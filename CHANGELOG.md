@@ -5,6 +5,19 @@ All notable changes to Memory Bridge will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [0.5.0] — 2026-05-22
+
+### Added
+- **FTS5 full-text search**: `memory_fts` virtual table with Porter stemming. Search memories by key, value, and tags. `/memories/search?q=...` endpoint with session/agent filtering. Schema migration v5 with backfill.
+- **Python client SDK**: `memory_bridge_client.Client` — async wrapper for all 12+ endpoints. Auto auth via Bearer token. Context manager support. 13 integration tests.
+- **Prometheus metrics endpoint**: `GET /metrics` returns Prometheus exposition format. Counters for requests (`memory_bridge_http_requests_total`), gauges for memories/sessions/uptime, latency histogram. Exempt from auth and rate limiting.
+
+### Test evolution
+```
+v0.4.0:  76 tests
+v0.5.0:  103 tests (+11 FTS5, +13 SDK, +3 Prometheus)
+```
+
 ## [0.4.0] — 2026-05-22
 
 ### Added
