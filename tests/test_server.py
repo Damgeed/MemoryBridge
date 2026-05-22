@@ -369,6 +369,64 @@ async def test_create_memory_without_ttl_default():
         assert data["ttl_seconds"] is None
 
 
+# --- Production Hardening Tests (v0.4) ---
+
+
+@pytest.mark.asyncio
+async def test_cors_headers():
+    """Response includes Access-Control-Allow-Origin header when request has Origin."""
+    transport = ASGITransport(app=app)
+    async with AsyncClient(transport=transport, base_url="http://test") as client:
+        resp = await client.get("/health", headers={"Origin": "http://example.com"})
+        assert resp.status_code == 200
+        assert "access-control-allow-origin" in resp.headers
+        assert resp.headers["access-control-allow-origin"] == "*"
+
+
+@pytest.mark.asyncio
+async def test_request_id_header():
+    """Response includes X-Request-ID header."""
+    transport = ASGITransport(app=app)
+    async with AsyncClient(transport=transport, base_url="http://test") as client:
+        resp = await client.get("/health")
+        assert resp.status_code == 200
+        assert "x-request-id" in resp.headers
+        rid = resp.headers["x-request-id"]
+        assert len(rid) == 36
+        assert rid.count("-") == 4
+
+
+@pytest.mark.asyncio
+async def test_rate_limit():
+    """When rate limit is low, requests beyond the limit get 429."""
+    os.environ["MEMORY_BRIDGE_RATE_LIMIT"] = "5"
+    import importlib
+    from memory_bridge import main as main_module
+    importlib.reload(main_module)
+    app2 = main_module.app
+
+    transport = ASGITransport(app=app2)
+    async with AsyncClient(transport=transport, base_url="http://test") as client:
+        for i in range(5):
+            resp = await client.post("/memories", json={
+                "session_id": "s-rate", "agent_id": "a1",
+                "key": f"k{i}", "value": f"v{i}",
+            })
+            assert resp.status_code == 200, f"Request {i} should succeed"
+
+        resp = await client.post("/memories", json={
+            "session_id": "s-rate", "agent_id": "a1",
+            "key": "k6", "value": "v6",
+        })
+        assert resp.status_code == 429
+        data = resp.json()
+        assert "rate limit" in data["detail"].lower()
+        assert "retry-after" in resp.headers or "Retry-After" in resp.headers
+
+    del os.environ["MEMORY_BRIDGE_RATE_LIMIT"]
+    importlib.reload(main_module)
+
+
 # --- Agent Lineage API Tests ---
 
 

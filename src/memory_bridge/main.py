@@ -2,28 +2,32 @@ import asyncio
 import logging
 import os
 import time
+import uuid
 from contextlib import asynccontextmanager
 from datetime import datetime, timezone
 
-from fastapi import FastAPI, Depends, HTTPException, Request, Query
+from fastapi import FastAPI, Depends, HTTPException, Request, Query, Response
+from fastapi.middleware.cors import CORSMiddleware
 
 from .dependencies import get_storage
 from .handoff import HandoffProtocol
 from .models import MemoryEntry, MemoryCreate, MemoryQuery, Session, HandoffPayload
-from .storage import MemoryStorage, last_cleanup_at
+from .storage import MemoryStorage
 from .auth import APIKeyMiddleware
+from .ratelimit import RateLimiter
 
 logger = logging.getLogger(__name__)
-
-# Operational metrics — module-level
-START_TIME = datetime.now(timezone.utc)
-request_count = 0
-total_latency = 0.0
 
 # How often the background cleanup runs (seconds). Default: 5 minutes.
 _CLEANUP_INTERVAL = int(os.environ.get("MEMORY_BRIDGE_CLEANUP_INTERVAL", "300"))
 # Default TTL for new memories (seconds). 0 or unset = no default TTL.
 _DEFAULT_TTL = int(os.environ.get("MEMORY_BRIDGE_DEFAULT_TTL", "0")) or None
+# Rate limit (requests per minute per IP). Default: 60.
+_RATE_LIMIT = int(os.environ.get("MEMORY_BRIDGE_RATE_LIMIT", "60"))
+# CORS origins (comma-separated). Default: allow all.
+_CORS_ORIGINS = os.environ.get("MEMORY_BRIDGE_CORS_ORIGINS", "*").split(",")
+
+_limiter = RateLimiter(requests_per_minute=_RATE_LIMIT)
 
 
 async def _cleanup_loop(storage: MemoryStorage):
@@ -32,8 +36,10 @@ async def _cleanup_loop(storage: MemoryStorage):
         try:
             await asyncio.sleep(_CLEANUP_INTERVAL)
             # Warn if cleanup hasn't run in > 2x the interval
-            if last_cleanup_at is not None:
-                seconds_since = (datetime.now(timezone.utc) - last_cleanup_at).total_seconds()
+            last_cleanup = await storage.get_metric("last_cleanup_at")
+            if last_cleanup is not None:
+                last_cleanup_dt = datetime.fromisoformat(last_cleanup)
+                seconds_since = (datetime.now(timezone.utc) - last_cleanup_dt).total_seconds()
                 if seconds_since > 2 * _CLEANUP_INTERVAL:
                     logger.warning(
                         "Cleanup hasn't run in %.0f seconds (interval=%ds)",
@@ -53,6 +59,11 @@ async def lifespan(app: FastAPI):
     """Initialize storage and background cleanup on startup."""
     storage = await get_storage()
     await storage.initialize()
+
+    # Initialize shared metrics (set-once, safe for multi-worker)
+    await storage.initialize_metric("start_time", datetime.now(timezone.utc).isoformat())
+    await storage.initialize_metric("request_count", 0)
+    await storage.initialize_metric("total_latency_ms", 0.0)
 
     # Start background cleanup task
     cleanup_task = asyncio.create_task(_cleanup_loop(storage))
@@ -74,34 +85,89 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
-# Auth middleware — checks Bearer token on all routes except /health
-# Disabled when MEMORY_BRIDGE_API_KEY env var is not set
+# ── Middleware Stack (order matters) ──────────────────────────────────────
+
+# 1. CORS — handle preflight and allow cross-origin requests
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=_CORS_ORIGINS,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# 2. Auth — Bearer token check on non-/health routes
 app.add_middleware(APIKeyMiddleware)
 
 
+# 3. Core middleware — rate limiting, request ID, metrics recording
 @app.middleware("http")
-async def track_requests(request: Request, call_next):
-    """Track request count and latency for operational metrics."""
-    global request_count, total_latency
+async def core_middleware(request: Request, call_next):
+    """Consolidated middleware: rate limit → request ID → record metrics."""
+
+    # Rate limit check (skip for health endpoint)
+    if request.url.path != "/health":
+        client_ip = request.client.host if request.client else "unknown"
+        allowed = await _limiter.check(client_ip)
+        if not allowed:
+            return Response(
+                content='{"detail":"Rate limit exceeded. Try again in 60 seconds."}',
+                status_code=429,
+                media_type="application/json",
+                headers={"Retry-After": "60", "X-Request-ID": ""},
+            )
+
+    # Generate request ID
+    request_id = str(uuid.uuid4())
+    request.state.request_id = request_id
+
+    # Process request
     start = time.monotonic()
     response = await call_next(request)
-    elapsed = time.monotonic() - start
-    request_count += 1
-    total_latency += elapsed
+    elapsed_ms = (time.monotonic() - start) * 1000
+
+    # Add request ID header
+    response.headers["X-Request-ID"] = request_id
+
+    # Record metrics (fire-and-forget, don't block the response)
+    try:
+        storage = await get_storage()
+        await storage.increment_metric("request_count")
+        await storage.increment_metric("total_latency_ms", round(elapsed_ms, 1))
+    except Exception:
+        logger.exception("Failed to record metrics")
+
     return response
+
+
+# ── Health ────────────────────────────────────────────────────────────────
 
 
 @app.get("/health")
 async def health(storage: MemoryStorage = Depends(get_storage)):
-    uptime = int((datetime.now(timezone.utc) - START_TIME).total_seconds())
-    sessions_total = await storage.count_sessions()
-    memories_total = await storage.count_memories()
-    avg_latency_ms = (total_latency / request_count * 1000) if request_count > 0 else 0.0
-    # Calculate cleanup monitoring
-    if last_cleanup_at is not None:
-        last_cleanup_seconds_ago = int((datetime.now(timezone.utc) - last_cleanup_at).total_seconds())
+    metrics = await storage.get_all_metrics()
+
+    start_time_str = metrics.get("start_time")
+    if start_time_str:
+        start_dt = datetime.fromisoformat(start_time_str)
+        uptime = int((datetime.now(timezone.utc) - start_dt).total_seconds())
+    else:
+        uptime = 0
+
+    req_count = metrics.get("request_count", 0)
+    total_lat = metrics.get("total_latency_ms", 0.0)
+    avg_latency = (total_lat / req_count) if req_count > 0 else 0.0
+
+    last_cleanup = metrics.get("last_cleanup_at")
+    if last_cleanup:
+        last_cleanup_dt = datetime.fromisoformat(last_cleanup)
+        last_cleanup_seconds_ago = int((datetime.now(timezone.utc) - last_cleanup_dt).total_seconds())
     else:
         last_cleanup_seconds_ago = None
+
+    sessions_total = await storage.count_sessions()
+    memories_total = await storage.count_memories()
+
     return {
         "status": "ok",
         "service": "memory-bridge",
@@ -109,8 +175,8 @@ async def health(storage: MemoryStorage = Depends(get_storage)):
         "uptime_seconds": uptime,
         "sessions_total": sessions_total,
         "memories_total": memories_total,
-        "avg_latency_ms": round(avg_latency_ms, 3),
-        "requests_served": request_count,
+        "avg_latency_ms": round(avg_latency, 3),
+        "requests_served": req_count,
         "last_cleanup_seconds_ago": last_cleanup_seconds_ago,
     }
 

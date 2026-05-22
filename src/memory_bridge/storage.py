@@ -9,9 +9,6 @@ from .models import MemoryEntry, Session
 
 logger = logging.getLogger(__name__)
 
-# Module-level timestamp for cleanup monitoring
-last_cleanup_at: Optional[datetime] = None
-
 # ── Schema version manifest ──────────────────────────────────────────────────
 #   v1  (0.1.0)  Base tables: sessions, memories (with tags column), memory_tags
 #   v2  (0.2.0)  Add ttl_seconds column to memories
@@ -315,7 +312,6 @@ class MemoryStorage:
 
     async def cleanup_expired(self) -> int:
         """Delete all expired memories. Returns the number of rows deleted."""
-        global last_cleanup_at
         async with aiosqlite.connect(self.db_path) as db:
             await db.execute("PRAGMA foreign_keys = ON")
             db.row_factory = aiosqlite.Row
@@ -344,7 +340,8 @@ class MemoryStorage:
             count = cursor.rowcount
             if count:
                 logger.info("Cleaned up %d expired memories", count)
-            last_cleanup_at = datetime.now(timezone.utc)
+            # Record cleanup timestamp in shared metrics
+            await self.record_metric("last_cleanup_at", datetime.now(timezone.utc).isoformat())
             return count
 
     # ── Metrics ───────────────────────────────────────────────────────────────
