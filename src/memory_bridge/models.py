@@ -16,6 +16,8 @@ class MemoryEntry(BaseModel):
     updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     ttl_seconds: Optional[int] = None
     """Seconds after which this memory expires. None = never expires."""
+    project: Optional[str] = None
+    """Project scope for multi-tenant isolation."""
 
 
 class Session(BaseModel):
@@ -25,6 +27,8 @@ class Session(BaseModel):
     parent_session_id: Optional[str] = None
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     metadata: dict[str, Any] = Field(default_factory=dict)
+    project: Optional[str] = None
+    """Project scope for multi-tenant isolation."""
 
 
 class HandoffPayload(BaseModel):
@@ -49,6 +53,8 @@ class MemoryCreate(BaseModel):
     """Seconds after which this memory expires. None = never expires."""
     propagate_to_parent: bool = False
     """If True and the session has a parent_session_id, also store a reference copy under the parent session."""
+    project: Optional[str] = None
+    """Project scope for multi-tenant isolation."""
 
 
 
@@ -60,6 +66,8 @@ class MemoryQuery(BaseModel):
     keys: list[str] = Field(default_factory=list)
     limit: int = Field(default=50, ge=1, le=500)
     offset: int = Field(default=0, ge=0)
+    project: Optional[str] = None
+    """Project scope for multi-tenant isolation."""
 
 
 class MemorySearchResult(BaseModel):

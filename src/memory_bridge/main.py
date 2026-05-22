@@ -226,10 +226,15 @@ async def metrics(storage: MemoryStorage = Depends(get_storage)):
 @app.post("/memories", response_model=MemoryEntry)
 async def create_memory(
     payload: MemoryCreate,
+    request: Request,
     storage: MemoryStorage = Depends(get_storage),
 ):
     # Apply default TTL if set and no TTL was specified
     ttl = payload.ttl_seconds if payload.ttl_seconds is not None else _DEFAULT_TTL
+    # Inherit project from auth if not explicitly set in payload
+    project = payload.project
+    if project is None and hasattr(request.state, "auth") and request.state.auth:
+        project = request.state.auth.get("project_id")
     entry = MemoryEntry(
         session_id=payload.session_id,
         agent_id=payload.agent_id,
@@ -237,12 +242,14 @@ async def create_memory(
         value=payload.value,
         tags=payload.tags,
         ttl_seconds=ttl,
+        project=project,
     )
     return await storage.store_memory(entry, propagate_to_parent=payload.propagate_to_parent)
 
 
 @app.get("/memories/search")
 async def search_memories(
+    request: Request,
     q: str = Query(..., description="Full-text search query"),
     session_id: Optional[str] = Query(None),
     agent_id: Optional[str] = Query(None),
@@ -250,9 +257,14 @@ async def search_memories(
     offset: int = Query(0, ge=0),
     storage: MemoryStorage = Depends(get_storage),
 ):
+    # Inherit project from auth if available
+    project = None
+    if hasattr(request.state, "auth") and request.state.auth:
+        project = request.state.auth.get("project_id")
     entries = await storage.search_memories(
         query=q, limit=limit, offset=offset,
         session_id=session_id, agent_id=agent_id,
+        project=project,
     )
     return {"entries": [e.model_dump() for e in entries], "total": len(entries)}
 
@@ -270,10 +282,15 @@ async def get_memory(
 
 @app.post("/memories/query")
 async def query_memories(
+    request: Request,
     query: MemoryQuery,
     storage: MemoryStorage = Depends(get_storage),
     include_lineage: bool = Query(False, description="If True, also query parent sessions in the lineage"),
 ):
+    # Inherit project from auth if not explicitly set in query
+    project = query.project
+    if project is None and hasattr(request.state, "auth") and request.state.auth:
+        project = request.state.auth.get("project_id")
     if include_lineage and query.session_id:
         entries = await storage.query_memories_lineage(
             session_id=query.session_id,
@@ -282,6 +299,7 @@ async def query_memories(
             keys=query.keys,
             limit=query.limit,
             offset=query.offset,
+            project=project,
         )
     else:
         entries = await storage.query_memories(
@@ -291,6 +309,7 @@ async def query_memories(
             keys=query.keys,
             limit=query.limit,
             offset=query.offset,
+            project=project,
         )
     return {"entries": [e.model_dump() for e in entries], "total": len(entries)}
 
@@ -371,3 +390,37 @@ async def execute_handoff(
         "context": result.context,
         "warnings": result.warnings,
     }
+
+
+# --- Admin: API Key Management ---
+
+
+@app.post("/admin/keys")
+async def admin_create_api_key(
+    label: str = Query(..., description="Human-readable label for the key"),
+    project_id: Optional[str] = Query(None, description="Optional project scope"),
+    storage: MemoryStorage = Depends(get_storage),
+):
+    """Create a new API key. The full key is returned only once."""
+    return await storage.create_api_key(label=label, project_id=project_id)
+
+
+@app.get("/admin/keys")
+async def admin_list_api_keys(
+    storage: MemoryStorage = Depends(get_storage),
+):
+    """List all API keys (key hashes only, not the actual keys)."""
+    keys = await storage.list_api_keys()
+    return {"keys": keys}
+
+
+@app.delete("/admin/keys/{key_id}")
+async def admin_revoke_api_key(
+    key_id: str,
+    storage: MemoryStorage = Depends(get_storage),
+):
+    """Revoke an API key. It can no longer be used for authentication."""
+    revoked = await storage.revoke_api_key(key_id)
+    if not revoked:
+        raise HTTPException(status_code=404, detail="API key not found")
+    return {"revoked": True, "key_id": key_id}

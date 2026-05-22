@@ -1,49 +1,81 @@
-"""API key authentication middleware for Memory Bridge."""
+"""API key authentication middleware with multi-key support."""
 
 import os
-from typing import Optional
-from fastapi import Request, HTTPException
+from fastapi import Request
 from fastapi.responses import JSONResponse
 from starlette.middleware.base import BaseHTTPMiddleware
+from .dependencies import get_storage
 
 
-def get_api_key() -> Optional[str]:
-    """Read the API key from environment. Returns None if not configured."""
-    return os.environ.get("MEMORY_BRIDGE_API_KEY", None)
+EXEMPT_PATHS = {"/health", "/docs", "/openapi.json", "/redoc", "/metrics"}
 
 
 class APIKeyMiddleware(BaseHTTPMiddleware):
-    """Middleware that checks Authorization: Bearer <key> on all routes.
+    """Validates Bearer token against configured API key OR stored API keys.
 
-    Exempts /health from auth checks.
-    If MEMORY_BRIDGE_API_KEY is not set, auth is disabled (open mode).
+    If MEMORY_BRIDGE_API_KEY env var is set, it is checked first as a fallback.
+    Additionally, the token is checked against API keys stored in the database.
+    On success, request.state.auth is populated with key info.
+    Exempted paths skip authentication entirely.
+
+    If neither env var nor DB keys exist, the middleware operates in open mode
+    (no authentication required).
     """
 
-    EXEMPT_PATHS = {"/health", "/metrics", "/docs", "/openapi.json", "/redoc"}
+    def __init__(self, app):
+        super().__init__(app)
+        self._has_checked_db_keys = False
+        self._has_db_keys = False
+
+    async def _check_db_has_keys(self) -> bool:
+        """Check if any API keys exist in the database."""
+        try:
+            storage = await get_storage()
+            keys = await storage.list_api_keys()
+            return len(keys) > 0
+        except Exception:
+            return False
 
     async def dispatch(self, request: Request, call_next):
-        # Skip auth for exempt paths or when no key is configured
-        if request.url.path in self.EXEMPT_PATHS:
+        if request.url.path in EXEMPT_PATHS:
             return await call_next(request)
 
-        api_key = get_api_key()
-        if api_key is None:
-            # No key configured — open mode
+        # Determine if auth is enforced
+        env_key = os.environ.get("MEMORY_BRIDGE_API_KEY")
+
+        if not self._has_checked_db_keys:
+            self._has_db_keys = await self._check_db_has_keys()
+            self._has_checked_db_keys = True
+
+        if not env_key and not self._has_db_keys:
+            # Open mode — no auth configured
             return await call_next(request)
 
-        # Check Authorization header
-        auth_header = request.headers.get("Authorization", "")
-        if not auth_header.startswith("Bearer "):
+        auth_header = request.headers.get("Authorization")
+        if not auth_header or not auth_header.startswith("Bearer "):
             return JSONResponse(
                 status_code=401,
-                content={"detail": "Missing or invalid Authorization header. Use: Bearer <key>"},
+                content={"detail": "Missing or invalid Authorization header. Use: Bearer <token>"},
             )
 
-        provided_key = auth_header.removeprefix("Bearer ").strip()
-        if provided_key != api_key:
-            return JSONResponse(
-                status_code=401,
-                content={"detail": "Invalid API key"},
-            )
+        token = auth_header.removeprefix("Bearer ")
 
-        return await call_next(request)
+        # 1. Check against env var (legacy single-key mode)
+        if env_key and token == env_key:
+            request.state.auth = {"key_id": "env", "label": "env-key", "project_id": None}
+            return await call_next(request)
+
+        # 2. Check against stored API keys
+        try:
+            storage = await get_storage()
+            key_info = await storage.authenticate_key(token)
+            if key_info:
+                request.state.auth = key_info
+                return await call_next(request)
+        except Exception:
+            pass
+
+        return JSONResponse(
+            status_code=401,
+            content={"detail": "Invalid API key. Check your Authorization header."},
+        )

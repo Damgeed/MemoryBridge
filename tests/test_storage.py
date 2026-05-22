@@ -665,12 +665,12 @@ async def test_schema_migration(tmp_path):
         # Verify schema_version table
         cursor = await db.execute("SELECT COALESCE(MAX(version), 0) FROM schema_version")
         row = await cursor.fetchone()
-        assert row[0] >= 4, f"Schema version should be at least 4, got {row[0]}"
+        assert row[0] >= 6, f"Schema version should be at least 6, got {row[0]}"
 
         # Verify all core tables exist
         cursor = await db.execute(
             "SELECT name FROM sqlite_master WHERE type='table' AND name IN "
-            "('sessions', 'memories', 'memory_tags', 'schema_version', 'metrics')"
+            "('sessions', 'memories', 'memory_tags', 'schema_version', 'metrics', 'api_keys')"
         )
         tables = {r[0] for r in await cursor.fetchall()}
         assert "sessions" in tables
@@ -678,6 +678,7 @@ async def test_schema_migration(tmp_path):
         assert "memory_tags" in tables
         assert "schema_version" in tables
         assert "metrics" in tables, "metrics table should exist after migration v4"
+        assert "api_keys" in tables, "api_keys table should exist after migration v6"
 
         # Verify ttl_seconds column exists (migration v2)
         cursor = await db.execute("PRAGMA table_info(memories)")
@@ -913,3 +914,140 @@ async def test_fts_backfill_migration(tmp_path):
 
     if os.path.exists(db_path):
         os.remove(db_path)
+
+
+# ── API Key Tests ──
+
+
+@pytest.mark.asyncio
+async def test_create_and_authenticate_key(storage):
+    """Create an API key and authenticate with it."""
+    result = await storage.create_api_key(label="test-key", project_id="proj-alpha")
+    assert result["label"] == "test-key"
+    assert result["project_id"] == "proj-alpha"
+    assert result["is_active"] is True
+    assert result["id"] is not None
+    plain_key = result["key"]
+    assert plain_key.startswith("mb_")
+
+    # Authenticate with the plain key
+    auth_info = await storage.authenticate_key(plain_key)
+    assert auth_info is not None
+    assert auth_info["id"] == result["id"]
+    assert auth_info["label"] == "test-key"
+    assert auth_info["project_id"] == "proj-alpha"
+
+
+@pytest.mark.asyncio
+async def test_authenticate_wrong_key(storage):
+    """Wrong key returns None."""
+    result = await storage.create_api_key(label="test-key")
+    auth_info = await storage.authenticate_key("mb_wrong_key_12345")
+    assert auth_info is None
+
+
+@pytest.mark.asyncio
+async def test_revoke_api_key(storage):
+    """Revoked key cannot authenticate."""
+    result = await storage.create_api_key(label="revocable")
+    plain_key = result["key"]
+
+    # Authenticate works before revoke
+    auth_info = await storage.authenticate_key(plain_key)
+    assert auth_info is not None
+
+    # Revoke
+    revoke_result = await storage.revoke_api_key(result["id"])
+    assert revoke_result is True
+
+    # Authenticate should fail after revoke
+    auth_info = await storage.authenticate_key(plain_key)
+    assert auth_info is None
+
+
+@pytest.mark.asyncio
+async def test_api_key_hash_not_stored_plaintext(storage):
+    """Verify the DB doesn't contain the plain key value."""
+    result = await storage.create_api_key(label="secret-key")
+    plain_key = result["key"]
+
+    # Direct DB query to check no plaintext key is stored
+    import aiosqlite
+    async with aiosqlite.connect(storage.db_path) as db:
+        cursor = await db.execute("SELECT key_hash FROM api_keys WHERE id = ?", (result["id"],))
+        row = await cursor.fetchone()
+        stored_hash = row[0]
+
+    # The stored hash should not equal the plain key
+    assert stored_hash != plain_key
+    # The stored hash should be a SHA-256 hex digest
+    assert len(stored_hash) == 64
+    import hashlib
+    assert stored_hash == hashlib.sha256(plain_key.encode()).hexdigest()
+
+
+@pytest.mark.asyncio
+async def test_list_api_keys(storage):
+    """List API keys returns all keys without plaintext."""
+    await storage.create_api_key(label="key-a", project_id="proj-1")
+    await storage.create_api_key(label="key-b")
+
+    keys = await storage.list_api_keys()
+    assert len(keys) >= 2
+
+    labels = {k["label"] for k in keys}
+    assert "key-a" in labels
+    assert "key-b" in labels
+
+    # Verify no plaintext key is returned
+    for k in keys:
+        assert "key" not in k
+        assert "key_hash" not in k
+
+
+# ── Project Isolation Tests ──
+
+
+@pytest.mark.asyncio
+async def test_memory_with_project(storage):
+    """Create and retrieve a memory with a project field."""
+    entry = MemoryEntry(
+        session_id="s1", agent_id="a1", key="proj-key",
+        value="project-scoped data", project="proj-alpha",
+    )
+    stored = await storage.store_memory(entry)
+    assert stored.project == "proj-alpha"
+
+    retrieved = await storage.get_memory(entry.id)
+    assert retrieved is not None
+    assert retrieved.project == "proj-alpha"
+
+
+@pytest.mark.asyncio
+async def test_query_by_project(storage):
+    """Query memories filtered by project."""
+    e1 = MemoryEntry(session_id="s1", agent_id="a1", key="k1", value="v1", project="proj-alpha")
+    e2 = MemoryEntry(session_id="s1", agent_id="a1", key="k2", value="v2", project="proj-beta")
+    e3 = MemoryEntry(session_id="s1", agent_id="a1", key="k3", value="v3", project="proj-alpha")
+    for e in [e1, e2, e3]:
+        await storage.store_memory(e)
+
+    results = await storage.query_memories(session_id="s1", project="proj-alpha")
+    assert len(results) == 2
+    assert {r.key for r in results} == {"k1", "k3"}
+
+    results = await storage.query_memories(session_id="s1", project="proj-beta")
+    assert len(results) == 1
+    assert results[0].key == "k2"
+
+
+@pytest.mark.asyncio
+async def test_session_with_project(storage):
+    """Create and retrieve a session with a project field."""
+    session = Session(session_id="s-proj", agent_id="a1", project="proj-alpha")
+    stored = await storage.store_session(session)
+    assert stored.project == "proj-alpha"
+
+    retrieved = await storage.get_session("s-proj")
+    assert retrieved is not None
+    assert retrieved.project == "proj-alpha"

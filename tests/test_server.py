@@ -614,3 +614,73 @@ async def test_query_with_lineage():
         data = resp.json()
         assert data["total"] == 1
         assert data["entries"][0]["value"] == "from child"
+
+
+# --- Admin API Key Management Endpoints ---
+
+
+@pytest.mark.asyncio
+async def test_create_api_key_endpoint():
+    """POST /admin/keys creates a new API key."""
+    transport = ASGITransport(app=app)
+    async with AsyncClient(transport=transport, base_url="http://test") as client:
+        resp = await client.post("/admin/keys?label=test-key")
+        assert resp.status_code == 200
+        data = resp.json()
+        assert "key" in data
+        assert data["key"].startswith("mb_")
+        assert data["label"] == "test-key"
+        assert data["is_active"] is True
+
+
+@pytest.mark.asyncio
+async def test_list_api_keys_endpoint():
+    """GET /admin/keys returns all keys."""
+    transport = ASGITransport(app=app)
+    async with AsyncClient(transport=transport, base_url="http://test") as client:
+        resp = await client.get("/admin/keys")
+        assert resp.status_code == 200
+        data = resp.json()
+        assert "keys" in data
+
+
+@pytest.mark.asyncio
+async def test_revoke_api_key_endpoint():
+    """DELETE /admin/keys/:id revokes a key."""
+    transport = ASGITransport(app=app)
+    async with AsyncClient(transport=transport, base_url="http://test") as client:
+        # Create a key
+        create_resp = await client.post("/admin/keys?label=revoke-me")
+        assert create_resp.status_code == 200
+        key_id = create_resp.json()["id"]
+
+        # Revoke it
+        resp = await client.delete(f"/admin/keys/{key_id}")
+        assert resp.status_code == 200
+        assert resp.json()["revoked"] is True
+
+        # Verify it's revoked
+        list_resp = await client.get("/admin/keys")
+        keys = list_resp.json()["keys"]
+        revoked_key = next(k for k in keys if k["id"] == key_id)
+        assert revoked_key["is_active"] == 0 or revoked_key["is_active"] is False
+
+
+@pytest.mark.asyncio
+async def test_revoke_nonexistent_key_404():
+    """DELETE /admin/keys/:id on nonexistent returns 404."""
+    transport = ASGITransport(app=app)
+    async with AsyncClient(transport=transport, base_url="http://test") as client:
+        resp = await client.delete("/admin/keys/nonexistent-id")
+        assert resp.status_code == 404
+
+
+@pytest.mark.asyncio
+async def test_create_key_with_project():
+    """POST /admin/keys supports project scoping."""
+    transport = ASGITransport(app=app)
+    async with AsyncClient(transport=transport, base_url="http://test") as client:
+        resp = await client.post("/admin/keys?label=project-key&project_id=proj-alpha")
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data["project_id"] == "proj-alpha"

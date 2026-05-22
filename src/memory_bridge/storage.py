@@ -1,13 +1,22 @@
 import aiosqlite
+import hashlib
 import json
 import logging
+import secrets
 from datetime import datetime, timezone
 from typing import Any, Optional
 from pathlib import Path
+from uuid import uuid4
 
 from .models import MemoryEntry, Session
 
 logger = logging.getLogger(__name__)
+
+
+def _hash_api_key(plain_key: str) -> str:
+    """Hash an API key using SHA-256 for storage."""
+    return hashlib.sha256(plain_key.encode()).hexdigest()
+
 
 # ── Schema version manifest ──────────────────────────────────────────────────
 #   v1  (0.1.0)  Base tables: sessions, memories (with tags column), memory_tags
@@ -36,6 +45,19 @@ _SCHEMA_MIGRATIONS: dict[int, str] = {
         "  COALESCE((SELECT group_concat(mt.tag, ' ') FROM memory_tags mt WHERE mt.memory_id = m.id), '')\n"
         "FROM memories m"
     ),
+    6: (
+        "CREATE TABLE IF NOT EXISTS api_keys ("
+        "  id TEXT PRIMARY KEY, "
+        "  key_hash TEXT NOT NULL UNIQUE, "
+        "  label TEXT NOT NULL, "
+        "  project_id TEXT, "
+        "  is_active INTEGER NOT NULL DEFAULT 1, "
+        "  created_at TEXT NOT NULL, "
+        "  last_used_at TEXT"
+        ")"
+    ),
+    7: "ALTER TABLE memories ADD COLUMN project TEXT",
+    8: "ALTER TABLE sessions ADD COLUMN project TEXT",
 }
 # ──────────────────────────────────────────────────────────────────────────────
 
@@ -55,6 +77,11 @@ async def _row_to_entry(row: aiosqlite.Row, db: aiosqlite.Connection) -> MemoryE
     tag_rows = await cursor.fetchall()
     tags = [r[0] for r in tag_rows]
 
+    try:
+        project = row["project"]
+    except (KeyError, IndexError):
+        project = None
+
     return MemoryEntry(
         id=row["id"],
         session_id=row["session_id"],
@@ -65,6 +92,7 @@ async def _row_to_entry(row: aiosqlite.Row, db: aiosqlite.Connection) -> MemoryE
         created_at=datetime.fromisoformat(row["created_at"]),
         updated_at=datetime.fromisoformat(row["updated_at"]),
         ttl_seconds=ttl,
+        project=project,
     )
 
 
@@ -96,7 +124,8 @@ class MemoryStorage:
                     agent_id TEXT NOT NULL,
                     parent_session_id TEXT,
                     created_at TEXT NOT NULL,
-                    metadata TEXT DEFAULT '{}'
+                    metadata TEXT DEFAULT '{}',
+                    project TEXT
                 );
                 CREATE TABLE IF NOT EXISTS memories (
                     id TEXT PRIMARY KEY,
@@ -108,6 +137,7 @@ class MemoryStorage:
                     created_at TEXT NOT NULL,
                     updated_at TEXT NOT NULL,
                     ttl_seconds INTEGER,
+                    project TEXT,
                     FOREIGN KEY (session_id) REFERENCES sessions(session_id)
                 );
                 CREATE INDEX IF NOT EXISTS idx_memories_session
@@ -132,6 +162,15 @@ class MemoryStorage:
                     key TEXT PRIMARY KEY,
                     value TEXT NOT NULL,
                     updated_at TEXT NOT NULL
+                );
+                CREATE TABLE IF NOT EXISTS api_keys (
+                    id TEXT PRIMARY KEY,
+                    key_hash TEXT NOT NULL UNIQUE,
+                    label TEXT NOT NULL,
+                    project_id TEXT,
+                    is_active INTEGER NOT NULL DEFAULT 1,
+                    created_at TEXT NOT NULL,
+                    last_used_at TEXT
                 );
             """)
             # Seed version 1 if this is a fresh database (v0.1.0 base tables)
@@ -186,8 +225,8 @@ class MemoryStorage:
         async with aiosqlite.connect(self.db_path) as db:
             await db.execute(
                 """INSERT OR REPLACE INTO memories
-                   (id, session_id, agent_id, key, value, created_at, updated_at, ttl_seconds)
-                   VALUES (?, ?, ?, ?, ?, ?, ?, ?)""",
+                   (id, session_id, agent_id, key, value, created_at, updated_at, ttl_seconds, project)
+                   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)""",
                 (
                     entry.id,
                     entry.session_id,
@@ -197,6 +236,7 @@ class MemoryStorage:
                     entry.created_at.isoformat(),
                     entry.updated_at.isoformat(),
                     entry.ttl_seconds,
+                    entry.project,
                 ),
             )
             # Sync the memory_tags junction table
@@ -231,6 +271,7 @@ class MemoryStorage:
                     created_at=entry.created_at,
                     updated_at=entry.updated_at,
                     ttl_seconds=entry.ttl_seconds,
+                    project=entry.project,
                 )
                 await self.store_memory(parent_entry, propagate_to_parent=False)
 
@@ -263,6 +304,7 @@ class MemoryStorage:
         keys: Optional[list[str]] = None,
         limit: int = 50,
         offset: int = 0,
+        project: Optional[str] = None,
     ) -> list[MemoryEntry]:
         """Query memories with optional filters. Tags are filtered via SQL JOIN.
         Expired memories are filtered out."""
@@ -293,6 +335,9 @@ class MemoryStorage:
             )
             params.extend(unique_tags)
             params.append(len(unique_tags))
+        if project:
+            conditions.append("project = ?")
+            params.append(project)
 
         where_clause = " AND ".join(conditions) if conditions else "1=1"
 
@@ -469,14 +514,15 @@ class MemoryStorage:
         async with aiosqlite.connect(self.db_path) as db:
             await db.execute(
                 """INSERT OR REPLACE INTO sessions
-                   (session_id, agent_id, parent_session_id, created_at, metadata)
-                   VALUES (?, ?, ?, ?, ?)""",
+                   (session_id, agent_id, parent_session_id, created_at, metadata, project)
+                   VALUES (?, ?, ?, ?, ?, ?)""",
                 (
                     session.session_id,
                     session.agent_id,
                     session.parent_session_id,
                     session.created_at.isoformat(),
                     json.dumps(session.metadata),
+                    session.project,
                 ),
             )
             await db.commit()
@@ -492,12 +538,17 @@ class MemoryStorage:
             row = await cursor.fetchone()
             if row is None:
                 return None
+            try:
+                project = row["project"]
+            except (KeyError, IndexError):
+                project = None
             return Session(
                 session_id=row["session_id"],
                 agent_id=row["agent_id"],
                 parent_session_id=row["parent_session_id"],
                 created_at=datetime.fromisoformat(row["created_at"]),
                 metadata=json.loads(row["metadata"]),
+                project=project,
             )
 
     async def get_session_lineage(self, session_id: str) -> list[str]:
@@ -528,6 +579,7 @@ class MemoryStorage:
         keys: Optional[list[str]] = None,
         limit: int = 50,
         offset: int = 0,
+        project: Optional[str] = None,
     ) -> list[MemoryEntry]:
         """Gets the session lineage (session + all parents up the chain),
         calls query_memories for each session, merges results deduplicating
@@ -546,6 +598,7 @@ class MemoryStorage:
                 keys=keys,
                 limit=limit * 2,  # Fetch extra to account for dedup
                 offset=offset,
+                project=project,
             )
             for entry in results:
                 if entry.key not in seen_keys:
@@ -563,6 +616,7 @@ class MemoryStorage:
         offset: int = 0,
         session_id: Optional[str] = None,
         agent_id: Optional[str] = None,
+        project: Optional[str] = None,
     ) -> list[MemoryEntry]:
         """Full-text search across memory keys, values, and tags using FTS5.
 
@@ -594,6 +648,9 @@ class MemoryStorage:
             if agent_id:
                 conditions.append("m.agent_id = ?")
                 params.append(agent_id)
+            if project:
+                conditions.append("m.project = ?")
+                params.append(project)
 
             where = " AND ".join(conditions)
             cursor = await db.execute(
@@ -624,3 +681,71 @@ class MemoryStorage:
                 await db.commit()
 
             return results
+
+    # ── API Key Management ────────────────────────────────────────────────────
+
+    async def create_api_key(self, label: str, project_id: Optional[str] = None) -> dict:
+        """Create a new API key. Returns the full key info including the plaintext key (show once)."""
+        plain_key = f"mb_{secrets.token_hex(24)}"
+        key_hash = _hash_api_key(plain_key)
+        key_id = str(uuid4())
+        now = datetime.now(timezone.utc).isoformat()
+
+        async with aiosqlite.connect(self.db_path) as db:
+            await db.execute(
+                "INSERT INTO api_keys (id, key_hash, label, project_id, is_active, created_at) "
+                "VALUES (?, ?, ?, ?, 1, ?)",
+                (key_id, key_hash, label, project_id, now),
+            )
+            await db.commit()
+
+        return {
+            "id": key_id,
+            "key": plain_key,
+            "label": label,
+            "project_id": project_id,
+            "is_active": True,
+            "created_at": now,
+        }
+
+    async def list_api_keys(self) -> list[dict]:
+        """List all API keys (without the actual key value, only hash)."""
+        async with aiosqlite.connect(self.db_path) as db:
+            db.row_factory = aiosqlite.Row
+            cursor = await db.execute(
+                "SELECT id, label, project_id, is_active, created_at, last_used_at FROM api_keys "
+                "ORDER BY created_at DESC"
+            )
+            rows = await cursor.fetchall()
+            return [dict(row) for row in rows]
+
+    async def revoke_api_key(self, key_id: str) -> bool:
+        """Revoke an API key by setting is_active=0."""
+        async with aiosqlite.connect(self.db_path) as db:
+            cursor = await db.execute(
+                "UPDATE api_keys SET is_active = 0 WHERE id = ?", (key_id,)
+            )
+            await db.commit()
+            return cursor.rowcount > 0
+
+    async def authenticate_key(self, plain_key: str) -> Optional[dict]:
+        """Authenticate a plaintext API key. Returns key info or None if invalid."""
+        key_hash = _hash_api_key(plain_key)
+        async with aiosqlite.connect(self.db_path) as db:
+            db.row_factory = aiosqlite.Row
+            cursor = await db.execute(
+                "SELECT id, label, project_id, is_active FROM api_keys WHERE key_hash = ?",
+                (key_hash,),
+            )
+            row = await cursor.fetchone()
+            if row is None or not row["is_active"]:
+                return None
+
+            # Update last_used_at
+            await db.execute(
+                "UPDATE api_keys SET last_used_at = datetime('now') WHERE id = ?",
+                (row["id"],),
+            )
+            await db.commit()
+
+            return {"id": row["id"], "label": row["label"], "project_id": row["project_id"]}
