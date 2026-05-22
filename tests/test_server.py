@@ -114,6 +114,6 @@ async def test_create_and_get_session():
 @pytest.mark.asyncio
 async def test_404_on_missing_session():
     transport = ASGITransport(app=app)
-    async with AsyncClient(transport=transport, base_url="http/test") as client:
+    async with AsyncClient(transport=transport, base_url="http://test") as client:
         resp = await client.get("/sessions/nonexistent")
         assert resp.status_code == 404
