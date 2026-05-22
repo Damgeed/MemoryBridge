@@ -225,6 +225,20 @@ class MemoryStorage:
                 logger.info("Cleaned up %d expired memories", count)
             return count
 
+    async def count_sessions(self) -> int:
+        """Return the total number of sessions in storage."""
+        async with aiosqlite.connect(self.db_path) as db:
+            cursor = await db.execute("SELECT COUNT(*) FROM sessions")
+            row = await cursor.fetchone()
+            return row[0]
+
+    async def count_memories(self) -> int:
+        """Return the total number of memories in storage."""
+        async with aiosqlite.connect(self.db_path) as db:
+            cursor = await db.execute("SELECT COUNT(*) FROM memories")
+            row = await cursor.fetchone()
+            return row[0]
+
     async def store_session(self, session: Session) -> Session:
         """Store a session record. Replaces if the same session_id exists."""
         async with aiosqlite.connect(self.db_path) as db:

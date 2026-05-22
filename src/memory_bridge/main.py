@@ -1,9 +1,11 @@
 import asyncio
 import logging
 import os
+import time
 from contextlib import asynccontextmanager
+from datetime import datetime, timezone
 
-from fastapi import FastAPI, Depends, HTTPException
+from fastapi import FastAPI, Depends, HTTPException, Request
 
 from .dependencies import get_storage
 from .handoff import HandoffProtocol
@@ -12,6 +14,11 @@ from .storage import MemoryStorage
 from .auth import APIKeyMiddleware
 
 logger = logging.getLogger(__name__)
+
+# Operational metrics — module-level
+START_TIME = datetime.now(timezone.utc)
+request_count = 0
+total_latency = 0.0
 
 # How often the background cleanup runs (seconds). Default: 5 minutes.
 _CLEANUP_INTERVAL = int(os.environ.get("MEMORY_BRIDGE_CLEANUP_INTERVAL", "300"))
@@ -64,9 +71,34 @@ app = FastAPI(
 app.add_middleware(APIKeyMiddleware)
 
 
+@app.middleware("http")
+async def track_requests(request: Request, call_next):
+    """Track request count and latency for operational metrics."""
+    global request_count, total_latency
+    start = time.monotonic()
+    response = await call_next(request)
+    elapsed = time.monotonic() - start
+    request_count += 1
+    total_latency += elapsed
+    return response
+
+
 @app.get("/health")
-async def health():
-    return {"status": "ok", "service": "memory-bridge"}
+async def health(storage: MemoryStorage = Depends(get_storage)):
+    uptime = int((datetime.now(timezone.utc) - START_TIME).total_seconds())
+    sessions_total = await storage.count_sessions()
+    memories_total = await storage.count_memories()
+    avg_latency_ms = (total_latency / request_count * 1000) if request_count > 0 else 0.0
+    return {
+        "status": "ok",
+        "service": "memory-bridge",
+        "version": "0.2.0",
+        "uptime_seconds": uptime,
+        "sessions_total": sessions_total,
+        "memories_total": memories_total,
+        "avg_latency_ms": round(avg_latency_ms, 3),
+        "requests_served": request_count,
+    }
 
 
 # --- Memory CRUD ---

@@ -25,7 +25,38 @@ async def test_health_endpoint():
     async with AsyncClient(transport=transport, base_url="http://test") as client:
         resp = await client.get("/health")
         assert resp.status_code == 200
-        assert resp.json() == {"status": "ok", "service": "memory-bridge"}
+        data = resp.json()
+        assert data["status"] == "ok"
+        assert data["service"] == "memory-bridge"
+        assert data["version"] == "0.2.0"
+        assert isinstance(data["uptime_seconds"], int)
+        assert isinstance(data["sessions_total"], int)
+        assert isinstance(data["memories_total"], int)
+        assert isinstance(data["avg_latency_ms"], float)
+        assert isinstance(data["requests_served"], int)
+
+
+@pytest.mark.asyncio
+async def test_health_returns_metrics():
+    """Verify health endpoint returns all operational metrics fields."""
+    transport = ASGITransport(app=app)
+    async with AsyncClient(transport=transport, base_url="http://test") as client:
+        resp = await client.get("/health")
+        assert resp.status_code == 200
+        data = resp.json()
+        expected_keys = {
+            "status", "service", "version", "uptime_seconds",
+            "sessions_total", "memories_total", "avg_latency_ms", "requests_served",
+        }
+        assert set(data.keys()) == expected_keys
+        assert data["status"] == "ok"
+        assert data["service"] == "memory-bridge"
+        assert data["version"] == "0.2.0"
+        assert data["uptime_seconds"] >= 0
+        assert data["sessions_total"] >= 0
+        assert data["memories_total"] >= 0
+        assert data["avg_latency_ms"] >= 0.0
+        assert data["requests_served"] >= 0
 
 
 @pytest.mark.asyncio

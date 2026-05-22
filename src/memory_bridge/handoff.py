@@ -1,6 +1,10 @@
 """Agent-to-agent context handoff with guardrails."""
 
+import asyncio
 from typing import Any, Optional
+
+from fastapi import HTTPException
+
 from .models import HandoffPayload, MemoryEntry, MemoryQuery
 from .storage import MemoryStorage
 
@@ -19,6 +23,15 @@ class HandoffResult:
         self.summary = summary
         self.context = context
         self.warnings = warnings or []
+
+
+class HandoffError(Exception):
+    """Error raised when a handoff operation cannot proceed."""
+
+    def __init__(self, detail: str, status_code: int = 409):
+        self.detail = detail
+        self.status_code = status_code
+        super().__init__(detail)
 
 
 class HandoffGuardrails:
@@ -67,8 +80,51 @@ class HandoffProtocol:
 
     def __init__(self, storage: MemoryStorage):
         self.storage = storage
+        self._session_locks: dict[str, asyncio.Lock] = {}
+
+    def _get_session_lock(self, session_id: str) -> asyncio.Lock:
+        """Get or create a per-session lock."""
+        if session_id not in self._session_locks:
+            self._session_locks[session_id] = asyncio.Lock()
+        return self._session_locks[session_id]
+
+    async def _acquire_session_lock(self, session_id: str, timeout: float = 5.0) -> None:
+        """Acquire the per-session lock with a timeout.
+
+        Raises HandoffError if the lock cannot be acquired within the timeout.
+        """
+        lock = self._get_session_lock(session_id)
+        try:
+            await asyncio.wait_for(lock.acquire(), timeout=timeout)
+        except asyncio.TimeoutError:
+            raise HandoffError(
+                detail=f"Session '{session_id}' is busy with another handoff. "
+                       f"Could not acquire lock within {timeout}s.",
+                status_code=409,
+            )
 
     async def prepare_handoff(
+        self,
+        from_agent_id: str,
+        to_agent_id: str,
+        session_id: str,
+        handoff_type: str = "summary",
+        include_tags: Optional[list[str]] = None,
+    ) -> HandoffResult:
+        """Prepare context for handoff between agents."""
+        await self._acquire_session_lock(session_id)
+        try:
+            return await self._prepare_handoff_internal(
+                from_agent_id=from_agent_id,
+                to_agent_id=to_agent_id,
+                session_id=session_id,
+                handoff_type=handoff_type,
+                include_tags=include_tags,
+            )
+        finally:
+            self._session_locks[session_id].release()
+
+    async def _prepare_handoff_internal(
         self,
         from_agent_id: str,
         to_agent_id: str,
