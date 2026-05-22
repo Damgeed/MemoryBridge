@@ -14,6 +14,8 @@ class MemoryEntry(BaseModel):
     tags: list[str] = Field(default_factory=list)
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    ttl_seconds: Optional[int] = None
+    """Seconds after which this memory expires. None = never expires."""
 
 
 class Session(BaseModel):
@@ -43,6 +45,8 @@ class MemoryCreate(BaseModel):
     key: str
     value: Any
     tags: list[str] = Field(default_factory=list)
+    ttl_seconds: Optional[int] = None
+    """Seconds after which this memory expires. None = never expires."""
 
 
 class MemoryQuery(BaseModel):

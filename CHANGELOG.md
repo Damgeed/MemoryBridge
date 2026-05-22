@@ -5,6 +5,30 @@ All notable changes to Memory Bridge will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [0.2.0] — 2026-05-22
+
+### Added
+- TTL / eviction policy for memories — each memory can specify `ttl_seconds`
+- Background cleanup task that periodically deletes expired memories
+- Expired memories are lazily filtered on GET and query
+- Column migration for existing databases (backward compatible)
+- Configurable via `MEMORY_BRIDGE_CLEANUP_INTERVAL` and `MEMORY_BRIDGE_DEFAULT_TTL` env vars
+- 13 new tests (50 total): TTL expiry, renewal, no-TTL, cleanup, API flow
+- Smoke test scenarios for TTL create, verify, and expiry filtering
+- API key auth middleware (env‑based `MEMORY_BRIDGE_API_KEY`)
+- Auth is open‑by‑default — no key needed unless explicitly configured
+
+### Changed
+- Bumped version to v0.2.0
+- CLI's `reload=True` is now opt-in via `MEMORY_BRIDGE_RELOAD=1`
+- Refactored `_row_to_entry()` helper in storage layer
+- Removed global DB test contaminant in smoke test
+
+### Fixed
+- Python 3.9 compatibility: `.get()` not available on `sqlite3.Row`
+- `no such table` error in API-level TTL test (moved to server test suite)
+- CI badge count updated to 50 tests
+
 ## [0.1.1] — 2026-05-22
 
 ### Added

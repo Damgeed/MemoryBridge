@@ -244,3 +244,40 @@ async def test_open_mode_no_key_needed():
             "session_id": "s1", "agent_id": "a1", "key": "k", "value": "v",
         })
         assert resp.status_code == 200
+
+
+# --- TTL / Eviction API Tests ---
+
+
+@pytest.mark.asyncio
+async def test_create_memory_with_ttl():
+    """Verify ttl_seconds flows through the API to the stored entry."""
+    transport = ASGITransport(app=app)
+    async with AsyncClient(transport=transport, base_url="http://test") as client:
+        resp = await client.post("/memories", json={
+            "session_id": "s-ttl-api",
+            "agent_id": "a1",
+            "key": "temp",
+            "value": "will expire",
+            "ttl_seconds": 300,
+        })
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data["ttl_seconds"] == 300
+        assert data["value"] == "will expire"
+
+
+@pytest.mark.asyncio
+async def test_create_memory_without_ttl_default():
+    """Memory created without ttl_seconds defaults to None (never expires)."""
+    transport = ASGITransport(app=app)
+    async with AsyncClient(transport=transport, base_url="http://test") as client:
+        resp = await client.post("/memories", json={
+            "session_id": "s-ttl-none",
+            "agent_id": "a1",
+            "key": "permanent",
+            "value": "stays forever",
+        })
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data["ttl_seconds"] is None

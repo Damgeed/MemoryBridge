@@ -1,23 +1,60 @@
+import asyncio
+import logging
+import os
 from contextlib import asynccontextmanager
+
 from fastapi import FastAPI, Depends, HTTPException
+
 from .dependencies import get_storage
 from .handoff import HandoffProtocol
 from .models import MemoryEntry, MemoryCreate, MemoryQuery, Session, HandoffPayload
 from .storage import MemoryStorage
 from .auth import APIKeyMiddleware
 
+logger = logging.getLogger(__name__)
+
+# How often the background cleanup runs (seconds). Default: 5 minutes.
+_CLEANUP_INTERVAL = int(os.environ.get("MEMORY_BRIDGE_CLEANUP_INTERVAL", "300"))
+# Default TTL for new memories (seconds). 0 or unset = no default TTL.
+_DEFAULT_TTL = int(os.environ.get("MEMORY_BRIDGE_DEFAULT_TTL", "0")) or None
+
+
+async def _cleanup_loop(storage: MemoryStorage):
+    """Periodically delete expired memories."""
+    while True:
+        try:
+            await asyncio.sleep(_CLEANUP_INTERVAL)
+            deleted = await storage.cleanup_expired()
+            if deleted:
+                logger.info("Cleanup: deleted %d expired memories", deleted)
+        except asyncio.CancelledError:
+            break
+        except Exception:
+            logger.exception("Cleanup task error")
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    """Initialize storage on startup, clean up on shutdown."""
+    """Initialize storage and background cleanup on startup."""
     storage = await get_storage()
     await storage.initialize()
+
+    # Start background cleanup task
+    cleanup_task = asyncio.create_task(_cleanup_loop(storage))
+
     yield
+
+    # Shutdown: cancel cleanup task
+    cleanup_task.cancel()
+    try:
+        await cleanup_task
+    except asyncio.CancelledError:
+        pass
 
 
 app = FastAPI(
     title="Memory Bridge",
-    version="0.1.0",
+    version="0.2.0",
     description="Cross-session memory persistence for multi-agent teams",
     lifespan=lifespan,
 )
@@ -34,17 +71,21 @@ async def health():
 
 # --- Memory CRUD ---
 
+
 @app.post("/memories", response_model=MemoryEntry)
 async def create_memory(
     payload: MemoryCreate,
     storage: MemoryStorage = Depends(get_storage),
 ):
+    # Apply default TTL if set and no TTL was specified
+    ttl = payload.ttl_seconds if payload.ttl_seconds is not None else _DEFAULT_TTL
     entry = MemoryEntry(
         session_id=payload.session_id,
         agent_id=payload.agent_id,
         key=payload.key,
         value=payload.value,
         tags=payload.tags,
+        ttl_seconds=ttl,
     )
     return await storage.store_memory(entry)
 
@@ -87,6 +128,7 @@ async def delete_memory(
 
 
 # --- Session CRUD ---
+
 
 @app.post("/sessions", response_model=Session)
 async def create_session(

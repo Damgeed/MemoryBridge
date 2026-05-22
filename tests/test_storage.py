@@ -1,6 +1,7 @@
 import os
 import pytest
 import pytest_asyncio
+from datetime import datetime, timezone
 from memory_bridge.storage import MemoryStorage
 from memory_bridge.models import MemoryEntry, Session
 
@@ -248,3 +249,129 @@ async def test_multiple_sessions_independent(storage):
     s2_results = await storage.query_memories(session_id="s2")
     assert len(s1_results) == 3
     assert len(s2_results) == 3
+
+
+# --- TTL / Eviction Tests ---
+
+
+@pytest.mark.asyncio
+async def test_memory_with_ttl_not_expired(storage):
+    """Memory with TTL is retrievable before the TTL elapses."""
+    entry = MemoryEntry(
+        session_id="s1", agent_id="a1", key="ephemeral",
+        value="temp data", ttl_seconds=3600,
+    )
+    await storage.store_memory(entry)
+
+    retrieved = await storage.get_memory(entry.id)
+    assert retrieved is not None
+    assert retrieved.value == "temp data"
+    assert retrieved.ttl_seconds == 3600
+
+
+@pytest.mark.asyncio
+async def test_memory_with_no_ttl_never_expires(storage):
+    """Memory with ttl_seconds=None never gets filtered by TTL."""
+    entry = MemoryEntry(
+        session_id="s1", agent_id="a1", key="permanent",
+        value="important data", ttl_seconds=None,
+    )
+    await storage.store_memory(entry)
+
+    # Simulate time passing — cleanup should not touch it
+    await storage.cleanup_expired()
+    retrieved = await storage.get_memory(entry.id)
+    assert retrieved is not None
+    assert retrieved.value == "important data"
+
+
+@pytest.mark.asyncio
+async def test_expired_memory_filtered_from_get(storage):
+    """A memory past its TTL is treated as non-existent by get_memory."""
+    now = datetime.now(timezone.utc)
+    entry = MemoryEntry(
+        session_id="s1", agent_id="a1", key="expired",
+        value="gone soon", ttl_seconds=1,
+        # Backdate creation so it looks expired
+        created_at=now.replace(year=now.year - 1),
+    )
+    await storage.store_memory(entry)
+
+    retrieved = await storage.get_memory(entry.id)
+    assert retrieved is None, "Expired memory should not be returned"
+
+
+@pytest.mark.asyncio
+async def test_expired_memory_filtered_from_query(storage):
+    """Expired memories are excluded from query results."""
+    now = datetime.now(timezone.utc)
+    e1 = MemoryEntry(
+        session_id="s1", agent_id="a1", key="fresh", value="fine",
+        ttl_seconds=3600,
+    )
+    e2 = MemoryEntry(
+        session_id="s1", agent_id="a1", key="stale", value="gone",
+        ttl_seconds=1,
+        created_at=now.replace(year=now.year - 1),
+    )
+    for e in [e1, e2]:
+        await storage.store_memory(e)
+
+    results = await storage.query_memories(session_id="s1")
+    keys = {r.key for r in results}
+    assert "fresh" in keys
+    assert "stale" not in keys, "Expired memory leaked into query results"
+
+
+@pytest.mark.asyncio
+async def test_cleanup_expired_removes_expired_entries(storage):
+    """cleanup_expired() deletes expired entries and leaves others intact."""
+    now = datetime.now(timezone.utc)
+    e1 = MemoryEntry(
+        session_id="s1", agent_id="a1", key="permanent", value="keep",
+        ttl_seconds=None,
+    )
+    e2 = MemoryEntry(
+        session_id="s1", agent_id="a1", key="valid", value="keep",
+        ttl_seconds=3600,
+    )
+    e3 = MemoryEntry(
+        session_id="s1", agent_id="a1", key="expired1", value="delete",
+        ttl_seconds=1,
+        created_at=now.replace(year=now.year - 1),
+    )
+    e4 = MemoryEntry(
+        session_id="s1", agent_id="a1", key="expired2", value="delete",
+        ttl_seconds=60,
+        created_at=now.replace(year=now.year - 1),
+    )
+    for e in [e1, e2, e3, e4]:
+        await storage.store_memory(e)
+    e1_id, e2_id, e3_id, e4_id = e1.id, e2.id, e3.id, e4.id
+
+    deleted = await storage.cleanup_expired()
+    assert deleted == 2, "Should delete exactly 2 expired entries"
+
+    # Permanents and valid ones survive
+    assert await storage.get_memory(e1_id) is not None
+    assert await storage.get_memory(e2_id) is not None
+    # Expired ones are gone
+    assert await storage.get_memory(e3_id) is None
+    assert await storage.get_memory(e4_id) is None
+
+
+@pytest.mark.asyncio
+async def test_cleanup_expired_with_none_expired(storage):
+    """cleanup_expired() returns 0 when nothing is expired."""
+    entries = [
+        MemoryEntry(session_id="s1", agent_id="a1", key=f"k{i}", value="v", ttl_seconds=3600)
+        for i in range(5)
+    ]
+    for e in entries:
+        await storage.store_memory(e)
+
+    deleted = await storage.cleanup_expired()
+    assert deleted == 0, "No entries should be expired"
+
+    results = await storage.query_memories(session_id="s1")
+    assert len(results) == 5

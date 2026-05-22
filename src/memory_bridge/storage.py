@@ -1,10 +1,46 @@
 import aiosqlite
 import json
+import logging
 from datetime import datetime, timezone
 from typing import Optional
 from pathlib import Path
 
 from .models import MemoryEntry, Session
+
+logger = logging.getLogger(__name__)
+
+
+def _row_to_entry(row: aiosqlite.Row) -> MemoryEntry:
+    """Convert a SQLite row to a MemoryEntry."""
+    # Use bracket access for sqlite3.Row (Python 3.9 compat — no .get())
+    try:
+        ttl = row["ttl_seconds"]
+    except (KeyError, IndexError):
+        ttl = None  # Column missing (pre-v0.2 database)
+    return MemoryEntry(
+        id=row["id"],
+        session_id=row["session_id"],
+        agent_id=row["agent_id"],
+        key=row["key"],
+        value=json.loads(row["value"]),
+        tags=json.loads(row["tags"]),
+        created_at=datetime.fromisoformat(row["created_at"]),
+        updated_at=datetime.fromisoformat(row["updated_at"]),
+        ttl_seconds=ttl,
+    )
+
+
+def _is_expired(entry: MemoryEntry) -> bool:
+    """Check if a memory entry has expired based on its TTL."""
+    if entry.ttl_seconds is None:
+        return False
+    elapsed = (datetime.now(timezone.utc) - entry.created_at).total_seconds()
+    return elapsed > entry.ttl_seconds
+
+
+def _filter_expired(entries: list[MemoryEntry]) -> list[MemoryEntry]:
+    """Filter out expired entries from a list."""
+    return [e for e in entries if not _is_expired(e)]
 
 
 class MemoryStorage:
@@ -33,6 +69,7 @@ class MemoryStorage:
                     tags TEXT DEFAULT '[]',
                     created_at TEXT NOT NULL,
                     updated_at TEXT NOT NULL,
+                    ttl_seconds INTEGER,
                     FOREIGN KEY (session_id) REFERENCES sessions(session_id)
                 );
                 CREATE INDEX IF NOT EXISTS idx_memories_session
@@ -42,6 +79,12 @@ class MemoryStorage:
                 CREATE INDEX IF NOT EXISTS idx_memories_key
                     ON memories(key);
             """)
+            # Column migration: add ttl_seconds if missing (pre-v0.2 databases)
+            try:
+                await db.execute("ALTER TABLE memories ADD COLUMN ttl_seconds INTEGER")
+                await db.commit()
+            except Exception:
+                pass  # Column already exists
             await db.commit()
 
     async def store_memory(self, entry: MemoryEntry) -> MemoryEntry:
@@ -49,8 +92,8 @@ class MemoryStorage:
         async with aiosqlite.connect(self.db_path) as db:
             await db.execute(
                 """INSERT OR REPLACE INTO memories
-                   (id, session_id, agent_id, key, value, tags, created_at, updated_at)
-                   VALUES (?, ?, ?, ?, ?, ?, ?, ?)""",
+                   (id, session_id, agent_id, key, value, tags, created_at, updated_at, ttl_seconds)
+                   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)""",
                 (
                     entry.id,
                     entry.session_id,
@@ -60,13 +103,14 @@ class MemoryStorage:
                     json.dumps(entry.tags),
                     entry.created_at.isoformat(),
                     entry.updated_at.isoformat(),
+                    entry.ttl_seconds,
                 ),
             )
             await db.commit()
         return entry
 
     async def get_memory(self, memory_id: str) -> Optional[MemoryEntry]:
-        """Retrieve a single memory entry by its ID."""
+        """Retrieve a single memory entry by its ID. Returns None if expired."""
         async with aiosqlite.connect(self.db_path) as db:
             db.row_factory = aiosqlite.Row
             cursor = await db.execute(
@@ -75,16 +119,13 @@ class MemoryStorage:
             row = await cursor.fetchone()
             if row is None:
                 return None
-            return MemoryEntry(
-                id=row["id"],
-                session_id=row["session_id"],
-                agent_id=row["agent_id"],
-                key=row["key"],
-                value=json.loads(row["value"]),
-                tags=json.loads(row["tags"]),
-                created_at=datetime.fromisoformat(row["created_at"]),
-                updated_at=datetime.fromisoformat(row["updated_at"]),
-            )
+            entry = _row_to_entry(row)
+            if _is_expired(entry):
+                # Lazily clean up expired entries on access
+                await db.execute("DELETE FROM memories WHERE id = ?", (memory_id,))
+                await db.commit()
+                return None
+            return entry
 
     async def query_memories(
         self,
@@ -94,7 +135,8 @@ class MemoryStorage:
         keys: Optional[list[str]] = None,
         limit: int = 50,
     ) -> list[MemoryEntry]:
-        """Query memories with optional filters. Tags are filtered client-side."""
+        """Query memories with optional filters. Tags are filtered client-side.
+        Expired memories are filtered out."""
         conditions: list[str] = []
         params: list = []
 
@@ -120,23 +162,26 @@ class MemoryStorage:
             rows = await cursor.fetchall()
 
             results: list[MemoryEntry] = []
+            expired_ids: list[str] = []
             for row in rows:
-                entry = MemoryEntry(
-                    id=row["id"],
-                    session_id=row["session_id"],
-                    agent_id=row["agent_id"],
-                    key=row["key"],
-                    value=json.loads(row["value"]),
-                    tags=json.loads(row["tags"]),
-                    created_at=datetime.fromisoformat(row["created_at"]),
-                    updated_at=datetime.fromisoformat(row["updated_at"]),
-                )
+                entry = _row_to_entry(row)
+                if _is_expired(entry):
+                    expired_ids.append(entry.id)
+                    continue
                 # Client-side tag filtering (tags stored as JSON array)
                 if tags:
                     entry_tags = set(entry.tags)
                     if not entry_tags.intersection(tags):
                         continue
                 results.append(entry)
+
+            # Lazily clean up expired entries
+            if expired_ids:
+                placeholders = ",".join("?" for _ in expired_ids)
+                await db.execute(
+                    f"DELETE FROM memories WHERE id IN ({placeholders})", expired_ids
+                )
+                await db.commit()
 
             return results
 
@@ -148,6 +193,37 @@ class MemoryStorage:
             )
             await db.commit()
             return cursor.rowcount > 0
+
+    async def cleanup_expired(self) -> int:
+        """Delete all expired memories. Returns the number of rows deleted."""
+        async with aiosqlite.connect(self.db_path) as db:
+            db.row_factory = aiosqlite.Row
+            # Fetch all memories with a TTL set
+            cursor = await db.execute(
+                "SELECT * FROM memories WHERE ttl_seconds IS NOT NULL"
+            )
+            rows = await cursor.fetchall()
+            now = datetime.now(timezone.utc)
+            expired_ids: list[str] = []
+            for row in rows:
+                entry = _row_to_entry(row)
+                elapsed = (now - entry.created_at).total_seconds()
+                if elapsed > entry.ttl_seconds:
+                    expired_ids.append(entry.id)
+
+            if not expired_ids:
+                return 0
+
+            placeholders = ",".join("?" for _ in expired_ids)
+            cursor = await db.execute(
+                f"DELETE FROM memories WHERE id IN ({placeholders})",
+                expired_ids,
+            )
+            await db.commit()
+            count = cursor.rowcount
+            if count:
+                logger.info("Cleaned up %d expired memories", count)
+            return count
 
     async def store_session(self, session: Session) -> Session:
         """Store a session record. Replaces if the same session_id exists."""
