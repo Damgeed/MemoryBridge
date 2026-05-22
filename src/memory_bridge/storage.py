@@ -2,7 +2,7 @@ import aiosqlite
 import json
 import logging
 from datetime import datetime, timezone
-from typing import Optional
+from typing import Any, Optional
 from pathlib import Path
 
 from .models import MemoryEntry, Session
@@ -19,6 +19,13 @@ last_cleanup_at: Optional[datetime] = None
 _SCHEMA_MIGRATIONS: dict[int, str] = {
     2: "ALTER TABLE memories ADD COLUMN ttl_seconds INTEGER",
     3: "ALTER TABLE memories DROP COLUMN tags",
+    4: (
+        "CREATE TABLE IF NOT EXISTS metrics ("
+        "key TEXT PRIMARY KEY, "
+        "value TEXT NOT NULL, "
+        "updated_at TEXT NOT NULL"
+        ")"
+    ),
 }
 # ──────────────────────────────────────────────────────────────────────────────
 
@@ -110,6 +117,11 @@ class MemoryStorage:
                 CREATE TABLE IF NOT EXISTS schema_version (
                     version INTEGER PRIMARY KEY,
                     applied_at TEXT NOT NULL
+                );
+                CREATE TABLE IF NOT EXISTS metrics (
+                    key TEXT PRIMARY KEY,
+                    value TEXT NOT NULL,
+                    updated_at TEXT NOT NULL
                 );
             """)
             # Seed version 1 if this is a fresh database (v0.1.0 base tables)
@@ -334,6 +346,78 @@ class MemoryStorage:
                 logger.info("Cleaned up %d expired memories", count)
             last_cleanup_at = datetime.now(timezone.utc)
             return count
+
+    # ── Metrics ───────────────────────────────────────────────────────────────
+
+    async def record_metric(self, key: str, value: Any) -> None:
+        """Upsert a metric value (converted to JSON string)."""
+        async with aiosqlite.connect(self.db_path) as db:
+            await db.execute(
+                "INSERT OR REPLACE INTO metrics (key, value, updated_at) "
+                "VALUES (?, ?, datetime('now'))",
+                (key, json.dumps(value)),
+            )
+            await db.commit()
+
+    async def get_metric(self, key: str) -> Optional[Any]:
+        """Get a metric value (parsed from JSON string). Returns None if not set."""
+        async with aiosqlite.connect(self.db_path) as db:
+            cursor = await db.execute(
+                "SELECT value FROM metrics WHERE key = ?", (key,)
+            )
+            row = await cursor.fetchone()
+            if row is None:
+                return None
+            return json.loads(row[0])
+
+    async def get_all_metrics(self) -> dict[str, Any]:
+        """Get all metrics as a dict mapping key to parsed value."""
+        async with aiosqlite.connect(self.db_path) as db:
+            cursor = await db.execute("SELECT key, value FROM metrics")
+            rows = await cursor.fetchall()
+            return {row[0]: json.loads(row[1]) for row in rows}
+
+    async def increment_metric(self, key: str, delta: int = 1) -> int:
+        """Atomically increment a numeric metric. Returns the new value.
+
+        Initializes to 0 if the key doesn't exist yet.
+        """
+        async with aiosqlite.connect(self.db_path) as db:
+            # Seed with 0 if absent
+            await db.execute(
+                "INSERT OR IGNORE INTO metrics (key, value, updated_at) "
+                "VALUES (?, '0', datetime('now'))",
+                (key,),
+            )
+            # Read current value
+            cursor = await db.execute(
+                "SELECT value FROM metrics WHERE key = ?", (key,)
+            )
+            row = await cursor.fetchone()
+            current = json.loads(row[0])
+            new_value = current + delta
+            # Write updated value back
+            await db.execute(
+                "UPDATE metrics SET value = ?, updated_at = datetime('now') "
+                "WHERE key = ?",
+                (json.dumps(new_value), key),
+            )
+            await db.commit()
+            return new_value
+
+    async def initialize_metric(self, key: str, default_value: Any) -> None:
+        """Set a metric only if it doesn't exist yet.
+
+        This is designed for startup counters (start_time, request_count)
+        that should be set once and never overwritten.
+        """
+        async with aiosqlite.connect(self.db_path) as db:
+            await db.execute(
+                "INSERT OR IGNORE INTO metrics (key, value, updated_at) "
+                "VALUES (?, ?, datetime('now'))",
+                (key, json.dumps(default_value)),
+            )
+            await db.commit()
 
     async def count_sessions(self) -> int:
         """Return the total number of sessions in storage."""

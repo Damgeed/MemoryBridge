@@ -547,12 +547,116 @@ async def test_propagate_to_parent(storage):
     assert "propagated:child" not in child_results[0].tags, "Original should not have the propagated tag"
 
 
+# ── Metrics Tests ──
+
+
+@pytest.mark.asyncio
+async def test_record_and_get_metric(storage):
+    """Record a metric and retrieve it."""
+    await storage.record_metric("start_time", "2026-01-15T10:00:00")
+    value = await storage.get_metric("start_time")
+    assert value == "2026-01-15T10:00:00"
+
+    # Overwrite with new value
+    await storage.record_metric("start_time", "2026-05-22T20:00:00")
+    value = await storage.get_metric("start_time")
+    assert value == "2026-05-22T20:00:00"
+
+
+@pytest.mark.asyncio
+async def test_get_metric_not_found(storage):
+    """Getting a non-existent metric returns None."""
+    value = await storage.get_metric("nonexistent")
+    assert value is None
+
+
+@pytest.mark.asyncio
+async def test_increment_metric(storage):
+    """Increment a numeric metric and verify the returned and stored value."""
+    # Start from scratch — should initialize to 0
+    new_val = await storage.increment_metric("request_count")
+    assert new_val == 1
+
+    new_val = await storage.increment_metric("request_count")
+    assert new_val == 2
+
+    new_val = await storage.increment_metric("request_count", delta=5)
+    assert new_val == 7
+
+    # Verify via get_metric
+    assert await storage.get_metric("request_count") == 7
+
+
+@pytest.mark.asyncio
+async def test_get_all_metrics(storage):
+    """get_all_metrics returns all stored metrics as a dict."""
+    await storage.record_metric("foo", "bar")
+    await storage.record_metric("count", 42)
+    await storage.record_metric("flag", True)
+    await storage.record_metric("nested", {"a": [1, 2]})
+
+    all_metrics = await storage.get_all_metrics()
+    assert all_metrics["foo"] == "bar"
+    assert all_metrics["count"] == 42
+    assert all_metrics["flag"] is True
+    assert all_metrics["nested"] == {"a": [1, 2]}
+    assert len(all_metrics) == 4
+
+
+@pytest.mark.asyncio
+async def test_metrics_persist_across_connections(storage, tmp_path):
+    """Metrics survive when closing and reopening storage."""
+    await storage.record_metric("greeting", "hello")
+    await storage.increment_metric("counter", 10)
+    await storage.initialize_metric("initialized", "yes")
+
+    # Close and reopen with same db_path
+    db_path = storage.db_path
+    del storage
+
+    s2 = MemoryStorage(db_path=db_path)
+    await s2.initialize()
+
+    assert await s2.get_metric("greeting") == "hello"
+    assert await s2.get_metric("counter") == 10
+    assert await s2.get_metric("initialized") == "yes"
+
+
+@pytest.mark.asyncio
+async def test_initialize_metric_idempotent(storage):
+    """initialize_metric sets a value once and does not overwrite."""
+    await storage.initialize_metric("start_time", "first_value")
+    assert await storage.get_metric("start_time") == "first_value"
+
+    # Second call should not overwrite
+    await storage.initialize_metric("start_time", "second_value")
+    assert await storage.get_metric("start_time") == "first_value"
+
+
+@pytest.mark.asyncio
+async def test_metric_complex_types(storage):
+    """Metrics support complex JSON types (dicts, lists, numbers, booleans)."""
+    await storage.record_metric("dict_val", {"key": "value", "num": 42})
+    await storage.record_metric("list_val", [1, "two", True])
+    await storage.record_metric("bool_val", False)
+    await storage.record_metric("int_val", 0)
+    await storage.record_metric("float_val", 3.14)
+    await storage.record_metric("null_val", None)
+
+    assert await storage.get_metric("dict_val") == {"key": "value", "num": 42}
+    assert await storage.get_metric("list_val") == [1, "two", True]
+    assert await storage.get_metric("bool_val") is False
+    assert await storage.get_metric("int_val") == 0
+    assert await storage.get_metric("float_val") == 3.14
+    assert await storage.get_metric("null_val") is None
+
+
 # ── Schema Migration Tests ──
 
 
 @pytest.mark.asyncio
 async def test_schema_migration(tmp_path):
-    """Fresh database gets schema_version=1 and all tables exist."""
+    """Fresh database gets schema_version=4 and all tables exist."""
     db_path = str(tmp_path / "schema_test.db")
     s = MemoryStorage(db_path=db_path)
     await s.initialize()
@@ -561,18 +665,19 @@ async def test_schema_migration(tmp_path):
         # Verify schema_version table
         cursor = await db.execute("SELECT COALESCE(MAX(version), 0) FROM schema_version")
         row = await cursor.fetchone()
-        assert row[0] >= 1, "Schema version should be at least 1"
+        assert row[0] >= 4, f"Schema version should be at least 4, got {row[0]}"
 
         # Verify all core tables exist
         cursor = await db.execute(
             "SELECT name FROM sqlite_master WHERE type='table' AND name IN "
-            "('sessions', 'memories', 'memory_tags', 'schema_version')"
+            "('sessions', 'memories', 'memory_tags', 'schema_version', 'metrics')"
         )
         tables = {r[0] for r in await cursor.fetchall()}
         assert "sessions" in tables
         assert "memories" in tables
         assert "memory_tags" in tables
         assert "schema_version" in tables
+        assert "metrics" in tables, "metrics table should exist after migration v4"
 
         # Verify ttl_seconds column exists (migration v2)
         cursor = await db.execute("PRAGMA table_info(memories)")
