@@ -9,7 +9,7 @@ def main():
     uvicorn.run(
         "memory_bridge.main:app",
         host="0.0.0.0",
-        port=8000,
+        port=int(os.environ.get("PORT", os.environ.get("MEMORY_BRIDGE_PORT", "8000"))),
         reload=reload_enabled,
     )
 

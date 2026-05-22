@@ -1,0 +1,9 @@
+[build]
+  builder = "DOCKERFILE"
+  dockerfilePath = "Dockerfile"
+
+[deploy]
+  startCommand = "memory-bridge"
+  healthcheckPath = "/health"
+  healthcheckTimeout = 5
+  restarts = "always"
