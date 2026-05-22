@@ -5,6 +5,26 @@ All notable changes to Memory Bridge will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [0.6.0] — 2026-05-22
+
+### Added
+- **Multi-key authentication**: API keys stored in `api_keys` table with SHA-256 hashing. Keys prefixed `mb_` for easy identification. Create, list, and revoke via API or admin endpoints.
+- **Project isolation**: Memories and sessions now have an optional `project` field. Queries can be scoped to a project. API keys can be bound to a project for automatic data isolation.
+- **Admin API endpoints**: `POST /admin/keys` (create with label + optional project), `GET /admin/keys` (list all), `DELETE /admin/keys/:id` (revoke). Return plaintext key only on creation.
+- **Backward-compatible auth**: Legacy `MEMORY_BRIDGE_API_KEY` env var still works as a fallback. Open mode (no keys configured) still works for development.
+- **Auth state**: `request.state.auth` populated with `{key_id, label, project_id}` on successful authentication.
+
+### Schema changes
+- Migration v6: `api_keys` table
+- Migration v7: `project` column on `memories`
+- Migration v8: `project` column on `sessions`
+
+### Test evolution
+```
+v0.5.0:  103 tests
+v0.6.0:  116 tests (+8 multi-key auth, +5 admin API)
+```
+
 ## [0.5.0] — 2026-05-22
 
 ### Added
