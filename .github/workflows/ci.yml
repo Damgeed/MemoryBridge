@@ -27,7 +27,7 @@ jobs:
           python -m pip install --upgrade pip
           pip install -e ".[dev]"
 
-      - name: Run unit tests (37 test suite)
+      - name: Run unit tests (42 test suite)
         run: pytest tests/ -v --tb=short
 
       - name: Start server for smoke test
