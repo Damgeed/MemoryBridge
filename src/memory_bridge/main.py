@@ -13,7 +13,7 @@ app = FastAPI(
 
 @app.on_event("startup")
 async def startup():
-    storage = get_storage()
+    storage = await get_storage()
     await storage.initialize()
 
 
