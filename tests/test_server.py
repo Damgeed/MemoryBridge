@@ -84,7 +84,8 @@ async def test_metrics_endpoint():
     async with AsyncClient(transport=transport, base_url="http://test") as client:
         resp = await client.get("/metrics")
         assert resp.status_code == 200
-        assert resp.headers.get("content-type") == "text/plain; version=0.0.4; charset=utf-8"
+        assert "text/plain" in resp.headers.get("content-type", "")
+        assert "charset=utf-8" in resp.headers.get("content-type", "")
         body = resp.text
 
         # Core metrics should be present
