@@ -19,7 +19,7 @@ class APIKeyMiddleware(BaseHTTPMiddleware):
     If MEMORY_BRIDGE_API_KEY is not set, auth is disabled (open mode).
     """
 
-    EXEMPT_PATHS = {"/health", "/docs", "/openapi.json", "/redoc"}
+    EXEMPT_PATHS = {"/health", "/metrics", "/docs", "/openapi.json", "/redoc"}
 
     async def dispatch(self, request: Request, call_next):
         # Skip auth for exempt paths or when no key is configured

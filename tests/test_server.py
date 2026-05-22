@@ -74,6 +74,55 @@ async def test_health_returns_cleanup_monitoring():
         assert data["last_cleanup_seconds_ago"] is None or isinstance(data["last_cleanup_seconds_ago"], int)
 
 
+# --- Prometheus Metrics Endpoint ---
+
+
+@pytest.mark.asyncio
+async def test_metrics_endpoint():
+    """GET /metrics returns 200 with Prometheus content type and expected metrics."""
+    transport = ASGITransport(app=app)
+    async with AsyncClient(transport=transport, base_url="http://test") as client:
+        resp = await client.get("/metrics")
+        assert resp.status_code == 200
+        assert resp.headers.get("content-type") == "text/plain; version=0.0.4; charset=utf-8"
+        body = resp.text
+
+        # Core metrics should be present
+        assert "memory_bridge_http_requests_total" in body
+        assert "memory_bridge_memories" in body
+        assert "memory_bridge_sessions" in body
+        assert "memory_bridge_uptime_seconds" in body
+        assert "memory_bridge_request_latency_seconds" in body
+
+
+@pytest.mark.asyncio
+async def test_metrics_updates_gauges():
+    """After storing memories and sessions, the gauges reflect current counts."""
+    transport = ASGITransport(app=app)
+    async with AsyncClient(transport=transport, base_url="http://test") as client:
+        # Create a session and a memory
+        await client.post("/sessions", json={"session_id": "s-metric", "agent_id": "a1"})
+        await client.post("/memories", json={
+            "session_id": "s-metric", "agent_id": "a1",
+            "key": "k1", "value": "v1",
+        })
+
+        resp = await client.get("/metrics")
+        body = resp.text
+        # Gauges should show at least 1
+        assert "memory_bridge_memories 1" in body or "memory_bridge_memories 1." in body
+        assert "memory_bridge_sessions 1" in body or "memory_bridge_sessions 1." in body
+
+
+@pytest.mark.asyncio
+async def test_metrics_exempt_from_auth(enable_auth):
+    """Metrics endpoint works without auth even when auth is enabled."""
+    transport = ASGITransport(app=app)
+    async with AsyncClient(transport=transport, base_url="http://test") as client:
+        resp = await client.get("/metrics")
+        assert resp.status_code == 200
+
+
 @pytest.mark.asyncio
 async def test_create_and_get_memory():
     transport = ASGITransport(app=app)

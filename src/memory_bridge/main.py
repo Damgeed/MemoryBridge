@@ -12,6 +12,15 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from .dependencies import get_storage
 from .handoff import HandoffProtocol
+from .metrics import (
+    request_counter,
+    memory_gauge,
+    session_gauge,
+    uptime_gauge,
+    request_latency,
+    generate_latest,
+    CONTENT_TYPE_LATEST,
+)
 from .models import MemoryEntry, MemoryCreate, MemoryQuery, Session, HandoffPayload
 from .storage import MemoryStorage
 from .auth import APIKeyMiddleware
@@ -66,6 +75,9 @@ async def lifespan(app: FastAPI):
     await storage.initialize_metric("request_count", 0)
     await storage.initialize_metric("total_latency_ms", 0.0)
 
+    # Set up Prometheus uptime gauge (auto-updates on scrape)
+    uptime_gauge.set_function(lambda: (datetime.now(timezone.utc) - _start_time).total_seconds())
+
     # Start background cleanup task
     cleanup_task = asyncio.create_task(_cleanup_loop(storage))
 
@@ -85,6 +97,9 @@ app = FastAPI(
     description="Cross-session memory persistence for multi-agent teams",
     lifespan=lifespan,
 )
+
+# Module-level start time for Prometheus uptime gauge
+_start_time = datetime.now(timezone.utc)
 
 # ── Middleware Stack (order matters) ──────────────────────────────────────
 
@@ -106,8 +121,8 @@ app.add_middleware(APIKeyMiddleware)
 async def core_middleware(request: Request, call_next):
     """Consolidated middleware: rate limit → request ID → record metrics."""
 
-    # Rate limit check (skip for health endpoint)
-    if request.url.path != "/health":
+    # Rate limit check (skip for health and metrics endpoints)
+    if request.url.path not in ("/health", "/metrics"):
         client_ip = request.client.host if request.client else "unknown"
         allowed = await _limiter.check(client_ip)
         if not allowed:
@@ -136,7 +151,11 @@ async def core_middleware(request: Request, call_next):
         await storage.increment_metric("request_count")
         await storage.increment_metric("total_latency_ms", round(elapsed_ms, 1))
     except Exception:
-        logger.exception("Failed to record metrics")
+        logger.exception("Failed to record storage metrics")
+
+    # Record Prometheus metrics
+    request_counter.inc()
+    request_latency.observe(elapsed_ms / 1000.0)
 
     return response
 
@@ -180,6 +199,25 @@ async def health(storage: MemoryStorage = Depends(get_storage)):
         "requests_served": req_count,
         "last_cleanup_seconds_ago": last_cleanup_seconds_ago,
     }
+
+
+# ── Prometheus Metrics ────────────────────────────────────────────────────
+
+
+@app.get("/metrics")
+async def metrics(storage: MemoryStorage = Depends(get_storage)):
+    """Expose Prometheus metrics at /metrics.
+
+    Updates memory and session gauges from storage, then returns the
+    latest Prometheus exposition format.
+    """
+    memory_gauge.set(await storage.count_memories())
+    session_gauge.set(await storage.count_sessions())
+
+    return Response(
+        content=generate_latest(),
+        media_type=CONTENT_TYPE_LATEST,
+    )
 
 
 # --- Memory CRUD ---
