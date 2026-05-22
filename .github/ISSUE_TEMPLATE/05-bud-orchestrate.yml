@@ -1,0 +1,21 @@
+---
+name: "🧢 Bud's Orchestration"
+description: "Documentation, CI/CD, community, or coordination tasks."
+title: "bud: "
+labels: ["bud/orchestrate"]
+assignees: []
+body:
+  - type: textarea
+    id: description
+    attributes:
+      label: What needs doing?
+      placeholder: "Update README with new endpoint documentation"
+    validations:
+      required: true
+  - type: textarea
+    id: reason
+    attributes:
+      label: Why?
+      placeholder: "We added 3 new endpoints in v0.2 and the README is out of date"
+    validations:
+      required: false

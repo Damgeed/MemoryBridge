@@ -1,0 +1,47 @@
+name: "🌟 Nova's Dream — Feature Request"
+description: "I have a vision for something Memory Bridge could become."
+title: "nova: "
+labels: ["nova/dream"]
+assignees: []
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for dreaming with us! Tell us what you envision.
+  - type: textarea
+    id: vision
+    attributes:
+      label: The Dream
+      description: What does this feature enable? Paint the picture.
+      placeholder: "Imagine a world where agents remember..."
+    validations:
+      required: true
+  - type: textarea
+    id: problem
+    attributes:
+      label: What problem does it solve?
+      description: Why does this matter?
+      placeholder: "Right now agents can't..."
+    validations:
+      required: true
+  - type: textarea
+    id: success
+    attributes:
+      label: What does success look like?
+      description: How would we know this is working?
+      placeholder: "An agent can now..."
+    validations:
+      required: true
+  - type: dropdown
+    id: milestone
+    attributes:
+      label: Target milestone
+      description: When should this ship?
+      options:
+        - v0.2 — Production Hardening
+        - v0.3 — Performance & Scale
+        - v0.4 — Framework Integration
+        - v0.5 — Nova's Dreams
+        - Future
+    validations:
+      required: true

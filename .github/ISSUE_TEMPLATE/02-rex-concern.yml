@@ -1,0 +1,54 @@
+name: "⚡ Rex's Concern — Bug Report"
+description: "Something's broken, edge-casey, or keeping me up at night."
+title: "rex: "
+labels: ["rex/concern"]
+assignees: []
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for catching this. Tell us what's wrong.
+  - type: textarea
+    id: description
+    attributes:
+      label: The Problem
+      description: What's happening that shouldn't be?
+      placeholder: "When I call endpoint X with parameter Y, the server returns..."
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Steps to Reproduce
+      description: Be specific. Include curl commands if possible.
+      placeholder: |
+        1. Start the server with `memory-bridge`
+        2. Run `curl ...`
+        3. See error: ...
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected Behavior
+      description: What should have happened?
+      placeholder: "Should return 200 with proper response"
+    validations:
+      required: true
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: OS, Python version, how you're running it
+      placeholder: "macOS 14.5, Python 3.11, via pip install"
+    validations:
+      required: false
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Before submitting
+      options:
+        - label: I've checked existing issues for duplicates
+          required: true
+        - label: I can reproduce this consistently
+          required: true

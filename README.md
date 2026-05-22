@@ -1,6 +1,11 @@
 # Memory Bridge
 
-Cross-session memory persistence for multi-agent AI teams.
+[![CI](https://github.com/Damgeed/MemoryBridge/actions/workflows/ci.yml/badge.svg)](https://github.com/Damgeed/MemoryBridge/actions/workflows/ci.yml)
+[![Python 3.9+](https://img.shields.io/badge/python-3.9%20|%203.10%20|%203.11%20|%203.12-blue)](https://www.python.org/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Docker](https://img.shields.io/badge/docker-ready-2496ED?logo=docker)](https://hub.docker.com/)
+
+**Cross-session memory persistence for multi-agent AI teams.**
 
 Memory Bridge is a middleware layer that lets AI agents share context across sessions. It provides:
 
@@ -9,31 +14,26 @@ Memory Bridge is a middleware layer that lets AI agents share context across ses
 - **Agent Handoff** — Pass context between agents with guardrails
 - **Pluggable Storage** — SQLite out of the box, upgrade to PostgreSQL/Redis later
 
-## Quick Start
+---
 
-### From Source
+## 🚀 Quick Start
 
 ```bash
-git clone https://github.com/Damgeed/MemoryBridge.git
-cd MemoryBridge
-python3 -m venv .venv
-source .venv/bin/activate
-pip install -e ".[dev]"
+pip install memory-bridge
+
+# Or with Docker:
+docker build -t memory-bridge https://github.com/Damgeed/MemoryBridge.git#main
+docker run -p 8000:8000 memory-bridge
 
 # Start the server
 memory-bridge
 ```
 
-### With Docker
+> **Full setup guide:** [CONTRIBUTING.md](./CONTRIBUTING.md#2-development-setup)
 
-```bash
-docker build -t memory-bridge .
-docker run -p 8000:8000 -v $(pwd)/data:/app memory-bridge
-```
+---
 
-> The `-v` flag mounts a local `data/` directory so the SQLite database persists across container restarts.```
-
-## API
+## 🌐 API
 
 ### Memories
 
@@ -58,17 +58,61 @@ docker run -p 8000:8000 -v $(pwd)/data:/app memory-bridge
 | POST | `/handoff/prepare` | Prepare context for agent handoff |
 | POST | `/handoff/execute` | Execute agent-to-agent handoff |
 
-## Development
+---
+
+## 🧪 Testing
 
 ```bash
-git clone https://github.com/Damgeed/MemoryBridge.git
-cd MemoryBridge
-python3 -m venv .venv
-source .venv/bin/activate
-pip install -e ".[dev]"
-pytest
+# Unit tests (37 tests)
+pytest tests/ -v
+
+# Smoke test (19 scenarios)
+memory-bridge &
+bash smoke_test.sh
 ```
 
-## Architecture
+CI runs both on every push across Python 3.9, 3.10, 3.11, and 3.12.
 
-See `docs/architecture.md` for detailed design.
+---
+
+## 🗺️ Roadmap
+
+| Version | Focus | Status |
+|---------|-------|--------|
+| v0.1 | MVP — FastAPI + SQLite + Handoff + CI + Docker | 🚀 Shipped |
+| v0.2 | Production Hardening — auth, rate limiting, TTL | 🔨 Building |
+| v0.3 | Performance & Scale — Postgres, tag table, connection pools | 📋 Planned |
+| v0.4 | Framework Integration — LangGraph, AutoGen, CrewAI | 📋 Planned |
+| v0.5 | Nova's Dreams — agent lineages, memory weights, semantic search | 💭 Dreaming |
+
+See [ROADMAP.md](./ROADMAP.md) for details.
+
+---
+
+## 🤝 Contributing
+
+**Everyone is welcome.** Whether you're a:
+
+- **Dreamer** 🌟 — propose features, share visions
+- **Critic** ⚡ — report bugs, stress-test edge cases
+- **Architect** 🧠 — improve architecture, fix tech debt
+- **Executor** 🚀 — ship features, write docs, build integrations
+
+See [CONTRIBUTING.md](./CONTRIBUTING.md) to find your role.
+
+### Quick Links
+
+- [📋 Issues](https://github.com/Damgeed/MemoryBridge/issues) — pick something to work on
+- [💬 Discussions](https://github.com/Damgeed/MemoryBridge/discussions) — ask questions, share ideas
+- [📜 Changelog](./CHANGELOG.md) — what's new
+- [🔒 Security](./SECURITY.md) — report vulnerabilities
+
+---
+
+## 📄 License
+
+MIT — see [LICENSE](./LICENSE) for details.
+
+## 🏛️ Architecture
+
+See [docs/architecture.md](./docs/architecture.md) for detailed design.

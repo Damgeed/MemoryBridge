@@ -1,0 +1,55 @@
+name: "🧠 Henry's Improvement — Tech Debt / Architecture"
+description: "I see a way to make the architecture cleaner, faster, or more robust."
+title: "henry: "
+labels: ["henry/tech-debt"]
+assignees: []
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for caring about the foundations. Describe the improvement.
+  - type: textarea
+    id: current
+    attributes:
+      label: Current Situation
+      description: What's the problem with the current approach?
+      placeholder: "The tag filtering currently does O(n) client-side matching..."
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed Improvement
+      description: What should we do instead? Be specific.
+      placeholder: "Add a tag junction table with composite index..."
+    validations:
+      required: true
+  - type: textarea
+    id: tradeoffs
+    attributes:
+      label: Trade-offs
+      description: What are the downsides or risks?
+      placeholder: "This adds schema complexity but improves query performance by ~100x at scale"
+    validations:
+      required: true
+  - type: dropdown
+    id: priority
+    attributes:
+      label: Priority
+      options:
+        - P0 — Blocking
+        - P1 — High
+        - P2 — Medium
+        - P3 — Nice to have
+    validations:
+      required: true
+  - type: dropdown
+    id: effort
+    attributes:
+      label: Estimated Effort
+      options:
+        - Small (hours)
+        - Medium (days)
+        - Large (weeks)
+    validations:
+      required: true

@@ -1,0 +1,22 @@
+# Auto-assign reviewers based on changed files
+
+# Core modules — Henry reviews architecture changes
+src/memory_bridge/storage.py      @Damgeed
+src/memory_bridge/handoff.py      @Damgeed
+src/memory_bridge/models.py       @Damgeed
+
+# API layer — everyone reviews API changes
+src/memory_bridge/main.py         @Damgeed
+
+# Infrastructure — Fred reviews deployment-related changes
+Dockerfile                        @Damgeed
+.github/workflows/                @Damgeed
+docker-compose.yml                @Damgeed
+
+# Documentation — Bud reviews docs
+*.md                              @Damgeed
+docs/                             @Damgeed
+
+# Tests — Rex reviews test coverage
+tests/                            @Damgeed
+smoke_test.sh                     @Damgeed
