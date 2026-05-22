@@ -1,6 +1,7 @@
 from fastapi import FastAPI, Depends, HTTPException
 from .dependencies import get_storage
-from .models import MemoryEntry, MemoryCreate, MemoryQuery, Session
+from .handoff import HandoffProtocol
+from .models import MemoryEntry, MemoryCreate, MemoryQuery, Session, HandoffPayload
 from .storage import MemoryStorage
 
 app = FastAPI(
@@ -94,3 +95,48 @@ async def get_session(
     if session is None:
         raise HTTPException(status_code=404, detail="Session not found")
     return session
+
+
+# --- Handoff Protocol ---
+
+
+@app.post("/handoff/prepare")
+async def prepare_handoff(
+    payload: HandoffPayload,
+    storage: MemoryStorage = Depends(get_storage),
+):
+    protocol = HandoffProtocol(storage)
+    result = await protocol.prepare_handoff(
+        from_agent_id=payload.from_agent_id,
+        to_agent_id=payload.to_agent_id,
+        session_id=payload.session_id,
+        handoff_type=payload.handoff_type,
+        include_tags=payload.include_tags,
+    )
+    return {
+        "success": result.success,
+        "summary": result.summary,
+        "context": result.context,
+        "warnings": result.warnings,
+    }
+
+
+@app.post("/handoff/execute")
+async def execute_handoff(
+    payload: HandoffPayload,
+    storage: MemoryStorage = Depends(get_storage),
+):
+    protocol = HandoffProtocol(storage)
+    result = await protocol.execute_handoff(
+        from_agent_id=payload.from_agent_id,
+        to_agent_id=payload.to_agent_id,
+        session_id=payload.session_id,
+        handoff_type=payload.handoff_type,
+        include_tags=payload.include_tags,
+    )
+    return {
+        "success": result.success,
+        "summary": result.summary,
+        "context": result.context,
+        "warnings": result.warnings,
+    }

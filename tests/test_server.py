@@ -117,3 +117,58 @@ async def test_404_on_missing_session():
     async with AsyncClient(transport=transport, base_url="http://test") as client:
         resp = await client.get("/sessions/nonexistent")
         assert resp.status_code == 404
+
+
+# --- Handoff Protocol Endpoints ---
+
+
+@pytest.mark.asyncio
+async def test_handoff_prepare_endpoint():
+    transport = ASGITransport(app=app)
+    async with AsyncClient(transport=transport, base_url="http://test") as client:
+        # Create a memory first
+        await client.post("/memories", json={
+            "session_id": "s-handoff", "agent_id": "agent_a",
+            "key": "project", "value": "Memory Bridge",
+        })
+
+        # Prepare handoff
+        resp = await client.post("/handoff/prepare", json={
+            "from_agent_id": "agent_a",
+            "to_agent_id": "agent_b",
+            "session_id": "s-handoff",
+            "context": {},
+            "handoff_type": "summary",
+        })
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data["success"] is True
+        assert "project" in data["context"]
+
+
+@pytest.mark.asyncio
+async def test_handoff_execute_endpoint():
+    transport = ASGITransport(app=app)
+    async with AsyncClient(transport=transport, base_url="http://test") as client:
+        await client.post("/memories", json={
+            "session_id": "s-exec", "agent_id": "agent_a",
+            "key": "user_name", "value": "Alice",
+        })
+
+        resp = await client.post("/handoff/execute", json={
+            "from_agent_id": "agent_a",
+            "to_agent_id": "agent_b",
+            "session_id": "s-exec",
+            "context": {},
+            "handoff_type": "summary",
+        })
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data["success"] is True
+
+        # Verify agent_b received the memory
+        query_resp = await client.post("/memories/query", json={
+            "agent_id": "agent_b",
+        })
+        assert query_resp.status_code == 200
+        assert query_resp.json()["total"] >= 1
