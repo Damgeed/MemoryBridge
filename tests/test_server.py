@@ -172,3 +172,75 @@ async def test_handoff_execute_endpoint():
         })
         assert query_resp.status_code == 200
         assert query_resp.json()["total"] >= 1
+
+
+# --- Auth Middleware Tests ---
+
+@pytest.fixture
+def enable_auth():
+    """Enable API key auth by setting MEMORY_BRIDGE_API_KEY."""
+    old = os.environ.get("MEMORY_BRIDGE_API_KEY")
+    os.environ["MEMORY_BRIDGE_API_KEY"] = "test-key-123"
+    yield
+    if old is None:
+        del os.environ["MEMORY_BRIDGE_API_KEY"]
+    else:
+        os.environ["MEMORY_BRIDGE_API_KEY"] = old
+
+
+@pytest.mark.asyncio
+async def test_health_exempt_from_auth(enable_auth):
+    """Health endpoint works without auth even when auth is enabled."""
+    transport = ASGITransport(app=app)
+    async with AsyncClient(transport=transport, base_url="http://test") as client:
+        resp = await client.get("/health")
+        assert resp.status_code == 200
+
+
+@pytest.mark.asyncio
+async def test_auth_required_when_key_set(enable_auth):
+    """Endpoints return 401 when no auth header."""
+    transport = ASGITransport(app=app)
+    async with AsyncClient(transport=transport, base_url="http://test") as client:
+        resp = await client.post("/memories", json={
+            "session_id": "s1", "agent_id": "a1", "key": "k", "value": "v",
+        })
+        assert resp.status_code == 401
+        assert "Bearer" in resp.json()["detail"]
+
+
+@pytest.mark.asyncio
+async def test_auth_rejects_wrong_key(enable_auth):
+    """Endpoints return 401 with wrong API key."""
+    transport = ASGITransport(app=app)
+    async with AsyncClient(transport=transport, base_url="http://test") as client:
+        resp = await client.post(
+            "/memories",
+            json={"session_id": "s1", "agent_id": "a1", "key": "k", "value": "v"},
+            headers={"Authorization": "Bearer wrong-key"},
+        )
+        assert resp.status_code == 401
+
+
+@pytest.mark.asyncio
+async def test_auth_allows_valid_key(enable_auth):
+    """Endpoints work with valid API key."""
+    transport = ASGITransport(app=app)
+    async with AsyncClient(transport=transport, base_url="http://test") as client:
+        resp = await client.post(
+            "/memories",
+            json={"session_id": "s1", "agent_id": "a1", "key": "k", "value": "v"},
+            headers={"Authorization": "Bearer test-key-123"},
+        )
+        assert resp.status_code == 200
+
+
+@pytest.mark.asyncio
+async def test_open_mode_no_key_needed():
+    """Without MEMORY_BRIDGE_API_KEY, everything works without auth."""
+    transport = ASGITransport(app=app)
+    async with AsyncClient(transport=transport, base_url="http://test") as client:
+        resp = await client.post("/memories", json={
+            "session_id": "s1", "agent_id": "a1", "key": "k", "value": "v",
+        })
+        assert resp.status_code == 200

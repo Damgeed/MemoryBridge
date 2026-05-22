@@ -4,11 +4,13 @@ import uvicorn
 
 def main():
     """Start the Memory Bridge server."""
+    import os
+    reload_enabled = os.environ.get("MEMORY_BRIDGE_RELOAD", "").lower() in ("1", "true", "yes")
     uvicorn.run(
         "memory_bridge.main:app",
         host="0.0.0.0",
         port=8000,
-        reload=True,
+        reload=reload_enabled,
     )
 
 

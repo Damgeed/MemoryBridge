@@ -4,6 +4,7 @@ from .dependencies import get_storage
 from .handoff import HandoffProtocol
 from .models import MemoryEntry, MemoryCreate, MemoryQuery, Session, HandoffPayload
 from .storage import MemoryStorage
+from .auth import APIKeyMiddleware
 
 
 @asynccontextmanager
@@ -20,6 +21,10 @@ app = FastAPI(
     description="Cross-session memory persistence for multi-agent teams",
     lifespan=lifespan,
 )
+
+# Auth middleware — checks Bearer token on all routes except /health
+# Disabled when MEMORY_BRIDGE_API_KEY env var is not set
+app.add_middleware(APIKeyMiddleware)
 
 
 @app.get("/health")
