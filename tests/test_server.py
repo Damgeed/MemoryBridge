@@ -312,3 +312,66 @@ async def test_create_memory_without_ttl_default():
         assert resp.status_code == 200
         data = resp.json()
         assert data["ttl_seconds"] is None
+
+
+# --- Agent Lineage API Tests ---
+
+
+@pytest.mark.asyncio
+async def test_query_with_lineage():
+    """Create memories under parent, query child session with include_lineage=True."""
+    transport = ASGITransport(app=app)
+    async with AsyncClient(transport=transport, base_url="http://test") as client:
+        # Create parent session
+        await client.post("/sessions", json={
+            "session_id": "s-parent-api",
+            "agent_id": "a1",
+        })
+        # Create child session with parent reference
+        await client.post("/sessions", json={
+            "session_id": "s-child-api",
+            "agent_id": "a2",
+            "parent_session_id": "s-parent-api",
+        })
+
+        # Store a memory under parent
+        await client.post("/memories", json={
+            "session_id": "s-parent-api",
+            "agent_id": "a1",
+            "key": "shared_info",
+            "value": "from parent",
+            "tags": ["shared"],
+        })
+
+        # Query child without lineage — should be empty
+        resp = await client.post("/memories/query", json={
+            "session_id": "s-child-api",
+        })
+        assert resp.status_code == 200
+        assert resp.json()["total"] == 0
+
+        # Query child WITH lineage — should see parent's memory
+        resp = await client.post("/memories/query?include_lineage=true", json={
+            "session_id": "s-child-api",
+        })
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data["total"] == 1
+        assert data["entries"][0]["key"] == "shared_info"
+        assert data["entries"][0]["value"] == "from parent"
+
+        # Store a child memory with the same key — child should win via lineage
+        await client.post("/memories", json={
+            "session_id": "s-child-api",
+            "agent_id": "a2",
+            "key": "shared_info",
+            "value": "from child",
+        })
+
+        resp = await client.post("/memories/query?include_lineage=true", json={
+            "session_id": "s-child-api",
+        })
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data["total"] == 1
+        assert data["entries"][0]["value"] == "from child"

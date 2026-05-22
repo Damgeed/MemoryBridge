@@ -120,8 +120,15 @@ class MemoryStorage:
                             pass  # Skip duplicates
             await db.commit()
 
-    async def store_memory(self, entry: MemoryEntry) -> MemoryEntry:
-        """Store a memory entry. Replaces if the same ID already exists."""
+    async def store_memory(
+        self, entry: MemoryEntry, propagate_to_parent: bool = False
+    ) -> MemoryEntry:
+        """Store a memory entry. Replaces if the same ID already exists.
+
+        If propagate_to_parent is True and the session has a parent_session_id,
+        also store a reference copy of the memory under the parent session with
+        tags augmented with ["propagated:child"].
+        """
         async with aiosqlite.connect(self.db_path) as db:
             await db.execute(
                 """INSERT OR REPLACE INTO memories
@@ -149,6 +156,23 @@ class MemoryStorage:
                     (entry.id, tag),
                 )
             await db.commit()
+
+        # Propagate to parent session if requested
+        if propagate_to_parent and entry.session_id:
+            session = await self.get_session(entry.session_id)
+            if session and session.parent_session_id:
+                parent_entry = MemoryEntry(
+                    session_id=session.parent_session_id,
+                    agent_id=entry.agent_id,
+                    key=entry.key,
+                    value=entry.value,
+                    tags=list(set(entry.tags + ["propagated:child"])),
+                    created_at=entry.created_at,
+                    updated_at=entry.updated_at,
+                    ttl_seconds=entry.ttl_seconds,
+                )
+                await self.store_memory(parent_entry, propagate_to_parent=False)
+
         return entry
 
     async def get_memory(self, memory_id: str) -> Optional[MemoryEntry]:
@@ -327,3 +351,55 @@ class MemoryStorage:
                 created_at=datetime.fromisoformat(row["created_at"]),
                 metadata=json.loads(row["metadata"]),
             )
+
+    async def get_session_lineage(self, session_id: str) -> list[str]:
+        """Follow parent_session_id chain up recursively.
+        Returns ordered list [session_id, parent_id, grandparent_id, ...].
+        Max depth of 10 to prevent infinite loops.
+        """
+        lineage: list[str] = []
+        current_id: Optional[str] = session_id
+        depth = 0
+        while current_id and depth < 10:
+            lineage.append(current_id)
+            session = await self.get_session(current_id)
+            if session is None:
+                break
+            current_id = session.parent_session_id
+            depth += 1
+        return lineage
+
+    async def query_memories_lineage(
+        self,
+        session_id: str,
+        agent_id: Optional[str] = None,
+        tags: Optional[list[str]] = None,
+        keys: Optional[list[str]] = None,
+        limit: int = 50,
+    ) -> list[MemoryEntry]:
+        """Gets the session lineage (session + all parents up the chain),
+        calls query_memories for each session, merges results deduplicating
+        by memory key (child keys override parent keys), and returns merged
+        list sorted by created_at DESC.
+        """
+        lineage = await self.get_session_lineage(session_id)
+
+        # Collect all memories from the lineage — child first so their keys win
+        seen_keys: set[str] = set()
+        merged: list[MemoryEntry] = []
+        for sid in lineage:
+            results = await self.query_memories(
+                session_id=sid,
+                agent_id=agent_id,
+                tags=tags,
+                keys=keys,
+                limit=limit * 2,  # Fetch extra to account for dedup
+            )
+            for entry in results:
+                if entry.key not in seen_keys:
+                    seen_keys.add(entry.key)
+                    merged.append(entry)
+
+        # Sort by created_at DESC and limit
+        merged.sort(key=lambda e: e.created_at, reverse=True)
+        return merged[:limit]

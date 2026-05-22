@@ -47,6 +47,9 @@ class MemoryCreate(BaseModel):
     tags: list[str] = Field(default_factory=list)
     ttl_seconds: Optional[int] = None
     """Seconds after which this memory expires. None = never expires."""
+    propagate_to_parent: bool = False
+    """If True and the session has a parent_session_id, also store a reference copy under the parent session."""
+
 
 
 class MemoryQuery(BaseModel):

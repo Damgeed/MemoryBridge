@@ -5,7 +5,7 @@ import time
 from contextlib import asynccontextmanager
 from datetime import datetime, timezone
 
-from fastapi import FastAPI, Depends, HTTPException, Request
+from fastapi import FastAPI, Depends, HTTPException, Request, Query
 
 from .dependencies import get_storage
 from .handoff import HandoffProtocol
@@ -119,7 +119,7 @@ async def create_memory(
         tags=payload.tags,
         ttl_seconds=ttl,
     )
-    return await storage.store_memory(entry)
+    return await storage.store_memory(entry, propagate_to_parent=payload.propagate_to_parent)
 
 
 @app.get("/memories/{memory_id}", response_model=MemoryEntry)
@@ -137,14 +137,24 @@ async def get_memory(
 async def query_memories(
     query: MemoryQuery,
     storage: MemoryStorage = Depends(get_storage),
+    include_lineage: bool = Query(False, description="If True, also query parent sessions in the lineage"),
 ):
-    entries = await storage.query_memories(
-        session_id=query.session_id,
-        agent_id=query.agent_id,
-        tags=query.tags,
-        keys=query.keys,
-        limit=query.limit,
-    )
+    if include_lineage and query.session_id:
+        entries = await storage.query_memories_lineage(
+            session_id=query.session_id,
+            agent_id=query.agent_id,
+            tags=query.tags,
+            keys=query.keys,
+            limit=query.limit,
+        )
+    else:
+        entries = await storage.query_memories(
+            session_id=query.session_id,
+            agent_id=query.agent_id,
+            tags=query.tags,
+            keys=query.keys,
+            limit=query.limit,
+        )
     return {"entries": [e.model_dump() for e in entries], "total": len(entries)}
 
 

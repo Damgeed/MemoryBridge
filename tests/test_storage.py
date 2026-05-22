@@ -441,3 +441,83 @@ async def test_cleanup_expired_with_none_expired(storage):
 
     results = await storage.query_memories(session_id="s1")
     assert len(results) == 5
+
+
+# --- Agent Lineage Tests ---
+
+
+@pytest.mark.asyncio
+async def test_session_lineage_simple(storage):
+    """parent → child → grandchild: verify lineage list."""
+    await storage.store_session(Session(session_id="s-parent", agent_id="a1"))
+    await storage.store_session(Session(session_id="s-child", agent_id="a2", parent_session_id="s-parent"))
+    await storage.store_session(Session(session_id="s-grandchild", agent_id="a3", parent_session_id="s-child"))
+
+    lineage = await storage.get_session_lineage("s-grandchild")
+    assert lineage == ["s-grandchild", "s-child", "s-parent"]
+
+    lineage = await storage.get_session_lineage("s-child")
+    assert lineage == ["s-child", "s-parent"]
+
+    lineage = await storage.get_session_lineage("s-parent")
+    assert lineage == ["s-parent"]
+
+
+@pytest.mark.asyncio
+async def test_query_memories_lineage(storage):
+    """Child can see parent's memories via lineage query."""
+    await storage.store_session(Session(session_id="s-parent", agent_id="a1"))
+    await storage.store_session(Session(session_id="s-child", agent_id="a2", parent_session_id="s-parent"))
+
+    # Parent stores a memory
+    parent_memory = MemoryEntry(session_id="s-parent", agent_id="a1", key="parent_key", value="parent_val", tags=["shared"])
+    await storage.store_memory(parent_memory)
+
+    # Child queries with lineage — should see parent's memory
+    results = await storage.query_memories_lineage(session_id="s-child")
+    keys = {r.key for r in results}
+    assert "parent_key" in keys, "Child should see parent's memory via lineage"
+    assert len(results) == 1
+
+
+@pytest.mark.asyncio
+async def test_child_key_overrides_parent(storage):
+    """Same key in child and parent: child wins (key-based dedup)."""
+    await storage.store_session(Session(session_id="s-parent", agent_id="a1"))
+    await storage.store_session(Session(session_id="s-child", agent_id="a2", parent_session_id="s-parent"))
+
+    # Parent stores a memory with key "project"
+    parent_memory = MemoryEntry(session_id="s-parent", agent_id="a1", key="project", value="old_value")
+    await storage.store_memory(parent_memory)
+
+    # Child stores a memory with the same key but different value
+    child_memory = MemoryEntry(session_id="s-child", agent_id="a2", key="project", value="new_value")
+    await storage.store_memory(child_memory)
+
+    # Lineage query should return child's value (child overrides parent)
+    results = await storage.query_memories_lineage(session_id="s-child")
+    assert len(results) == 1, "Should be 1 entry after dedup"
+    assert results[0].value == "new_value", "Child's value should override parent's"
+    assert results[0].session_id == "s-child", "Child's entry should be the one retained"
+
+
+@pytest.mark.asyncio
+async def test_propagate_to_parent(storage):
+    """Child stores with propagate_to_parent=True: copy appears under parent."""
+    await storage.store_session(Session(session_id="s-parent", agent_id="a1"))
+    await storage.store_session(Session(session_id="s-child", agent_id="a2", parent_session_id="s-parent"))
+
+    child_memory = MemoryEntry(session_id="s-child", agent_id="a2", key="secret", value="shared_secret")
+    await storage.store_memory(child_memory, propagate_to_parent=True)
+
+    # Parent session should now have a propagated copy
+    parent_results = await storage.query_memories(session_id="s-parent")
+    assert len(parent_results) == 1, "Parent should have the propagated memory"
+    assert parent_results[0].value == "shared_secret"
+    assert "propagated:child" in parent_results[0].tags, "Propagated copy should have propagated:child tag"
+    assert parent_results[0].key == "secret"
+
+    # Child still has the original (no tag change)
+    child_results = await storage.query_memories(session_id="s-child")
+    assert len(child_results) == 1
+    assert "propagated:child" not in child_results[0].tags, "Original should not have the propagated tag"
