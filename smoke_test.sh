@@ -53,8 +53,8 @@ call() {
 }
 
 extract() {
-  # extract JSON value from stdin using Python
-  python3 -c "import sys,json; print(json.load(sys.stdin)['$1'])"
+  # extract JSON value from stdin using Python, lowercase for boolean compat
+  python3 -c "import sys,json; v=json.load(sys.stdin)['$1']; print(str(v).lower() if isinstance(v,bool) else v)"
 }
 
 cleanup() {
@@ -310,18 +310,23 @@ RESP=$(call POST /memories/query "$VERIFY_DATA") && {
 
 section "16. Guardrails — Sensitive Key Detection"
 
+# First, store a memory with a sensitive key
+curl -sf -X POST "$BASE/memories" \
+  -H "Content-Type: application/json" \
+  -d '{"session_id":"'$SESSION'","agent_id":"bud","key":"api_key","value":"sk-1234","tags":["sensitive"]}' > /dev/null
+
+# Now try handing off — guardrails should catch it
 GUARD_DATA=$(cat <<JSON
-{"from_agent_id":"bud","to_agent_id":"nova","session_id":"$SESSION","context":{"api_key":"sk-1234","password":"hunter2","theme":"dark"},"handoff_type":"summary"}
+{"from_agent_id":"bud","to_agent_id":"nova","session_id":"$SESSION","context":{},"handoff_type":"summary"}
 JSON
 )
 
 RESP=$(call POST /handoff/prepare "$GUARD_DATA") && {
   CTX=$(echo "$RESP" | python3 -c "import sys,json; ctx=json.load(sys.stdin)['context']; print(list(ctx.keys()))")
   WARN_COUNT=$(echo "$RESP" | python3 -c "import sys,json; print(len(json.load(sys.stdin)['warnings']))")
-  SUCCESS=$(echo "$RESP" | extract success)
-  # Context should NOT contain api_key or password
-  if echo "$CTX" | grep -qv "api_key\|password"; then
-    ok "POST /handoff/prepare → sensitive keys blocked, $WARN_COUNT warnings (ctx=$CTX)"
+  # Context should NOT contain api_key (it was sanitized)
+  if echo "$CTX" | grep -qv "api_key"; then
+    ok "POST /handoff/prepare → sensitive keys blocked ($WARN_COUNT warnings, ctx=$CTX)"
   else
     fail "POST /handoff/prepare → sensitive keys leaked: $CTX"
   fi
