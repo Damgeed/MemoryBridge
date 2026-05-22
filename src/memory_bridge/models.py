@@ -59,6 +59,7 @@ class MemoryQuery(BaseModel):
     tags: list[str] = Field(default_factory=list)
     keys: list[str] = Field(default_factory=list)
     limit: int = Field(default=50, ge=1, le=500)
+    offset: int = Field(default=0, ge=0)
 
 
 class MemorySearchResult(BaseModel):

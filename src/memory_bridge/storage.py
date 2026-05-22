@@ -4,10 +4,22 @@ import logging
 from datetime import datetime, timezone
 from typing import Optional
 from pathlib import Path
+from datetime import datetime, timezone
+from typing import Optional
 
 from .models import MemoryEntry, Session
 
 logger = logging.getLogger(__name__)
+
+# ── Schema version manifest ──────────────────────────────────────────────────
+#   v1  (0.1.0)  Base tables: sessions, memories (with tags column), memory_tags
+#   v2  (0.2.0)  Add ttl_seconds column to memories
+#   v3  (0.3.0)  Drop legacy tags column from memories (junction-table only)
+_SCHEMA_MIGRATIONS: dict[int, str] = {
+    2: "ALTER TABLE memories ADD COLUMN ttl_seconds INTEGER",
+    3: "ALTER TABLE memories DROP COLUMN tags",
+}
+# ──────────────────────────────────────────────────────────────────────────────
 
 
 async def _row_to_entry(row: aiosqlite.Row, db: aiosqlite.Connection) -> MemoryEntry:
@@ -58,7 +70,7 @@ class MemoryStorage:
         self.db_path = db_path
 
     async def initialize(self):
-        """Create tables if they don't exist."""
+        """Create tables if they don't exist and run pending schema migrations."""
         async with aiosqlite.connect(self.db_path) as db:
             await db.executescript("""
                 CREATE TABLE IF NOT EXISTS sessions (
@@ -94,36 +106,54 @@ class MemoryStorage:
                 );
                 CREATE INDEX IF NOT EXISTS idx_memory_tags_tag
                     ON memory_tags(tag);
+                CREATE TABLE IF NOT EXISTS schema_version (
+                    version INTEGER PRIMARY KEY,
+                    applied_at TEXT NOT NULL
+                );
             """)
-            # Column migration: add ttl_seconds if missing (pre-v0.2 databases)
-            try:
-                await db.execute("ALTER TABLE memories ADD COLUMN ttl_seconds INTEGER")
-                await db.commit()
-            except Exception:
-                pass  # Column already exists
-
-            # Migrate existing tags from memories.tags TEXT column to memory_tags junction table
-            cursor = await db.execute(
-                "SELECT id, tags FROM memories WHERE tags IS NOT NULL AND tags != '[]'"
+            # Seed version 1 if this is a fresh database (v0.1.0 base tables)
+            await db.execute(
+                "INSERT OR IGNORE INTO schema_version (version, applied_at) VALUES (1, datetime('now'))"
             )
-            rows = await cursor.fetchall()
-            for row_id, tags_json in rows:
-                tags_list = json.loads(tags_json)
-                if tags_list:
-                    for tag in tags_list:
-                        try:
-                            await db.execute(
-                                "INSERT OR IGNORE INTO memory_tags (memory_id, tag) VALUES (?, ?)",
-                                (row_id, tag),
-                            )
-                        except Exception:
-                            pass  # Skip duplicates
             await db.commit()
+
+            # Run sequential migrations
+            await self._migrate(db)
+
+    async def _migrate(self, db: aiosqlite.Connection) -> None:
+        """Apply pending schema migrations sequentially.
+
+        Each migration is executed in order.  Individual steps that fail
+        (e.g. because the column already exists) are logged and skipped
+        so that the migration system works on both fresh and upgraded DBs.
+        """
+        cursor = await db.execute("SELECT COALESCE(MAX(version), 0) FROM schema_version")
+        row = await cursor.fetchone()
+        current_version: int = row[0]
+
+        for version, ddl in sorted(_SCHEMA_MIGRATIONS.items()):
+            if version <= current_version:
+                continue
+            try:
+                await db.execute(ddl)
+                await db.execute(
+                    "INSERT INTO schema_version (version, applied_at) VALUES (?, datetime('now'))",
+                    (version,),
+                )
+                logger.info("Applied schema migration v%d", version)
+            except Exception as exc:
+                logger.warning(
+                    "Schema migration v%d skipped (%s: %s)", version, type(exc).__name__, exc
+                )
+        await db.commit()
 
     async def store_memory(
         self, entry: MemoryEntry, propagate_to_parent: bool = False
     ) -> MemoryEntry:
         """Store a memory entry. Replaces if the same ID already exists.
+
+        Tags are stored exclusively in the memory_tags junction table
+        (the legacy tags JSON column was dropped in schema v3).
 
         If propagate_to_parent is True and the session has a parent_session_id,
         also store a reference copy of the memory under the parent session with
@@ -132,15 +162,14 @@ class MemoryStorage:
         async with aiosqlite.connect(self.db_path) as db:
             await db.execute(
                 """INSERT OR REPLACE INTO memories
-                   (id, session_id, agent_id, key, value, tags, created_at, updated_at, ttl_seconds)
-                   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                   (id, session_id, agent_id, key, value, created_at, updated_at, ttl_seconds)
+                   VALUES (?, ?, ?, ?, ?, ?, ?, ?)""",
                 (
                     entry.id,
                     entry.session_id,
                     entry.agent_id,
                     entry.key,
                     json.dumps(entry.value),
-                    json.dumps(entry.tags),
                     entry.created_at.isoformat(),
                     entry.updated_at.isoformat(),
                     entry.ttl_seconds,
@@ -355,8 +384,7 @@ class MemoryStorage:
     async def get_session_lineage(self, session_id: str) -> list[str]:
         """Follow parent_session_id chain up recursively.
         Returns ordered list [session_id, parent_id, grandparent_id, ...].
-        Max depth of 10 to prevent infinite loops.
-        """
+        Max depth of 10 to prevent infinite loops."""
         lineage: list[str] = []
         current_id: Optional[str] = session_id
         depth = 0
@@ -380,8 +408,7 @@ class MemoryStorage:
         """Gets the session lineage (session + all parents up the chain),
         calls query_memories for each session, merges results deduplicating
         by memory key (child keys override parent keys), and returns merged
-        list sorted by created_at DESC.
-        """
+        list sorted by created_at DESC."""
         lineage = await self.get_session_lineage(session_id)
 
         # Collect all memories from the lineage — child first so their keys win

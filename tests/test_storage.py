@@ -521,3 +521,83 @@ async def test_propagate_to_parent(storage):
     child_results = await storage.query_memories(session_id="s-child")
     assert len(child_results) == 1
     assert "propagated:child" not in child_results[0].tags, "Original should not have the propagated tag"
+
+
+# ── Schema Migration Tests ──
+
+
+@pytest.mark.asyncio
+async def test_schema_migration(tmp_path):
+    """Fresh database gets schema_version=1 and all tables exist."""
+    db_path = str(tmp_path / "schema_test.db")
+    s = MemoryStorage(db_path=db_path)
+    await s.initialize()
+
+    async with aiosqlite.connect(db_path) as db:
+        # Verify schema_version table
+        cursor = await db.execute("SELECT COALESCE(MAX(version), 0) FROM schema_version")
+        row = await cursor.fetchone()
+        assert row[0] >= 1, "Schema version should be at least 1"
+
+        # Verify all core tables exist
+        cursor = await db.execute(
+            "SELECT name FROM sqlite_master WHERE type='table' AND name IN "
+            "('sessions', 'memories', 'memory_tags', 'schema_version')"
+        )
+        tables = {r[0] for r in await cursor.fetchall()}
+        assert "sessions" in tables
+        assert "memories" in tables
+        assert "memory_tags" in tables
+        assert "schema_version" in tables
+
+        # Verify ttl_seconds column exists (migration v2)
+        cursor = await db.execute("PRAGMA table_info(memories)")
+        columns = {r[1] for r in await cursor.fetchall()}
+        assert "ttl_seconds" in columns, "TTL column should exist after migrations"
+
+    if os.path.exists(db_path):
+        os.remove(db_path)
+
+
+@pytest.mark.asyncio
+async def test_drop_legacy_tags_column(tmp_path):
+    """Memory storage works without the legacy tags JSON column; tags live in junction table."""
+    db_path = str(tmp_path / "tags_drop_test.db")
+    s = MemoryStorage(db_path=db_path)
+    await s.initialize()
+
+    # Store a memory with tags — should write to junction table only
+    entry = MemoryEntry(
+        session_id="s1", agent_id="a1", key="k1", value="v1",
+        tags=["alpha", "beta"],
+    )
+    await s.store_memory(entry)
+
+    # Verify junction table has the tags
+    async with aiosqlite.connect(db_path) as db:
+        cursor = await db.execute(
+            "SELECT tag FROM memory_tags WHERE memory_id = ? ORDER BY tag",
+            (entry.id,),
+        )
+        rows = await cursor.fetchall()
+    assert [r[0] for r in rows] == ["alpha", "beta"]
+
+    # Verify the legacy tags column is gone from the schema
+    async with aiosqlite.connect(db_path) as db:
+        cursor = await db.execute("PRAGMA table_info(memories)")
+        columns = {r[1] for r in await cursor.fetchall()}
+    assert "tags" not in columns, "Legacy tags JSON column should have been dropped"
+
+    # Full round-trip still works via junction table
+    retrieved = await s.get_memory(entry.id)
+    assert retrieved is not None
+    assert retrieved.tags == ["alpha", "beta"]
+    assert retrieved.value == "v1"
+
+    # Query by tag still works
+    results = await s.query_memories(session_id="s1", tags=["alpha"])
+    assert len(results) == 1
+    assert results[0].id == entry.id
+
+    if os.path.exists(db_path):
+        os.remove(db_path)

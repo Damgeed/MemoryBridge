@@ -1,10 +1,13 @@
 """Agent-to-agent context handoff with guardrails."""
 
 import asyncio
+import logging
 from typing import Any, Optional
 
 from .models import HandoffPayload, MemoryEntry, MemoryQuery
 from .storage import MemoryStorage
+
+logger = logging.getLogger(__name__)
 
 
 class HandoffResult:
@@ -85,6 +88,25 @@ class HandoffProtocol:
         if session_id not in self._session_locks:
             self._session_locks[session_id] = asyncio.Lock()
         return self._session_locks[session_id]
+
+    async def _cleanup_stale_locks(self) -> None:
+        """Remove locks whose sessions no longer exist in storage.
+
+        Prevents unbounded growth of ``_session_locks`` when sessions
+        are deleted externally or expire naturally.
+        """
+        stale = []
+        for sid in list(self._session_locks):
+            session = await self.storage.get_session(sid)
+            if session is None:
+                stale.append(sid)
+        for sid in stale:
+            # Only remove if the lock is not currently acquired
+            lock = self._session_locks[sid]
+            if not lock.locked():
+                del self._session_locks[sid]
+        if stale:
+            logger.debug("Cleaned up %d stale session locks", len(stale))
 
     async def _acquire_session_lock(self, session_id: str, timeout: float = 5.0) -> None:
         """Acquire the per-session lock with a timeout.
