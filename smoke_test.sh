@@ -28,8 +28,8 @@ NC='\033[0m'
 
 header()  { printf "\n${CYAN}═══════════════════════════════════════════════════${NC}\n"; }
 section() { printf "\n${BOLD}${YELLOW}  ▶ $1${NC}\n"; }
-ok()      { printf "  ${GREEN}✓${NC} %s\n" "$1"; ((PASS++)); }
-fail()    { printf "  ${RED}✗${NC} %s\n" "$1"; ((FAIL++)); }
+ok()      { printf "  ${GREEN}✓${NC} %s\n" "$1"; ((PASS++)) || true; }
+fail()    { printf "  ${RED}✗${NC} %s\n" "$1"; ((FAIL++)) || true; }
 detail()  { printf "    ${YELLOW}→${NC} %s\n" "$1"; }
 
 call() {
