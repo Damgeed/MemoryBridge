@@ -5,6 +5,28 @@ All notable changes to Memory Bridge will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [0.4.0] — 2026-05-22
+
+### Added
+- **Shared metrics table** (`metrics` in SQLite): replaces module-level globals. `request_count`, `total_latency_ms`, `start_time`, and `last_cleanup_at` are now stored in the database. Safe for multi-worker Gunicorn/Uvicorn deployments. Schema migration v4.
+- **CORS middleware**: configurable via `MEMORY_BRIDGE_CORS_ORIGINS` (comma-separated, default `*`).
+- **Request ID middleware**: each request gets a `X-Request-ID` header (UUID v4). Attached to `request.state.request_id`.
+- **Rate limiting**: in-memory sliding-window rate limiter. Configurable via `MEMORY_BRIDGE_RATE_LIMIT` (requests/minute/IP, default 60). Returns 429 with `Retry-After` header.
+- **Cleanup monitoring via metrics**: `last_cleanup_at` metric updated on every cleanup cycle. Warning log if cleanup hasn't run in > 2× the configured interval.
+- **Increment metric atomicity**: `increment_metric()` uses read-modify-write within a single SQLite connection.
+
+### Changed
+- Health endpoint now reads all metrics from the shared metrics table instead of module-level globals.
+- `cleanup_expired()` records its timestamp via `record_metric()` instead of a module-level variable.
+- Consolidated request pipeline: rate limit → request ID → call → record metrics in a single middleware.
+- `last_cleanup_at` removed from `storage.py` module globals.
+
+### Test evolution
+```
+v0.3.0:  66 tests
+v0.4.0:  76 tests  (+3 production hardening, +7 metrics storage)
+```
+
 ## [0.2.0] — 2026-05-22
 
 ### Added
