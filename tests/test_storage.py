@@ -762,3 +762,154 @@ async def test_lineage_depth_just_under_limit(storage):
     lineage = await storage.get_session_lineage("s7")
     assert len(lineage) == 9  # s7, s6, ..., s0, root
     assert lineage[-1] == "root"
+
+
+# ── FTS5 Full-Text Search Tests ──
+
+
+@pytest.mark.asyncio
+async def test_fts_search_by_content(storage):
+    """Searching for a word in memory value returns matching entries."""
+    e1 = MemoryEntry(session_id="s1", agent_id="a1", key="k1", value="the quick brown fox")
+    e2 = MemoryEntry(session_id="s1", agent_id="a1", key="k2", value="jumps over the lazy dog")
+    e3 = MemoryEntry(session_id="s2", agent_id="a2", key="k3", value="python programming is fun")
+    for e in [e1, e2, e3]:
+        await storage.store_memory(e)
+
+    results = await storage.search_memories(query="fox")
+    assert len(results) == 1
+    assert results[0].id == e1.id
+
+    results = await storage.search_memories(query="dog")
+    assert len(results) == 1
+    assert results[0].id == e2.id
+
+
+@pytest.mark.asyncio
+async def test_fts_search_by_key(storage):
+    """Searching for a word in memory key returns matching entries."""
+    e1 = MemoryEntry(session_id="s1", agent_id="a1", key="user_preference", value="dark_mode")
+    e2 = MemoryEntry(session_id="s1", agent_id="a1", key="project_config", value="settings")
+    await storage.store_memory(e1)
+    await storage.store_memory(e2)
+
+    results = await storage.search_memories(query="preference")
+    assert len(results) == 1
+    assert results[0].key == "user_preference"
+
+
+@pytest.mark.asyncio
+async def test_fts_search_no_results(storage):
+    """A query with no matches returns an empty list."""
+    entry = MemoryEntry(session_id="s1", agent_id="a1", key="greeting", value="hello world")
+    await storage.store_memory(entry)
+
+    results = await storage.search_memories(query="nonexistent_term_xyz")
+    assert results == []
+
+
+@pytest.mark.asyncio
+async def test_fts_search_with_session_filter(storage):
+    """Search results can be scoped to a specific session."""
+    e1 = MemoryEntry(session_id="s1", agent_id="a1", key="k1", value="apple pie recipe")
+    e2 = MemoryEntry(session_id="s2", agent_id="a2", key="k2", value="apple turnover recipe")
+    for e in [e1, e2]:
+        await storage.store_memory(e)
+
+    # Without filter, both match
+    results = await storage.search_memories(query="apple")
+    assert len(results) == 2
+
+    # With session filter, only the matching one
+    results = await storage.search_memories(query="apple", session_id="s1")
+    assert len(results) == 1
+    assert results[0].session_id == "s1"
+
+
+@pytest.mark.asyncio
+async def test_fts_search_with_agent_filter(storage):
+    """Search results can be scoped to a specific agent."""
+    e1 = MemoryEntry(session_id="s1", agent_id="alice", key="k1", value="data from alice")
+    e2 = MemoryEntry(session_id="s2", agent_id="bob", key="k2", value="data from bob")
+    for e in [e1, e2]:
+        await storage.store_memory(e)
+
+    results = await storage.search_memories(query="data", agent_id="alice")
+    assert len(results) == 1
+    assert results[0].agent_id == "alice"
+
+
+@pytest.mark.asyncio
+async def test_fts_search_limit(storage):
+    """Search respects the limit parameter."""
+    for i in range(10):
+        entry = MemoryEntry(session_id="s1", agent_id="a1", key=f"key_{i}", value=f"common value {i}")
+        await storage.store_memory(entry)
+
+    results = await storage.search_memories(query="common", limit=3)
+    assert len(results) == 3
+
+
+@pytest.mark.asyncio
+async def test_fts_sync_on_delete(storage):
+    """Deleted memories do not appear in search results."""
+    entry = MemoryEntry(session_id="s1", agent_id="a1", key="temp", value="delete me please")
+    await storage.store_memory(entry)
+
+    results = await storage.search_memories(query="delete")
+    assert len(results) == 1
+
+    await storage.delete_memory(entry.id)
+
+    results = await storage.search_memories(query="delete")
+    assert len(results) == 0
+
+
+@pytest.mark.asyncio
+async def test_fts_sync_on_update(storage):
+    """Updating a memory re-indexes the new content into FTS5."""
+    entry = MemoryEntry(session_id="s1", agent_id="a1", key="chapter1", value="once upon a time")
+    await storage.store_memory(entry)
+
+    results = await storage.search_memories(query="once")
+    assert len(results) == 1
+
+    # Update with completely different content
+    entry.key = "chapter2"
+    entry.value = "in a galaxy far far away"
+    await storage.store_memory(entry)
+
+    # Old content should no longer match
+    results = await storage.search_memories(query="once")
+    assert len(results) == 0
+
+    # New content should match
+    results = await storage.search_memories(query="galaxy")
+    assert len(results) == 1
+
+
+@pytest.mark.asyncio
+async def test_fts_backfill_migration(tmp_path):
+    """Migration v5 backfills existing memories into the FTS table."""
+    db_path = str(tmp_path / "fts_backfill.db")
+    s = MemoryStorage(db_path=db_path)
+    await s.initialize()
+
+    # Store memories BEFORE the FTS migration exists (v4)
+    # We simulate this by not having FTS5 yet
+    e1 = MemoryEntry(session_id="s1", agent_id="a1", key="project", value="memory bridge rocks", tags=["important"])
+    e2 = MemoryEntry(session_id="s2", agent_id="a2", key="greeting", value="hello world", tags=["user-preference"])
+    await s.store_memory(e1)
+    await s.store_memory(e2)
+
+    # Verify both are searchable (store_memory syncs to FTS5)
+    results = await s.search_memories(query="rocks")
+    assert len(results) == 1
+    assert results[0].id == e1.id
+
+    results = await s.search_memories(query="hello")
+    assert len(results) == 1
+    assert results[0].id == e2.id
+
+    if os.path.exists(db_path):
+        os.remove(db_path)

@@ -5,6 +5,7 @@ import time
 import uuid
 from contextlib import asynccontextmanager
 from datetime import datetime, timezone
+from typing import Optional
 
 from fastapi import FastAPI, Depends, HTTPException, Request, Query, Response
 from fastapi.middleware.cors import CORSMiddleware
@@ -200,6 +201,22 @@ async def create_memory(
         ttl_seconds=ttl,
     )
     return await storage.store_memory(entry, propagate_to_parent=payload.propagate_to_parent)
+
+
+@app.get("/memories/search")
+async def search_memories(
+    q: str = Query(..., description="Full-text search query"),
+    session_id: Optional[str] = Query(None),
+    agent_id: Optional[str] = Query(None),
+    limit: int = Query(50, ge=1, le=500),
+    offset: int = Query(0, ge=0),
+    storage: MemoryStorage = Depends(get_storage),
+):
+    entries = await storage.search_memories(
+        query=q, limit=limit, offset=offset,
+        session_id=session_id, agent_id=agent_id,
+    )
+    return {"entries": [e.model_dump() for e in entries], "total": len(entries)}
 
 
 @app.get("/memories/{memory_id}", response_model=MemoryEntry)

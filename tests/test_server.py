@@ -182,6 +182,82 @@ async def test_404_on_missing_memory():
 
 
 @pytest.mark.asyncio
+async def test_search_memories_endpoint():
+    """Hit /memories/search?q=... and verify response."""
+    transport = ASGITransport(app=app)
+    async with AsyncClient(transport=transport, base_url="http://test") as client:
+        # Store some memories
+        await client.post("/memories", json={
+            "session_id": "s1", "agent_id": "a1",
+            "key": "project", "value": "Memory Bridge is awesome",
+        })
+        await client.post("/memories", json={
+            "session_id": "s1", "agent_id": "a1",
+            "key": "user", "value": "Alice likes python programming",
+        })
+        await client.post("/memories", json={
+            "session_id": "s2", "agent_id": "a2",
+            "key": "note", "value": "completely unrelated content",
+        })
+
+        # Search for "python"
+        resp = await client.get("/memories/search", params={"q": "python"})
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data["total"] == 1
+        assert data["entries"][0]["key"] == "user"
+
+        # Search with session filter
+        resp = await client.get("/memories/search", params={
+            "q": "Memory", "session_id": "s1",
+        })
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data["total"] == 1
+        assert data["entries"][0]["key"] == "project"
+
+        # Search with no matches
+        resp = await client.get("/memories/search", params={"q": "zzzznotfound"})
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data["total"] == 0
+        assert data["entries"] == []
+
+
+@pytest.mark.asyncio
+async def test_search_memories_endpoint_with_filters():
+    """Search endpoint respects agent_id and session_id filters."""
+    transport = ASGITransport(app=app)
+    async with AsyncClient(transport=transport, base_url="http://test") as client:
+        await client.post("/memories", json={
+            "session_id": "s-alice", "agent_id": "alice",
+            "key": "k1", "value": "alice secret data",
+        })
+        await client.post("/memories", json={
+            "session_id": "s-bob", "agent_id": "bob",
+            "key": "k2", "value": "bob secret data",
+        })
+
+        # Filter by agent
+        resp = await client.get("/memories/search", params={
+            "q": "secret", "agent_id": "alice",
+        })
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data["total"] == 1
+        assert data["entries"][0]["agent_id"] == "alice"
+
+        # Filter by session
+        resp = await client.get("/memories/search", params={
+            "q": "secret", "session_id": "s-bob",
+        })
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data["total"] == 1
+        assert data["entries"][0]["session_id"] == "s-bob"
+
+
+@pytest.mark.asyncio
 async def test_create_and_get_session():
     transport = ASGITransport(app=app)
     async with AsyncClient(transport=transport, base_url="http://test") as client:

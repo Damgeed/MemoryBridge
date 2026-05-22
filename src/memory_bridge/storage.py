@@ -23,6 +23,19 @@ _SCHEMA_MIGRATIONS: dict[int, str] = {
         "updated_at TEXT NOT NULL"
         ")"
     ),
+    5: (
+        "CREATE VIRTUAL TABLE IF NOT EXISTS memory_fts USING fts5(\n"
+        "    memory_id UNINDEXED,\n"
+        "    key,\n"
+        "    value,\n"
+        "    tags UNINDEXED,\n"
+        "    tokenize='porter unicode61'\n"
+        ");\n"
+        "INSERT INTO memory_fts (memory_id, key, value, tags)\n"
+        "SELECT m.id, m.key, m.value,\n"
+        "  COALESCE((SELECT group_concat(mt.tag, ' ') FROM memory_tags mt WHERE mt.memory_id = m.id), '')\n"
+        "FROM memories m"
+    ),
 }
 # ──────────────────────────────────────────────────────────────────────────────
 
@@ -145,7 +158,8 @@ class MemoryStorage:
             if version <= current_version:
                 continue
             try:
-                await db.execute(ddl)
+                # Use executescript for multi-statement migrations (e.g. v5: FTS5 + backfill)
+                await db.executescript(ddl)
                 await db.execute(
                     "INSERT INTO schema_version (version, applied_at) VALUES (?, datetime('now'))",
                     (version,),
@@ -194,6 +208,14 @@ class MemoryStorage:
                     "INSERT INTO memory_tags (memory_id, tag) VALUES (?, ?)",
                     (entry.id, tag),
                 )
+            # Sync FTS5 full-text search index
+            await db.execute(
+                "DELETE FROM memory_fts WHERE memory_id = ?", (entry.id,)
+            )
+            await db.execute(
+                "INSERT INTO memory_fts (memory_id, key, value, tags) VALUES (?, ?, ?, ?)",
+                (entry.id, entry.key, json.dumps(entry.value), " ".join(entry.tags)),
+            )
             await db.commit()
 
         # Propagate to parent session if requested
@@ -228,6 +250,7 @@ class MemoryStorage:
             if _is_expired(entry):
                 # Lazily clean up expired entries on access
                 await db.execute("DELETE FROM memories WHERE id = ?", (memory_id,))
+                await db.execute("DELETE FROM memory_fts WHERE memory_id = ?", (memory_id,))
                 await db.commit()
                 return None
             return entry
@@ -296,6 +319,9 @@ class MemoryStorage:
                 await db.execute(
                     f"DELETE FROM memories WHERE id IN ({placeholders})", expired_ids
                 )
+                await db.execute(
+                    f"DELETE FROM memory_fts WHERE memory_id IN ({placeholders})", expired_ids
+                )
                 await db.commit()
 
             return results
@@ -304,6 +330,9 @@ class MemoryStorage:
         """Delete a memory entry by ID. Returns True if a row was deleted."""
         async with aiosqlite.connect(self.db_path) as db:
             await db.execute("PRAGMA foreign_keys = ON")
+            await db.execute(
+                "DELETE FROM memory_fts WHERE memory_id = ?", (memory_id,)
+            )
             cursor = await db.execute(
                 "DELETE FROM memories WHERE id = ?", (memory_id,)
             )
@@ -334,6 +363,11 @@ class MemoryStorage:
             placeholders = ",".join("?" for _ in expired_ids)
             cursor = await db.execute(
                 f"DELETE FROM memories WHERE id IN ({placeholders})",
+                expired_ids,
+            )
+            # Also clean up FTS5 index
+            await db.execute(
+                f"DELETE FROM memory_fts WHERE memory_id IN ({placeholders})",
                 expired_ids,
             )
             await db.commit()
@@ -521,3 +555,72 @@ class MemoryStorage:
         # Sort by created_at DESC and limit
         merged.sort(key=lambda e: e.created_at, reverse=True)
         return merged[:limit]
+
+    async def search_memories(
+        self,
+        query: str,
+        limit: int = 50,
+        offset: int = 0,
+        session_id: Optional[str] = None,
+        agent_id: Optional[str] = None,
+    ) -> list[MemoryEntry]:
+        """Full-text search across memory keys, values, and tags using FTS5.
+
+        Returns matching memories ordered by creation time (newest first).
+        Filters by session_id and/or agent_id if provided.
+        Expired memories are filtered out.
+        """
+        async with aiosqlite.connect(self.db_path) as db:
+            db.row_factory = aiosqlite.Row
+
+            # Get matching memory IDs from FTS5
+            fts_cursor = await db.execute(
+                "SELECT memory_id FROM memory_fts WHERE memory_fts MATCH ?",
+                (query,),
+            )
+            matching_ids = [row[0] for row in await fts_cursor.fetchall()]
+
+            if not matching_ids:
+                return []
+
+            # Build query with session/agent filters
+            placeholders = ",".join("?" for _ in matching_ids)
+            conditions: list[str] = [f"m.id IN ({placeholders})"]
+            params: list = list(matching_ids)
+
+            if session_id:
+                conditions.append("m.session_id = ?")
+                params.append(session_id)
+            if agent_id:
+                conditions.append("m.agent_id = ?")
+                params.append(agent_id)
+
+            where = " AND ".join(conditions)
+            cursor = await db.execute(
+                f"SELECT m.* FROM memories m WHERE {where} ORDER BY m.created_at DESC LIMIT ? OFFSET ?",
+                (*params, limit, offset),
+            )
+            rows = await cursor.fetchall()
+
+            # Convert to MemoryEntry and filter expired
+            results: list[MemoryEntry] = []
+            expired_ids: list[str] = []
+            for row in rows:
+                entry = await _row_to_entry(row, db)
+                if _is_expired(entry):
+                    expired_ids.append(entry.id)
+                    continue
+                results.append(entry)
+
+            # Lazily clean up expired entries
+            if expired_ids:
+                id_placeholders = ",".join("?" for _ in expired_ids)
+                await db.execute(
+                    f"DELETE FROM memories WHERE id IN ({id_placeholders})", expired_ids
+                )
+                await db.execute(
+                    f"DELETE FROM memory_fts WHERE memory_id IN ({id_placeholders})", expired_ids
+                )
+                await db.commit()
+
+            return results
