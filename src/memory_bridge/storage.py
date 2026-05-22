@@ -10,20 +10,28 @@ from .models import MemoryEntry, Session
 logger = logging.getLogger(__name__)
 
 
-def _row_to_entry(row: aiosqlite.Row) -> MemoryEntry:
-    """Convert a SQLite row to a MemoryEntry."""
+async def _row_to_entry(row: aiosqlite.Row, db: aiosqlite.Connection) -> MemoryEntry:
+    """Convert a SQLite row to a MemoryEntry, fetching tags from junction table."""
     # Use bracket access for sqlite3.Row (Python 3.9 compat — no .get())
     try:
         ttl = row["ttl_seconds"]
     except (KeyError, IndexError):
         ttl = None  # Column missing (pre-v0.2 database)
+
+    # Fetch tags from the memory_tags junction table
+    cursor = await db.execute(
+        "SELECT tag FROM memory_tags WHERE memory_id = ?", (row["id"],)
+    )
+    tag_rows = await cursor.fetchall()
+    tags = [r[0] for r in tag_rows]
+
     return MemoryEntry(
         id=row["id"],
         session_id=row["session_id"],
         agent_id=row["agent_id"],
         key=row["key"],
         value=json.loads(row["value"]),
-        tags=json.loads(row["tags"]),
+        tags=tags,
         created_at=datetime.fromisoformat(row["created_at"]),
         updated_at=datetime.fromisoformat(row["updated_at"]),
         ttl_seconds=ttl,
@@ -78,6 +86,14 @@ class MemoryStorage:
                     ON memories(agent_id);
                 CREATE INDEX IF NOT EXISTS idx_memories_key
                     ON memories(key);
+                CREATE TABLE IF NOT EXISTS memory_tags (
+                    memory_id TEXT NOT NULL,
+                    tag TEXT NOT NULL,
+                    PRIMARY KEY (memory_id, tag),
+                    FOREIGN KEY (memory_id) REFERENCES memories(id) ON DELETE CASCADE
+                );
+                CREATE INDEX IF NOT EXISTS idx_memory_tags_tag
+                    ON memory_tags(tag);
             """)
             # Column migration: add ttl_seconds if missing (pre-v0.2 databases)
             try:
@@ -85,6 +101,23 @@ class MemoryStorage:
                 await db.commit()
             except Exception:
                 pass  # Column already exists
+
+            # Migrate existing tags from memories.tags TEXT column to memory_tags junction table
+            cursor = await db.execute(
+                "SELECT id, tags FROM memories WHERE tags IS NOT NULL AND tags != '[]'"
+            )
+            rows = await cursor.fetchall()
+            for row_id, tags_json in rows:
+                tags_list = json.loads(tags_json)
+                if tags_list:
+                    for tag in tags_list:
+                        try:
+                            await db.execute(
+                                "INSERT OR IGNORE INTO memory_tags (memory_id, tag) VALUES (?, ?)",
+                                (row_id, tag),
+                            )
+                        except Exception:
+                            pass  # Skip duplicates
             await db.commit()
 
     async def store_memory(self, entry: MemoryEntry) -> MemoryEntry:
@@ -106,6 +139,15 @@ class MemoryStorage:
                     entry.ttl_seconds,
                 ),
             )
+            # Sync the memory_tags junction table
+            await db.execute(
+                "DELETE FROM memory_tags WHERE memory_id = ?", (entry.id,)
+            )
+            for tag in entry.tags:
+                await db.execute(
+                    "INSERT INTO memory_tags (memory_id, tag) VALUES (?, ?)",
+                    (entry.id, tag),
+                )
             await db.commit()
         return entry
 
@@ -119,7 +161,7 @@ class MemoryStorage:
             row = await cursor.fetchone()
             if row is None:
                 return None
-            entry = _row_to_entry(row)
+            entry = await _row_to_entry(row, db)
             if _is_expired(entry):
                 # Lazily clean up expired entries on access
                 await db.execute("DELETE FROM memories WHERE id = ?", (memory_id,))
@@ -135,7 +177,7 @@ class MemoryStorage:
         keys: Optional[list[str]] = None,
         limit: int = 50,
     ) -> list[MemoryEntry]:
-        """Query memories with optional filters. Tags are filtered client-side.
+        """Query memories with optional filters. Tags are filtered via SQL JOIN.
         Expired memories are filtered out."""
         conditions: list[str] = []
         params: list = []
@@ -150,6 +192,20 @@ class MemoryStorage:
             placeholders = ",".join("?" for _ in keys)
             conditions.append(f"key IN ({placeholders})")
             params.extend(keys)
+        if tags:
+            unique_tags = list(set(tags))
+            placeholders = ",".join("?" for _ in unique_tags)
+            # Use subquery with GROUP BY/HAVING for AND logic — memory must match ALL specified tags
+            conditions.append(
+                f"id IN ("
+                f"  SELECT memory_id FROM memory_tags "
+                f"  WHERE tag IN ({placeholders}) "
+                f"  GROUP BY memory_id "
+                f"  HAVING COUNT(DISTINCT tag) = ?"
+                f")"
+            )
+            params.extend(unique_tags)
+            params.append(len(unique_tags))
 
         where_clause = " AND ".join(conditions) if conditions else "1=1"
 
@@ -164,15 +220,10 @@ class MemoryStorage:
             results: list[MemoryEntry] = []
             expired_ids: list[str] = []
             for row in rows:
-                entry = _row_to_entry(row)
+                entry = await _row_to_entry(row, db)
                 if _is_expired(entry):
                     expired_ids.append(entry.id)
                     continue
-                # Client-side tag filtering (tags stored as JSON array)
-                if tags:
-                    entry_tags = set(entry.tags)
-                    if not entry_tags.intersection(tags):
-                        continue
                 results.append(entry)
 
             # Lazily clean up expired entries
@@ -188,6 +239,7 @@ class MemoryStorage:
     async def delete_memory(self, memory_id: str) -> bool:
         """Delete a memory entry by ID. Returns True if a row was deleted."""
         async with aiosqlite.connect(self.db_path) as db:
+            await db.execute("PRAGMA foreign_keys = ON")
             cursor = await db.execute(
                 "DELETE FROM memories WHERE id = ?", (memory_id,)
             )
@@ -197,6 +249,7 @@ class MemoryStorage:
     async def cleanup_expired(self) -> int:
         """Delete all expired memories. Returns the number of rows deleted."""
         async with aiosqlite.connect(self.db_path) as db:
+            await db.execute("PRAGMA foreign_keys = ON")
             db.row_factory = aiosqlite.Row
             # Fetch all memories with a TTL set
             cursor = await db.execute(
@@ -206,7 +259,7 @@ class MemoryStorage:
             now = datetime.now(timezone.utc)
             expired_ids: list[str] = []
             for row in rows:
-                entry = _row_to_entry(row)
+                entry = await _row_to_entry(row, db)
                 elapsed = (now - entry.created_at).total_seconds()
                 if elapsed > entry.ttl_seconds:
                     expired_ids.append(entry.id)

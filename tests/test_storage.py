@@ -1,4 +1,5 @@
 import os
+import aiosqlite
 import pytest
 import pytest_asyncio
 from datetime import datetime, timezone
@@ -100,7 +101,7 @@ async def test_query_limit(storage):
 
 @pytest.mark.asyncio
 async def test_query_by_tags(storage):
-    """Query filters by tags (client-side)."""
+    """Query filters by tags using SQL JOIN."""
     e1 = MemoryEntry(
         session_id="s1", agent_id="a1", key="k1", value="v1",
         tags=["important", "user-preference"],
@@ -113,21 +114,86 @@ async def test_query_by_tags(storage):
         session_id="s1", agent_id="a1", key="k3", value="v3",
         tags=["important"],
     )
-    for e in [e1, e2, e3]:
+    e4 = MemoryEntry(
+        session_id="s1", agent_id="a1", key="k4", value="v4",
+        tags=["important", "archived"],
+    )
+    for e in [e1, e2, e3, e4]:
         await storage.store_memory(e)
 
+    # Single tag — find all memories with "important"
     results = await storage.query_memories(session_id="s1", tags=["important"])
-    assert len(results) == 2
-    assert {r.key for r in results} == {"k1", "k3"}
+    assert len(results) == 3
+    assert {r.key for r in results} == {"k1", "k3", "k4"}
 
+    # Single tag — find all memories with "archived"
     results = await storage.query_memories(session_id="s1", tags=["archived"])
-    assert len(results) == 1
-    assert results[0].key == "k2"
+    assert len(results) == 2
+    assert {r.key for r in results} == {"k2", "k4"}
 
+    # Multiple tags with AND logic — memory must have ALL specified tags
     results = await storage.query_memories(
         session_id="s1", tags=["important", "archived"]
     )
-    assert len(results) == 3
+    assert len(results) == 1
+    assert results[0].key == "k4"
+
+    # No tags filter — returns all
+    results = await storage.query_memories(session_id="s1")
+    assert len(results) == 4
+
+
+@pytest.mark.asyncio
+async def test_junction_table_sync(storage):
+    """Verify junction table rows are created and tag queries use SQL JOIN."""
+    entry = MemoryEntry(
+        session_id="s1", agent_id="a1", key="test", value="v",
+        tags=["alpha", "beta", "gamma"],
+    )
+    await storage.store_memory(entry)
+
+    # Directly query the junction table to verify rows exist
+    async with aiosqlite.connect(storage.db_path) as db:
+        cursor = await db.execute(
+            "SELECT tag FROM memory_tags WHERE memory_id = ? ORDER BY tag",
+            (entry.id,),
+        )
+        rows = await cursor.fetchall()
+    assert [r[0] for r in rows] == ["alpha", "beta", "gamma"]
+
+    # Query by single tag via SQL
+    results = await storage.query_memories(tags=["alpha"])
+    assert len(results) == 1
+    assert results[0].id == entry.id
+
+    # Query by multiple tags (AND logic)
+    results = await storage.query_memories(tags=["alpha", "gamma"])
+    assert len(results) == 1
+    assert results[0].id == entry.id
+
+    # Query by tag that doesn't exist
+    results = await storage.query_memories(tags=["nonexistent"])
+    assert len(results) == 0
+
+    # Update memory with different tags — old tags should be replaced
+    entry.tags = ["delta"]
+    await storage.store_memory(entry)
+    async with aiosqlite.connect(storage.db_path) as db:
+        cursor = await db.execute(
+            "SELECT tag FROM memory_tags WHERE memory_id = ? ORDER BY tag",
+            (entry.id,),
+        )
+        rows = await cursor.fetchall()
+    assert [r[0] for r in rows] == ["delta"]
+
+    # Cascade delete: deleting the memory should remove junction rows
+    await storage.delete_memory(entry.id)
+    async with aiosqlite.connect(storage.db_path) as db:
+        cursor = await db.execute(
+            "SELECT COUNT(*) FROM memory_tags WHERE memory_id = ?", (entry.id,)
+        )
+        count = (await cursor.fetchone())[0]
+    assert count == 0, "Cascade delete should remove junction table rows"
 
 
 @pytest.mark.asyncio
