@@ -1,0 +1,11 @@
+.venv/
+.git/
+__pycache__/
+*.py[cod]
+*.egg-info/
+.env
+*.db
+tests/
+docs/
+smoke_test.sh
+.github/

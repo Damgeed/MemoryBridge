@@ -1,20 +1,25 @@
+from contextlib import asynccontextmanager
 from fastapi import FastAPI, Depends, HTTPException
 from .dependencies import get_storage
 from .handoff import HandoffProtocol
 from .models import MemoryEntry, MemoryCreate, MemoryQuery, Session, HandoffPayload
 from .storage import MemoryStorage
 
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Initialize storage on startup, clean up on shutdown."""
+    storage = await get_storage()
+    await storage.initialize()
+    yield
+
+
 app = FastAPI(
     title="Memory Bridge",
     version="0.1.0",
     description="Cross-session memory persistence for multi-agent teams",
+    lifespan=lifespan,
 )
-
-
-@app.on_event("startup")
-async def startup():
-    storage = await get_storage()
-    await storage.initialize()
 
 
 @app.get("/health")

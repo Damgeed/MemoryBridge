@@ -11,12 +11,27 @@ Memory Bridge is a middleware layer that lets AI agents share context across ses
 
 ## Quick Start
 
+### From Source
+
 ```bash
-pip install memory-bridge
+git clone https://github.com/Damgeed/MemoryBridge.git
+cd MemoryBridge
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -e ".[dev]"
 
 # Start the server
 memory-bridge
 ```
+
+### With Docker
+
+```bash
+docker build -t memory-bridge .
+docker run -p 8000:8000 -v $(pwd)/data:/app memory-bridge
+```
+
+> The `-v` flag mounts a local `data/` directory so the SQLite database persists across container restarts.```
 
 ## API
 
