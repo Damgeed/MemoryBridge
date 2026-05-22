@@ -3,8 +3,6 @@
 import asyncio
 from typing import Any, Optional
 
-from fastapi import HTTPException
-
 from .models import HandoffPayload, MemoryEntry, MemoryQuery
 from .storage import MemoryStorage
 
@@ -190,28 +188,32 @@ class HandoffProtocol:
         new_session_id: Optional[str] = None,
     ) -> HandoffResult:
         """Execute a handoff: prepare context, store it for the receiving agent."""
-        result = await self.prepare_handoff(
-            from_agent_id=from_agent_id,
-            to_agent_id=to_agent_id,
-            session_id=session_id,
-            handoff_type=handoff_type,
-            include_tags=include_tags,
-        )
-
-        if not result.success and not result.context:
-            return result
-
-        # Store context for the receiving agent
-        target_session = new_session_id or session_id
-        for key, value in result.context.items():
-            entry = MemoryEntry(
-                session_id=target_session,
-                agent_id=to_agent_id,
-                key=f"handoff:{key}",
-                value=value,
-                tags=["handoff", f"from:{from_agent_id}"],
+        await self._acquire_session_lock(session_id)
+        try:
+            result = await self._prepare_handoff_internal(
+                from_agent_id=from_agent_id,
+                to_agent_id=to_agent_id,
+                session_id=session_id,
+                handoff_type=handoff_type,
+                include_tags=include_tags,
             )
-            await self.storage.store_memory(entry)
 
-        result.summary += f" | Stored {len(result.context)} keys for '{to_agent_id}'"
-        return result
+            if not result.success and not result.context:
+                return result
+
+            # Store context for the receiving agent
+            target_session = new_session_id or session_id
+            for key, value in result.context.items():
+                entry = MemoryEntry(
+                    session_id=target_session,
+                    agent_id=to_agent_id,
+                    key=f"handoff:{key}",
+                    value=value,
+                    tags=["handoff", f"from:{from_agent_id}"],
+                )
+                await self.storage.store_memory(entry)
+
+            result.summary += f" | Stored {len(result.context)} keys for '{to_agent_id}'"
+            return result
+        finally:
+            self._session_locks[session_id].release()
