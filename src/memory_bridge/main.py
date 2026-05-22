@@ -10,7 +10,7 @@ from fastapi import FastAPI, Depends, HTTPException, Request, Query
 from .dependencies import get_storage
 from .handoff import HandoffProtocol
 from .models import MemoryEntry, MemoryCreate, MemoryQuery, Session, HandoffPayload
-from .storage import MemoryStorage
+from .storage import MemoryStorage, last_cleanup_at
 from .auth import APIKeyMiddleware
 
 logger = logging.getLogger(__name__)
@@ -31,6 +31,14 @@ async def _cleanup_loop(storage: MemoryStorage):
     while True:
         try:
             await asyncio.sleep(_CLEANUP_INTERVAL)
+            # Warn if cleanup hasn't run in > 2x the interval
+            if last_cleanup_at is not None:
+                seconds_since = (datetime.now(timezone.utc) - last_cleanup_at).total_seconds()
+                if seconds_since > 2 * _CLEANUP_INTERVAL:
+                    logger.warning(
+                        "Cleanup hasn't run in %.0f seconds (interval=%ds)",
+                        seconds_since, _CLEANUP_INTERVAL,
+                    )
             deleted = await storage.cleanup_expired()
             if deleted:
                 logger.info("Cleanup: deleted %d expired memories", deleted)
@@ -89,6 +97,11 @@ async def health(storage: MemoryStorage = Depends(get_storage)):
     sessions_total = await storage.count_sessions()
     memories_total = await storage.count_memories()
     avg_latency_ms = (total_latency / request_count * 1000) if request_count > 0 else 0.0
+    # Calculate cleanup monitoring
+    if last_cleanup_at is not None:
+        last_cleanup_seconds_ago = int((datetime.now(timezone.utc) - last_cleanup_at).total_seconds())
+    else:
+        last_cleanup_seconds_ago = None
     return {
         "status": "ok",
         "service": "memory-bridge",
@@ -98,6 +111,7 @@ async def health(storage: MemoryStorage = Depends(get_storage)):
         "memories_total": memories_total,
         "avg_latency_ms": round(avg_latency_ms, 3),
         "requests_served": request_count,
+        "last_cleanup_seconds_ago": last_cleanup_seconds_ago,
     }
 
 
@@ -146,6 +160,7 @@ async def query_memories(
             tags=query.tags,
             keys=query.keys,
             limit=query.limit,
+            offset=query.offset,
         )
     else:
         entries = await storage.query_memories(
@@ -154,6 +169,7 @@ async def query_memories(
             tags=query.tags,
             keys=query.keys,
             limit=query.limit,
+            offset=query.offset,
         )
     return {"entries": [e.model_dump() for e in entries], "total": len(entries)}
 

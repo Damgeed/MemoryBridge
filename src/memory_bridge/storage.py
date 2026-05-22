@@ -4,12 +4,13 @@ import logging
 from datetime import datetime, timezone
 from typing import Optional
 from pathlib import Path
-from datetime import datetime, timezone
-from typing import Optional
 
 from .models import MemoryEntry, Session
 
 logger = logging.getLogger(__name__)
+
+# Module-level timestamp for cleanup monitoring
+last_cleanup_at: Optional[datetime] = None
 
 # ── Schema version manifest ──────────────────────────────────────────────────
 #   v1  (0.1.0)  Base tables: sessions, memories (with tags column), memory_tags
@@ -229,6 +230,7 @@ class MemoryStorage:
         tags: Optional[list[str]] = None,
         keys: Optional[list[str]] = None,
         limit: int = 50,
+        offset: int = 0,
     ) -> list[MemoryEntry]:
         """Query memories with optional filters. Tags are filtered via SQL JOIN.
         Expired memories are filtered out."""
@@ -265,8 +267,8 @@ class MemoryStorage:
         async with aiosqlite.connect(self.db_path) as db:
             db.row_factory = aiosqlite.Row
             cursor = await db.execute(
-                f"SELECT * FROM memories WHERE {where_clause} ORDER BY created_at DESC LIMIT ?",
-                (*params, limit),
+                f"SELECT * FROM memories WHERE {where_clause} ORDER BY created_at DESC LIMIT ? OFFSET ?",
+                (*params, limit, offset),
             )
             rows = await cursor.fetchall()
 
@@ -301,6 +303,7 @@ class MemoryStorage:
 
     async def cleanup_expired(self) -> int:
         """Delete all expired memories. Returns the number of rows deleted."""
+        global last_cleanup_at
         async with aiosqlite.connect(self.db_path) as db:
             await db.execute("PRAGMA foreign_keys = ON")
             db.row_factory = aiosqlite.Row
@@ -329,6 +332,7 @@ class MemoryStorage:
             count = cursor.rowcount
             if count:
                 logger.info("Cleaned up %d expired memories", count)
+            last_cleanup_at = datetime.now(timezone.utc)
             return count
 
     async def count_sessions(self) -> int:
@@ -384,7 +388,7 @@ class MemoryStorage:
     async def get_session_lineage(self, session_id: str) -> list[str]:
         """Follow parent_session_id chain up recursively.
         Returns ordered list [session_id, parent_id, grandparent_id, ...].
-        Max depth of 10 to prevent infinite loops."""
+        Raises ValueError if depth exceeds 10 (possible cycle or runaway chain)."""
         lineage: list[str] = []
         current_id: Optional[str] = session_id
         depth = 0
@@ -395,6 +399,10 @@ class MemoryStorage:
                 break
             current_id = session.parent_session_id
             depth += 1
+        if depth >= 10 and current_id is not None:
+            raise ValueError(
+                "Session lineage exceeds maximum depth of 10. Possible cycle or runaway chain."
+            )
         return lineage
 
     async def query_memories_lineage(
@@ -404,6 +412,7 @@ class MemoryStorage:
         tags: Optional[list[str]] = None,
         keys: Optional[list[str]] = None,
         limit: int = 50,
+        offset: int = 0,
     ) -> list[MemoryEntry]:
         """Gets the session lineage (session + all parents up the chain),
         calls query_memories for each session, merges results deduplicating
@@ -421,6 +430,7 @@ class MemoryStorage:
                 tags=tags,
                 keys=keys,
                 limit=limit * 2,  # Fetch extra to account for dedup
+                offset=offset,
             )
             for entry in results:
                 if entry.key not in seen_keys:

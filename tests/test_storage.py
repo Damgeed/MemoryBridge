@@ -443,6 +443,30 @@ async def test_cleanup_expired_with_none_expired(storage):
     assert len(results) == 5
 
 
+@pytest.mark.asyncio
+async def test_query_with_offset(storage):
+    """Query respects the offset parameter — skip first N results."""
+    for i in range(5):
+        entry = MemoryEntry(session_id="s1", agent_id="a1", key=f"k{i}", value=f"v{i}")
+        await storage.store_memory(entry)
+
+    # Without offset, we get all 5
+    all_results = await storage.query_memories(session_id="s1", limit=10)
+    assert len(all_results) == 5
+
+    # With offset=2, we skip the first 2 (newest 2) and get 3
+    offset_results = await storage.query_memories(session_id="s1", limit=10, offset=2)
+    assert len(offset_results) == 3
+
+    keys_offset = {r.key for r in offset_results}
+    # Since ORDER BY created_at DESC, offset=2 means skip k4,k3 and get k2,k1,k0
+    assert keys_offset == {"k2", "k1", "k0"}
+
+    # Offset beyond available results returns empty
+    empty_results = await storage.query_memories(session_id="s1", limit=10, offset=10)
+    assert len(empty_results) == 0
+
+
 # --- Agent Lineage Tests ---
 
 
@@ -601,3 +625,35 @@ async def test_drop_legacy_tags_column(tmp_path):
 
     if os.path.exists(db_path):
         os.remove(db_path)
+
+
+@pytest.mark.asyncio
+async def test_session_lineage_depth_limit(storage):
+    """Lineage depth exceeding 10 raises ValueError."""
+    # Create a chain of 11 sessions: root -> s0 -> s1 -> ... -> s9
+    await storage.store_session(Session(session_id="root", agent_id="a0"))
+    prev = "root"
+    for i in range(10):
+        sid = f"s{i}"
+        await storage.store_session(Session(session_id=sid, agent_id=f"a{i}", parent_session_id=prev))
+        prev = sid
+
+    # Querying the deepest session should raise ValueError
+    with pytest.raises(ValueError, match="exceeds maximum depth of 10"):
+        await storage.get_session_lineage("s9")
+
+
+@pytest.mark.asyncio
+async def test_lineage_depth_just_under_limit(storage):
+    """A chain of exactly 10 sessions (depth < 10) works fine."""
+    # Create chain: root -> s0 -> ... -> s7 (9 sessions total, depth from leaf = 8)
+    await storage.store_session(Session(session_id="root", agent_id="a0"))
+    prev = "root"
+    for i in range(8):
+        sid = f"s{i}"
+        await storage.store_session(Session(session_id=sid, agent_id=f"a{i}", parent_session_id=prev))
+        prev = sid
+
+    lineage = await storage.get_session_lineage("s7")
+    assert len(lineage) == 9  # s7, s6, ..., s0, root
+    assert lineage[-1] == "root"

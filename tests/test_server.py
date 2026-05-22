@@ -47,6 +47,7 @@ async def test_health_returns_metrics():
         expected_keys = {
             "status", "service", "version", "uptime_seconds",
             "sessions_total", "memories_total", "avg_latency_ms", "requests_served",
+            "last_cleanup_seconds_ago",
         }
         assert set(data.keys()) == expected_keys
         assert data["status"] == "ok"
@@ -57,6 +58,20 @@ async def test_health_returns_metrics():
         assert data["memories_total"] >= 0
         assert data["avg_latency_ms"] >= 0.0
         assert data["requests_served"] >= 0
+
+
+@pytest.mark.asyncio
+async def test_health_returns_cleanup_monitoring():
+    """Health endpoint includes last_cleanup_seconds_ago field."""
+    transport = ASGITransport(app=app)
+    async with AsyncClient(transport=transport, base_url="http://test") as client:
+        resp = await client.get("/health")
+        assert resp.status_code == 200
+        data = resp.json()
+        assert "last_cleanup_seconds_ago" in data
+        # When the test starts, cleanup hasn't run yet, so it should be None
+        # But after any cleanup call it could be an int
+        assert data["last_cleanup_seconds_ago"] is None or isinstance(data["last_cleanup_seconds_ago"], int)
 
 
 @pytest.mark.asyncio
@@ -99,6 +114,46 @@ async def test_query_memories():
         })
         assert resp.status_code == 200
         assert resp.json()["total"] == 2
+
+
+@pytest.mark.asyncio
+async def test_query_memories_with_offset():
+    """Query endpoint respects the offset parameter."""
+    transport = ASGITransport(app=app)
+    async with AsyncClient(transport=transport, base_url="http://test") as client:
+        # Store 5 memories
+        for i in range(5):
+            await client.post("/memories", json={
+                "session_id": "s-offset", "agent_id": "a1",
+                "key": f"k{i}", "value": f"v{i}",
+            })
+
+        # Query with limit=5, offset=0 -> get all 5
+        resp = await client.post("/memories/query", json={
+            "session_id": "s-offset",
+            "limit": 5,
+            "offset": 0,
+        })
+        assert resp.status_code == 200
+        assert resp.json()["total"] == 5
+
+        # Query with offset=2 -> skip 2, expect 3
+        resp = await client.post("/memories/query", json={
+            "session_id": "s-offset",
+            "limit": 5,
+            "offset": 2,
+        })
+        assert resp.status_code == 200
+        assert resp.json()["total"] == 3
+
+        # Query with offset=10 (beyond available) -> expect 0
+        resp = await client.post("/memories/query", json={
+            "session_id": "s-offset",
+            "limit": 5,
+            "offset": 10,
+        })
+        assert resp.status_code == 200
+        assert resp.json()["total"] == 0
 
 
 @pytest.mark.asyncio
