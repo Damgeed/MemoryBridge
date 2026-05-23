@@ -38,6 +38,12 @@ class Settings(BaseSettings):
     rate_limit_per_minute: int = 60
     rate_limit_backend: str = "memory"  # "memory" | "redis"
 
+    # Rate limiting by tier (requests per minute)
+    rate_limit_free: int = 60
+    rate_limit_starter: int = 300
+    rate_limit_pro: int = 600
+    rate_limit_enterprise: int = 6000
+
     # Redis
     redis_url: str = "redis://localhost:6379"
 

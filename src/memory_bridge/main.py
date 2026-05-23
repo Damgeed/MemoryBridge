@@ -181,7 +181,15 @@ def create_app() -> FastAPI:
         # Rate limit check (skip for health and metrics endpoints)
         if request.url.path not in ("/health", "/metrics"):
             client_ip = request.client.host if request.client else "unknown"
-            allowed = await _limiter.check(client_ip)
+            key_id = None
+            tier = "free"
+            if hasattr(request.state, "auth") and request.state.auth:
+                # Support both "id" (DB keys) and "key_id" (env/JWT) field names
+                key_id = request.state.auth.get("id") or request.state.auth.get("key_id")
+                tier = request.state.auth.get("tier", "free")
+            allowed = await _limiter.check_with_key(
+                key_id=key_id, tier=tier, client_ip=client_ip
+            )
             if not allowed:
                 return Response(
                     content='{"detail":"Rate limit exceeded. Try again in 60 seconds."}',
