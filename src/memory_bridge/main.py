@@ -17,6 +17,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from starlette.middleware.base import BaseHTTPMiddleware
 
 from .auth import APIKeyMiddleware
+from .middleware.tenant import TenantResolverMiddleware
 from .controllers import (
     admin_controller,
     auth_controller,
@@ -127,6 +128,9 @@ def create_app() -> FastAPI:
 
     # 2. Auth — Bearer token check on non-/health routes
     app.add_middleware(APIKeyMiddleware)
+
+    # 3. Tenant resolver — resolves project scope from auth context
+    app.add_middleware(TenantResolverMiddleware)
 
     # --- Request Size Limit ---
     MAX_BODY_SIZE = int(
