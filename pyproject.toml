@@ -31,3 +31,6 @@ dev = [
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
+markers = [
+    "postgres: mark test as requiring PostgreSQL (skipped if not available)",
+]
