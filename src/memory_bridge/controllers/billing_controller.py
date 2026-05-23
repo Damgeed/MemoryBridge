@@ -20,13 +20,15 @@ async def stripe_webhook(request: Request):
     - customer.subscription.deleted
     """
     payload = await request.body()
-    signature = request.headers.get("stripe-signature", "")
+    # Get the signature — Stripe sends case-insensitive header
+    # Try lowercase first (FastAPI normalizes to lowercase), fallback to original case
+    signature = request.headers.get("stripe-signature") or request.headers.get("Stripe-Signature", "")
 
     service = BillingService()
     result = await service.handle_webhook(payload, signature)
 
     logger.info("Stripe webhook processed: %s", result)
-    return {"received": True}
+    return result
 
 
 @router.get("/subscription/{org_id}")

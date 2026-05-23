@@ -11,6 +11,7 @@ from typing import Optional
 from ..config import get_settings
 from ..models import MemoryEntry, MemoryCreate
 from ..repository import MemoryRepository
+from ..repository.s3_store import S3Store
 from .metering_service import TIER_LIMITS
 
 logger = logging.getLogger(__name__)
@@ -40,10 +41,12 @@ class MemoryService:
         repo: MemoryRepository,
         cache=None,  # Optional CacheService
         metering=None,  # Optional MeteringService
+        s3_store: Optional[S3Store] = None,
     ):
         self.repo = repo
         self.cache = cache
         self.metering = metering
+        self.s3_store = s3_store
         self._default_ttl: Optional[int] = None  # Set from settings
 
     async def create_memory(
@@ -115,6 +118,21 @@ class MemoryService:
             project=resolved_project,
         )
 
+        # Offload large values to S3 (or local fallback)
+        if self.s3_store and self.s3_store.needs_offloading(payload.value):
+            s3_key = await self.s3_store.store(entry.id, payload.value)
+            if s3_key:
+                # Replace the full value with a reference pointer
+                entry.value = {
+                    "__s3_ref__": True,
+                    "key": s3_key,
+                    "original_type": type(payload.value).__name__,
+                }
+                logger.info(
+                    "Offloaded %d-byte value to S3 (key=%s)",
+                    len(json.dumps(payload.value)), s3_key,
+                )
+
         # Store
         result = await self.repo.store_memory(
             entry, propagate_to_parent=payload.propagate_to_parent
@@ -146,6 +164,19 @@ class MemoryService:
 
         # Fall through to repo
         entry = await self.repo.get_memory(memory_id)
+
+        # Resolve S3 reference if value was offloaded
+        if entry and self.s3_store and self._is_s3_ref(entry.value):
+            resolved = await self.s3_store.retrieve(
+                memory_id, entry.value["key"]
+            )
+            if resolved is not None:
+                entry.value = resolved
+            else:
+                logger.warning(
+                    "S3 value missing for memory %s (key=%s); keeping reference",
+                    memory_id, entry.value.get("key"),
+                )
 
         # Populate cache on miss
         if entry and self.cache:
