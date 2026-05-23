@@ -99,6 +99,8 @@ class WebhookService:
         )
         self._retry_worker_task: Optional[asyncio.Task] = None
         self._last_deliveries: dict[str, WebhookDelivery] = {}
+        self._delivery_history: dict[str, list[WebhookDelivery]] = {}
+        self._max_deliveries_per_webhook = 1000
         self._delivery_semaphore = asyncio.Semaphore(20)
 
         # Subscribe to all event types on the bus if available
@@ -398,5 +400,24 @@ class WebhookService:
     # ── Internal Helpers ────────────────────────────────────────────────
 
     def _record_delivery(self, delivery: WebhookDelivery) -> None:
-        """Record a delivery attempt."""
-        self._last_deliveries[delivery.subscription_id] = delivery
+        """Record a delivery attempt in both last-delivery and history stores."""
+        sub_id = delivery.subscription_id
+        self._last_deliveries[sub_id] = delivery
+
+        # Append to full delivery history
+        if sub_id not in self._delivery_history:
+            self._delivery_history[sub_id] = []
+        self._delivery_history[sub_id].append(delivery)
+
+        # Trim old records beyond the max per-webhook limit
+        if len(self._delivery_history[sub_id]) > self._max_deliveries_per_webhook:
+            self._delivery_history[sub_id] = self._delivery_history[sub_id][-self._max_deliveries_per_webhook:]
+
+    def get_deliveries(
+        self, webhook_id: str, limit: int = 50, offset: int = 0
+    ) -> tuple[list[WebhookDelivery], int]:
+        """Get paginated delivery history for a webhook."""
+        deliveries = self._delivery_history.get(webhook_id, [])
+        total = len(deliveries)
+        page = deliveries[offset:offset + limit]
+        return page, total

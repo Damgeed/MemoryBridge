@@ -90,6 +90,15 @@ class WebhookDeliveryResponse(BaseModel):
     timestamp: str
 
 
+class PaginatedDeliveriesResponse(BaseModel):
+    """Paginated list of delivery records."""
+
+    deliveries: list[WebhookDeliveryResponse]
+    total: int
+    limit: int
+    offset: int
+
+
 # ── Helper ─────────────────────────────────────────────────────────────────
 
 
@@ -196,27 +205,38 @@ async def delete_webhook(
     return None
 
 
-@router.get("/{webhook_id}/deliveries", response_model=Optional[WebhookDeliveryResponse])
+@router.get("/{webhook_id}/deliveries", response_model=PaginatedDeliveriesResponse)
 async def get_webhook_deliveries(
     webhook_id: str,
+    limit: int = Query(50, ge=1, le=500),
+    offset: int = Query(0, ge=0),
     service: WebhookService = Depends(get_webhook_service),
 ):
-    """Get the last delivery status for a webhook subscription."""
+    """Get paginated delivery history for a webhook subscription.
+
+    Returns a list of delivery records sorted newest-first, with
+    pagination via ``limit`` and ``offset`` query parameters.
+    """
     sub = service.get_subscription(webhook_id)
     if sub is None:
         raise HTTPException(status_code=404, detail="Webhook not found")
 
-    delivery = service.get_last_delivery(webhook_id)
-    if delivery is None:
-        return None
-
-    return WebhookDeliveryResponse(
-        subscription_id=delivery.subscription_id,
-        event_type=delivery.event_type,
-        url=delivery.url,
-        status=delivery.status,
-        status_code=delivery.status_code,
-        error=delivery.error,
-        attempts=delivery.attempts,
-        timestamp=delivery.timestamp.isoformat(),
+    deliveries, total = service.get_deliveries(webhook_id, limit=limit, offset=offset)
+    return PaginatedDeliveriesResponse(
+        deliveries=[
+            WebhookDeliveryResponse(
+                subscription_id=d.subscription_id,
+                event_type=d.event_type,
+                url=d.url,
+                status=d.status,
+                status_code=d.status_code,
+                error=d.error,
+                attempts=d.attempts,
+                timestamp=d.timestamp.isoformat(),
+            )
+            for d in deliveries
+        ],
+        total=total,
+        limit=limit,
+        offset=offset,
     )
