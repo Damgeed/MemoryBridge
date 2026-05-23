@@ -5,7 +5,7 @@ Uses SessionService for project scoping and session lifecycle management.
 
 import logging
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
 
 from ..dependencies import get_storage
 from ..models import Session
@@ -25,10 +25,12 @@ async def get_session_service():
 @router.post("", response_model=Session)
 async def create_session(
     session: Session,
+    request: Request,
     service: SessionService = Depends(get_session_service),
 ):
-    """Create a new session."""
-    return await service.create_session(session=session)
+    """Create a new session with project scope inferred from auth."""
+    project = session.project or getattr(request.state, "project_id", None)
+    return await service.create_session(session=session, project=project)
 
 
 @router.get("/{session_id}", response_model=Session)
