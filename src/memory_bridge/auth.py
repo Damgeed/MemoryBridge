@@ -15,7 +15,7 @@ from .dependencies import get_storage
 logger = logging.getLogger(__name__)
 
 
-EXEMPT_PATHS = {"/health", "/docs", "/openapi.json", "/redoc"}
+EXEMPT_PATHS = {"/health", "/docs", "/openapi.json", "/redoc", "/playground"}
 
 
 class APIKeyMiddleware(BaseHTTPMiddleware):
@@ -49,7 +49,8 @@ class APIKeyMiddleware(BaseHTTPMiddleware):
             return False
 
     async def dispatch(self, request: Request, call_next):
-        if request.url.path in EXEMPT_PATHS:
+        path = request.url.path
+        if path in EXEMPT_PATHS or path.startswith("/playground/"):
             return await call_next(request)
 
         # Determine if auth is enforced
