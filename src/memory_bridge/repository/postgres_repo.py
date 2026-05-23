@@ -116,80 +116,89 @@ class PostgresMemoryRepository(MemoryRepository):
         self.schema = schema
 
     async def initialize(self):
-        """Create schema, tables, and run pending migrations."""
+        """Create schema, tables, and run pending migrations.
+
+        Uses a PostgreSQL advisory lock to prevent deadlocks when multiple
+        workers attempt to migrate the schema concurrently (C7).
+        """
         async with self.pool.acquire() as conn:
-            # Create schema if it doesn't exist
-            await conn.execute(f"CREATE SCHEMA IF NOT EXISTS {self.schema}")
+            # Acquire advisory lock to serialize concurrent migrations
+            await conn.execute("SELECT pg_advisory_lock(123456789)")
+            try:
+                # Create schema if it doesn't exist
+                await conn.execute(f"CREATE SCHEMA IF NOT EXISTS {self.schema}")
 
-            base_ddl = f"""
-                CREATE TABLE IF NOT EXISTS {self.schema}.sessions (
-                    session_id TEXT PRIMARY KEY,
-                    agent_id TEXT NOT NULL,
-                    parent_session_id TEXT,
-                    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-                    metadata JSONB DEFAULT '{{}}',
-                    project TEXT
-                );
+                base_ddl = f"""
+                    CREATE TABLE IF NOT EXISTS {self.schema}.sessions (
+                        session_id TEXT PRIMARY KEY,
+                        agent_id TEXT NOT NULL,
+                        parent_session_id TEXT,
+                        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+                        metadata JSONB DEFAULT '{{}}',
+                        project TEXT
+                    );
 
-                CREATE TABLE IF NOT EXISTS {self.schema}.memories (
-                    id TEXT PRIMARY KEY,
-                    session_id TEXT NOT NULL REFERENCES {self.schema}.sessions(session_id) ON DELETE CASCADE,
-                    agent_id TEXT NOT NULL,
-                    key TEXT NOT NULL,
-                    value JSONB NOT NULL,
-                    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-                    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-                    ttl_seconds INTEGER,
-                    project TEXT
-                );
+                    CREATE TABLE IF NOT EXISTS {self.schema}.memories (
+                        id TEXT PRIMARY KEY,
+                        session_id TEXT NOT NULL REFERENCES {self.schema}.sessions(session_id) ON DELETE CASCADE,
+                        agent_id TEXT NOT NULL,
+                        key TEXT NOT NULL,
+                        value JSONB NOT NULL,
+                        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+                        updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+                        ttl_seconds INTEGER,
+                        project TEXT
+                    );
 
-                CREATE INDEX IF NOT EXISTS idx_{self.schema}_memories_session
-                    ON {self.schema}.memories(session_id);
-                CREATE INDEX IF NOT EXISTS idx_{self.schema}_memories_agent
-                    ON {self.schema}.memories(agent_id);
-                CREATE INDEX IF NOT EXISTS idx_{self.schema}_memories_key
-                    ON {self.schema}.memories(key);
+                    CREATE INDEX IF NOT EXISTS idx_{self.schema}_memories_session
+                        ON {self.schema}.memories(session_id);
+                    CREATE INDEX IF NOT EXISTS idx_{self.schema}_memories_agent
+                        ON {self.schema}.memories(agent_id);
+                    CREATE INDEX IF NOT EXISTS idx_{self.schema}_memories_key
+                        ON {self.schema}.memories(key);
 
-                CREATE TABLE IF NOT EXISTS {self.schema}.memory_tags (
-                    memory_id TEXT NOT NULL REFERENCES {self.schema}.memories(id) ON DELETE CASCADE,
-                    tag TEXT NOT NULL,
-                    PRIMARY KEY (memory_id, tag)
-                );
+                    CREATE TABLE IF NOT EXISTS {self.schema}.memory_tags (
+                        memory_id TEXT NOT NULL REFERENCES {self.schema}.memories(id) ON DELETE CASCADE,
+                        tag TEXT NOT NULL,
+                        PRIMARY KEY (memory_id, tag)
+                    );
 
-                CREATE INDEX IF NOT EXISTS idx_{self.schema}_memory_tags_tag
-                    ON {self.schema}.memory_tags(tag);
+                    CREATE INDEX IF NOT EXISTS idx_{self.schema}_memory_tags_tag
+                        ON {self.schema}.memory_tags(tag);
 
-                CREATE TABLE IF NOT EXISTS {self.schema}.schema_version (
-                    version INTEGER PRIMARY KEY,
-                    applied_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-                );
+                    CREATE TABLE IF NOT EXISTS {self.schema}.schema_version (
+                        version INTEGER PRIMARY KEY,
+                        applied_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+                    );
 
-                CREATE TABLE IF NOT EXISTS {self.schema}.metrics (
-                    key TEXT PRIMARY KEY,
-                    value TEXT NOT NULL,
-                    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-                );
+                    CREATE TABLE IF NOT EXISTS {self.schema}.metrics (
+                        key TEXT PRIMARY KEY,
+                        value TEXT NOT NULL,
+                        updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+                    );
 
-                CREATE TABLE IF NOT EXISTS {self.schema}.api_keys (
-                    id TEXT PRIMARY KEY,
-                    key_hash TEXT NOT NULL UNIQUE,
-                    label TEXT NOT NULL,
-                    project_id TEXT,
-                    is_active BOOLEAN NOT NULL DEFAULT TRUE,
-                    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-                    last_used_at TIMESTAMPTZ
-                );
-            """
-            await conn.execute(base_ddl)
+                    CREATE TABLE IF NOT EXISTS {self.schema}.api_keys (
+                        id TEXT PRIMARY KEY,
+                        key_hash TEXT NOT NULL UNIQUE,
+                        label TEXT NOT NULL,
+                        project_id TEXT,
+                        is_active BOOLEAN NOT NULL DEFAULT TRUE,
+                        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+                        last_used_at TIMESTAMPTZ
+                    );
+                """
+                await conn.execute(base_ddl)
 
-            # Seed version 1 if this is a fresh database
-            await conn.execute(
-                f"INSERT INTO {self.schema}.schema_version (version, applied_at) "
-                f"VALUES (1, NOW()) ON CONFLICT (version) DO NOTHING"
-            )
+                # Seed version 1 if this is a fresh database
+                await conn.execute(
+                    f"INSERT INTO {self.schema}.schema_version (version, applied_at) "
+                    f"VALUES (1, NOW()) ON CONFLICT (version) DO NOTHING"
+                )
 
-            # Run sequential migrations
-            await self._migrate(conn)
+                # Run sequential migrations
+                await self._migrate(conn)
+            finally:
+                await conn.execute("SELECT pg_advisory_unlock(123456789)")
 
     async def _migrate(self, conn: asyncpg.Connection) -> None:
         """Apply pending schema migrations sequentially.
