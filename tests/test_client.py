@@ -24,6 +24,7 @@ from memory_bridge_client import Client, MemoryBridgeError
 @pytest.fixture(autouse=True)
 async def setup_storage():
     """Use a temp DB for each test (same pattern as test_server.py)."""
+    os.environ["MEMORY_BRIDGE_ALLOW_OPEN"] = "true"
     db_path = tempfile.mktemp(suffix=".db")
     old_path = storage.db_path
     storage.db_path = db_path

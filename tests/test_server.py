@@ -8,7 +8,8 @@ from memory_bridge.dependencies import storage
 
 @pytest.fixture(autouse=True)
 async def setup_storage():
-    """Use a temp DB for each test."""
+    """Use a temp DB for each test. Enable open mode for test suite."""
+    os.environ["MEMORY_BRIDGE_ALLOW_OPEN"] = "true"
     db_path = tempfile.mktemp(suffix=".db")
     old_path = storage.db_path
     storage.db_path = db_path
@@ -80,6 +81,7 @@ async def test_health_returns_cleanup_monitoring():
 @pytest.mark.asyncio
 async def test_metrics_endpoint():
     """GET /metrics returns 200 with Prometheus content type and expected metrics."""
+    os.environ["MEMORY_BRIDGE_PUBLIC_METRICS"] = "true"
     transport = ASGITransport(app=app)
     async with AsyncClient(transport=transport, base_url="http://test") as client:
         resp = await client.get("/metrics")
@@ -99,6 +101,7 @@ async def test_metrics_endpoint():
 @pytest.mark.asyncio
 async def test_metrics_updates_gauges():
     """After storing memories and sessions, the gauges reflect current counts."""
+    os.environ["MEMORY_BRIDGE_PUBLIC_METRICS"] = "true"
     transport = ASGITransport(app=app)
     async with AsyncClient(transport=transport, base_url="http://test") as client:
         # Create a session and a memory
@@ -117,11 +120,11 @@ async def test_metrics_updates_gauges():
 
 @pytest.mark.asyncio
 async def test_metrics_exempt_from_auth(enable_auth):
-    """Metrics endpoint works without auth even when auth is enabled."""
+    """Metrics endpoint requires auth by default when auth is enabled."""
     transport = ASGITransport(app=app)
     async with AsyncClient(transport=transport, base_url="http://test") as client:
         resp = await client.get("/metrics")
-        assert resp.status_code == 200
+        assert resp.status_code == 401
 
 
 @pytest.mark.asyncio
@@ -449,13 +452,17 @@ async def test_auth_allows_valid_key(enable_auth):
 
 @pytest.mark.asyncio
 async def test_open_mode_no_key_needed():
-    """Without MEMORY_BRIDGE_API_KEY, everything works without auth."""
+    """Without MEMORY_BRIDGE_ALLOW_OPEN=true, open mode is disabled and requests fail with 401."""
+    # Temporarily remove ALLOW_OPEN to verify the default behavior
+    old = os.environ.pop("MEMORY_BRIDGE_ALLOW_OPEN", None)
     transport = ASGITransport(app=app)
     async with AsyncClient(transport=transport, base_url="http://test") as client:
         resp = await client.post("/memories", json={
             "session_id": "s1", "agent_id": "a1", "key": "k", "value": "v",
         })
-        assert resp.status_code == 200
+        assert resp.status_code == 401
+    if old:
+        os.environ["MEMORY_BRIDGE_ALLOW_OPEN"] = old
 
 
 # --- TTL / Eviction API Tests ---
