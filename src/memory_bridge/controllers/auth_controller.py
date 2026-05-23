@@ -1,21 +1,16 @@
-"""Auth endpoints for user registration and login.
-
-Provides /auth/register and /auth/login endpoints that issue JWTs.
-In Phase 4 these will integrate with UserService for proper user management.
-For now, they return stub responses noting that full functionality is coming.
-"""
+"""Authentication endpoints for user registration and login."""
 
 import logging
 from datetime import datetime, timedelta, timezone
+from typing import Optional
 
-import jwt
-from fastapi import APIRouter, HTTPException
-from pydantic import BaseModel
+from fastapi import APIRouter, HTTPException, Depends
+from pydantic import BaseModel, EmailStr
 
-from ..config import get_settings
+from ..services.user_service import UserService
+from ..dependencies import get_storage
 
 logger = logging.getLogger(__name__)
-
 router = APIRouter(prefix="/auth", tags=["auth"])
 
 
@@ -30,21 +25,62 @@ class LoginRequest(BaseModel):
     password: str
 
 
-@router.post("/register")
-async def register(req: RegisterRequest):
-    """Register a new user account.
-
-    In Phase 4 this will use UserService to create and store user accounts.
-    For now, returns a stub response.
-    """
-    return {"message": "Registration coming in Phase 4"}
+class AuthResponse(BaseModel):
+    token: str
+    user: dict
 
 
-@router.post("/login")
-async def login(req: LoginRequest):
-    """Authenticate and receive a JWT token.
+async def get_user_service():
+    repo = await get_storage()
+    return UserService(repo=repo)
 
-    In Phase 4 this will verify credentials against UserService and issue a JWT.
-    For now, returns a stub response.
-    """
-    return {"message": "Login coming in Phase 4"}
+
+@router.post("/register", response_model=AuthResponse)
+async def register(
+    req: RegisterRequest,
+    service: UserService = Depends(get_user_service),
+):
+    """Register a new user account."""
+    if len(req.password) < 8:
+        raise HTTPException(status_code=400, detail="Password must be at least 8 characters")
+
+    user = await service.register(
+        email=req.email,
+        password=req.password,
+        name=req.name,
+    )
+
+    token = await service.generate_token(user)
+
+    return AuthResponse(
+        token=token,
+        user={k: v for k, v in user.items() if k != "password_hash"},
+    )
+
+
+@router.post("/login", response_model=AuthResponse)
+async def login(
+    req: LoginRequest,
+    service: UserService = Depends(get_user_service),
+):
+    """Authenticate and return a JWT token."""
+    user = await service.authenticate(email=req.email, password=req.password)
+    if user is None:
+        raise HTTPException(status_code=401, detail="Invalid email or password")
+
+    token = await service.generate_token(user)
+
+    return AuthResponse(
+        token=token,
+        user={k: v for k, v in user.items() if k != "password_hash"},
+    )
+
+
+@router.post("/refresh")
+async def refresh_token(token_data: dict):
+    """Refresh an authentication token."""
+    service = UserService()
+    new_token = await service.refresh_token(token_data.get("token", ""))
+    if new_token is None:
+        raise HTTPException(status_code=401, detail="Invalid or expired token")
+    return {"token": new_token}
