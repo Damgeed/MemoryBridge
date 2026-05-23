@@ -28,6 +28,7 @@ from .controllers import (
     session_controller,
 )
 from .webhooks import router as webhook_router
+from .webhooks.webhook_controller import get_webhook_service
 from .dependencies import close_factory, get_storage
 from .middleware.rate_limit import RedisRateLimiter
 from .metrics import (
@@ -107,6 +108,10 @@ async def lifespan(app: FastAPI):
 
     # Start background cleanup task
     cleanup_task = asyncio.create_task(_cleanup_loop(storage))
+
+    # Load persisted webhook subscriptions from the repository
+    webhook_svc = await get_webhook_service(repo=storage)
+    await webhook_svc.load_subscriptions()
 
     yield
 

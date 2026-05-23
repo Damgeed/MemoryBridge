@@ -14,6 +14,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from ..config import get_settings
 from ..dependencies import get_storage
 from ..models import MemoryCreate, MemoryEntry, MemoryQuery
+from ..repository.s3_store import S3Store
 from ..services.memory_service import MemoryService
 
 logger = logging.getLogger(__name__)
@@ -24,7 +25,8 @@ router = APIRouter(prefix="/memories")
 async def get_memory_service():
     """Dependency: instantiate MemoryService from the current repository."""
     repo = await get_storage()
-    service = MemoryService(repo=repo)
+    s3_store = S3Store()
+    service = MemoryService(repo=repo, s3_store=s3_store)
     # Apply server-side default TTL from env
     default_ttl = int(os.environ.get("MEMORY_BRIDGE_DEFAULT_TTL", "0")) or None
     if default_ttl:

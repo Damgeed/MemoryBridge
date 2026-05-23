@@ -14,6 +14,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from pydantic import BaseModel, Field, HttpUrl
 
 from ..dependencies import get_storage
+from ..repository import MemoryRepository
 from .webhook_service import WebhookService, WebhookSubscription
 
 logger = logging.getLogger(__name__)
@@ -25,11 +26,13 @@ router = APIRouter(prefix="/webhooks")
 _service: Optional[WebhookService] = None
 
 
-def get_webhook_service() -> WebhookService:
-    """Dependency: return the shared WebhookService instance."""
+async def get_webhook_service(
+    repo: MemoryRepository = Depends(get_storage),
+) -> WebhookService:
+    """Dependency: return the shared WebhookService instance with repo injection."""
     global _service
     if _service is None:
-        _service = WebhookService()
+        _service = WebhookService(repo=repo)
     return _service
 
 
@@ -125,6 +128,7 @@ async def create_webhook(
         project=project or payload.project,
     )
     service.register_subscription(sub)
+    await service.save_subscription(sub)
     logger.info("Created webhook subscription %s → %s", sub.id, sub.url)
     return _to_response(sub)
 
@@ -173,6 +177,7 @@ async def update_webhook(
         sub.is_active = payload.is_active
 
     service.register_subscription(sub)
+    await service.save_subscription(sub)
     logger.info("Updated webhook subscription %s", webhook_id)
     return _to_response(sub)
 
@@ -186,6 +191,7 @@ async def delete_webhook(
     removed = service.remove_subscription(webhook_id)
     if not removed:
         raise HTTPException(status_code=404, detail="Webhook not found")
+    await service.remove_subscription_from_repo(webhook_id)
     logger.info("Deleted webhook subscription %s", webhook_id)
     return None
 

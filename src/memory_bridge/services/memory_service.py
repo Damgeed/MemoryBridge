@@ -6,7 +6,7 @@ Handles auth context, tier limits, caching, and metering.
 
 import json
 import logging
-from typing import Optional
+from typing import Any, Optional
 
 from ..config import get_settings
 from ..models import MemoryEntry, MemoryCreate
@@ -236,8 +236,21 @@ class MemoryService:
         )
 
     async def delete_memory(self, memory_id: str) -> bool:
-        """Delete a memory, evicting from cache."""
+        """Delete a memory, evicting from cache and cleaning up S3 if needed."""
+        # Fetch the entry first to check for S3 references
+        entry = await self.repo.get_memory(memory_id)
+
         result = await self.repo.delete_memory(memory_id)
         if result and self.cache:
             await self.cache.delete_memory(memory_id)
+
+        # Clean up S3 / local storage if value was offloaded
+        if result and self.s3_store and entry and self._is_s3_ref(entry.value):
+            await self.s3_store.delete(memory_id, entry.value["key"])
+
         return result
+
+    @staticmethod
+    def _is_s3_ref(value: Any) -> bool:
+        """Check if a value is an S3 reference pointer."""
+        return isinstance(value, dict) and value.get("__s3_ref__") is True

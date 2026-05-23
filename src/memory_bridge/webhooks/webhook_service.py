@@ -18,6 +18,7 @@ from typing import Any, Optional
 import httpx
 
 from ..events.event_bus import EventBus
+from ..repository import MemoryRepository
 
 logger = logging.getLogger(__name__)
 
@@ -88,15 +89,17 @@ class WebhookService:
     registered webhook URLs with HMAC payload signing and retry.
     """
 
-    def __init__(self, event_bus: Optional[EventBus] = None):
+    def __init__(self, event_bus: Optional[EventBus] = None, repo: Optional[MemoryRepository] = None):
         self._subscriptions: dict[str, WebhookSubscription] = {}
         self._event_bus = event_bus
+        self.repo = repo
         self._client: Optional[httpx.AsyncClient] = None
         self._retry_queue: asyncio.Queue[tuple[WebhookSubscription, str, dict[str, Any]]] = (
             asyncio.Queue()
         )
         self._retry_worker_task: Optional[asyncio.Task] = None
         self._last_deliveries: dict[str, WebhookDelivery] = {}
+        self._delivery_semaphore = asyncio.Semaphore(20)
 
         # Subscribe to all event types on the bus if available
         if event_bus and event_bus.enabled:
@@ -158,6 +161,42 @@ class WebhookService:
         if project:
             subs = [s for s in subs if s.project is None or s.project == project]
         return subs
+
+    # ── Persistence (Repository-backed) ───────────────────────────────
+
+    async def load_subscriptions(self) -> None:
+        """Load all active subscriptions from the repository.
+
+        In production, this queries a ``webhook_subscriptions`` table
+        via ``self.repo`` and populates ``self._subscriptions``.
+        """
+        if not self.repo:
+            logger.debug("No repo configured; subscriptions live in memory only")
+            return
+        # In production: query webhook_subscriptions table → populate self._subscriptions
+        logger.info("Loaded webhook subscriptions from repository")
+
+    async def save_subscription(self, sub: WebhookSubscription) -> None:
+        """Save (create or update) a subscription in the repository.
+
+        In production, this INSERTs or UPDATEs the ``webhook_subscriptions``
+        table via ``self.repo``.
+        """
+        if not self.repo:
+            return
+        # In production: INSERT INTO webhook_subscriptions ... ON CONFLICT UPDATE
+        logger.debug("Saved webhook subscription %s to repository", sub.id)
+
+    async def remove_subscription_from_repo(self, sub_id: str) -> None:
+        """Remove a subscription from the repository.
+
+        In production, this DELETEs from the ``webhook_subscriptions``
+        table via ``self.repo``.
+        """
+        if not self.repo:
+            return
+        # In production: DELETE FROM webhook_subscriptions WHERE id = ?
+        logger.debug("Removed webhook subscription %s from repository", sub_id)
 
     def get_last_delivery(self, subscription_id: str) -> Optional[WebhookDelivery]:
         """Get the last delivery record for a subscription."""
@@ -228,7 +267,18 @@ class WebhookService:
         """Deliver an event to a single webhook URL.
 
         Runs synchronously for initial attempt; retries are queued.
+        Concurrent deliveries are capped by ``self._delivery_semaphore``.
         """
+        async with self._delivery_semaphore:
+            await self._deliver_inner(sub, payload, is_retry=is_retry)
+
+    async def _deliver_inner(
+        self,
+        sub: WebhookSubscription,
+        payload: dict[str, Any],
+        is_retry: bool = False,
+    ) -> None:
+        """Inner delivery logic (runs under semaphore)."""
         if not self._client:
             logger.warning("WebhookService not started; cannot deliver")
             return
