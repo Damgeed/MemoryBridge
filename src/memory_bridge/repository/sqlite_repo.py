@@ -794,10 +794,10 @@ class SQLiteMemoryRepository(MemoryRepository):
                 "VALUES (?, '0', datetime('now'))",
                 (key,),
             )
-            # Atomic increment: value = CAST(COALESCE(NULLIF(value, ''), '0') AS INTEGER) + delta
+            # Atomic increment: value = CAST(COALESCE(NULLIF(value, ''), '0') AS REAL) + delta
             await db.execute(
                 "UPDATE metrics SET "
-                "value = CAST(COALESCE(NULLIF(value, ''), '0') AS INTEGER) + ?, "
+                "value = CAST(COALESCE(NULLIF(value, ''), '0') AS REAL) + ?, "
                 "updated_at = datetime('now') "
                 "WHERE key = ?",
                 (delta, key),
@@ -807,7 +807,7 @@ class SQLiteMemoryRepository(MemoryRepository):
             )
             row = await cursor.fetchone()
             await db.commit()
-            return int(row[0]) if row else delta
+            return float(row[0]) if row else delta
 
     async def initialize_metric(self, key: str, default_value: Any) -> None:
         """Set a metric only if it doesn't exist yet.

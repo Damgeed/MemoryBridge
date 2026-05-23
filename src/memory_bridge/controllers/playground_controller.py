@@ -14,7 +14,8 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/playground", tags=["playground"])
 
 
-@router.get("", response_class=HTMLResponse)
+@router.get("", response_class=HTMLResponse, include_in_schema=False)
+@router.get("/", response_class=HTMLResponse, include_in_schema=True)
 async def get_playground_page():
     """Serve the interactive memory bridge playground page."""
     static_dir = os.path.join(os.path.dirname(__file__), "..", "static")
