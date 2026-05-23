@@ -27,6 +27,7 @@ from .controllers import (
     memory_controller,
     session_controller,
 )
+from .webhooks import router as webhook_router
 from .dependencies import close_factory, get_storage
 from .middleware.rate_limit import RedisRateLimiter
 from .metrics import (
@@ -209,6 +210,7 @@ def create_app() -> FastAPI:
     app.include_router(session_controller.router)
     app.include_router(handoff_controller.router)
     app.include_router(admin_controller.router)
+    app.include_router(webhook_router)
 
     return app
 
