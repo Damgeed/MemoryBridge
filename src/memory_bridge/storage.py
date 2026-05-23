@@ -1,5 +1,5 @@
 import aiosqlite
-import hashlib
+import bcrypt
 import json
 import logging
 import secrets
@@ -14,8 +14,10 @@ logger = logging.getLogger(__name__)
 
 
 def _hash_api_key(plain_key: str) -> str:
-    """Hash an API key using SHA-256 for storage."""
-    return hashlib.sha256(plain_key.encode()).hexdigest()
+    """Hash an API key using bcrypt for secure storage.
+    Uses bcrypt (intentionally slow) to resist brute-force attacks.
+    """
+    return bcrypt.hashpw(plain_key.encode(), bcrypt.gensalt()).decode()
 
 
 # ── Schema version manifest ──────────────────────────────────────────────────
@@ -730,22 +732,35 @@ class MemoryStorage:
 
     async def authenticate_key(self, plain_key: str) -> Optional[dict]:
         """Authenticate a plaintext API key. Returns key info or None if invalid."""
-        key_hash = _hash_api_key(plain_key)
         async with aiosqlite.connect(self.db_path) as db:
             db.row_factory = aiosqlite.Row
             cursor = await db.execute(
-                "SELECT id, label, project_id, is_active FROM api_keys WHERE key_hash = ?",
-                (key_hash,),
+                "SELECT id, key_hash, label, project_id, is_active FROM api_keys WHERE is_active = 1",
             )
-            row = await cursor.fetchone()
-            if row is None or not row["is_active"]:
+            rows = await cursor.fetchall()
+
+            matched_row = None
+            for row in rows:
+                try:
+                    if bcrypt.checkpw(plain_key.encode(), row["key_hash"].encode()):
+                        matched_row = row
+                        break
+                except ValueError:
+                    # Invalid hash format, skip
+                    continue
+
+            if matched_row is None:
                 return None
 
             # Update last_used_at
             await db.execute(
                 "UPDATE api_keys SET last_used_at = datetime('now') WHERE id = ?",
-                (row["id"],),
+                (matched_row["id"],),
             )
             await db.commit()
 
-            return {"id": row["id"], "label": row["label"], "project_id": row["project_id"]}
+            return {
+                "id": matched_row["id"],
+                "label": matched_row["label"],
+                "project_id": matched_row["project_id"],
+            }
