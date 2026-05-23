@@ -1,7 +1,7 @@
 """Abstract repository interface for memory storage backends."""
 
 from abc import ABC, abstractmethod
-from typing import Optional
+from typing import Any, Optional
 
 from ..models import MemoryEntry, Session
 
@@ -138,4 +138,32 @@ class MemoryRepository(ABC):
 
     @abstractmethod
     async def initialize_metric(self, key: str, default_value) -> None:
+        ...
+
+    # ── Audit Log ───────────────────────────────────────────────────────────
+
+    @abstractmethod
+    async def record_audit_entry(
+        self,
+        id: str,
+        timestamp: str,
+        actor_type: str,
+        actor_id: str,
+        action: str,
+        resource_type: str,
+        resource_id: Optional[str],
+        project_id: Optional[str],
+        ip_address: Optional[str],
+        details: Any,
+        previous_hash: Optional[str],
+        hash: str,
+    ) -> None:
+        ...
+
+    @abstractmethod
+    async def get_last_audit_hash(self) -> Optional[str]:
+        ...
+
+    @abstractmethod
+    async def get_all_audit_entries(self) -> list[dict]:
         ...

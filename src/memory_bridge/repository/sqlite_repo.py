@@ -73,6 +73,26 @@ _SCHEMA_MIGRATIONS: dict[int, str] = {
         "CREATE INDEX IF NOT EXISTS idx_sessions_project_created "
         "ON sessions(project, created_at)"
     ),
+    10: (
+        "CREATE TABLE IF NOT EXISTS audit_log ("
+        "  id TEXT PRIMARY KEY, "
+        "  timestamp TEXT NOT NULL, "
+        "  actor_type TEXT NOT NULL, "
+        "  actor_id TEXT NOT NULL, "
+        "  action TEXT NOT NULL, "
+        "  resource_type TEXT NOT NULL, "
+        "  resource_id TEXT, "
+        "  project_id TEXT, "
+        "  ip_address TEXT, "
+        "  details TEXT DEFAULT '{}', "
+        "  previous_hash TEXT, "
+        "  hash TEXT"
+        "); "
+        "CREATE INDEX IF NOT EXISTS idx_audit_log_timestamp ON audit_log(timestamp DESC); "
+        "CREATE INDEX IF NOT EXISTS idx_audit_log_actor ON audit_log(actor_type, actor_id); "
+        "CREATE INDEX IF NOT EXISTS idx_audit_log_action ON audit_log(action); "
+        "CREATE INDEX IF NOT EXISTS idx_audit_log_project ON audit_log(project_id)"
+    ),
 }
 # ──────────────────────────────────────────────────────────────────────────────
 
@@ -802,6 +822,68 @@ class SQLiteMemoryRepository(MemoryRepository):
                 (key, json.dumps(default_value)),
             )
             await db.commit()
+
+    # ── Audit Log ───────────────────────────────────────────────────────────
+
+    async def record_audit_entry(
+        self,
+        id: str,
+        timestamp: str,
+        actor_type: str,
+        actor_id: str,
+        action: str,
+        resource_type: str,
+        resource_id: Optional[str],
+        project_id: Optional[str],
+        ip_address: Optional[str],
+        details: Any,
+        previous_hash: Optional[str],
+        hash: str,
+    ) -> None:
+        """Insert an audit log entry."""
+        async with aiosqlite.connect(self.db_path) as db:
+            await db.execute(
+                """INSERT INTO audit_log
+                   (id, timestamp, actor_type, actor_id, action,
+                    resource_type, resource_id, project_id, ip_address,
+                    details, previous_hash, hash)
+                   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                (
+                    id, timestamp, actor_type, actor_id, action,
+                    resource_type, resource_id, project_id, ip_address,
+                    json.dumps(details), previous_hash, hash,
+                ),
+            )
+            await db.commit()
+
+    async def get_last_audit_hash(self) -> Optional[str]:
+        """Get the hash of the most recent audit entry."""
+        async with aiosqlite.connect(self.db_path) as db:
+            cursor = await db.execute(
+                "SELECT hash FROM audit_log ORDER BY timestamp DESC LIMIT 1"
+            )
+            row = await cursor.fetchone()
+            return row[0] if row else None
+
+    async def get_all_audit_entries(self) -> list[dict]:
+        """Return all audit entries ordered by timestamp ascending."""
+        async with aiosqlite.connect(self.db_path) as db:
+            db.row_factory = aiosqlite.Row
+            cursor = await db.execute(
+                "SELECT * FROM audit_log ORDER BY timestamp ASC"
+            )
+            rows = await cursor.fetchall()
+            results = []
+            for row in rows:
+                entry = dict(row)
+                if isinstance(entry.get("details"), str):
+                    import json
+                    try:
+                        entry["details"] = json.loads(entry["details"])
+                    except (json.JSONDecodeError, TypeError):
+                        pass
+                results.append(entry)
+            return results
 
     # ── Additional utilities (beyond the ABC) ────────────────────────────────
 

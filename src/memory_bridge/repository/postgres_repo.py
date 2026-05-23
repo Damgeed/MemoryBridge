@@ -72,6 +72,30 @@ _SCHEMA_MIGRATIONS: dict[int, str] = {
         "ON {schema}.memories USING ivfflat (embedding vector_cosine_ops) "
         "WITH (lists = 100)"
     ),
+    11: (
+        "CREATE TABLE IF NOT EXISTS {schema}.audit_log ("
+        "  id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text, "
+        "  timestamp TIMESTAMPTZ NOT NULL DEFAULT NOW(), "
+        "  actor_type TEXT NOT NULL, "
+        "  actor_id TEXT NOT NULL, "
+        "  action TEXT NOT NULL, "
+        "  resource_type TEXT NOT NULL, "
+        "  resource_id TEXT, "
+        "  project_id TEXT, "
+        "  ip_address TEXT, "
+        "  details JSONB DEFAULT '{}', "
+        "  previous_hash TEXT, "
+        "  hash TEXT"
+        "); "
+        "CREATE INDEX IF NOT EXISTS idx_{schema}_audit_log_timestamp "
+        "ON {schema}.audit_log(timestamp DESC); "
+        "CREATE INDEX IF NOT EXISTS idx_{schema}_audit_log_actor "
+        "ON {schema}.audit_log(actor_type, actor_id); "
+        "CREATE INDEX IF NOT EXISTS idx_{schema}_audit_log_action "
+        "ON {schema}.audit_log(action); "
+        "CREATE INDEX IF NOT EXISTS idx_{schema}_audit_log_project "
+        "ON {schema}.audit_log(project_id)"
+    ),
 }
 # ──────────────────────────────────────────────────────────────────────────────
 
@@ -867,6 +891,65 @@ class PostgresMemoryRepository(MemoryRepository):
                 """,
                 key, json.dumps(default_value),
             )
+
+    # ── Audit Log ───────────────────────────────────────────────────────────
+
+    async def record_audit_entry(
+        self,
+        id: str,
+        timestamp: str,
+        actor_type: str,
+        actor_id: str,
+        action: str,
+        resource_type: str,
+        resource_id: Optional[str],
+        project_id: Optional[str],
+        ip_address: Optional[str],
+        details: Any,
+        previous_hash: Optional[str],
+        hash: str,
+    ) -> None:
+        """Insert an audit log entry."""
+        async with self.pool.acquire() as conn:
+            await conn.execute(
+                f"""INSERT INTO {self.schema}.audit_log
+                   (id, timestamp, actor_type, actor_id, action,
+                    resource_type, resource_id, project_id, ip_address,
+                    details, previous_hash, hash)
+                   VALUES ($1, $2::timestamptz, $3, $4, $5, $6, $7, $8, $9,
+                           $10::jsonb, $11, $12)""",
+                id, timestamp, actor_type, actor_id, action,
+                resource_type, resource_id, project_id, ip_address,
+                json.dumps(details) if isinstance(details, dict) else details,
+                previous_hash, hash,
+            )
+
+    async def get_last_audit_hash(self) -> Optional[str]:
+        """Get the hash of the most recent audit entry."""
+        async with self.pool.acquire() as conn:
+            row = await conn.fetchrow(
+                f"SELECT hash FROM {self.schema}.audit_log "
+                f"ORDER BY timestamp DESC LIMIT 1"
+            )
+            return row["hash"] if row else None
+
+    async def get_all_audit_entries(self) -> list[dict]:
+        """Return all audit entries ordered by timestamp ascending."""
+        async with self.pool.acquire() as conn:
+            rows = await conn.fetch(
+                f"SELECT * FROM {self.schema}.audit_log "
+                f"ORDER BY timestamp ASC"
+            )
+            results = []
+            for row in rows:
+                entry = dict(row)
+                # Convert datetimes to ISO strings for consistency
+                if isinstance(entry.get("timestamp"), datetime):
+                    entry["timestamp"] = entry["timestamp"].isoformat()
+                if isinstance(entry.get("details"), (dict, list)):
+                    entry["details"] = entry["details"]
+                results.append(entry)
+            return results
 
     # ── Additional utilities (beyond the ABC) ────────────────────────────────
 

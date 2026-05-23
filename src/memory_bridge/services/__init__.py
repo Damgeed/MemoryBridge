@@ -1,6 +1,7 @@
 """Service layer for business logic."""
 
 from .admin_service import AdminService
+from .audit_service import AuditService
 from .billing_service import BillingService
 from .cache_service import CacheService
 from .export_service import ExportService
@@ -11,6 +12,7 @@ from .user_service import UserService
 
 __all__ = [
     "AdminService",
+    "AuditService",
     "BillingService",
     "CacheService",
     "ExportService",

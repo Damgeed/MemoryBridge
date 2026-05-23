@@ -22,6 +22,7 @@ from .middleware.tenant import TenantResolverMiddleware
 from .controllers import (
     admin_controller,
     auth_controller,
+    badge_controller,
     billing_controller,
     export_controller,
     graph_controller,
@@ -33,12 +34,14 @@ from .controllers import (
 from .webhooks import router as webhook_router
 from .webhooks.webhook_controller import get_webhook_service
 from .dependencies import close_factory, get_storage
+from .events.event_bus import EventBus
 from .middleware.rate_limit import RedisRateLimiter
 from .metrics import (
     request_counter,
     request_latency,
     uptime_gauge,
 )
+from .services.audit_service import AuditService
 from .storage import MemoryStorage
 
 logger = logging.getLogger(__name__)
@@ -115,6 +118,38 @@ async def lifespan(app: FastAPI):
     # Load persisted webhook subscriptions from the repository
     webhook_svc = await get_webhook_service(repo=storage)
     await webhook_svc.load_subscriptions()
+
+    # Initialize audit service and subscribe to EventBus events
+    audit_svc = AuditService(repo=storage)
+
+    # Try to get EventBus from webhook service if available
+    event_bus = getattr(webhook_svc, '_event_bus', None)
+    if event_bus is None:
+        event_bus = EventBus()
+
+    # Subscribe audit service to all event types
+    async def audit_event_handler(data: dict) -> None:
+        event_type = data.get("type", "unknown")
+        event_data = data.get("data", {}) if isinstance(data, dict) else data
+        await audit_svc.record(
+            action=event_type,
+            actor_type="system",
+            actor_id="event_bus",
+            resource_type=event_data.get("resource_type", ""),
+            resource_id=event_data.get("resource_id"),
+            project_id=event_data.get("project"),
+            details=event_data,
+        )
+
+    for et in [
+        "memory.created",
+        "memory.updated",
+        "memory.deleted",
+        "memory.searched",
+        "session.created",
+        "handoff.executed",
+    ]:
+        event_bus.subscribe(et, audit_event_handler)
 
     yield
 
@@ -234,6 +269,7 @@ def create_app() -> FastAPI:
 
     app.include_router(health_controller.router)
     app.include_router(auth_controller.router)
+    app.include_router(badge_controller.router)
     app.include_router(billing_controller.router)
     app.include_router(memory_controller.router)
     app.include_router(session_controller.router)
