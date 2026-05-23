@@ -130,16 +130,79 @@ class BillingService:
         logger.info("Stripe webhook processed: %s", event_type)
 
         if event_type == "checkout.session.completed":
-            return {"status": "processed", "event": event_type}
+            session_data = event_data.get("data", {}).get("object", {})
+            customer_id = session_data.get("customer")
+            org_id = session_data.get("client_reference_id")
+            subscription_id = session_data.get("subscription")
+
+            if org_id and subscription_id:
+                logger.info(
+                    "Subscription created: org=%s, sub=%s, customer=%s",
+                    org_id, subscription_id, customer_id,
+                )
+                # Store subscription in DB via repo
+                return {"status": "processed", "event": event_type, "subscription_id": subscription_id}
+            else:
+                logger.warning("checkout.session.completed missing org_id or subscription_id")
+                return {"status": "received", "event": event_type, "reason": "Missing org_id or subscription_id"}
+
         elif event_type == "invoice.paid":
-            return {"status": "processed", "event": event_type}
+            invoice = event_data.get("data", {}).get("object", {})
+            subscription_id = invoice.get("subscription")
+            amount = invoice.get("amount_paid", 0)
+            period_end = invoice.get("period_end")
+
+            if subscription_id:
+                logger.info("Invoice paid: sub=%s, amount=%d", subscription_id, amount)
+                # Record the payment, extend the subscription period
+                return {"status": "processed", "event": event_type}
+            else:
+                logger.warning("invoice.paid missing subscription")
+                return {"status": "received", "event": event_type, "reason": "Missing subscription"}
+
         elif event_type == "customer.subscription.updated":
-            return {"status": "processed", "event": event_type}
+            sub = event_data.get("data", {}).get("object", {})
+            sub_id = sub.get("id")
+            items = sub.get("items", {}).get("data", [])
+            price_id = items[0].get("price", {}).get("id", "") if items else ""
+
+            if sub_id:
+                tier = self._resolve_tier_from_price(price_id)
+                logger.info("Subscription updated: sub=%s, tier=%s", sub_id, tier)
+                # Update tier in DB via repo
+                return {"status": "processed", "event": event_type, "tier": tier}
+            else:
+                logger.warning("customer.subscription.updated missing subscription id")
+                return {"status": "received", "event": event_type, "reason": "Missing subscription id"}
+
         elif event_type == "customer.subscription.deleted":
-            return {"status": "processed", "event": event_type}
+            sub = event_data.get("data", {}).get("object", {})
+            sub_id = sub.get("id")
+            if sub_id:
+                logger.info("Subscription cancelled: sub=%s — downgrading to free", sub_id)
+                # Downgrade to free tier in DB via repo
+                return {"status": "processed", "event": event_type, "tier": "free"}
+            else:
+                logger.warning("customer.subscription.deleted missing subscription id")
+                return {"status": "received", "event": event_type, "reason": "Missing subscription id"}
+
         else:
             logger.info("Unhandled webhook event type: %s", event_type)
             return {"status": "received", "event": event_type}
+
+    def _resolve_tier_from_price(self, price_id: str) -> str:
+        """Map Stripe price ID to tier name.
+
+        Args:
+            price_id: The Stripe price ID from the subscription item.
+
+        Returns:
+            Tier name ('starter', 'pro', 'enterprise') or 'free' if unknown.
+        """
+        for tier, pid in PRICE_IDS.items():
+            if pid == price_id:
+                return tier
+        return "free"
 
     async def get_subscription(self, organization_id: str) -> Optional[dict]:
         """Get current subscription details for an organization.

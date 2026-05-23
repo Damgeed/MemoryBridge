@@ -63,6 +63,16 @@ _SCHEMA_MIGRATIONS: dict[int, str] = {
     ),
     7: "ALTER TABLE memories ADD COLUMN project TEXT",
     8: "ALTER TABLE sessions ADD COLUMN project TEXT",
+    9: (
+        "CREATE INDEX IF NOT EXISTS idx_memories_project_created "
+        "ON memories(project, created_at); "
+        "CREATE INDEX IF NOT EXISTS idx_memories_session_key "
+        "ON memories(session_id, key); "
+        "CREATE INDEX IF NOT EXISTS idx_memories_project_agent "
+        "ON memories(project, agent_id); "
+        "CREATE INDEX IF NOT EXISTS idx_sessions_project_created "
+        "ON sessions(project, created_at)"
+    ),
 }
 # ──────────────────────────────────────────────────────────────────────────────
 
@@ -695,30 +705,31 @@ class SQLiteMemoryRepository(MemoryRepository):
     async def increment_metric(self, key: str, delta: int = 1) -> int:
         """Atomically increment a numeric metric. Returns the new value.
 
+        Uses atomic UPSERT to eliminate read-then-write race conditions
+        that can drop increments under concurrent load.
         Initializes to 0 if the key doesn't exist yet.
         """
         async with aiosqlite.connect(self.db_path) as db:
-            # Seed with 0 if absent
+            # Seed with 0 if absent (no-op on conflict)
             await db.execute(
                 "INSERT OR IGNORE INTO metrics (key, value, updated_at) "
                 "VALUES (?, '0', datetime('now'))",
                 (key,),
             )
-            # Read current value
+            # Atomic increment: value = CAST(COALESCE(NULLIF(value, ''), '0') AS INTEGER) + delta
+            await db.execute(
+                "UPDATE metrics SET "
+                "value = CAST(COALESCE(NULLIF(value, ''), '0') AS INTEGER) + ?, "
+                "updated_at = datetime('now') "
+                "WHERE key = ?",
+                (delta, key),
+            )
             cursor = await db.execute(
                 "SELECT value FROM metrics WHERE key = ?", (key,)
             )
             row = await cursor.fetchone()
-            current = json.loads(row[0])
-            new_value = current + delta
-            # Write updated value back
-            await db.execute(
-                "UPDATE metrics SET value = ?, updated_at = datetime('now') "
-                "WHERE key = ?",
-                (json.dumps(new_value), key),
-            )
             await db.commit()
-            return new_value
+            return int(row[0]) if row else delta
 
     async def initialize_metric(self, key: str, default_value: Any) -> None:
         """Set a metric only if it doesn't exist yet.

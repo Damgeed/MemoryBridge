@@ -56,6 +56,16 @@ _SCHEMA_MIGRATIONS: dict[int, str] = {
     ),
     7: "ALTER TABLE {schema}.memories ADD COLUMN IF NOT EXISTS project TEXT",
     8: "ALTER TABLE {schema}.sessions ADD COLUMN IF NOT EXISTS project TEXT",
+    9: (
+        "CREATE INDEX IF NOT EXISTS idx_{schema}_memories_project_created "
+        "ON {schema}.memories(project, created_at DESC); "
+        "CREATE INDEX IF NOT EXISTS idx_{schema}_memories_session_key "
+        "ON {schema}.memories(session_id, key); "
+        "CREATE INDEX IF NOT EXISTS idx_{schema}_memories_project_agent "
+        "ON {schema}.memories(project, agent_id); "
+        "CREATE INDEX IF NOT EXISTS idx_{schema}_sessions_project_created "
+        "ON {schema}.sessions(project, created_at DESC)"
+    ),
 }
 # ──────────────────────────────────────────────────────────────────────────────
 
@@ -757,32 +767,26 @@ class PostgresMemoryRepository(MemoryRepository):
     async def increment_metric(self, key: str, delta: int = 1) -> int:
         """Atomically increment a numeric metric. Returns the new value.
 
+        Uses atomic UPSERT to eliminate read-then-write race conditions
+        that can drop increments under concurrent load.
         Initializes to 0 if the key doesn't exist yet.
         """
         async with self.pool.acquire() as conn:
-            # Seed with 0 if absent
-            await conn.execute(
+            row = await conn.fetchrow(
                 f"""
                 INSERT INTO {self.schema}.metrics (key, value, updated_at)
                 VALUES ($1, '0', NOW())
-                ON CONFLICT (key) DO NOTHING
+                ON CONFLICT (key) DO UPDATE SET
+                    value = (
+                        (COALESCE(NULLIF({self.schema}.metrics.value, ''), '0')::integer + $2)::text
+                    ),
+                    updated_at = NOW()
+                RETURNING value::text::int
                 """,
                 key,
+                delta,
             )
-            # Read current value
-            row = await conn.fetchrow(
-                f"SELECT value FROM {self.schema}.metrics WHERE key = $1",
-                key,
-            )
-            current = json.loads(row["value"])
-            new_value = current + delta
-            # Write updated value back
-            await conn.execute(
-                f"UPDATE {self.schema}.metrics SET value = $1, updated_at = NOW() "
-                f"WHERE key = $2",
-                json.dumps(new_value), key,
-            )
-            return new_value
+            return row[0] if row else delta
 
     async def initialize_metric(self, key: str, default_value: Any) -> None:
         """Set a metric only if it doesn't exist yet.
