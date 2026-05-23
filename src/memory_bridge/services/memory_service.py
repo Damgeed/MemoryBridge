@@ -9,8 +9,17 @@ from typing import Optional
 
 from ..models import MemoryEntry, MemoryCreate
 from ..repository import MemoryRepository
+from .metering_service import TIER_LIMITS
 
 logger = logging.getLogger(__name__)
+
+
+class TierLimitExceeded(Exception):
+    """Raised when a tier limit has been exceeded."""
+
+    def __init__(self, message: str):
+        self.message = message
+        super().__init__(message)
 
 
 class MemoryService:
@@ -58,6 +67,31 @@ class MemoryService:
         ttl = payload.ttl_seconds
         if ttl is None and self._default_ttl:
             ttl = self._default_ttl
+
+        # Check tier limits before storing
+        if self.metering:
+            usage = await self.metering.get_usage(project=resolved_project)
+            tier = auth_context.get("tier", "free") if auth_context else "free"
+
+            # Check max memories limit
+            memories_count = usage.get("memory_write", 0)
+            allowed, msg = self.metering.check_tier_limit(
+                tier=tier,
+                metric="max_memories",
+                current_usage=memories_count,
+            )
+            if not allowed:
+                raise TierLimitExceeded(msg)
+
+            # Check storage limit
+            storage_bytes = usage.get("storage_bytes", 0)
+            max_storage = TIER_LIMITS.get(tier, TIER_LIMITS["free"]).get(
+                "storage_bytes", 100 * 1024 * 1024
+            )
+            if storage_bytes >= max_storage:
+                raise TierLimitExceeded(
+                    f"Storage limit reached ({storage_bytes}/{max_storage}). Upgrade your plan."
+                )
 
         # Build the entry
         entry = MemoryEntry(
