@@ -9,6 +9,7 @@ import os
 
 from fastapi import APIRouter
 from fastapi.responses import HTMLResponse
+from starlette.responses import Response
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/playground", tags=["playground"])
@@ -26,4 +27,9 @@ async def get_playground_page():
             status_code=200,
         )
     with open(html_path) as f:
-        return HTMLResponse(content=f.read())
+        content = f.read()
+    return Response(
+        content=content,
+        media_type="text/html",
+        headers={"Cache-Control": "no-cache, no-store, must-revalidate"},
+    )
