@@ -268,6 +268,37 @@ asyncio.run(run_migrations())
 
 ---
 
+## Blue-Green Deployment
+
+Memory Bridge supports blue-green (zero-downtime) deployments.
+
+### Principles
+
+1. **Migrations must be backward-compatible** — the old version must work with the new schema
+2. **Only ADD, never DROP** — adding columns/indices is safe; removing them requires 2 releases
+3. **Migration guard** — the migration runner checks for destructive operations and warns at startup
+
+### Deploy Flow
+
+1. Deploy new version (green) alongside old version (blue)
+2. New version runs migrations — these must not break the old version's queries
+3. Health checks pass → switch traffic to green
+4. Monitor for issues
+5. Old version (blue) stays running for rollback capability
+6. After 24h, decommission blue
+
+### Rollback Plan
+
+If green has issues:
+
+1. Switch traffic back to blue
+2. Green's schema changes are additive (new columns with NULL defaults) — blue ignores them
+3. Fix issues on green
+4. Deploy fixed green
+5. Switch traffic
+
+---
+
 ## Backup & Recovery
 
 ### PostgreSQL

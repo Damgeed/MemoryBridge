@@ -3,6 +3,9 @@
 Reads SQL migration files from backend-specific subdirectories,
 applies them in version order, and tracks applied versions in a
 ``schema_version`` table.
+
+Supports blue-green (zero-downtime) deployments via a migration
+guard that warns on backward-incompatible operations.
 """
 
 import logging
@@ -27,6 +30,50 @@ def _parse_version(filename: str) -> Optional[int]:
     if m is not None:
         return int(m.group(1))
     return None
+
+
+# ------------------------------------------------------------------
+# Blue-green deployment guard
+# ------------------------------------------------------------------
+
+# Patterns for SQL operations that break backward compatibility.
+# Any migration containing these will trigger a warning at deploy time.
+_DESTRUCTIVE_PATTERNS: list[tuple[str, str]] = [
+    (r'DROP\s+COLUMN', 'DROP COLUMN breaks backward compatibility'),
+    (r'DROP\s+TABLE', 'DROP TABLE breaks backward compatibility'),
+    (r'DROP\s+SCHEMA', 'DROP SCHEMA breaks backward compatibility'),
+    (r'ALTER\s+COLUMN.*DROP\s+DEFAULT', 'Dropping default may break old readers'),
+    (r'ALTER\s+COLUMN.*SET\s+NOT\s+NULL', 'Adding NOT NULL to existing column breaks old readers'),
+    (r'RENAME\s+COLUMN', 'RENAME COLUMN breaks backward compatibility'),
+    (r'RENAME\s+TABLE', 'RENAME TABLE breaks backward compatibility'),
+]
+
+
+def check_backward_compatible(sql_file_path: str | Path) -> list[str]:
+    """Check if a migration SQL file contains backward-incompatible changes.
+
+    Scans the file for destructive SQL operations (DROP, RENAME,
+    ALTER ... NOT NULL, etc.) that would break an older application
+    version still running against the same schema.
+
+    Parameters
+    ----------
+    sql_file_path : str or Path
+        Path to the ``.sql`` migration file to inspect.
+
+    Returns
+    -------
+    list of str
+        Warning messages.  An empty list means the migration is safe.
+    """
+    with open(sql_file_path, encoding="utf-8") as f:
+        content = f.read().upper()
+
+    warnings: list[str] = []
+    for pattern, message in _DESTRUCTIVE_PATTERNS:
+        if re.search(pattern, content, re.IGNORECASE):
+            warnings.append(f"⚠️  {message}")
+    return warnings
 
 
 class MigrationRunner:
@@ -86,13 +133,19 @@ class MigrationRunner:
         # 3. Find already-applied versions
         applied = await self._get_applied_versions(conn_or_db)
 
-        # 4. Apply each pending migration in order
+        # 4. Check backward compatibility and apply each pending migration
         applied_names: list[str] = []
         for version, filepath in migrations:
             if version in applied:
                 continue
             name = filepath.name
             logger.info("Applying migration %s (%s)", name, self.backend)
+
+            # Blue-green guard: warn on backward-incompatible operations
+            compat_warnings = check_backward_compatible(filepath)
+            for warning in compat_warnings:
+                logger.warning("Migration %s: %s", name, warning)
+
             try:
                 await self._apply_sql_file(conn_or_db, filepath)
                 await self._record_version(conn_or_db, version)

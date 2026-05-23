@@ -1,5 +1,7 @@
 -- v3: Composite indexes for common query patterns (SQLite)
 --
+-- ✅ Backward compatible — CREATE INDEX IF NOT EXISTS only
+--
 -- Adds composite indexes to accelerate the most frequent query patterns:
 --   1. (project, created_at)       — project-scoped time-ordered queries
 --   2. (session_id, key)           — memory lookup by key within a session

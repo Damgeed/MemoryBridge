@@ -28,7 +28,6 @@ def _hash_api_key(plain_key: str) -> str:
 # ── Schema version manifest ──────────────────────────────────────────────────
 #   v1  (0.1.0)  Base tables: sessions, memories (with tags column), memory_tags
 #   v2  (0.2.0)  Add ttl_seconds column to memories
-#   v3  (0.3.0)  Drop legacy tags column from memories (junction-table only)
 _SCHEMA_MIGRATIONS: dict[int, str] = {
     2: "ALTER TABLE {schema}.memories ADD COLUMN ttl_seconds INTEGER",
     3: "ALTER TABLE {schema}.memories DROP COLUMN IF EXISTS tags",
@@ -41,7 +40,8 @@ _SCHEMA_MIGRATIONS: dict[int, str] = {
     ),
     5: (
         "CREATE INDEX IF NOT EXISTS idx_{schema}_memories_fts "
-        "ON {schema}.memories USING GIN (to_tsvector('english', COALESCE(value::text, '')))"
+        "ON {schema}.memories USING GIN (to_tsvector('english', COALESCE(value::text, ''))"
+        ")"
     ),
     6: (
         "CREATE TABLE IF NOT EXISTS {schema}.api_keys ("
@@ -65,6 +65,12 @@ _SCHEMA_MIGRATIONS: dict[int, str] = {
         "ON {schema}.memories(project, agent_id); "
         "CREATE INDEX IF NOT EXISTS idx_{schema}_sessions_project_created "
         "ON {schema}.sessions(project, created_at DESC)"
+    ),
+    10: (
+        "ALTER TABLE {schema}.memories ADD COLUMN IF NOT EXISTS embedding vector(1536); "
+        "CREATE INDEX IF NOT EXISTS idx_{schema}_memories_embedding "
+        "ON {schema}.memories USING ivfflat (embedding vector_cosine_ops) "
+        "WITH (lists = 100)"
     ),
 }
 # ──────────────────────────────────────────────────────────────────────────────
@@ -488,6 +494,64 @@ class PostgresMemoryRepository(MemoryRepository):
                 *params, limit, offset,
             )
 
+            results: list[MemoryEntry] = []
+            expired_ids: list[str] = []
+            for row in rows:
+                entry = await self._row_to_entry_schema(row, conn)
+                if _is_expired(entry):
+                    expired_ids.append(entry.id)
+                    continue
+                results.append(entry)
+
+            # Lazily clean up expired entries
+            if expired_ids:
+                id_placeholders = ",".join(f"${i + 1}" for i in range(len(expired_ids)))
+                await conn.execute(
+                    f"DELETE FROM {self.schema}.memories WHERE id IN ({id_placeholders})",
+                    *expired_ids,
+                )
+
+            return results
+
+    async def search_memories_semantic(
+        self,
+        query_vector: list[float],
+        project: Optional[str] = None,
+        limit: int = 50,
+        offset: int = 0,
+    ) -> list[MemoryEntry]:
+        """Search memories by semantic similarity using pgvector.
+
+        Uses cosine distance (<=>) to rank memories by embedding similarity.
+        Filters by project if provided.
+        Expired memories are filtered out.
+        """
+        conditions: list[str] = []
+        params: list = []
+        param_idx = 1
+
+        if project:
+            conditions.append(f"m.project = ${param_idx}")
+            params.append(project)
+            param_idx += 1
+
+        where = " AND ".join(conditions) if conditions else "TRUE"
+
+        # Pad or truncate vector to 1536 dimensions
+        vec = query_vector[:1536] if len(query_vector) >= 1536 else query_vector + [0.0] * (1536 - len(query_vector))
+        vec_str = "[" + ",".join(str(v) for v in vec) + "]"
+
+        sql = f"""
+            SELECT m.id, m.session_id, m.agent_id, m.key, m.value,
+                   m.created_at, m.updated_at, m.ttl_seconds, m.project
+            FROM {self.schema}.memories m
+            WHERE {where}
+            ORDER BY m.embedding <=> ${param_idx}::vector
+            LIMIT ${param_idx + 1} OFFSET ${param_idx + 2}
+        """
+
+        async with self.pool.acquire() as conn:
+            rows = await conn.fetch(sql, *params, vec_str, limit, offset)
             results: list[MemoryEntry] = []
             expired_ids: list[str] = []
             for row in rows:

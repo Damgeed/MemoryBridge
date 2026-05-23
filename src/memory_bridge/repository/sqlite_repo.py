@@ -463,6 +463,64 @@ class SQLiteMemoryRepository(MemoryRepository):
 
             return results
 
+    async def search_memories_semantic(
+        self,
+        query_vector: list[float],
+        project: Optional[str] = None,
+        limit: int = 50,
+        offset: int = 0,
+    ) -> list[MemoryEntry]:
+        """Semantic search — falls back to full-text search for SQLite.
+
+        SQLite does not have pgvector, so we perform a brute-force cosine
+        similarity search in Python over all memories in the project scope.
+        """
+        # Fetch all memories (with optional project filter)
+        all_memories = await self.query_memories(
+            project=project,
+            limit=10000,
+            offset=0,
+        )
+
+        if not all_memories or not query_vector:
+            return []
+
+        # Compute cosine similarity between query vector and each memory
+        # (using a local TF-IDF-like embedding computed from value text)
+        scored = []
+        for mem in all_memories:
+            value_text = str(mem.value) if not isinstance(mem.value, str) else mem.value
+            # Generate a simple local embedding from the value text
+            mem_vec = self._local_embed(value_text)
+            sim = self._cosine_similarity(query_vector, mem_vec)
+            scored.append((sim, mem))
+
+        # Sort by similarity descending
+        scored.sort(key=lambda x: -x[0])
+
+        # Apply pagination
+        paginated = scored[offset:offset + limit]
+        return [mem for _, mem in paginated]
+
+    @staticmethod
+    def _local_embed(text: str) -> list[float]:
+        """Simple character-level embedding for local cosine comparison."""
+        chars = set(text.lower())
+        all_chars = "abcdefghijklmnopqrstuvwxyz0123456789 ._-"
+        return [1.0 if c in chars else 0.0 for c in all_chars]
+
+    @staticmethod
+    def _cosine_similarity(a: list[float], b: list[float]) -> float:
+        """Compute cosine similarity between two vectors."""
+        if not a or not b or len(a) != len(b):
+            return 0.0
+        dot = sum(x * y for x, y in zip(a, b))
+        norm_a = sum(x * x for x in a) ** 0.5
+        norm_b = sum(x * x for x in b) ** 0.5
+        if norm_a == 0 or norm_b == 0:
+            return 0.0
+        return dot / (norm_a * norm_b)
+
     async def delete_memory(self, memory_id: str) -> bool:
         """Delete a memory entry by ID. Returns True if a row was deleted."""
         async with aiosqlite.connect(self.db_path) as db:

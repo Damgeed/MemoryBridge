@@ -1,0 +1,511 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Memory Bridge — Memory Graph</title>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <style>
+        /* ── Reset & Base ─────────────────────────────────────────────── */
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            background: #0d1117;
+            color: #e6edf3;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            overflow: hidden;
+            height: 100vh;
+        }
+
+        /* ── Toolbar ──────────────────────────────────────────────────── */
+        .toolbar {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 0.75rem 1.5rem;
+            background: #161b22;
+            border-bottom: 1px solid #30363d;
+            height: 56px;
+        }
+        .toolbar h2 {
+            font-size: 1rem;
+            color: #58a6ff;
+            white-space: nowrap;
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
+        .toolbar input {
+            background: #0d1117;
+            border: 1px solid #30363d;
+            padding: 0.4rem 0.8rem;
+            border-radius: 6px;
+            color: #e6edf3;
+            font-size: 0.85rem;
+            flex: 1;
+            max-width: 300px;
+            outline: none;
+            transition: border-color 0.15s;
+        }
+        .toolbar input:focus {
+            border-color: #58a6ff;
+        }
+        .toolbar input::placeholder {
+            color: #484f58;
+        }
+
+        /* ── Legend ───────────────────────────────────────────────────── */
+        .legend {
+            display: flex;
+            gap: 1rem;
+            font-size: 0.8rem;
+            margin-left: auto;
+        }
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 0.3rem;
+        }
+        .legend-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            display: inline-block;
+            flex-shrink: 0;
+        }
+
+        /* ── Graph Container ──────────────────────────────────────────── */
+        #graph {
+            width: 100vw;
+            height: calc(100vh - 56px);
+            position: relative;
+        }
+        #graph svg {
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+
+        /* ── Tooltip ──────────────────────────────────────────────────── */
+        .tooltip {
+            position: absolute;
+            background: #1c2333;
+            border: 1px solid #30363d;
+            padding: 0.6rem 0.85rem;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            line-height: 1.5;
+            pointer-events: none;
+            display: none;
+            z-index: 100;
+            max-width: 280px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+        }
+        .tooltip strong {
+            color: #f0f6fc;
+        }
+        .tooltip .tt-label {
+            color: #8b949e;
+            font-size: 0.75rem;
+        }
+
+        /* ── D3 Elements ──────────────────────────────────────────────── */
+        .node {
+            cursor: pointer;
+            stroke: #1c2333;
+            stroke-width: 1.5px;
+            transition: stroke-width 0.1s;
+        }
+        .node:hover {
+            stroke: #f0f6fc;
+            stroke-width: 2.5px;
+        }
+        .node.highlighted {
+            stroke: #f0f6fc;
+            stroke-width: 2.5px;
+        }
+        .node.dimmed {
+            opacity: 0.15;
+        }
+        .link {
+            stroke: #30363d;
+            stroke-opacity: 0.5;
+            stroke-width: 1px;
+        }
+        .link.highlighted {
+            stroke: #58a6ff;
+            stroke-opacity: 0.8;
+            stroke-width: 1.5px;
+        }
+        .link.dimmed {
+            stroke-opacity: 0.05;
+        }
+        .label {
+            font-size: 10px;
+            fill: #8b949e;
+            pointer-events: none;
+            font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+        }
+        .label.dimmed {
+            opacity: 0.2;
+        }
+
+        /* ── Empty State ──────────────────────────────────────────────── */
+        .empty-state {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            color: #484f58;
+        }
+        .empty-state h3 {
+            font-size: 1.2rem;
+            margin-bottom: 0.5rem;
+            color: #8b949e;
+        }
+        .empty-state p {
+            font-size: 0.9rem;
+        }
+
+        /* ── Loading ──────────────────────────────────────────────────── */
+        .loading {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            color: #8b949e;
+            font-size: 0.9rem;
+        }
+        .spinner {
+            width: 24px;
+            height: 24px;
+            border: 3px solid #30363d;
+            border-top-color: #58a6ff;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin-right: 0.75rem;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* ── Responsive ───────────────────────────────────────────────── */
+        @media (max-width: 640px) {
+            .toolbar { flex-wrap: wrap; height: auto; padding: 0.5rem 1rem; gap: 0.5rem; }
+            .toolbar input { max-width: 100%; }
+            .legend { margin-left: 0; flex-wrap: wrap; gap: 0.5rem; }
+            #graph { height: calc(100vh - 120px); }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ── Toolbar ──────────────────────────────────────────────── -->
+    <div class="toolbar">
+        <h2>🧠 Memory Graph</h2>
+        <input id="search" type="text" placeholder="Filter nodes by label..." oninput="filterNodes()">
+        <div class="legend">
+            <span class="legend-item">
+                <span class="legend-dot" style="background: #58a6ff;"></span> Memory
+            </span>
+            <span class="legend-item">
+                <span class="legend-dot" style="background: #3fb950;"></span> Session
+            </span>
+            <span class="legend-item">
+                <span class="legend-dot" style="background: #d29922;"></span> Agent
+            </span>
+            <span class="legend-item">
+                <span class="legend-dot" style="background: #bc8cff;"></span> Tag
+            </span>
+        </div>
+    </div>
+
+    <!-- ── Graph ────────────────────────────────────────────────── -->
+    <div id="graph">
+        <div class="loading">
+            <div class="spinner"></div>
+            Loading graph data...
+        </div>
+    </div>
+
+    <!-- ── Tooltip ──────────────────────────────────────────────── -->
+    <div id="tooltip" class="tooltip"></div>
+
+    <script>
+        // ── Configuration ───────────────────────────────────────────────
+        const COLORS = {
+            memory:  '#58a6ff',
+            session: '#3fb950',
+            agent:   '#d29922',
+            tag:     '#bc8cff',
+        };
+
+        const API_ENDPOINT = '/graph/data';
+
+        let svg, g, simulation, linkElements, nodeElements, labelElements;
+        let graphData = null;
+
+        // ── Load Data ───────────────────────────────────────────────────
+        async function loadGraph() {
+            const container = document.getElementById('graph');
+
+            try {
+                // Build query params from URL
+                const params = new URLSearchParams(window.location.search);
+                const limit = params.get('limit') || '200';
+                const sessionId = params.get('session_id') || '';
+                const project = params.get('project') || '';
+
+                let url = `${API_ENDPOINT}?limit=${limit}`;
+                if (sessionId) url += `&session_id=${encodeURIComponent(sessionId)}`;
+                if (project)   url += `&project=${encodeURIComponent(project)}`;
+
+                const response = await fetch(url);
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+
+                graphData = await response.json();
+
+                if (!graphData.nodes || graphData.nodes.length === 0) {
+                    container.innerHTML = `
+                        <div class="empty-state">
+                            <h3>No memories found</h3>
+                            <p>Create some memories first, then visit this page.</p>
+                        </div>`;
+                    return;
+                }
+
+                renderGraph(graphData);
+            } catch (e) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <h3>⚠️ Failed to load graph</h3>
+                        <p style="color: #f85149;">${e.message}</p>
+                    </div>`;
+            }
+        }
+
+        // ── Render D3 Force-Directed Graph ──────────────────────────────
+        function renderGraph(data) {
+            const container = document.getElementById('graph');
+            container.innerHTML = '';
+
+            const width = container.clientWidth;
+            const height = container.clientHeight;
+
+            svg = d3.select('#graph')
+                .append('svg')
+                .attr('width', width)
+                .attr('height', height);
+
+            // ── Zoom ────────────────────────────────────────────────────
+            const zoom = d3.zoom()
+                .scaleExtent([0.1, 5])
+                .on('zoom', (event) => {
+                    g.attr('transform', event.transform);
+                });
+
+            svg.call(zoom);
+
+            // Center group
+            g = svg.append('g');
+
+            // ── Links ───────────────────────────────────────────────────
+            linkElements = g.selectAll('line')
+                .data(data.edges)
+                .join('line')
+                .attr('class', 'link');
+
+            // ── Nodes ───────────────────────────────────────────────────
+            nodeElements = g.selectAll('circle')
+                .data(data.nodes)
+                .join('circle')
+                .attr('class', 'node')
+                .attr('r', d => d.type === 'session' ? 10 : d.type === 'agent' ? 9 : 7)
+                .attr('fill', d => COLORS[d.type] || '#888')
+                .call(d3.drag()
+                    .on('start', (event, d) => {
+                        if (!event.active) simulation.alphaTarget(0.3).restart();
+                        d.fx = d.x;
+                        d.fy = d.y;
+                    })
+                    .on('drag', (event, d) => {
+                        d.fx = event.x;
+                        d.fy = event.y;
+                    })
+                    .on('end', (event, d) => {
+                        if (!event.active) simulation.alphaTarget(0);
+                        d.fx = null;
+                        d.fy = null;
+                    })
+                );
+
+            // ── Labels ──────────────────────────────────────────────────
+            labelElements = g.selectAll('text')
+                .data(data.nodes)
+                .join('text')
+                .text(d => d.label)
+                .attr('class', 'label')
+                .attr('dx', d => d.type === 'memory' ? 10 : 12)
+                .attr('dy', 4);
+
+            // ── Tooltip ─────────────────────────────────────────────────
+            const tooltip = d3.select('#tooltip');
+            const tooltipEl = document.getElementById('tooltip');
+
+            nodeElements
+                .on('mouseover', (event, d) => {
+                    const tags = d.tags && d.tags.length > 0
+                        ? '<br><span class="tt-label">Tags:</span> ' + d.tags.join(', ')
+                        : '';
+                    const key = d.key
+                        ? '<br><span class="tt-label">Key:</span> ' + d.key
+                        : '';
+                    tooltip
+                        .style('display', 'block')
+                        .html(`
+                            <strong>${d.label}</strong><br>
+                            <span class="tt-label">Type:</span> ${d.type}${key}${tags}
+                        `);
+                })
+                .on('mousemove', (event) => {
+                    const x = event.pageX + 14;
+                    const y = event.pageY - 10;
+                    // Keep tooltip in viewport
+                    const tw = tooltipEl.offsetWidth || 200;
+                    const th = tooltipEl.offsetHeight || 100;
+                    tooltip
+                        .style('left', (x + tw > window.innerWidth ? event.pageX - tw - 14 : x) + 'px')
+                        .style('top', (y + th > window.innerHeight ? event.pageY - th - 10 : y) + 'px');
+                })
+                .on('mouseout', () => {
+                    tooltip.style('display', 'none');
+                });
+
+            // ── Simulation ──────────────────────────────────────────────
+            simulation = d3.forceSimulation(data.nodes)
+                .force('link', d3.forceLink(data.edges)
+                    .id(d => d.id)
+                    .distance(d => d.type === 'tagged' ? 80 : 120)
+                    .strength(0.4)
+                )
+                .force('charge', d3.forceManyBody()
+                    .strength(d => d.type === 'session' ? -400 : d.type === 'agent' ? -350 : -200)
+                )
+                .force('center', d3.forceCenter(width / 2, height / 2))
+                .force('collision', d3.forceCollide().radius(12))
+                .alphaDecay(0.02)
+                .on('tick', () => {
+                    linkElements
+                        .attr('x1', d => d.source.x)
+                        .attr('y1', d => d.source.y)
+                        .attr('x2', d => d.target.x)
+                        .attr('y2', d => d.target.y);
+                    nodeElements
+                        .attr('cx', d => d.x)
+                        .attr('cy', d => d.y);
+                    labelElements
+                        .attr('x', d => d.x)
+                        .attr('y', d => d.y);
+                });
+
+            // ── Initial zoom to fit ─────────────────────────────────────
+            setTimeout(() => {
+                const bounds = g.node()?.getBBox();
+                if (bounds && bounds.width > 0 && bounds.height > 0) {
+                    const scale = Math.min(
+                        width / (bounds.width + 100),
+                        height / (bounds.height + 100),
+                        1.5
+                    );
+                    const tx = width / 2 - (bounds.x + bounds.width / 2) * scale;
+                    const ty = height / 2 - (bounds.y + bounds.height / 2) * scale;
+                    svg.transition().duration(500).call(
+                        zoom.transform,
+                        d3.zoomIdentity.translate(tx, ty).scale(scale)
+                    );
+                }
+            }, 100);
+        }
+
+        // ── Filter Nodes ────────────────────────────────────────────────
+        function filterNodes() {
+            const query = document.getElementById('search').value.toLowerCase().trim();
+
+            if (!graphData || !graphData.nodes) return;
+
+            if (!query) {
+                // Reset all
+                nodeElements.classed('dimmed highlighted', false);
+                linkElements.classed('dimmed highlighted', false);
+                labelElements.classed('dimmed', false);
+                return;
+            }
+
+            // Find matching node IDs
+            const matchIds = new Set();
+            graphData.nodes.forEach(d => {
+                if (d.label.toLowerCase().includes(query) ||
+                    (d.key && d.key.toLowerCase().includes(query)) ||
+                    (d.type && d.type.includes(query))) {
+                    matchIds.add(d.id);
+                }
+            });
+
+            // Find connected edge targets
+            const connectedIds = new Set(matchIds);
+            graphData.edges.forEach(e => {
+                const sId = typeof e.source === 'object' ? e.source.id : e.source;
+                const tId = typeof e.target === 'object' ? e.target.id : e.target;
+                if (matchIds.has(sId)) connectedIds.add(tId);
+                if (matchIds.has(tId)) connectedIds.add(sId);
+            });
+
+            nodeElements
+                .classed('dimmed', d => !connectedIds.has(d.id))
+                .classed('highlighted', d => matchIds.has(d.id));
+
+            linkElements
+                .classed('dimmed', d => {
+                    const sId = typeof d.source === 'object' ? d.source.id : d.source;
+                    const tId = typeof d.target === 'object' ? d.target.id : d.target;
+                    return !(connectedIds.has(sId) && connectedIds.has(tId));
+                })
+                .classed('highlighted', d => {
+                    const sId = typeof d.source === 'object' ? d.source.id : d.source;
+                    const tId = typeof d.target === 'object' ? d.target.id : d.target;
+                    return matchIds.has(sId) && matchIds.has(tId);
+                });
+
+            labelElements.classed('dimmed', d => !connectedIds.has(d.id));
+        }
+
+        // ── Handle Resize ───────────────────────────────────────────────
+        let resizeTimeout;
+        window.addEventListener('resize', () => {
+            clearTimeout(resizeTimeout);
+            resizeTimeout = setTimeout(() => {
+                // Reload the graph to adapt to new dimensions
+                if (graphData) {
+                    const container = document.getElementById('graph');
+                    const width = container.clientWidth;
+                    const height = container.clientHeight;
+                    svg.attr('width', width).attr('height', height);
+                    simulation.force('center', d3.forceCenter(width / 2, height / 2));
+                    simulation.alpha(0.3).restart();
+                }
+            }, 200);
+        });
+
+        // ── Keyboard shortcut ───────────────────────────────────────────
+        document.addEventListener('keydown', (e) => {
+            if (e.key === '/' && e.target.tagName !== 'INPUT') {
+                e.preventDefault();
+                document.getElementById('search').focus();
+            }
+        });
+
+        // ── Start ───────────────────────────────────────────────────────
+        loadGraph();
+    </script>
+</body>
+</html>

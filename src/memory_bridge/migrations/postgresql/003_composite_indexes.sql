@@ -1,5 +1,7 @@
 -- v3: Composite indexes for common query patterns (PostgreSQL)
 --
+-- ✅ Backward compatible — CREATE INDEX IF NOT EXISTS only
+--
 -- Adds composite indexes to accelerate the most frequent query patterns.
 -- PostgreSQL supports DESC in index definitions, so we include it for
 -- created-at columns which are always queried in descending order.

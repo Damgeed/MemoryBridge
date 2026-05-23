@@ -2,6 +2,8 @@
 --
 -- Core tables for Memory Bridge: sessions, memories, memory_tags,
 -- schema_version (for migration tracking), metrics, and api_keys.
+--
+-- ✅ Backward compatible — CREATE TABLE IF NOT EXISTS, CREATE INDEX IF NOT EXISTS only
 
 CREATE TABLE IF NOT EXISTS sessions (
     session_id TEXT PRIMARY KEY,

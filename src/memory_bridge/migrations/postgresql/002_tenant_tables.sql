@@ -1,4 +1,7 @@
 -- v2: Multi-tenant tables
+--
+-- ✅ Backward compatible — CREATE TABLE IF NOT EXISTS, ADD COLUMN IF NOT EXISTS,
+--    CREATE INDEX IF NOT EXISTS only
 
 CREATE TABLE IF NOT EXISTS public.organizations (
     id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,

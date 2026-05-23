@@ -12,6 +12,7 @@ from ..config import get_settings
 from ..models import MemoryEntry, MemoryCreate
 from ..repository import MemoryRepository
 from ..repository.s3_store import S3Store
+from .embedding_service import EmbeddingService
 from .metering_service import TIER_LIMITS
 
 logger = logging.getLogger(__name__)
@@ -48,6 +49,7 @@ class MemoryService:
         self.metering = metering
         self.s3_store = s3_store
         self._default_ttl: Optional[int] = None  # Set from settings
+        self._embedding_service = EmbeddingService()
 
     async def create_memory(
         self,
@@ -234,6 +236,51 @@ class MemoryService:
             offset=offset,
             project=project,
         )
+
+    async def search_memories_semantic(
+        self,
+        query: str,
+        project: Optional[str] = None,
+        limit: int = 50,
+        offset: int = 0,
+    ) -> list[MemoryEntry]:
+        """Semantic search across memories.
+
+        Generates an embedding vector from the query text using the
+        configured EmbeddingService, then delegates to the repository's
+        vector search (pgvector for PostgreSQL, brute-force cosine for SQLite).
+
+        Falls back to regular FTS search if embedding generation is
+        unavailable (no API key configured).
+        """
+        query_vector = await self._embedding_service.embed(query)
+
+        if query_vector is None or len(query_vector) == 0:
+            # Embedding unavailable — fall back to FTS
+            logger.info("Embedding unavailable, falling back to FTS search")
+            return await self.repo.search_memories(
+                query=query,
+                limit=limit,
+                offset=offset,
+                project=project,
+            )
+
+        try:
+            return await self.repo.search_memories_semantic(
+                query_vector=query_vector,
+                project=project,
+                limit=limit,
+                offset=offset,
+            )
+        except NotImplementedError:
+            # Backend doesn't support vector search — fall back to FTS
+            logger.info("Vector search not supported by backend, falling back to FTS")
+            return await self.repo.search_memories(
+                query=query,
+                limit=limit,
+                offset=offset,
+                project=project,
+            )
 
     async def delete_memory(self, memory_id: str) -> bool:
         """Delete a memory, evicting from cache and cleaning up S3 if needed."""

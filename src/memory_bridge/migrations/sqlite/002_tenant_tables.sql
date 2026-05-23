@@ -1,4 +1,6 @@
 -- v2: Multi-tenant tables (SQLite)
+--
+-- ✅ Backward compatible — CREATE TABLE IF NOT EXISTS only (no DROP/ALTER/RENAME)
 
 CREATE TABLE IF NOT EXISTS organizations (
     id TEXT PRIMARY KEY DEFAULT (lower(hex(randomblob(16)))),

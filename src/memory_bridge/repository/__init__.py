@@ -51,6 +51,20 @@ class MemoryRepository(ABC):
         """Full-text search across memory content."""
         ...
 
+    async def search_memories_semantic(
+        self,
+        query_vector: list[float],
+        project: Optional[str] = None,
+        limit: int = 50,
+        offset: int = 0,
+    ) -> list[MemoryEntry]:
+        """Search memories by semantic similarity.
+
+        Default implementation falls back to FTS search.
+        Override in backends that support vector search (e.g. pgvector).
+        """
+        raise NotImplementedError("Semantic search not supported by this backend")
+
     @abstractmethod
     async def delete_memory(self, memory_id: str) -> bool:
         """Delete a memory by ID. Returns True if deleted."""

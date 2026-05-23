@@ -87,6 +87,40 @@ async def search_memories(
     return {"entries": [e.model_dump() for e in entries], "total": len(entries)}
 
 
+@router.post("/semantic_search")
+async def semantic_search_memories(
+    request: Request,
+    payload: MemoryQuery,
+    service: MemoryService = Depends(get_memory_service),
+):
+    """Search memories by semantic similarity.
+
+    Generates an embedding from the query text (extracted from the first
+    key or tag in the payload, or falls back to FTS). Uses pgvector
+    on PostgreSQL or brute-force cosine similarity on SQLite.
+
+    Reuses the MemoryQuery model — the 'keys' field acts as the search
+    query text, or 'tags' can be used for the query context.
+    """
+    project = payload.project or getattr(request.state, "project_id", None)
+
+    # Build a search query from the payload
+    query_text = " ".join(payload.keys) if payload.keys else ""
+    if payload.tags:
+        query_text = (query_text + " " + " ".join(payload.tags)).strip()
+    if not query_text:
+        # Fall back to session_id as a filter context
+        query_text = payload.session_id or ""
+
+    entries = await service.search_memories_semantic(
+        query=query_text,
+        project=project,
+        limit=payload.limit,
+        offset=payload.offset,
+    )
+    return {"entries": [e.model_dump() for e in entries], "total": len(entries)}
+
+
 @router.get("/{memory_id}", response_model=MemoryEntry)
 async def get_memory(
     memory_id: str,
