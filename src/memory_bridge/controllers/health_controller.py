@@ -3,6 +3,8 @@
 Exposes service health status and Prometheus metrics.
 Both endpoints bypass the service layer and talk directly
 to the repository for operational data.
+
+Also provides Kubernetes-style readiness and liveness probes.
 """
 
 import logging
@@ -64,6 +66,36 @@ async def health(storage: MemoryRepository = Depends(get_storage)):
         "requests_served": req_count,
         "last_cleanup_seconds_ago": last_cleanup_seconds_ago,
     }
+
+
+@router.get("/health/ready")
+async def readiness(storage: MemoryRepository = Depends(get_storage)):
+    """Kubernetes readiness probe.
+
+    Returns 200 when the service is ready to accept traffic,
+    meaning the database connection is functional.
+    Returns 503 if the database is unreachable.
+    """
+    try:
+        # Verify database connectivity by checking metrics
+        await storage.get_all_metrics()
+        return {"status": "ready", "database": "connected"}
+    except Exception as e:
+        logger.warning("Readiness check failed: %s", e)
+        raise HTTPException(
+            status_code=503,
+            detail={"status": "not_ready", "database": "disconnected"},
+        )
+
+
+@router.get("/health/live")
+async def liveness():
+    """Kubernetes liveness probe.
+
+    Always returns 200 as long as the process is alive.
+    The process being alive means the service is running.
+    """
+    return {"status": "alive"}
 
 
 @router.get("/metrics")
