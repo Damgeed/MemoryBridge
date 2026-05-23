@@ -42,7 +42,7 @@ async def create_memory(
     Applies server-wide default TTL if configured.
     """
     auth_context = getattr(request.state, "auth", None)
-    project = payload.project
+    project = payload.project or getattr(request.state, "project_id", None)
     return await service.create_memory(
         payload=payload,
         project=project,
@@ -61,9 +61,7 @@ async def search_memories(
     service: MemoryService = Depends(get_memory_service),
 ):
     """Full-text search across memories."""
-    project = None
-    if hasattr(request.state, "auth") and request.state.auth:
-        project = request.state.auth.get("project_id")
+    project = getattr(request.state, "project_id", None)
     entries = await service.search_memories(
         query=q,
         limit=limit,
@@ -98,9 +96,7 @@ async def query_memories(
     ),
 ):
     """Query memories with optional filters and lineage traversal."""
-    project = query.project
-    if project is None and hasattr(request.state, "auth") and request.state.auth:
-        project = request.state.auth.get("project_id")
+    project = query.project or getattr(request.state, "project_id", None)
     entries = await service.query_memories(
         session_id=query.session_id,
         agent_id=query.agent_id,
