@@ -4,12 +4,14 @@ Uses MemoryService for business logic including project scope
 resolution, default TTL application, and cache integration.
 """
 
+import json
 import logging
 import os
 from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
 
+from ..config import get_settings
 from ..dependencies import get_storage
 from ..models import MemoryCreate, MemoryEntry, MemoryQuery
 from ..services.memory_service import MemoryService
@@ -43,6 +45,16 @@ async def create_memory(
     """
     auth_context = getattr(request.state, "auth", None)
     project = payload.project or getattr(request.state, "project_id", None)
+
+    # Validate value size before processing (fast-fail for HTTP clients)
+    value_size = len(json.dumps(payload.value))
+    max_value_size = get_settings().max_value_size
+    if value_size > max_value_size:
+        raise HTTPException(
+            status_code=413,
+            detail=f"Memory value too large: {value_size} bytes exceeds limit of {max_value_size} bytes",
+        )
+
     return await service.create_memory(
         payload=payload,
         project=project,

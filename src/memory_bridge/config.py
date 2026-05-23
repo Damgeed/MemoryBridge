@@ -45,6 +45,9 @@ class Settings(BaseSettings):
     max_body_size: int = 10_485_760  # 10MB
     public_metrics: bool = False
 
+    # Value-size enforcement
+    max_value_size: int = 1_048_576  # 1MB default for individual value
+
     # Memory lifecycle
     cleanup_interval: int = 300
     default_ttl: int = 0  # 0 = no default TTL

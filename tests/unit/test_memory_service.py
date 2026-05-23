@@ -2,7 +2,7 @@
 import pytest
 from memory_bridge.models import MemoryCreate
 from memory_bridge.repository.sqlite_repo import SQLiteMemoryRepository
-from memory_bridge.services.memory_service import MemoryService
+from memory_bridge.services.memory_service import MemoryService, TierLimitExceeded
 
 
 @pytest.fixture
@@ -92,3 +92,21 @@ async def test_query_with_tags(service):
 
     results = await service.query_memories(session_id="s1", tags=["nonexistent"])
     assert len(results) == 0
+
+
+@pytest.mark.asyncio
+async def test_create_memory_value_too_large(service):
+    """Creating a memory with a value exceeding max-size should raise TierLimitExceeded."""
+    # A value large enough to exceed the 1MB default
+    large_value = "x" * (1_048_576 + 1)  # 1MB + 1 byte
+    payload = MemoryCreate(session_id="s1", agent_id="a1", key="k1", value=large_value)
+    with pytest.raises(TierLimitExceeded, match="Value exceeds"):
+        await service.create_memory(payload)
+
+
+@pytest.mark.asyncio
+async def test_create_memory_normal_value(service):
+    """A normal-sized value should not be blocked."""
+    payload = MemoryCreate(session_id="s1", agent_id="a1", key="k_normal", value="small_value")
+    entry = await service.create_memory(payload)
+    assert entry.value == "small_value"

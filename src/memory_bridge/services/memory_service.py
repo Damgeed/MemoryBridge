@@ -4,9 +4,11 @@ Sits between controllers and the repository layer.
 Handles auth context, tier limits, caching, and metering.
 """
 
+import json
 import logging
 from typing import Optional
 
+from ..config import get_settings
 from ..models import MemoryEntry, MemoryCreate
 from ..repository import MemoryRepository
 from .metering_service import TIER_LIMITS
@@ -92,6 +94,15 @@ class MemoryService:
                 raise TierLimitExceeded(
                     f"Storage limit reached ({storage_bytes}/{max_storage}). Upgrade your plan."
                 )
+
+        # Validate value size before storing
+        value_size = len(json.dumps(payload.value))
+        max_value_size = get_settings().max_value_size
+        if value_size > max_value_size:
+            logger.warning("Memory value too large: %d bytes (limit: %d)", value_size, max_value_size)
+            raise TierLimitExceeded(
+                f"Value exceeds {max_value_size}-byte limit ({value_size} bytes)"
+            )
 
         # Build the entry
         entry = MemoryEntry(
