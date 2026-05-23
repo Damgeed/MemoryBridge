@@ -14,6 +14,7 @@ from datetime import datetime, timezone
 
 from fastapi import FastAPI, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 from starlette.middleware.base import BaseHTTPMiddleware
 
 from .auth import APIKeyMiddleware
@@ -279,6 +280,11 @@ def create_app() -> FastAPI:
     app.include_router(admin_controller.router)
     app.include_router(export_controller.router)
     app.include_router(webhook_router)
+
+    # ── Static Assets (logo.svg, etc.) ─────────────────────────────
+    static_dir = os.path.join(os.path.dirname(__file__), "static")
+    if os.path.exists(static_dir):
+        app.mount("/playground", StaticFiles(directory=static_dir, html=False), name="playground-assets")
 
     return app
 
