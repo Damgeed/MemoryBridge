@@ -19,6 +19,7 @@ from starlette.middleware.base import BaseHTTPMiddleware
 from .auth import APIKeyMiddleware
 from .controllers import (
     admin_controller,
+    auth_controller,
     handoff_controller,
     health_controller,
     memory_controller,
@@ -197,6 +198,7 @@ def create_app() -> FastAPI:
     # ── Routers ──────────────────────────────────────────────────────────────
 
     app.include_router(health_controller.router)
+    app.include_router(auth_controller.router)
     app.include_router(memory_controller.router)
     app.include_router(session_controller.router)
     app.include_router(handoff_controller.router)

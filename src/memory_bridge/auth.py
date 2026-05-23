@@ -1,10 +1,15 @@
-"""API key authentication middleware with multi-key support."""
+"""API key + JWT authentication middleware with dual-auth support."""
 
 import logging
 import os
+from datetime import datetime, timezone
+
+import jwt
 from fastapi import Request
 from fastapi.responses import JSONResponse
 from starlette.middleware.base import BaseHTTPMiddleware
+
+from .config import get_settings
 from .dependencies import get_storage
 
 logger = logging.getLogger(__name__)
@@ -14,15 +19,19 @@ EXEMPT_PATHS = {"/health", "/docs", "/openapi.json", "/redoc"}
 
 
 class APIKeyMiddleware(BaseHTTPMiddleware):
-    """Validates Bearer token against configured API key OR stored API keys.
+    """Validates Bearer token as either an API key or a JWT.
 
-    If MEMORY_BRIDGE_API_KEY env var is set, it is checked first as a fallback.
-    Additionally, the token is checked against API keys stored in the database.
-    On success, request.state.auth is populated with key info.
+    Authentication methods (checked in order):
+    1. MEMORY_BRIDGE_API_KEY env var (legacy single-key mode)
+    2. API keys stored in the database
+    3. JWT token (if MEMORY_BRIDGE_JWT_SECRET is configured)
+
+    On success, request.state.auth is populated with key/identity info.
     Exempted paths skip authentication entirely.
 
-    If neither env var nor DB keys exist, the middleware operates in open mode
-    (no authentication required).
+    If neither env var, DB keys, nor JWT secret are configured, the middleware
+    operates in open mode (no authentication required) only when
+    MEMORY_BRIDGE_ALLOW_OPEN=true. Otherwise, all requests are rejected.
     """
 
     def __init__(self, app):
@@ -88,6 +97,29 @@ class APIKeyMiddleware(BaseHTTPMiddleware):
                 return await call_next(request)
         except Exception:
             pass
+
+        # 3. Try JWT authentication
+        settings = get_settings()
+        if settings.jwt_secret:
+            try:
+                payload = jwt.decode(
+                    token,
+                    settings.jwt_secret,
+                    algorithms=[settings.jwt_algorithm],
+                )
+                if payload.get("sub"):
+                    request.state.auth = {
+                        "key_id": f"user:{payload['sub']}",
+                        "label": f"user:{payload.get('username', '')}",
+                        "project_id": payload.get("project_id"),
+                        "user_id": payload["sub"],
+                        "role": payload.get("role", "member"),
+                    }
+                    return await call_next(request)
+            except jwt.ExpiredSignatureError:
+                pass  # Fall through to 401
+            except jwt.InvalidTokenError:
+                pass  # Fall through to 401
 
         return JSONResponse(
             status_code=401,
