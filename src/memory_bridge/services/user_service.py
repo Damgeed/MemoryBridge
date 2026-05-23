@@ -70,9 +70,20 @@ class UserService:
         # For now, return None (will be implemented with DB in Phase 4 full)
         return None
 
+    def _get_jwt_secret(self) -> str:
+        """Return the validated JWT secret or raise a clear error."""
+        secret = self.settings.jwt_secret
+        if not secret:
+            raise RuntimeError(
+                "JWT secret not configured. Set MEMORY_BRIDGE_JWT_SECRET environment variable. "
+                "This is required for authentication to work."
+            )
+        return secret
+
     async def generate_token(self, user: dict) -> str:
         """Generate a JWT token for an authenticated user."""
         settings = self.settings
+        jwt_secret = self._get_jwt_secret()
         now = datetime.now(timezone.utc)
         payload = {
             "sub": user.get("id", user.get("email")),
@@ -85,17 +96,18 @@ class UserService:
         }
         return jwt.encode(
             payload,
-            settings.jwt_secret or "dev-secret",
+            jwt_secret,
             algorithm=settings.jwt_algorithm or "HS256",
         )
 
     async def refresh_token(self, token: str) -> Optional[str]:
         """Refresh an expired token if the refresh window is valid."""
         settings = self.settings
+        jwt_secret = self._get_jwt_secret()
         try:
             payload = jwt.decode(
                 token,
-                settings.jwt_secret or "dev-secret",
+                jwt_secret,
                 algorithms=[settings.jwt_algorithm or "HS256"],
                 options={"verify_exp": True},
             )

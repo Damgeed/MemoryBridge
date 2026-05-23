@@ -82,6 +82,19 @@ async def lifespan(app: FastAPI):
     storage = await get_storage()
     await storage.initialize()
 
+    # Warn if JWT secret is not configured but auth is enabled
+    from .config import get_settings
+    _settings = get_settings()
+    if not _settings.jwt_secret:
+        env_key = os.environ.get("MEMORY_BRIDGE_API_KEY")
+        if env_key or not _settings.allow_open:
+            logger.warning(
+                "⚠️  JWT_SECRET is not configured (MEMORY_BRIDGE_JWT_SECRET not set). "
+                "JWT-based authentication and token refresh will fail with a RuntimeError. "
+                "For API-key-only operation this is fine; set MEMORY_BRIDGE_JWT_SECRET if you "
+                "need JWT authentication."
+            )
+
     # Initialize shared metrics (set-once, safe for multi-worker)
     await storage.initialize_metric("start_time", datetime.now(timezone.utc).isoformat())
     await storage.initialize_metric("request_count", 0)
