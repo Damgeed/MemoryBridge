@@ -980,10 +980,11 @@ async def test_api_key_hash_not_stored_plaintext(storage):
 
     # The stored hash should not equal the plain key
     assert stored_hash != plain_key
-    # The stored hash should be a SHA-256 hex digest
-    assert len(stored_hash) == 64
-    import hashlib
-    assert stored_hash == hashlib.sha256(plain_key.encode()).hexdigest()
+    # The stored hash should be a bcrypt hash (starts with $2b$)
+    assert stored_hash.startswith("$2b$")
+    assert len(stored_hash) == 60
+    import bcrypt
+    assert bcrypt.checkpw(plain_key.encode(), stored_hash.encode())
 
 
 @pytest.mark.asyncio

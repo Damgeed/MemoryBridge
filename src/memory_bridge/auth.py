@@ -1,13 +1,16 @@
 """API key authentication middleware with multi-key support."""
 
+import logging
 import os
 from fastapi import Request
 from fastapi.responses import JSONResponse
 from starlette.middleware.base import BaseHTTPMiddleware
 from .dependencies import get_storage
 
+logger = logging.getLogger(__name__)
 
-EXEMPT_PATHS = {"/health", "/docs", "/openapi.json", "/redoc", "/metrics"}
+
+EXEMPT_PATHS = {"/health", "/docs", "/openapi.json", "/redoc"}
 
 
 class APIKeyMiddleware(BaseHTTPMiddleware):
@@ -48,7 +51,18 @@ class APIKeyMiddleware(BaseHTTPMiddleware):
             self._has_checked_db_keys = True
 
         if not env_key and not self._has_db_keys:
-            # Open mode — no auth configured
+            open_mode = os.environ.get("MEMORY_BRIDGE_ALLOW_OPEN", "false").lower() == "true"
+            if not open_mode:
+                logger.warning(
+                    "🚨 SECURITY: No API keys configured and MEMORY_BRIDGE_ALLOW_OPEN is not set. "
+                    "All requests will be rejected. Set MEMORY_BRIDGE_API_KEY or create a key via /admin/keys."
+                )
+                return JSONResponse(
+                    status_code=401,
+                    content={"detail": "Authentication required. No API keys configured on this server. "
+                             "Set MEMORY_BRIDGE_API_KEY environment variable or create an API key."},
+                )
+            logger.warning("⚠️  OPEN MODE: MEMORY_BRIDGE_ALLOW_OPEN=true. No auth configured. Do NOT use in production.")
             return await call_next(request)
 
         auth_header = request.headers.get("Authorization")

@@ -9,6 +9,7 @@ from typing import Optional
 
 from fastapi import FastAPI, Depends, HTTPException, Request, Query, Response
 from fastapi.middleware.cors import CORSMiddleware
+from starlette.middleware.base import BaseHTTPMiddleware
 
 from .dependencies import get_storage
 from .handoff import HandoffProtocol
@@ -115,6 +116,25 @@ app.add_middleware(
 # 2. Auth — Bearer token check on non-/health routes
 app.add_middleware(APIKeyMiddleware)
 
+# --- Request Size Limit ---
+
+MAX_BODY_SIZE = int(os.environ.get("MEMORY_BRIDGE_MAX_BODY_SIZE", "10_485_760"))  # 10MB default
+
+class RequestSizeLimitMiddleware(BaseHTTPMiddleware):
+    """Rejects requests with body larger than MAX_BODY_SIZE."""
+    async def dispatch(self, request, call_next):
+        content_length = request.headers.get("content-length")
+        if content_length and int(content_length) > MAX_BODY_SIZE:
+            return Response(
+                status_code=413,
+                content=f'{{"detail":"Request body exceeds {MAX_BODY_SIZE} byte limit"}}',
+                media_type="application/json",
+            )
+        return await call_next(request)
+
+# 2.5. Request size limit — prevent oversized bodies
+app.add_middleware(RequestSizeLimitMiddleware)
+
 
 # 3. Core middleware — rate limiting, request ID, metrics recording
 @app.middleware("http")
@@ -205,12 +225,19 @@ async def health(storage: MemoryStorage = Depends(get_storage)):
 
 
 @app.get("/metrics")
-async def metrics(storage: MemoryStorage = Depends(get_storage)):
-    """Expose Prometheus metrics at /metrics.
-
-    Updates memory and session gauges from storage, then returns the
-    latest Prometheus exposition format.
+async def metrics(
+    storage: MemoryStorage = Depends(get_storage),
+    request: Request = None,
+):
+    """Expose Prometheus metrics.
+    Requires auth by default. Set MEMORY_BRIDGE_PUBLIC_METRICS=true to allow unauthenticated access.
     """
+    public_metrics = os.environ.get("MEMORY_BRIDGE_PUBLIC_METRICS", "").lower() == "true"
+    if not public_metrics:
+        auth = getattr(request.state, "auth", None) if request else None
+        if not auth:
+            raise HTTPException(status_code=401, detail="Authentication required. Set MEMORY_BRIDGE_PUBLIC_METRICS=true for public access.")
+
     memory_gauge.set(await storage.count_memories())
     session_gauge.set(await storage.count_sessions())
 
