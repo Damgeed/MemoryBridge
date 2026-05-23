@@ -19,6 +19,13 @@ FAIL=0
 TIMESTAMP=$(date +%s)
 SESSION="smoke-$TIMESTAMP"
 
+# Auth header: use MEMORY_BRIDGE_API_KEY if set, otherwise empty (open mode)
+if [ -n "${MEMORY_BRIDGE_API_KEY:-}" ]; then
+  AUTH_HEADER="Authorization: Bearer $MEMORY_BRIDGE_API_KEY"
+else
+  AUTH_HEADER=""
+fi
+
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
@@ -38,12 +45,12 @@ call() {
   local url="$BASE$path"
   local resp
   if [ -n "$data" ]; then
-    resp=$(curl -sf -X "$method" "$url" -H "Content-Type: application/json" -d "$data" 2>&1) || {
+    resp=$(curl -sf -X "$method" "$url" -H "Content-Type: application/json" ${AUTH_HEADER:+-H "$AUTH_HEADER"} -d "$data" 2>&1) || {
       echo "    RESP: $resp"
       return 1
     }
   else
-    resp=$(curl -sf -X "$method" "$url" 2>&1) || {
+    resp=$(curl -sf -X "$method" "$url" ${AUTH_HEADER:+-H "$AUTH_HEADER"} 2>&1) || {
       echo "    RESP: $resp"
       return 1
     }
@@ -313,6 +320,7 @@ section "16. Guardrails — Sensitive Key Detection"
 # First, store a memory with a sensitive key
 curl -sf -X POST "$BASE/memories" \
   -H "Content-Type: application/json" \
+  ${AUTH_HEADER:+-H "$AUTH_HEADER"} \
   -d '{"session_id":"'$SESSION'","agent_id":"bud","key":"api_key","value":"sk-1234","tags":["sensitive"]}' > /dev/null
 
 # Now try handing off — guardrails should catch it
@@ -443,6 +451,7 @@ section "24. TTL — Expired memory filtered from queries"
 PAST_TIMESTAMP="2020-01-01T00:00:00+00:00"
 curl -sf -X POST "$BASE/memories" \
   -H "Content-Type: application/json" \
+  ${AUTH_HEADER:+-H "$AUTH_HEADER"} \
   -d '{"session_id":"expired-sess","agent_id":"bud","key":"stale","value":"should-be-hidden","ttl_seconds":1}' > /dev/null
 
 QUERY_EXPIRED=$(cat <<JSON
@@ -466,7 +475,9 @@ RESP=$(call POST /memories/query "$QUERY_EXPIRED") && {
 } || fail "POST /memories/query (expired) → request failed"
 
 # Clean up the TTL test memory
-curl -sf -X DELETE "$BASE/memories/$TTL_ID" > /dev/null 2>&1 || true
+curl -sf -X DELETE "$BASE/memories/$TTL_ID" \
+  ${AUTH_HEADER:+-H "$AUTH_HEADER"} \
+  > /dev/null 2>&1 || true
 
 
 TOTAL=$((PASS + FAIL))
