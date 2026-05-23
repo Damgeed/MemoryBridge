@@ -49,7 +49,7 @@ _DESTRUCTIVE_PATTERNS: list[tuple[str, str]] = [
 ]
 
 
-def check_backward_compatible(sql_file_path: str | Path) -> list[str]:
+def check_backward_compatible(sql_file_path: Union[str, Path]) -> list[str]:
     """Check if a migration SQL file contains backward-incompatible changes.
 
     Scans the file for destructive SQL operations (DROP, RENAME,

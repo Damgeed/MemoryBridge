@@ -10,7 +10,8 @@ from typing import Optional
 
 logger = logging.getLogger(__name__)
 
-# Tier limits
+# Tier limits (aligned with pricing: Free $0, Starter $29/mo, Pro $99/mo, Enterprise custom)
+# See docs/next-gen-plan.md for pricing rationale
 TIER_LIMITS = {
     "free": {
         "max_memories": 1_000,
@@ -19,22 +20,28 @@ TIER_LIMITS = {
         "storage_bytes": 100 * 1024 * 1024,  # 100 MB
         "max_projects": 3,
         "max_api_keys": 5,
+        "retention_days": 7,
+        "price_monthly": 0,
     },
     "starter": {
-        "max_memories": 10_000,
+        "max_memories": 100_000,
         "max_sessions": 1_000,
         "queries_per_day": 50_000,
         "storage_bytes": 500 * 1024 * 1024,  # 500 MB
         "max_projects": 10,
         "max_api_keys": 25,
+        "retention_days": 90,
+        "price_monthly": 29,
     },
     "pro": {
-        "max_memories": 100_000,
+        "max_memories": 1_000_000,
         "max_sessions": 10_000,
         "queries_per_day": 500_000,
         "storage_bytes": 5 * 1024 * 1024 * 1024,  # 5 GB
         "max_projects": 100,
         "max_api_keys": 100,
+        "retention_days": 365,
+        "price_monthly": 99,
     },
     "enterprise": {
         "max_memories": 10_000_000,
@@ -43,6 +50,8 @@ TIER_LIMITS = {
         "storage_bytes": 100 * 1024 * 1024 * 1024,  # 100 GB
         "max_projects": 1_000,
         "max_api_keys": 1_000,
+        "retention_days": 365 * 5,
+        "price_monthly": -1,  # Custom pricing
     },
 }
 
