@@ -1,7 +1,8 @@
-"""Admin API key management endpoints.
+"""Admin API endpoints for user/project management and API keys.
 
-Direct repository access since key management is an infrastructure
-operation outside the service layer.
+Direct repository access for key management since it is an infrastructure
+operation outside the service layer. User/project/analytics endpoints
+use the AdminService layer.
 """
 
 import logging
@@ -11,10 +12,19 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 
 from ..dependencies import get_storage
 from ..repository import MemoryRepository
+from ..services.admin_service import AdminService
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/admin")
+
+
+async def get_admin_service():
+    repo = await get_storage()
+    return AdminService(repo=repo)
+
+
+# ── API Key Management (direct repository access) ─────────────────────────
 
 
 @router.post("/keys")
@@ -46,3 +56,53 @@ async def admin_revoke_api_key(
     if not revoked:
         raise HTTPException(status_code=404, detail="API key not found")
     return {"revoked": True, "key_id": key_id}
+
+
+# ── User Management ──────────────────────────────────────────────────────
+
+
+@router.get("/users")
+async def list_users(
+    limit: int = Query(50, ge=1, le=500),
+    offset: int = Query(0, ge=0),
+    service: AdminService = Depends(get_admin_service),
+):
+    """List registered users."""
+    users = await service.list_users(limit=limit, offset=offset)
+    return {"users": users, "total": len(users)}
+
+
+# ── Project Management ───────────────────────────────────────────────────
+
+
+@router.get("/projects")
+async def list_projects(
+    limit: int = Query(50, ge=1, le=500),
+    offset: int = Query(0, ge=0),
+    service: AdminService = Depends(get_admin_service),
+):
+    """List all projects."""
+    projects = await service.list_projects(limit=limit, offset=offset)
+    return {"projects": projects, "total": len(projects)}
+
+
+# ── Analytics ────────────────────────────────────────────────────────────
+
+
+@router.get("/analytics")
+async def get_analytics(
+    service: AdminService = Depends(get_admin_service),
+):
+    """Get system-wide analytics."""
+    return await service.get_analytics()
+
+
+# ── System Health ────────────────────────────────────────────────────────
+
+
+@router.get("/health/system")
+async def system_health(
+    service: AdminService = Depends(get_admin_service),
+):
+    """Get system health status."""
+    return await service.get_system_health()
