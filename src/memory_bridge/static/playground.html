@@ -255,6 +255,14 @@
         </p>
     </header>
 
+    <!-- ════════ API KEY ════════ -->
+    <section class="card" style="padding: 0.75rem 1.5rem; display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap;">
+        <label for="api-key-input" style="margin:0; white-space:nowrap; font-weight:600;">🔑 API Key</label>
+        <input id="api-key-input" type="password" placeholder="Paste your MEMORY_BRIDGE_API_KEY here…" spellcheck="false" style="flex:1; min-width:200px; margin:0; padding:0.4rem 0.6rem; font-size:0.8rem;">
+        <button class="secondary" onclick="setApiKey()" style="padding:0.4rem 0.8rem; font-size:0.8rem;">Save</button>
+        <span id="api-key-status" style="font-size:0.8rem; color:#8b949e;"></span>
+    </section>
+
     <!-- ════════ STORE MEMORY ════════ -->
     <section class="card" id="store-card">
         <h2>💾 Store a Memory</h2>
@@ -355,11 +363,31 @@
 
         const API_BASE = '';
 
+        function getApiKey() {
+            return localStorage.getItem('mb_api_key') || '';
+        }
+
+        function setApiKey() {
+            const key = document.getElementById('api-key-input').value.trim();
+            if (key) {
+                localStorage.setItem('mb_api_key', key);
+                document.getElementById('api-key-status').textContent = '✅ Saved';
+                setTimeout(() => document.getElementById('api-key-status').textContent = '', 2000);
+            } else {
+                localStorage.removeItem('mb_api_key');
+                document.getElementById('api-key-status').textContent = '🗑️ Cleared';
+            }
+        }
+
         async function api(method, path, body) {
             const opts = {
                 method,
                 headers: { 'Content-Type': 'application/json' },
             };
+            const apiKey = getApiKey();
+            if (apiKey) {
+                opts.headers['Authorization'] = 'Bearer ' + apiKey;
+            }
             if (body !== undefined) opts.body = JSON.stringify(body);
             const res = await fetch(API_BASE + path, opts);
             if (!res.ok) {
@@ -722,6 +750,12 @@
 
         document.addEventListener('DOMContentLoaded', () => {
             applyQueryParams();
+            // Load saved API key into input field
+            const savedKey = getApiKey();
+            if (savedKey) {
+                document.getElementById('api-key-input').value = savedKey;
+                document.getElementById('api-key-status').textContent = '🔑 Key loaded';
+            }
             checkApiStatus();
         });
     </script>
