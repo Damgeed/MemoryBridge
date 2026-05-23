@@ -11,7 +11,7 @@ from fastapi import FastAPI, Depends, HTTPException, Request, Query, Response
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.middleware.base import BaseHTTPMiddleware
 
-from .dependencies import get_storage
+from .dependencies import get_storage, close_factory
 from .handoff import HandoffProtocol
 from .metrics import (
     request_counter,
@@ -90,6 +90,9 @@ async def lifespan(app: FastAPI):
         await cleanup_task
     except asyncio.CancelledError:
         pass
+
+    # Close connection pool if using PostgreSQL
+    await close_factory()
 
 
 app = FastAPI(
