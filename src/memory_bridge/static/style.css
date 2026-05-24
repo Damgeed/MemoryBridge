@@ -407,37 +407,6 @@ a:hover { color: var(--accent-light); text-decoration: none; }
 }
 
 /* Language dropdown refinement */
-.lang-dropdown {
-    position: absolute;
-    top: 100%;
-    right: 0;
-    margin-top: 6px;
-    background: var(--bg-glass-strong);
-    backdrop-filter: blur(20px) saturate(1.5);
-    border: 1px solid var(--border-primary);
-    border-radius: var(--radius-md);
-    box-shadow: var(--shadow-lg);
-    min-width: 170px;
-    display: none;
-    z-index: 200;
-    overflow: hidden;
-}
-.lang-dropdown.open { display: block; }
-.lang-opt {
-    display: block;
-    padding: 0.55rem 1rem;
-    font-size: 0.85rem;
-    color: var(--text-secondary) !important;
-    transition: all var(--transition-fast);
-}
-.lang-opt:hover {
-    background: var(--btn-secondary-hover);
-    color: var(--text-primary) !important;
-}
-.lang-opt.active {
-    color: var(--accent) !important;
-    background: var(--accent-glow);
-}
 /* ── Glass Card ────────────────────────────────────────── */
 .glass {
   background: var(--bg-glass);
@@ -684,37 +653,6 @@ select.input { cursor: pointer; }
 /* ── Tag / Chip ────────────────────────────────────────── */
 
 /* ── Language Selector ─────────────────────────────────── */
-.lang-dropdown {
-    position: absolute;
-    top: 100%;
-    right: 0;
-    margin-top: 6px;
-    background: var(--bg-glass-strong);
-    backdrop-filter: blur(20px) saturate(1.5);
-    border: 1px solid var(--border-primary);
-    border-radius: var(--radius-md);
-    box-shadow: var(--shadow-lg);
-    min-width: 170px;
-    display: none;
-    z-index: 200;
-    overflow: hidden;
-}
-.lang-dropdown.open { display: block; }
-.lang-opt {
-    display: block;
-    padding: 0.55rem 1rem;
-    font-size: 0.85rem;
-    color: var(--text-secondary) !important;
-    transition: all var(--transition-fast);
-}
-.lang-opt:hover {
-    background: var(--btn-secondary-hover);
-    color: var(--text-primary) !important;
-}
-.lang-opt.active {
-    color: var(--accent) !important;
-    background: var(--accent-glow);
-}
 
 .chip {
   display: inline-flex;
