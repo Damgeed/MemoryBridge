@@ -411,44 +411,30 @@
             <div class="dash-card" id="setup-card">
                 <div class="card-title">🚀 Setup Guide</div>
                 <p style="margin-bottom:1.25rem;color:var(--text-muted);font-size:0.88rem;">
-                    Get started in 3 steps. Your API key goes in the <code style="background:var(--bg-tertiary);padding:0.1rem 0.35rem;border-radius:4px;color:var(--accent);">Authorization</code> header.
+                    Get started in 2 steps. Your API key goes in the <code style="background:var(--bg-tertiary);padding:0.1rem 0.35rem;border-radius:4px;color:var(--accent);">Authorization</code> header.
                 </p>
 
                 <div class="step-flow">
                     <div class="step-num">1</div>
                     <div class="step-content">
-                        <h3>Install</h3>
-                        <p>Install the Python package via pip.</p>
+                        <h3>Run the server</h3>
+                        <p>Clone the repo and start Memory Bridge locally. It runs on <strong>http://localhost:8000</strong>.</p>
                     </div>
                 </div>
                 <div class="term-block">
-                    <button class="term-copy-btn" onclick="copyCmd(this,'pip install memory-bridge')" title="Copy command">
+                    <button class="term-copy-btn" onclick="copyCmd(this,'git clone https://github.com/Damgeed/MemoryBridge.git && cd MemoryBridge && pip install -e . && memory-bridge')" title="Copy command">
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
                         Copy
                     </button>
-                    <span class="term-prompt">$</span> <span class="term-line">pip install memory-bridge</span>
+                    <span class="term-prompt">$</span> <span class="term-line">git clone https://github.com/Damgeed/MemoryBridge.git</span><br>
+                    <span class="term-line" style="padding-left:1.5rem;">cd MemoryBridge && pip install -e . && memory-bridge</span>
                 </div>
 
                 <div class="step-flow">
                     <div class="step-num">2</div>
                     <div class="step-content">
-                        <h3>Start the server</h3>
-                        <p>Run the server locally. It starts on <strong>http://localhost:8000</strong>.</p>
-                    </div>
-                </div>
-                <div class="term-block">
-                    <button class="term-copy-btn" onclick="copyCmd(this,'memory-bridge')" title="Copy command">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
-                        Copy
-                    </button>
-                    <span class="term-prompt">$</span> <span class="term-line">memory-bridge</span>
-                </div>
-
-                <div class="step-flow">
-                    <div class="step-num">3</div>
-                    <div class="step-content">
                         <h3>Store your first memory</h3>
-                        <p>Use your API key to authenticate. Replace <code style="font-size:0.78rem;">YOUR_API_KEY</code> below.</p>
+                        <p>Replace <code style="font-size:0.78rem;">YOUR_API_KEY</code> with your key from above.</p>
                     </div>
                 </div>
                 <div class="term-block">
