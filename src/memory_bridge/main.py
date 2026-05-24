@@ -52,7 +52,7 @@ _CLEANUP_INTERVAL = int(os.environ.get("MEMORY_BRIDGE_CLEANUP_INTERVAL", "300"))
 # Rate limit (requests per minute per IP). Default: 60.
 _RATE_LIMIT = int(os.environ.get("MEMORY_BRIDGE_RATE_LIMIT", "60"))
 # CORS origins (comma-separated). Default: allow all.
-_CORS_ORIGINS = os.environ.get("MEMORY_BRIDGE_CORS_ORIGINS", "*").split(",")
+_CORS_ORIGINS = os.environ.get("MEMORY_BRIDGE_CORS_ORIGINS", "http://localhost:8000,https://*.railway.app").split(",")
 
 _limiter = RedisRateLimiter(requests_per_minute=_RATE_LIMIT)
 

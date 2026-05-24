@@ -63,7 +63,7 @@ class Settings(BaseSettings):
     reload: bool = False
 
     # CORS
-    cors_origins: str = "*"
+    cors_origins: str = "http://localhost:8000,https://*.railway.app"
 
     model_config = {"env_prefix": "MEMORY_BRIDGE_"}
 
