@@ -752,6 +752,10 @@ function toggleLang() {
   document.getElementById('lang-dropdown').classList.toggle('open');
 }
 
+function toggleLangMobile() {
+  document.getElementById('lang-dropdown-mobile').classList.toggle('open');
+}
+
 /**
  * Set the current language and re-translate the page.
  */
@@ -761,14 +765,18 @@ function setLang(code) {
   const opt = document.querySelector(`.lang-opt[data-lang="${code}"]`);
   if (opt) opt.classList.add('active');
   applyTranslations();
-  document.getElementById('lang-dropdown').classList.remove('open');
+  document.getElementById('lang-dropdown')?.classList.remove('open');
+  document.getElementById('lang-dropdown-mobile')?.classList.remove('open');
 }
 
-// Close language dropdown on outside click
+// Close language drop-downs on outside click
 document.addEventListener('DOMContentLoaded', () => {
   document.addEventListener('click', (e) => {
-    if (!e.target.closest('.lang-toggle') && !e.target.closest('.lang-dropdown')) {
+    if (!e.target.closest('.lang-toggle') && !e.target.closest('#lang-dropdown')) {
       document.getElementById('lang-dropdown')?.classList.remove('open');
+    }
+    if (!e.target.closest('#lang-dropdown-mobile') && !e.target.closest('[onclick="toggleLangMobile()"]')) {
+      document.getElementById('lang-dropdown-mobile')?.classList.remove('open');
     }
   });
 });
