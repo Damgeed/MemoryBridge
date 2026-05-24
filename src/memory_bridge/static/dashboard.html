@@ -110,6 +110,7 @@
         #key-login-bar .btn-sm { flex-shrink: 0; }
         .key-login-label { font-size: 0.85rem; font-weight: 600; color: var(--text-muted); }
         .key-login-row { display: flex; gap: 0.5rem; }
+        .forgot-link { font-size: 0.78rem; color: var(--accent); text-decoration: underline; white-space: nowrap; }
 
         /* ── API Key List ──────────────────────────── */
         .key-item {
@@ -307,6 +308,7 @@
             #key-login-bar .btn-sm { width: 100%; justify-content: center; }
             #key-login-bar .key-login-row { display: flex; gap: 0.5rem; }
             #key-login-bar .key-login-row .btn-sm { flex: 1; }
+            #key-login-bar .forgot-link { display: block; text-align: center; }
 
             /* Key items — compact layout: label + date + actions on row 1, key on row 2 */
             .key-item {
@@ -513,9 +515,7 @@
                 <button class="btn btn-secondary btn-sm" onclick="clearApiKey()" data-i18n="dash.clear">Clear</button>
             </div>
             <span id="key-login-status"></span>
-        </div>
-        <div class="dash-card" style="padding:0.5rem 1rem;margin-top:-0.5rem;border-top:none;border-radius:0 0 var(--radius-lg) var(--radius-lg);text-align:center;">
-            <a href="/pricing" data-i18n="dash.lost_key" style="color:var(--accent);font-size:0.82rem;text-decoration:underline;">Lost your key? Subscribe to get a new one →</a>
+            <a href="/pricing" class="forgot-link" data-i18n="dash.lost_key">Lost your key? Subscribe to get a new one →</a>
         </div>
 
         <div class="dash-grid">
