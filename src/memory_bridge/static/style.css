@@ -413,6 +413,56 @@ select.input { cursor: pointer; }
 .hero-bg > * { position: relative; z-index: 1; }
 
 /* ── Tag / Chip ────────────────────────────────────────── */
+
+/* ── Language Selector ─────────────────────────────────── */
+.lang-selector {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    cursor: pointer;
+    padding: 0.25rem 0.5rem;
+    border-radius: var(--radius-sm);
+    font-size: 0.78rem;
+    color: var(--text-muted);
+    user-select: none;
+    transition: all var(--transition-fast);
+}
+.lang-selector:hover {
+    color: var(--text-primary);
+    background: var(--btn-secondary-hover);
+}
+.lang-current { font-weight: 600; letter-spacing: 0.02em; }
+.lang-dropdown {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    margin-top: 6px;
+    background: var(--bg-glass-strong);
+    backdrop-filter: blur(20px) saturate(1.5);
+    border: 1px solid var(--border-primary);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-lg);
+    min-width: 170px;
+    display: none;
+    z-index: 200;
+    overflow: hidden;
+}
+.lang-dropdown.open { display: block; }
+.lang-opt {
+    display: block;
+    padding: 0.55rem 1rem;
+    font-size: 0.85rem;
+    color: var(--text-secondary) !important;
+    transition: all var(--transition-fast);
+}
+.lang-opt:hover {
+    background: var(--btn-secondary-hover);
+    color: var(--text-primary) !important;
+}
+.lang-opt.active {
+    color: var(--accent) !important;
+    background: var(--accent-glow);
+}
 .chip {
   display: inline-flex;
   align-items: center;

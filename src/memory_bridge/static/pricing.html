@@ -310,11 +310,23 @@
         </a>
         <div class="nav-links">
             <a href="/">Home</a>
-            <a href="/playground/?api_key=mb-prod-3a2166c2083744bb90ac8933519d14790e56902d5ec1ba9a">Playground</a>
+            <a href="/playground/">Playground</a>
             <a href="/playground/graph.html">Graph</a>
             <a href="/docs">API Docs</a>
             <a href="/pricing" class="active">Pricing</a>
-            <button class="theme-toggle" onclick="toggleTheme()" title="Toggle theme" aria-label="Toggle theme">🌙</button>
+            <div class="lang-selector" onclick="toggleLang()">
+            <span class="lang-current">🌐 EN</span>
+            <div class="lang-dropdown" id="lang-dropdown">
+                <a href="#" data-lang="en" class="lang-opt active" onclick="setLang('en')">🇬🇧 English</a>
+                <a href="#" data-lang="zh" class="lang-opt" onclick="setLang('zh')">🇨🇳 中文</a>
+                <a href="#" data-lang="ja" class="lang-opt" onclick="setLang('ja')">🇯🇵 日本語</a>
+                <a href="#" data-lang="ko" class="lang-opt" onclick="setLang('ko')">🇰🇷 한국어</a>
+                <a href="#" data-lang="es" class="lang-opt" onclick="setLang('es')">🇪🇸 Español</a>
+                <a href="#" data-lang="fr" class="lang-opt" onclick="setLang('fr')">🇫🇷 Français</a>
+                <a href="#" data-lang="de" class="lang-opt" onclick="setLang('de')">🇩🇪 Deutsch</a>
+            </div>
+        </div>
+        <button class="theme-toggle" onclick="toggleTheme()" title="Toggle theme" aria-label="Toggle theme">🌙</button>
         </div>
     </nav>
 
@@ -356,7 +368,7 @@
                 <li><span class="check">✓</span> Email support</li>
                 <li><span class="check">✓</span> Webhook access</li>
             </ul>
-            <a href="/playground/" class="btn btn-primary">Subscribe</a>
+            <a href="#" onclick="checkout('starter')" class="btn btn-primary">Subscribe</a>
         </div>
 
         <!-- Pro Tier (Featured) -->
@@ -375,7 +387,7 @@
                 <li><span class="check">✓</span> Webhooks + HMAC signing</li>
                 <li><span class="check">✓</span> Team management</li>
             </ul>
-            <a href="/playground/" class="btn btn-primary">Subscribe</a>
+            <a href="#" onclick="checkout('starter')" class="btn btn-primary">Subscribe</a>
         </div>
     </div>
 
@@ -465,6 +477,60 @@
             const btn = document.querySelector('.theme-toggle');
             if (btn) btn.textContent = theme === 'dark' ? '🌙' : '☀️';
         }
+
+        // ── Checkout ─────────────────────────────────────────────
+        async function checkout(tier) {
+            const key = localStorage.getItem('mb_api_key');
+            const orgId = 'demo';
+            try {
+                const res = await fetch('/billing/checkout/' + orgId + '?tier=' + tier, {
+                    method: 'POST',
+                    headers: key ? { 'Authorization': 'Bearer ' + key } : {},
+                });
+                if (!res.ok) throw new Error('Stripe not configured');
+                const data = await res.json();
+                if (data.checkout_url) { window.location.href = data.checkout_url; }
+            } catch {
+                window.location.href = '/playground/';
+            }
+        }
+
+        // ── Language Selector ─────────────────────────────────────
+        function toggleLang() {
+            document.getElementById('lang-dropdown').classList.toggle('open');
+        }
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('.lang-selector')) {
+                document.getElementById('lang-dropdown')?.classList.remove('open');
+            }
+        });
+
+        const TRANSLATIONS = {
+            en: {},
+            zh: {},
+            ja: {},
+            ko: {},
+            es: {},
+            fr: {},
+            de: {},
+        };
+
+        function setLang(code) {
+            localStorage.setItem('mb-lang', code);
+            document.documentElement.lang = code;
+            document.querySelectorAll('.lang-opt').forEach(el => el.classList.remove('active'));
+            const opt = document.querySelector(`.lang-opt[data-lang="${code}"]`);
+            if (opt) opt.classList.add('active');
+            const codes = {en:'🇬🇧 EN',zh:'🇨🇳 ZH',ja:'🇯🇵 JA',ko:'🇰🇷 KO',es:'🇪🇸 ES',fr:'🇫🇷 FR',de:'🇩🇪 DE'};
+            document.querySelector('.lang-current').textContent = codes[code] || '🌐 EN';
+            document.getElementById('lang-dropdown').classList.remove('open');
+        }
+
+        // ── Init Language on page load ──────────────────────────
+        (function initLang() {
+            const saved = localStorage.getItem('mb-lang') || 'en';
+            setLang(saved);
+        })();
 
         // ── Scroll Animations ────────────────────────────────────
         const observer = new IntersectionObserver((entries) => {

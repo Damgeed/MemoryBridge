@@ -337,7 +337,19 @@
             <a href="/playground/graph.html">Graph</a>
             <a href="/pricing">Pricing</a>
             <a href="/docs">API Docs</a>
-            <button class="theme-toggle" onclick="toggleTheme()" title="Toggle theme" aria-label="Toggle theme">🌙</button>
+            <div class="lang-selector" onclick="toggleLang()">
+            <span class="lang-current">🌐 EN</span>
+            <div class="lang-dropdown" id="lang-dropdown">
+                <a href="#" data-lang="en" class="lang-opt active" onclick="setLang('en')">🇬🇧 English</a>
+                <a href="#" data-lang="zh" class="lang-opt" onclick="setLang('zh')">🇨🇳 中文</a>
+                <a href="#" data-lang="ja" class="lang-opt" onclick="setLang('ja')">🇯🇵 日本語</a>
+                <a href="#" data-lang="ko" class="lang-opt" onclick="setLang('ko')">🇰🇷 한국어</a>
+                <a href="#" data-lang="es" class="lang-opt" onclick="setLang('es')">🇪🇸 Español</a>
+                <a href="#" data-lang="fr" class="lang-opt" onclick="setLang('fr')">🇫🇷 Français</a>
+                <a href="#" data-lang="de" class="lang-opt" onclick="setLang('de')">🇩🇪 Deutsch</a>
+            </div>
+        </div>
+        <button class="theme-toggle" onclick="toggleTheme()" title="Toggle theme" aria-label="Toggle theme">🌙</button>
         </div>
     </nav>
 
@@ -431,25 +443,8 @@
                     We provide <strong>Python SDK</strong> and <strong>framework adapters</strong> for LangGraph, AutoGen, and CrewAI that automate this flow.
                 </div>
             </div>
-            <div class="qa-card fade-up">
-                <div class="q"><span class="q-icon">📋</span> Why session_id, agent_id, key, value?</div>
-                <div class="a">
-                    These 4 fields are the <strong>who, where, what, and content</strong> of every memory:
-                    <br><br>
-                    <strong>agent_id</strong> = "who wrote this?" — Henry vs Fred. Filter by agent to get the right expert's knowledge.<br><br>
-                    <strong>session_id</strong> = "which conversation?" — Sessions form a tree (parent → child). Memory from "deploy setup" doesn't bleed into "fix login bug" unless you allow it.<br><br>
-                    <strong>key</strong> = "what kind of fact?" — Like a filename. <code>user_preference</code>, <code>architecture_decision</code>, <code>code_review</code>.<br><br>
-                    <strong>value</strong> = the actual data — string, JSON, whatever.
-                </div>
-            </div>
-            <div class="qa-card fade-up">
-                <div class="q"><span class="q-icon">🔄</span> How is this different from memorybridge.ai?</div>
-                <div class="a">
-                    <strong>memorybridge.ai</strong> is for <em>you as a person</em> — it remembers what you told ChatGPT so you don't repeat yourself. Browser extension, inbox review, personal use.<br><br>
-                    <strong>Memory Bridge (ours)</strong> is for <em>your agents as a team</em> — it's a REST API that agents call programmatically. Henry stores, Fred finds, Alice hands off to Bob. Developer-first, framework-native, open source.<br><br>
-                    Different tools for different problems.
-                </div>
-            </div>
+
+
         </div>
     </section>
 
@@ -552,6 +547,33 @@
             const btn = document.querySelector('.theme-toggle');
             if (btn) btn.textContent = theme === 'dark' ? '🌙' : '☀️';
         }
+
+        // ── Language Selector ─────────────────────────────────────
+        function toggleLang() {
+            document.getElementById('lang-dropdown').classList.toggle('open');
+        }
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('.lang-selector')) {
+                document.getElementById('lang-dropdown')?.classList.remove('open');
+            }
+        });
+        function setLang(code) {
+            localStorage.setItem('mb-lang', code);
+            document.documentElement.lang = code;
+            document.querySelectorAll('.lang-opt').forEach(el => el.classList.remove('active'));
+            const opt = document.querySelector(`.lang-opt[data-lang="${code}"]`);
+            if (opt) opt.classList.add('active');
+            const codes = {en:'🇬🇧 EN',zh:'🇨🇳 ZH',ja:'🇯🇵 JA',ko:'🇰🇷 KO',es:'🇪🇸 ES',fr:'🇫🇷 FR',de:'🇩🇪 DE'};
+            document.querySelector('.lang-current').textContent = codes[code] || '🌐 EN';
+            document.getElementById('lang-dropdown').classList.remove('open');
+        }
+        (function initLang() {
+            const saved = localStorage.getItem('mb-lang') || 'en';
+            document.querySelectorAll('.lang-opt').forEach(el => el.classList.remove('active'));
+            const opt = document.querySelector(`.lang-opt[data-lang="${saved}"]`);
+            if (opt) opt.classList.add('active');
+            document.documentElement.lang = saved;
+        })();
 
         // ── Scroll Animations ────────────────────────────────────
         const observer = new IntersectionObserver((entries) => {

@@ -180,7 +180,19 @@
             <a href="/playground/graph.html">Graph</a>
             <a href="/pricing">Pricing</a>
             <a href="/docs">API Docs</a>
-            <button class="theme-toggle" onclick="toggleTheme()" title="Toggle theme" aria-label="Toggle theme">🌙</button>
+            <div class="lang-selector" onclick="toggleLang()">
+            <span class="lang-current">🌐 EN</span>
+            <div class="lang-dropdown" id="lang-dropdown">
+                <a href="#" data-lang="en" class="lang-opt active" onclick="setLang('en')">🇬🇧 English</a>
+                <a href="#" data-lang="zh" class="lang-opt" onclick="setLang('zh')">🇨🇳 中文</a>
+                <a href="#" data-lang="ja" class="lang-opt" onclick="setLang('ja')">🇯🇵 日本語</a>
+                <a href="#" data-lang="ko" class="lang-opt" onclick="setLang('ko')">🇰🇷 한국어</a>
+                <a href="#" data-lang="es" class="lang-opt" onclick="setLang('es')">🇪🇸 Español</a>
+                <a href="#" data-lang="fr" class="lang-opt" onclick="setLang('fr')">🇫🇷 Français</a>
+                <a href="#" data-lang="de" class="lang-opt" onclick="setLang('de')">🇩🇪 Deutsch</a>
+            </div>
+        </div>
+        <button class="theme-toggle" onclick="toggleTheme()" title="Toggle theme" aria-label="Toggle theme">🌙</button>
         </div>
     </nav>
 
@@ -578,6 +590,33 @@
                 if (active && active.id === 'search-query') { e.preventDefault(); searchMemories(); }
             }
         });
+
+        // ── Language Selector ─────────────────────────────────────
+        function toggleLang() {
+            document.getElementById('lang-dropdown').classList.toggle('open');
+        }
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('.lang-selector')) {
+                document.getElementById('lang-dropdown')?.classList.remove('open');
+            }
+        });
+        function setLang(code) {
+            localStorage.setItem('mb-lang', code);
+            document.documentElement.lang = code;
+            document.querySelectorAll('.lang-opt').forEach(el => el.classList.remove('active'));
+            const opt = document.querySelector(`.lang-opt[data-lang="${code}"]`);
+            if (opt) opt.classList.add('active');
+            const codes = {en:'🇬🇧 EN',zh:'🇨🇳 ZH',ja:'🇯🇵 JA',ko:'🇰🇷 KO',es:'🇪🇸 ES',fr:'🇫🇷 FR',de:'🇩🇪 DE'};
+            document.querySelector('.lang-current').textContent = codes[code] || '🌐 EN';
+            document.getElementById('lang-dropdown').classList.remove('open');
+        }
+        (function initLang() {
+            const saved = localStorage.getItem('mb-lang') || 'en';
+            document.querySelectorAll('.lang-opt').forEach(el => el.classList.remove('active'));
+            const opt = document.querySelector(`.lang-opt[data-lang="${saved}"]`);
+            if (opt) opt.classList.add('active');
+            document.documentElement.lang = saved;
+        })();
 
         // ── Init ──────────────────────────────────────────────────
         document.addEventListener('DOMContentLoaded', () => {
