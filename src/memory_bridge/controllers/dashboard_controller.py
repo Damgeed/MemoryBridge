@@ -114,18 +114,19 @@ async def welcome_setup(
         except Exception as e:
             logger.warning("Could not pre-store subscription via welcome: %s", e)
 
-    # Check if this org already has keys — if so, just list them
+    # Check if this org already has ACTIVE keys — if so, just list them
     existing_keys = await storage.list_api_keys()
     user_keys = [k for k in existing_keys if k.get("project_id") == org_id or not k.get("project_id")]
-    if user_keys:
+    active_keys = [k for k in user_keys if k.get("is_active") is not False]
+    if active_keys:
         # Return the most recent key's last-6 (don't show full key again)
         return {
             "welcome": True,
             "has_keys": True,
             "tier": tier,
             "organization_id": org_id,
-            "key_count": len(user_keys),
-            "latest_key_id": user_keys[-1]["id"],
+            "key_count": len(active_keys),
+            "latest_key_id": active_keys[-1]["id"],
             "hint": "Paste your existing key in the login bar above, or revoke old keys and generate a new one."
         }
 

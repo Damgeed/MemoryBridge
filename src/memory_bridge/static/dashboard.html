@@ -798,7 +798,9 @@
 
         function renderKeys(keys) {
             const el = document.getElementById('keys-list');
-            if (!keys || keys.length === 0) {
+            // Only show active (non-revoked) keys
+            const active = (keys || []).filter(k => k.is_active !== false);
+            if (!active || active.length === 0) {
                 el.innerHTML = `
                     <div class="empty-keys">
                         <div class="icon">🔑</div>
@@ -809,7 +811,7 @@
             }
 
             let html = '';
-            for (const k of keys) {
+            for (const k of active) {
                 const created = k.created_at ? new Date(k.created_at).toLocaleDateString() : '—';
                 const label = k.label || 'default';
                 html += `
@@ -857,7 +859,7 @@
         }
 
         async function revokeKey(keyId) {
-            // Count current keys to warn about deleting the last one
+            // Count current ACTIVE keys to warn about deleting the last one
             const keyItems = document.querySelectorAll('#keys-list .key-item');
             const isLast = keyItems.length <= 1;
             const msg = isLast
@@ -865,7 +867,7 @@
                 : 'Revoke this API key? It will stop working immediately.';
             if (!confirm(msg)) return;
             try {
-                await api('DELETE', '/dashboard/keys/' + keyId);
+                const result = await api('DELETE', '/dashboard/keys/' + keyId);
                 showToast('🗑️ Key revoked');
                 loadKeys();
             } catch (e) {
