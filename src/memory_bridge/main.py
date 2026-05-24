@@ -256,7 +256,7 @@ def create_app() -> FastAPI:
         try:
             storage = await get_storage()
             await storage.increment_metric("request_count")
-            await storage.increment_metric("total_latency_ms", round(elapsed_ms, 1))
+            await storage.increment_metric("total_latency_ms", int(round(elapsed_ms, 1)))
         except Exception:
             logger.exception("Failed to record storage metrics")
 

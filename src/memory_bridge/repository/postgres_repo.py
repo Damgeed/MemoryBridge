@@ -83,7 +83,7 @@ _SCHEMA_MIGRATIONS: dict[int, str] = {
         "  resource_id TEXT, "
         "  project_id TEXT, "
         "  ip_address TEXT, "
-        "  details JSONB DEFAULT '{}', "
+        "  details JSONB DEFAULT '{{}}', "
         "  previous_hash TEXT, "
         "  hash TEXT"
         "); "
