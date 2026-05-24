@@ -977,7 +977,7 @@
             }
             resultEl.innerHTML = '<div class="flex-center" style="gap:0.5rem;padding:0.5rem;"><span class="spinner-sm"></span> Looking up your purchase...</div>';
             try {
-                const res = await fetch('/dashboard/recover?email=' + encodeURIComponent(email));
+                const res = await fetch('/dashboard/recover?email=' + encodeURIComponent(email), { method: 'POST' });
                 if (!res.ok) {
                     const err = await res.json().catch(() => ({ detail: 'Request failed' }));
                     resultEl.innerHTML = `<div class="status error">❌ ${escapeHtml(err.detail || 'Could not recover key.')}</div>`;
