@@ -26,6 +26,7 @@ from .controllers import (
     billing_controller,
     export_controller,
     graph_controller,
+    dashboard_controller,
     handoff_controller,
     health_controller,
     memory_controller,
@@ -278,6 +279,7 @@ def create_app() -> FastAPI:
     app.include_router(pricing_controller.router)
     app.include_router(session_controller.router)
     app.include_router(graph_controller.router)
+    app.include_router(dashboard_controller.router)
     app.include_router(handoff_controller.router)
     app.include_router(admin_controller.router)
     app.include_router(export_controller.router)

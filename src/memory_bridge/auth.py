@@ -18,7 +18,7 @@ logger = logging.getLogger(__name__)
 DEMO_API_KEY = "mb_demo_public_test"
 
 
-EXEMPT_PATHS = {"/", "/health", "/docs", "/openapi.json", "/redoc", "/playground", "/badge", "/graph", "/billing/webhook", "/pricing"}
+EXEMPT_PATHS = {"/", "/health", "/docs", "/openapi.json", "/redoc", "/playground", "/badge", "/graph", "/billing/webhook", "/pricing", "/dashboard"}
 
 
 class APIKeyMiddleware(BaseHTTPMiddleware):
@@ -53,7 +53,7 @@ class APIKeyMiddleware(BaseHTTPMiddleware):
 
     async def dispatch(self, request: Request, call_next):
         path = request.url.path
-        if path in EXEMPT_PATHS or path.startswith("/playground/") or path.startswith("/graph/"):
+        if path in EXEMPT_PATHS or path.startswith("/playground/") or path.startswith("/graph/") or path.startswith("/dashboard/"):
             return await call_next(request)
 
         # Determine if auth is enforced

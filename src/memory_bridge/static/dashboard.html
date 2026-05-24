@@ -1,0 +1,727 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#0a0a0f" media="(prefers-color-scheme: dark)">
+    <meta name="theme-color" content="#f8f9fc" media="(prefers-color-scheme: light)">
+    <title>Memory Bridge — Dashboard</title>
+    <link rel="icon" href="/playground/logo.svg" type="image/svg+xml">
+    <link rel="stylesheet" href="/playground/style.css">
+    <style>
+        .dash-container {
+            max-width: 960px;
+            margin: 0 auto;
+            padding: 2rem 1.5rem;
+        }
+        .dash-header {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-bottom: 0.25rem;
+        }
+        .dash-header h1 {
+            font-size: 1.6rem;
+            font-weight: 800;
+            letter-spacing: -0.02em;
+        }
+        .dash-header h1 span.gradient-text {
+            background: linear-gradient(135deg, var(--accent), var(--pink));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .dash-subtitle {
+            color: var(--text-muted);
+            margin-bottom: 2rem;
+            font-size: 0.92rem;
+        }
+
+        .tier-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+            padding: 0.25rem 0.75rem;
+            border-radius: var(--radius-full);
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        .tier-badge.free { background: var(--bg-tertiary); color: var(--text-muted); border: 1px solid var(--border-primary); }
+        .tier-badge.starter { background: var(--accent-glow); color: var(--accent); border: 1px solid var(--accent); }
+        .tier-badge.pro { background: var(--accent-glow); color: var(--accent); border: 1px solid var(--accent); }
+        .tier-badge.enterprise { background: var(--green-bg); color: var(--green); border: 1px solid var(--green); }
+
+        .dash-grid {
+            display: grid;
+            gap: 1.5rem;
+        }
+        .dash-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-primary);
+            border-radius: var(--radius-lg);
+            padding: 1.5rem;
+            box-shadow: var(--shadow-sm);
+            transition: all var(--transition-base);
+        }
+        .dash-card:hover {
+            border-color: var(--border-strong);
+            box-shadow: var(--shadow-md);
+        }
+        .dash-card .card-title {
+            font-size: 1rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
+
+        /* ── API Key List ──────────────────────────── */
+        .key-item {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.75rem 0;
+            border-bottom: 1px solid var(--border-subtle);
+        }
+        .key-item:last-child { border-bottom: none; }
+        .key-item .key-label {
+            font-weight: 600;
+            font-size: 0.88rem;
+            color: var(--text-primary);
+            min-width: 100px;
+        }
+        .key-item .key-value {
+            font-family: var(--font-mono);
+            font-size: 0.78rem;
+            color: var(--text-muted);
+            flex: 1;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .key-item .key-date {
+            font-size: 0.72rem;
+            color: var(--text-faint);
+            white-space: nowrap;
+        }
+        .key-item .btn-icon {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 32px;
+            height: 32px;
+            border-radius: 6px;
+            border: 1px solid var(--border-primary);
+            background: transparent;
+            color: var(--text-muted);
+            cursor: pointer;
+            transition: all var(--transition-fast);
+        }
+        .key-item .btn-icon:hover {
+            background: var(--btn-secondary-hover);
+            color: var(--accent);
+        }
+
+        .key-reveal {
+            margin-top: 1rem;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--accent);
+            border-radius: var(--radius-md);
+            padding: 1rem;
+        }
+        .key-reveal .key-plaintext {
+            font-family: var(--font-mono);
+            font-size: 0.85rem;
+            color: var(--accent);
+            word-break: break-all;
+            user-select: all;
+            margin-bottom: 0.5rem;
+        }
+        .key-reveal .key-warning {
+            font-size: 0.78rem;
+            color: var(--orange);
+        }
+
+        /* ── Terminal / Code Blocks ────────────────── */
+        .term-block {
+            background: var(--code-bg);
+            border: 1px solid var(--code-border);
+            border-radius: var(--radius-md);
+            padding: 1rem 1.25rem;
+            font-family: var(--font-mono);
+            font-size: 0.85rem;
+            line-height: 1.65;
+            overflow-x: auto;
+            position: relative;
+            margin-bottom: 1rem;
+        }
+        .term-block .term-line { color: var(--code-text); }
+        .term-block .term-prompt { color: var(--green); }
+        .term-block .term-comment { color: #6c7086; font-style: italic; }
+        .term-copy-btn {
+            position: absolute;
+            top: 0.5rem;
+            right: 0.5rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.3rem;
+            padding: 0.3rem 0.6rem;
+            font-size: 0.72rem;
+            font-family: var(--font-sans);
+            background: var(--bg-glass);
+            border: 1px solid var(--border-primary);
+            border-radius: 6px;
+            color: var(--text-muted);
+            cursor: pointer;
+            transition: all var(--transition-fast);
+        }
+        .term-copy-btn:hover {
+            background: var(--accent-glow);
+            color: var(--accent);
+            border-color: var(--accent);
+        }
+        .term-copy-btn.copied {
+            background: var(--green-bg);
+            color: var(--green);
+            border-color: var(--green);
+        }
+
+        .step-flow {
+            display: flex;
+            gap: 0.75rem;
+            align-items: flex-start;
+            margin-bottom: 1.5rem;
+        }
+        .step-num {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            background: var(--accent-gradient);
+            color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 800;
+            font-size: 0.8rem;
+            flex-shrink: 0;
+            margin-top: 0.1rem;
+        }
+        .step-content { flex: 1; }
+        .step-content h3 { font-size: 0.95rem; font-weight: 700; margin-bottom: 0.3rem; }
+        .step-content p { font-size: 0.85rem; color: var(--text-muted); line-height: 1.55; }
+
+        .empty-keys {
+            text-align: center;
+            padding: 2rem 1rem;
+            color: var(--text-faint);
+        }
+        .empty-keys .icon { font-size: 2rem; margin-bottom: 0.5rem; }
+
+        .toast {
+            position: fixed;
+            bottom: 2rem;
+            left: 50%;
+            transform: translateX(-50%) translateY(100px);
+            background: var(--bg-glass-strong);
+            backdrop-filter: blur(16px);
+            border: 1px solid var(--border-primary);
+            border-radius: var(--radius-md);
+            padding: 0.7rem 1.2rem;
+            font-size: 0.85rem;
+            color: var(--text-primary);
+            box-shadow: var(--shadow-lg);
+            opacity: 0;
+            transition: all 0.3s ease;
+            z-index: 999;
+            pointer-events: none;
+        }
+        .toast.show {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
+
+        .spinner-sm {
+            display: inline-block;
+            width: 14px;
+            height: 14px;
+            border: 2px solid var(--border-primary);
+            border-top-color: var(--accent);
+            border-radius: 50%;
+            animation: spin 0.6s linear infinite;
+            vertical-align: middle;
+        }
+
+        @media (max-width: 768px) {
+            .dash-container { padding: 1rem 0.75rem; }
+            .dash-header h1 { font-size: 1.3rem; }
+            .key-item { flex-wrap: wrap; gap: 0.4rem; }
+            .key-item .key-label { min-width: 70px; font-size: 0.82rem; }
+            .key-item .key-value { font-size: 0.72rem; }
+            .term-block { font-size: 0.78rem; padding: 0.8rem; }
+            .step-flow { flex-direction: column; }
+        }
+    </style>
+    <script src="/playground/i18n.js"></script>
+</head>
+<body>
+    <!-- Navbar -->
+    <nav class="navbar">
+        <a href="/" class="logo">
+            <img src="/playground/logo.svg" alt="Memory Bridge">
+            Memory <span class="logo-accent">Bridge</span>
+        </a>
+        <div class="nav-links">
+            <a href="/">Home</a>
+            <a href="/playground/">Playground</a>
+            <a href="/playground/graph.html">Graph</a>
+            <a href="/pricing">Pricing</a>
+            <a href="/dashboard/" class="active">Dashboard</a>
+        </div>
+        <div class="nav-right">
+            <div style="position:relative;display:inline-flex;">
+                <button class="nav-icon-btn lang-toggle" onclick="toggleLang()" title="Switch language" aria-label="Switch language">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="10"/>
+                        <line x1="2" y1="12" x2="22" y2="12"/>
+                        <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+                    </svg>
+                </button>
+                <div class="lang-dropdown" id="lang-dropdown">
+                    <a href="javascript:void(0)" data-lang="en" class="lang-opt active" onclick="setLang('en')">🇬🇧 English</a>
+                    <a href="javascript:void(0)" data-lang="zh" class="lang-opt" onclick="setLang('zh')">🇨🇳 中文</a>
+                    <a href="javascript:void(0)" data-lang="ja" class="lang-opt" onclick="setLang('ja')">🇯🇵 日本語</a>
+                    <a href="javascript:void(0)" data-lang="ko" class="lang-opt" onclick="setLang('ko')">🇰🇷 한국어</a>
+                    <a href="javascript:void(0)" data-lang="es" class="lang-opt" onclick="setLang('es')">🇪🇸 Español</a>
+                    <a href="javascript:void(0)" data-lang="fr" class="lang-opt" onclick="setLang('fr')">🇫🇷 Français</a>
+                    <a href="javascript:void(0)" data-lang="de" class="lang-opt" onclick="setLang('de')">🇩🇪 Deutsch</a>
+                </div>
+            </div>
+            <button class="nav-icon-btn theme-toggle-btn" onclick="toggleTheme()" title="Toggle theme">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="theme-sun">
+                    <circle cx="12" cy="12" r="5"/>
+                    <line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/>
+                    <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+                    <line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/>
+                    <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+                </svg>
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="theme-moon" style="display:none">
+                    <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+                </svg>
+            </button>
+            <a href="/playground/" class="nav-cta">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <polygon points="5 3 19 12 5 21 5 3"/>
+                </svg>
+                <span>Launch</span>
+            </a>
+            <button class="nav-hamburger" onclick="toggleMobileNav()" aria-label="Open menu">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="4" y1="6" x2="20" y2="6"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="18" x2="20" y2="18"/>
+                </svg>
+            </button>
+        </div>
+    </nav>
+
+    <!-- Mobile Nav Panel -->
+    <div class="nav-mobile-backdrop" id="nav-backdrop" onclick="closeMobileNav()"></div>
+    <div class="nav-mobile-panel" id="nav-mobile">
+        <div class="nav-mobile-header">
+            <div class="logo">
+                <img src="/playground/logo.svg" alt="Memory Bridge">
+                Memory <span class="logo-accent">Bridge</span>
+            </div>
+            <button class="nav-mobile-close" onclick="closeMobileNav()" aria-label="Close menu">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+                </svg>
+            </button>
+        </div>
+        <a href="/" onclick="closeMobileNav()">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+            Home
+        </a>
+        <a href="/playground/" onclick="closeMobileNav()">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+            Playground
+        </a>
+        <a href="/playground/graph.html" onclick="closeMobileNav()">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="5" cy="5" r="3"/><circle cx="19" cy="5" r="3"/><circle cx="12" cy="19" r="3"/><line x1="5" y1="5" x2="19" y2="5"/><line x1="5" y1="5" x2="12" y2="19"/><line x1="19" y1="5" x2="12" y2="19"/></svg>
+            Graph
+        </a>
+        <a href="/pricing" onclick="closeMobileNav()">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+            Pricing
+        </a>
+        <a href="/dashboard/" class="active" onclick="closeMobileNav()">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+            Dashboard
+        </a>
+        <div class="nav-mobile-divider"></div>
+        <a href="/playground/" class="nav-mobile-cta" onclick="closeMobileNav()">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+            Launch Playground
+        </a>
+    </div>
+
+    <div class="dash-container">
+        <!-- Header -->
+        <div class="dash-header">
+            <img src="/playground/logo.svg" alt="" style="height:28px;">
+            <h1><span class="gradient-text">Dashboard</span></h1>
+        </div>
+        <p class="dash-subtitle" id="dash-status">Loading your dashboard...</p>
+
+        <div class="dash-grid">
+            <!-- Subscription Card -->
+            <div class="dash-card" id="sub-card">
+                <div class="card-title">💳 Subscription</div>
+                <div id="sub-content">
+                    <div class="flex-center" style="gap:0.5rem;"><span class="spinner-sm"></span> Loading...</div>
+                </div>
+            </div>
+
+            <!-- API Keys Card -->
+            <div class="dash-card" id="keys-card">
+                <div class="card-title">🔑 API Keys</div>
+                <div style="margin-bottom:1rem;">
+                    <button class="btn btn-primary btn-sm" onclick="generateKey()">+ Generate New Key</button>
+                </div>
+                <div id="keys-list">
+                    <div class="flex-center" style="gap:0.5rem;"><span class="spinner-sm"></span> Loading keys...</div>
+                </div>
+                <div id="key-reveal-area"></div>
+            </div>
+
+            <!-- Setup Guide -->
+            <div class="dash-card" id="setup-card">
+                <div class="card-title">🚀 Setup Guide</div>
+                <p style="margin-bottom:1.25rem;color:var(--text-muted);font-size:0.88rem;">
+                    Get started in 3 steps. Your API key goes in the <code style="background:var(--bg-tertiary);padding:0.1rem 0.35rem;border-radius:4px;color:var(--accent);">Authorization</code> header.
+                </p>
+
+                <div class="step-flow">
+                    <div class="step-num">1</div>
+                    <div class="step-content">
+                        <h3>Install</h3>
+                        <p>Install the Python package via pip.</p>
+                    </div>
+                </div>
+                <div class="term-block">
+                    <button class="term-copy-btn" onclick="copyCmd(this,'pip install memory-bridge')" title="Copy command">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                        Copy
+                    </button>
+                    <span class="term-prompt">$</span> <span class="term-line">pip install memory-bridge</span>
+                </div>
+
+                <div class="step-flow">
+                    <div class="step-num">2</div>
+                    <div class="step-content">
+                        <h3>Start the server</h3>
+                        <p>Run the server locally. It starts on <strong>http://localhost:8000</strong>.</p>
+                    </div>
+                </div>
+                <div class="term-block">
+                    <button class="term-copy-btn" onclick="copyCmd(this,'memory-bridge')" title="Copy command">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                        Copy
+                    </button>
+                    <span class="term-prompt">$</span> <span class="term-line">memory-bridge</span>
+                </div>
+
+                <div class="step-flow">
+                    <div class="step-num">3</div>
+                    <div class="step-content">
+                        <h3>Store your first memory</h3>
+                        <p>Use your API key to authenticate. Replace <code style="font-size:0.78rem;">YOUR_API_KEY</code> below.</p>
+                    </div>
+                </div>
+                <div class="term-block">
+                    <button class="term-copy-btn" onclick="copyPyCode(this)" title="Copy code">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                        Copy
+                    </button>
+                    <span class="term-prompt">$</span> <span class="term-line" id="py-code-demo">curl -X POST http://localhost:8000/memories \</span><br>
+                    <span class="term-line" style="padding-left:1.5rem;">-H "Authorization: Bearer YOUR_API_KEY" \</span><br>
+                    <span class="term-line" style="padding-left:1.5rem;">-H "Content-Type: application/json" \</span><br>
+                    <span class="term-line" style="padding-left:1.5rem;">-d '{"session_id":"my-session","agent_id":"henry","key":"hello","value":"Hello Memory Bridge!"}'</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer class="footer">© 2026 Memory Bridge — API for cross-agent memory</footer>
+
+    <!-- Toast -->
+    <div class="toast" id="toast"></div>
+
+    <script>
+        // ── Theme ──────────────────────────────────────────────────
+        (function initTheme() {
+            const saved = localStorage.getItem('mb-theme');
+            if (saved) document.documentElement.setAttribute('data-theme', saved);
+            else {
+                const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+                document.documentElement.setAttribute('data-theme', prefersDark ? 'dark' : 'light');
+            }
+            updateThemeIcons();
+        })();
+        function toggleTheme() {
+            const html = document.documentElement;
+            const next = html.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+            html.setAttribute('data-theme', next);
+            localStorage.setItem('mb-theme', next);
+            updateThemeIcons();
+        }
+        function updateThemeIcons() {
+            const theme = document.documentElement.getAttribute('data-theme');
+            const isDark = theme === 'dark';
+            document.querySelectorAll('.theme-toggle-btn').forEach(btn => {
+                const sun = btn.querySelector('.theme-sun');
+                const moon = btn.querySelector('.theme-moon');
+                if (sun) sun.style.display = isDark ? 'block' : 'none';
+                if (moon) moon.style.display = isDark ? 'none' : 'block';
+            });
+        }
+
+        // ── Mobile Nav ───────────────────────────────────────────
+        function toggleMobileNav() {
+            const panel = document.getElementById('nav-mobile');
+            const backdrop = document.getElementById('nav-backdrop');
+            const isOpen = panel.classList.toggle('open');
+            backdrop.classList.toggle('open');
+            document.body.style.overflow = isOpen ? 'hidden' : '';
+        }
+        function closeMobileNav() {
+            const panel = document.getElementById('nav-mobile');
+            const backdrop = document.getElementById('nav-backdrop');
+            if (panel) panel.classList.remove('open');
+            if (backdrop) backdrop.classList.remove('open');
+            document.body.style.overflow = '';
+        }
+
+        // ── Language ────────────────────────────────────────────────
+        function toggleLang() {
+            document.getElementById('lang-dropdown').classList.toggle('open');
+        }
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('.lang-toggle') && !e.target.closest('#lang-dropdown')) {
+                document.getElementById('lang-dropdown')?.classList.remove('open');
+            }
+        });
+        function setLang(code) {
+            localStorage.setItem('mb-lang', code);
+            document.querySelectorAll('.lang-opt').forEach(el => el.classList.remove('active'));
+            const opt = document.querySelector(`.lang-opt[data-lang="${code}"]`);
+            if (opt) opt.classList.add('active');
+            document.getElementById('lang-dropdown').classList.remove('open');
+        }
+        (function initLang() {
+            const saved = localStorage.getItem('mb-lang') || 'en';
+            document.querySelectorAll('.lang-opt').forEach(el => el.classList.remove('active'));
+            const opt = document.querySelector(`.lang-opt[data-lang="${saved}"]`);
+            if (opt) opt.classList.add('active');
+        })();
+
+        // ── API Client ──────────────────────────────────────────────
+        const API_BASE = '';
+        let currentApiKey = '';
+
+        function getAuthHeaders() {
+            const headers = { 'Content-Type': 'application/json' };
+            const key = document.getElementById('api-key-input')?.value || localStorage.getItem('mb_api_key') || '';
+            if (key) headers['Authorization'] = 'Bearer ' + key;
+            return headers;
+        }
+
+        async function api(method, path, body) {
+            const opts = { method, headers: getAuthHeaders() };
+            if (body !== undefined) opts.body = JSON.stringify(body);
+            const res = await fetch(API_BASE + path, opts);
+            if (!res.ok) {
+                let detail;
+                try { const err = await res.json(); detail = err.detail || err.message || res.statusText; }
+                catch { detail = res.statusText || `HTTP ${res.status}`; }
+                throw new Error(detail);
+            }
+            return res.json();
+        }
+
+        // ── Dashboard Data ─────────────────────────────────────────
+        async function loadDashboard() {
+            try {
+                const data = await api('GET', '/dashboard/data');
+                renderSubscription(data);
+                document.getElementById('dash-status').textContent = `Your organization: ${data.organization_id} · ${data.tier.charAt(0).toUpperCase() + data.tier.slice(1)} plan`;
+            } catch (e) {
+                document.getElementById('dash-status').textContent = '⚠️ Could not load dashboard data. Run the demo key in the playground to get started.';
+                document.getElementById('sub-content').innerHTML = '<div style="color:var(--text-muted);font-size:0.85rem;">Use the <a href="/playground/" style="color:var(--accent);">Playground</a> to generate test data first.</div>';
+            }
+            loadKeys();
+        }
+
+        function renderSubscription(data) {
+            const el = document.getElementById('sub-content');
+            const tierClass = data.tier || 'free';
+            const tierLabel = data.tier ? data.tier.charAt(0).toUpperCase() + data.tier.slice(1) : 'Free';
+            const periodEnd = data.current_period_end
+                ? new Date(data.current_period_end).toLocaleDateString()
+                : '—';
+
+            el.innerHTML = `
+                <div style="display:flex;align-items:center;gap:1rem;flex-wrap:wrap;">
+                    <span class="tier-badge ${tierClass}">${tierLabel}</span>
+                    <span style="font-size:0.85rem;color:var(--text-muted);">Status: <strong style="color:var(--green);">${data.status}</strong></span>
+                    <span style="font-size:0.85rem;color:var(--text-muted);">Keys: <strong>${data.active_keys}</strong> active</span>
+                    ${periodEnd !== '—' ? `<span style="font-size:0.82rem;color:var(--text-faint);">Period ends: ${periodEnd}</span>` : ''}
+                </div>
+            `;
+        }
+
+        // ── API Key Management ─────────────────────────────────────
+        async function loadKeys() {
+            try {
+                const data = await api('GET', '/dashboard/keys');
+                renderKeys(data.keys || []);
+            } catch (e) {
+                document.getElementById('keys-list').innerHTML =
+                    '<div class="empty-keys"><div class="icon">🔑</div><div>Use the Playground first or set an API key.</div></div>';
+            }
+        }
+
+        function renderKeys(keys) {
+            const el = document.getElementById('keys-list');
+            if (!keys || keys.length === 0) {
+                el.innerHTML = `
+                    <div class="empty-keys">
+                        <div class="icon">🔑</div>
+                        <div>No API keys yet.</div>
+                        <div style="font-size:0.82rem;margin-top:0.3rem;color:var(--text-faint);">Click "Generate New Key" to create one.</div>
+                    </div>`;
+                return;
+            }
+
+            let html = '';
+            for (const k of keys) {
+                const created = k.created_at ? new Date(k.created_at).toLocaleDateString() : '—';
+                const label = k.label || 'default';
+                html += `
+                    <div class="key-item">
+                        <span class="key-label">${escapeHtml(label)}</span>
+                        <span class="key-value">••••••••${k.id ? k.id.slice(-6) : ''}</span>
+                        <span class="key-date">${created}</span>
+                        <button class="btn-icon" onclick="copyKey('${k.id}')" title="Copy key ID">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                        </button>
+                        <button class="btn-icon" onclick="revokeKey('${k.id}')" title="Revoke key" style="color:var(--red);">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                        </button>
+                    </div>`;
+            }
+            el.innerHTML = html;
+        }
+
+        async function generateKey() {
+            const btn = document.querySelector('#keys-card .btn-primary');
+            const original = btn.innerHTML;
+            btn.innerHTML = '<span class="spinner-sm"></span> Generating...';
+            btn.disabled = true;
+
+            try {
+                const label = 'key-' + Date.now().toString(36);
+                const result = await api('POST', '/dashboard/keys?label=' + encodeURIComponent(label));
+                document.getElementById('key-reveal-area').innerHTML = `
+                    <div class="key-reveal">
+                        <div style="margin-bottom:0.5rem;font-weight:700;font-size:0.85rem;">🎉 New API Key Created</div>
+                        <div class="key-plaintext">${escapeHtml(result.key)}</div>
+                        <div class="key-warning">⚠️ This is the only time you'll see this key. Copy it now.</div>
+                        <div style="margin-top:0.75rem;display:flex;gap:0.5rem;">
+                            <button class="btn btn-primary btn-sm" onclick="copyText(this, '${result.key}')">📋 Copy Key</button>
+                            <button class="btn btn-secondary btn-sm" onclick="document.getElementById('key-reveal-area').innerHTML='';loadKeys();">Dismiss</button>
+                        </div>
+                    </div>`;
+                loadKeys();
+            } catch (e) {
+                document.getElementById('key-reveal-area').innerHTML = `<div class="status error" style="margin-top:0.5rem;">❌ ${e.message}</div>`;
+            } finally {
+                btn.innerHTML = original;
+                btn.disabled = false;
+            }
+        }
+
+        async function revokeKey(keyId) {
+            if (!confirm('Revoke this API key? It will stop working immediately.')) return;
+            try {
+                await api('DELETE', '/dashboard/keys/' + keyId);
+                showToast('🗑️ Key revoked');
+                loadKeys();
+            } catch (e) {
+                showToast('❌ ' + e.message);
+            }
+        }
+
+        // ── Copy Utilities ─────────────────────────────────────────
+        function copyCmd(btn, text) {
+            copyText(btn, text);
+        }
+
+        function copyPyCode(btn) {
+            // Build the full curl command with the current API key
+            const key = currentApiKey || localStorage.getItem('mb_api_key') || 'YOUR_API_KEY';
+            const cmd = `curl -X POST http://localhost:8000/memories \\
+  -H "Authorization: Bearer ${key}" \\
+  -H "Content-Type: application/json" \\
+  -d '{"session_id":"my-session","agent_id":"henry","key":"hello","value":"Hello Memory Bridge!"}'`;
+            copyText(btn, cmd);
+        }
+
+        function copyKey(keyId) {
+            copyText(event.target.closest('.btn-icon'), keyId);
+        }
+
+        function copyText(btn, text) {
+            navigator.clipboard.writeText(text).then(() => {
+                const original = btn.innerHTML;
+                btn.innerHTML = '✅ Copied';
+                btn.classList.add('copied');
+                setTimeout(() => {
+                    btn.innerHTML = original;
+                    btn.classList.remove('copied');
+                }, 2000);
+            }).catch(() => {
+                // Fallback
+                const ta = document.createElement('textarea');
+                ta.value = text;
+                document.body.appendChild(ta);
+                ta.select();
+                document.execCommand('copy');
+                document.body.removeChild(ta);
+                showToast('📋 Copied!');
+            });
+        }
+
+        function showToast(msg) {
+            const el = document.getElementById('toast');
+            el.textContent = msg;
+            el.classList.add('show');
+            clearTimeout(el._t);
+            el._t = setTimeout(() => el.classList.remove('show'), 2500);
+        }
+
+        function escapeHtml(str) {
+            const div = document.createElement('div');
+            div.textContent = str;
+            return div.innerHTML;
+        }
+
+        // ── Init ──────────────────────────────────────────────────
+        document.addEventListener('DOMContentLoaded', () => {
+            currentApiKey = localStorage.getItem('mb_api_key') || '';
+            loadDashboard();
+        });
+    </script>
+</body>
+</html>
