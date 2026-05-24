@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Memory Bridge — Memory Graph</title>
     <link rel="icon" href="/playground/logo.svg" type="image/svg+xml">
+    <link rel="stylesheet" href="/playground/style.css">
     <script src="https://d3js.org/d3.v7.min.js"></script>
     <style>
         /* ── Reset & Base ─────────────────────────────────────────────── */
@@ -199,7 +200,21 @@
 </head>
 <body>
 
-    <!-- ── Toolbar ──────────────────────────────────────────────── -->
+    <!-- Navbar -->
+    <nav class="navbar">
+        <a href="/" class="logo">
+            <img src="/playground/logo.svg" alt="Memory Bridge">
+            Memory Bridge
+        </a>
+        <div class="nav-links">
+            <a href="/">Home</a>
+            <a href="/playground/">Playground</a>
+            <a href="/playground/graph.html" class="active">Graph</a>
+            <a href="/docs">API Docs</a>
+        </div>
+    </nav>
+
+    <!-- ── Toolbar ──────────────────────────────────────── -->
     <div class="toolbar">
         <h2>🧠 Memory Graph</h2>
         <input id="search" type="text" placeholder="Filter nodes by label..." oninput="filterNodes()">

@@ -281,6 +281,26 @@ def create_app() -> FastAPI:
     app.include_router(export_controller.router)
     app.include_router(webhook_router)
 
+    # ── Root Landing Page ──────────────────────────────────
+    @app.get("/", include_in_schema=False)
+    async def root():
+        """Serve the landing page."""
+        static_dir = os.path.join(os.path.dirname(__file__), "static")
+        html_path = os.path.join(static_dir, "index.html")
+        if os.path.exists(html_path):
+            with open(html_path) as f:
+                content = f.read()
+            return Response(
+                content=content,
+                media_type="text/html",
+                headers={"Cache-Control": "no-cache, no-store, must-revalidate"},
+            )
+        return Response(
+            content='{"service":"memory-bridge","docs":"/docs","playground":"/playground/"}',
+            media_type="application/json",
+            headers={"Cache-Control": "no-cache, no-store, must-revalidate"},
+        )
+
     # ── Static Assets (logo.svg, etc.) ─────────────────────────────
     static_dir = os.path.join(os.path.dirname(__file__), "static")
     if os.path.exists(static_dir):

@@ -1,0 +1,215 @@
+/* ═══════════════════════════════════════════════════════════
+   Memory Bridge — Shared Design System
+   Dark GitHub-inspired theme for all Memory Bridge pages
+   ═══════════════════════════════════════════════════════════ */
+
+/* ── Reset & Variables ─────────────────────────────────── */
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg-primary: #0d1117;
+  --bg-secondary: #161b22;
+  --bg-tertiary: #0d1117;
+  --border-primary: #30363d;
+  --border-secondary: #21262d;
+  --text-primary: #e6edf3;
+  --text-secondary: #c9d1d9;
+  --text-muted: #8b949e;
+  --text-faint: #484f58;
+  --accent-blue: #58a6ff;
+  --accent-green: #3fb950;
+  --accent-red: #f85149;
+  --accent-orange: #d29922;
+  --btn-primary: #238636;
+  --btn-primary-hover: #2ea043;
+  --btn-secondary: #21262d;
+  --btn-secondary-hover: #30363d;
+  --btn-danger: #da3633;
+  --btn-danger-hover: #e5534b;
+  --input-bg: #0d1117;
+  --card-shadow: 0 1px 3px rgba(0,0,0,0.3);
+  --font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+  --font-mono: 'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 10px;
+  --max-width: 1000px;
+}
+
+body {
+  font-family: var(--font-family);
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+a { color: var(--accent-blue); text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+/* ── Typography ─────────────────────────────────────────── */
+h1 { font-size: 1.8rem; letter-spacing: -0.02em; }
+h2 { font-size: 1.15rem; color: #f0f6fc; }
+h3 { font-size: 1rem; color: var(--text-primary); }
+.subtitle { color: var(--text-muted); font-size: 0.95rem; margin-bottom: 2rem; }
+
+/* ── Cards ──────────────────────────────────────────────── */
+.card {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-primary);
+  border-radius: var(--radius-lg);
+  padding: 1.5rem;
+  margin-bottom: 1.25rem;
+  box-shadow: var(--card-shadow);
+}
+
+/* ── Buttons ─────────────────────────────────────────────── */
+button, .btn {
+  background: var(--btn-primary);
+  color: white;
+  border: none;
+  padding: 0.6rem 1.3rem;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 0.9rem;
+  transition: background 0.15s;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+button:hover { background: var(--btn-primary-hover); }
+button:active { background: #1e7a2f; }
+
+.btn-secondary {
+  background: var(--btn-secondary);
+  border: 1px solid var(--border-primary);
+}
+.btn-secondary:hover { background: var(--btn-secondary-hover); border-color: var(--text-faint); }
+
+.btn-danger {
+  background: var(--btn-danger);
+}
+.btn-danger:hover { background: var(--btn-danger-hover); }
+
+.btn-sm {
+  padding: 0.35rem 0.7rem;
+  font-size: 0.8rem;
+}
+
+.btn-group {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  margin-top: 0.25rem;
+}
+
+/* ── Form Elements ─────────────────────────────────────────── */
+label {
+  display: block;
+  margin-bottom: 0.3rem;
+  font-weight: 500;
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+}
+
+input, textarea, select {
+  width: 100%;
+  padding: 0.6rem 0.75rem;
+  margin-bottom: 0.85rem;
+  background: var(--input-bg);
+  border: 1px solid var(--border-primary);
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  font-size: 0.9rem;
+  transition: border-color 0.15s;
+  font-family: inherit;
+}
+input:focus, textarea:focus, select:focus {
+  outline: none;
+  border-color: var(--accent-blue);
+  box-shadow: 0 0 0 2px rgba(88,166,255,0.15);
+}
+textarea { resize: vertical; min-height: 60px; }
+::placeholder { color: var(--text-faint); }
+
+/* ── Status Messages ───────────────────────────────────── */
+.status { padding: 0.6rem 0.9rem; border-radius: var(--radius-sm); margin-top: 0.5rem; font-size: 0.88rem; line-height: 1.4; }
+.status.success { background: #1a3a2a; color: var(--accent-green); border: 1px solid #23863633; }
+.status.error   { background: #3a1a1a; color: var(--accent-red); border: 1px solid #da363333; }
+.status.info    { background: #1a2a3a; color: var(--accent-blue); border: 1px solid #1f6feb33; }
+
+/* ── Flex / Grid Helpers ────────────────────────────────── */
+.flex-row { display: flex; gap: 1rem; }
+.flex-row > * { flex: 1; }
+.flex-center { display: flex; align-items: center; gap: 0.5rem; }
+
+@media (max-width: 640px) {
+  .flex-row { flex-direction: column; }
+  h1 { font-size: 1.4rem; }
+}
+
+/* ── Header / Nav Bar ─────────────────────────────────────── */
+.navbar {
+  background: var(--bg-secondary);
+  border-bottom: 1px solid var(--border-primary);
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+  padding: 0.75rem 1.5rem;
+}
+.navbar .logo {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 700;
+  font-size: 1rem;
+  color: var(--text-primary);
+}
+.navbar .logo img { height: 24px; }
+.navbar .nav-links { display: flex; gap: 1rem; margin-left: auto; }
+.navbar .nav-links a {
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  padding: 0.25rem 0.5rem;
+  border-radius: var(--radius-sm);
+  transition: color 0.15s, background 0.15s;
+}
+.navbar .nav-links a:hover {
+  color: var(--text-primary);
+  background: var(--bg-tertiary);
+  text-decoration: none;
+}
+.navbar .nav-links a.active {
+  color: var(--accent-blue);
+}
+
+/* ── Footer ─────────────────────────────────────────────── */
+.footer {
+  text-align: center;
+  color: var(--text-faint);
+  font-size: 0.8rem;
+  padding: 2rem 0 1rem;
+  border-top: 1px solid var(--border-secondary);
+  margin-top: 2rem;
+}
+
+/* ── Loading Spinner ──────────────────────────────────────── */
+.spinner {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  border: 2px solid var(--border-primary);
+  border-top-color: var(--accent-blue);
+  border-radius: 50%;
+  animation: spin 0.6s linear infinite;
+  margin-right: 0.4rem;
+  vertical-align: middle;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ── Scrollbar ─────────────────────────────────────────── */
+::-webkit-scrollbar { width: 8px; }
+::-webkit-scrollbar-track { background: var(--bg-primary); }
+::-webkit-scrollbar-thumb { background: var(--border-primary); border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: var(--text-faint); }

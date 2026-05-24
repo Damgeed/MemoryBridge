@@ -16,8 +16,9 @@ COPY --from=builder /app/dist/*.whl .
 
 RUN pip install --no-cache-dir *.whl && rm *.whl
 
-# Ensure static files are present at the right path
-RUN python -c "import os, memory_bridge; static = os.path.join(os.path.dirname(memory_bridge.__file__), 'static'); print('Static dir:', static, 'Exists:', os.path.isdir(static)); print(os.listdir(static) if os.path.isdir(static) else 'NOT FOUND')"
+# Copy static files directly into the installed package
+# (setuptools wheels don't include non-Python files)
+COPY src/memory_bridge/static/ /usr/local/lib/python3.12/site-packages/memory_bridge/static/
 
 # Copy startup script
 COPY run.sh .
