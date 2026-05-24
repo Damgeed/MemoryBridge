@@ -110,7 +110,26 @@
         #key-login-bar .btn-sm { flex-shrink: 0; }
         .key-login-label { font-size: 0.85rem; font-weight: 600; color: var(--text-muted); }
         .key-login-row { display: flex; gap: 0.5rem; }
-        .forgot-link { font-size: 0.78rem; color: var(--accent); text-decoration: underline; white-space: nowrap; }
+        .forgot-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+            font-size: 0.82rem;
+            color: var(--accent);
+            text-decoration: none;
+            font-weight: 600;
+            padding: 0.35rem 0.85rem;
+            border-radius: 6px;
+            background: var(--accent-glow);
+            border: 1px solid transparent;
+            transition: all 0.2s;
+        }
+        .forgot-link:hover {
+            border-color: var(--accent);
+            text-decoration: none;
+            color: var(--accent);
+            background: var(--accent-glow);
+        }
 
         /* ── API Key List ──────────────────────────── */
         .key-item {
@@ -293,6 +312,62 @@
             border-radius: 50%;
             animation: spin 0.6s linear infinite;
             vertical-align: middle;
+        }
+
+        /* ── Confirm Modal ─────────────────────────── */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.55);
+            z-index: 999;
+            backdrop-filter: blur(4px);
+        }
+        .modal-overlay.open { display: block; }
+        .modal {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 1000;
+            background: var(--card-bg);
+            border: 1px solid var(--border-primary);
+            border-radius: var(--radius-lg);
+            padding: 1.75rem;
+            min-width: 320px;
+            max-width: 90vw;
+            box-shadow: var(--shadow-xl);
+            text-align: center;
+        }
+        .modal.open { display: block; }
+        .modal .modal-icon { font-size: 2rem; margin-bottom: 0.5rem; }
+        .modal .modal-title { font-size: 1.1rem; font-weight: 700; margin-bottom: 0.5rem; }
+        .modal .modal-text { font-size: 0.88rem; color: var(--text-muted); line-height: 1.5; margin-bottom: 1.25rem; }
+        .modal .modal-btns { display: flex; gap: 0.5rem; justify-content: center; }
+        .btn-danger {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.4rem;
+            padding: 0.35rem 0.8rem;
+            font-size: 0.8rem;
+            font-weight: 600;
+            border: none;
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            font-family: var(--font-sans);
+            transition: all var(--transition-fast);
+            background: var(--red);
+            color: #fff;
+        }
+        .btn-danger:hover { opacity: 0.85; transform: translateY(-1px); }
+        @media (max-width: 480px) {
+            .modal { min-width: unset; width: 90vw; padding: 1.25rem; }
+            .modal .modal-title { font-size: 1rem; }
+            .modal .modal-text { font-size: 0.82rem; }
+            .modal .modal-btns { flex-direction: column; }
+            .modal .modal-btns .btn { width: 100%; }
         }
 
         @media (max-width: 768px) {
@@ -587,6 +662,18 @@
     <!-- Toast -->
     <div class="toast" id="toast"></div>
 
+    <!-- Confirm Modal -->
+    <div class="modal-overlay" id="confirm-overlay" onclick="closeConfirm()"></div>
+    <div class="modal" id="confirm-modal">
+        <div class="modal-icon" id="confirm-icon">⚠️</div>
+        <div class="modal-title" id="confirm-title">Are you sure?</div>
+        <div class="modal-text" id="confirm-text">This action cannot be undone.</div>
+        <div class="modal-btns">
+            <button class="btn btn-secondary btn-sm" onclick="closeConfirm()">Cancel</button>
+            <button class="btn btn-danger btn-sm" id="confirm-ok-btn" onclick="confirmAction()">Delete</button>
+        </div>
+    </div>
+
     <script>
         // ── Theme ──────────────────────────────────────────────────
         (function initTheme() {
@@ -862,17 +949,45 @@
             // Count current ACTIVE keys to warn about deleting the last one
             const keyItems = document.querySelectorAll('#keys-list .key-item');
             const isLast = keyItems.length <= 1;
-            const msg = isLast
-                ? '⚠️ This is your LAST API key. If you revoke it, you will lose access to your account. To recover, use the "Lost your key?" link on the dashboard.\n\nAre you sure?'
-                : 'Revoke this API key? It will stop working immediately.';
-            if (!confirm(msg)) return;
-            try {
-                const result = await api('DELETE', '/dashboard/keys/' + keyId);
-                showToast('🗑️ Key revoked');
-                loadKeys();
-            } catch (e) {
-                showToast('❌ ' + e.message);
-            }
+            const icon = '🗑️';
+            const title = isLast ? 'Revoke last API key?' : 'Revoke API key?';
+            const text = isLast
+                ? 'This is your <strong>LAST active API key</strong>. If you revoke it, you will lose access to your account.<br><br>To recover, use the <strong>"Lost your key?"</strong> link below the login bar and re-subscribe.'
+                : 'This API key will stop working <strong>immediately</strong>. Any services using it will lose access.';
+            showConfirm(icon, title, text, 'Revoke Key', async () => {
+                try {
+                    const result = await api('DELETE', '/dashboard/keys/' + keyId);
+                    showToast('🗑️ Key revoked');
+                    loadKeys();
+                } catch (e) {
+                    showToast('❌ ' + e.message);
+                }
+            });
+        }
+
+        // ── Confirm Modal ─────────────────────────────────────────
+        let _confirmCallback = null;
+
+        function showConfirm(icon, title, text, okLabel, callback) {
+            document.getElementById('confirm-icon').textContent = icon || '⚠️';
+            document.getElementById('confirm-title').textContent = title || 'Are you sure?';
+            document.getElementById('confirm-text').innerHTML = text || 'This action cannot be undone.';
+            document.getElementById('confirm-ok-btn').textContent = okLabel || 'Delete';
+            _confirmCallback = callback;
+            document.getElementById('confirm-overlay').classList.add('open');
+            document.getElementById('confirm-modal').classList.add('open');
+        }
+
+        function closeConfirm() {
+            document.getElementById('confirm-overlay').classList.remove('open');
+            document.getElementById('confirm-modal').classList.remove('open');
+            _confirmCallback = null;
+        }
+
+        function confirmAction() {
+            const cb = _confirmCallback;
+            closeConfirm();
+            if (cb) cb();
         }
 
         // ── Copy Utilities ─────────────────────────────────────────
