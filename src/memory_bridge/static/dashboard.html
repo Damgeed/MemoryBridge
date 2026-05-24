@@ -554,8 +554,8 @@
             const input = document.getElementById('api-key-input');
             const status = document.getElementById('key-login-status');
             if (stored) {
-                status.textContent = '✅ Key saved · ' + stored.substring(0, 12) + '…';
-                if (input) input.value = '';
+                status.textContent = '✅ Key saved — dashboard ready' ;
+                if (input && !input.value) input.value = stored;
             } else if (input && input.value) {
                 status.textContent = '⚠️ Not saved yet — click Unlock to save.';
             } else {
@@ -573,7 +573,15 @@
             localStorage.setItem('mb_api_key', key);
             currentApiKey = key;
             updateKeyLoginStatus();
-            loadDashboard();  // Reload dashboard data with the new key
+            reconnectDashboard();
+        }
+
+        function reconnectDashboard() {
+            // Force-reload all dashboard data with current key
+            const el = document.getElementById('dash-status');
+            el.textContent = '🔄 Reconnecting...';
+            document.getElementById('key-reveal-area').innerHTML = '';
+            loadDashboard();
         }
 
         function clearApiKey() {
