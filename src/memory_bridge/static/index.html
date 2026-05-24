@@ -323,6 +323,7 @@
             .model-table td { padding: 0.4rem 0.5rem; }
         }
     </style>
+    <script src="/playground/i18n.js"></script>
 </head>
 <body>
     <!-- Navbar -->
@@ -332,12 +333,30 @@
             Memory <span class="logo-accent">Bridge</span>
         </a>
         <div class="nav-links">
-            <a href="/" class="active">Home</a>
-            <a href="/playground/">Playground</a>
-            <a href="/playground/graph.html">Graph</a>
-            <a href="/pricing">Pricing</a>
+            <a href="/" class="active" data-i18n="nav.home">Home</a>
+            <a href="/playground/" data-i18n="nav.playground">Playground</a>
+            <a href="/playground/graph.html" data-i18n="nav.graph">Graph</a>
+            <a href="/pricing" data-i18n="nav.pricing">Pricing</a>
         </div>
         <div class="nav-right">
+            <div style="position:relative;display:inline-flex;">
+                <button class="nav-icon-btn lang-toggle" onclick="toggleLang()" title="Switch language" aria-label="Switch language">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="10"/>
+                        <line x1="2" y1="12" x2="22" y2="12"/>
+                        <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+                    </svg>
+                </button>
+                <div class="lang-dropdown" id="lang-dropdown">
+                    <a href="#" data-lang="en" class="lang-opt active" onclick="setLang('en')">🇬🇧 English</a>
+                    <a href="#" data-lang="zh" class="lang-opt" onclick="setLang('zh')">🇨🇳 中文</a>
+                    <a href="#" data-lang="ja" class="lang-opt" onclick="setLang('ja')">🇯🇵 日本語</a>
+                    <a href="#" data-lang="ko" class="lang-opt" onclick="setLang('ko')">🇰🇷 한국어</a>
+                    <a href="#" data-lang="es" class="lang-opt" onclick="setLang('es')">🇪🇸 Español</a>
+                    <a href="#" data-lang="fr" class="lang-opt" onclick="setLang('fr')">🇫🇷 Français</a>
+                    <a href="#" data-lang="de" class="lang-opt" onclick="setLang('de')">🇩🇪 Deutsch</a>
+                </div>
+            </div>
             <button class="nav-icon-btn theme-toggle-btn" onclick="toggleTheme()" title="Toggle theme" aria-label="Toggle theme">
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="theme-sun">
                     <circle cx="12" cy="12" r="5"/>
@@ -409,44 +428,61 @@
                     <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
                 </svg>
             </button>
-            
+            <div style="position:relative;flex:1">
+                <button class="nav-icon-btn" onclick="toggleLangMobile()" title="Language" style="width:100%">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="18" height="18">
+                        <circle cx="12" cy="12" r="10"/>
+                        <line x1="2" y1="12" x2="22" y2="12"/>
+                        <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+                    </svg>
+                </button>
+                <div class="lang-dropdown" id="lang-dropdown-mobile" style="left:0;right:auto;min-width:160px">
+                    <a href="#" data-lang="en" class="lang-opt active" onclick="setLang('en')">🇬🇧 English</a>
+                    <a href="#" data-lang="zh" class="lang-opt" onclick="setLang('zh')">🇨🇳 中文</a>
+                    <a href="#" data-lang="ja" class="lang-opt" onclick="setLang('ja')">🇯🇵 日本語</a>
+                    <a href="#" data-lang="ko" class="lang-opt" onclick="setLang('ko')">🇰🇷 한국어</a>
+                    <a href="#" data-lang="es" class="lang-opt" onclick="setLang('es')">🇪🇸 Español</a>
+                    <a href="#" data-lang="fr" class="lang-opt" onclick="setLang('fr')">🇫🇷 Français</a>
+                    <a href="#" data-lang="de" class="lang-opt" onclick="setLang('de')">🇩🇪 Deutsch</a>
+                </div>
+            </div>
         </div>
     </div>
 
     <!-- ═══ HERO ═══ -->
     <section class="hero-section hero-bg">
         <div class="hero-content">
-            <h1>Your AI agents have<br>
+            <h1 data-i18n="hero.title">Your AI agents have<br>
                 <span class="gradient-text">amnesia</span>.
             </h1>
-            <p class="hero-tagline">You're building a team of AI agents — but every conversation is a fresh start.
+            <p class="hero-tagline" data-i18n="hero.subtitle">You're building a team of AI agents — but every conversation is a fresh start.
                 Memory Bridge is the API every agent calls to store and find shared context.
             </p>
             <div class="hero-cta">
-                <a href="/playground/" class="btn-primary">🚀 Try It Now — No Signup</a>
-                <a href="#how-it-works" class="btn-ghost-accent"><span class="btn-text">How It Works</span><span class="arrow-down">↓</span></a>
+                <a href="/playground/" class="btn-primary" data-i18n="cta.tryit">🚀 Try It Now — No Signup</a>
+                <a href="#how-it-works" class="btn-ghost-accent"><span class="btn-text" data-i18n="cta.howitworks">How It Works</span><span class="arrow-down">↓</span></a>
             </div>
             <div class="hero-stats">
-                <div class="hero-stat"><div class="num">198</div><div class="label">Tests</div></div>
-                <div class="hero-stat"><div class="num">56</div><div class="label">PG Tests</div></div>
-                <div class="hero-stat"><div class="num">3</div><div class="label">Adapters</div></div>
-                <div class="hero-stat"><div class="num">OSS</div><div class="label">Open Source</div></div>
+                <div class="hero-stat"><div class="num">198</div><div class="label" data-i18n="stat.tests">Tests</div></div>
+                <div class="hero-stat"><div class="num">56</div><div class="label" data-i18n="stat.pg_tests">PG Tests</div></div>
+                <div class="hero-stat"><div class="num">3</div><div class="label" data-i18n="stat.adapters">Adapters</div></div>
+                <div class="hero-stat"><div class="num">OSS</div><div class="label" data-i18n="stat.oss">Open Source</div></div>
             </div>
         </div>
         <div class="hero-visual">
             <div class="bubbles">
                 <div class="bubble">
                     <div class="agent-label"><span class="henry-dot">🧠</span> Henry (AI Expert)</div>
-                    <div class="bubble-text">"User prefers Python 3.12, dark mode, fast iteration. Stored."</div>
+                    <div class="bubble-text" data-i18n="bubble.henry">"User prefers Python 3.12, dark mode, fast iteration. Stored."</div>
                 </div>
                 <div class="bubble" style="margin-left: 1.5rem;">
                     <div class="agent-label"><span class="fred-dot">🚀</span> Fred (Co-founder)</div>
-                    <div class="bubble-text">"What do we know about the user? Let me check memory."</div>
+                    <div class="bubble-text" data-i18n="bubble.fred">"What do we know about the user? Let me check memory."</div>
                 </div>
                 <div class="bubble" style="border-color: var(--green-glow);">
                     <div class="agent-label"><span class="fred-dot">🚀</span> Fred (Builder)</div>
                     <div class="bubble-text">"Found it: Python 3.12 ✓, dark mode ✓. Henry already did the research. <strong style="color:var(--green)">Ship it.</strong>"</div>
-                    <div class="bubble-foot">↔ Henry wrote it. Fred found it. No hand-holding needed.</div>
+                    <div class="bubble-foot" data-i18n="bubble.foot">↔ Henry wrote it. Fred found it. No hand-holding needed.</div>
                 </div>
             </div>
         </div>
@@ -454,13 +490,13 @@
 
     <!-- ═══ HOW IT WORKS ═══ -->
     <section class="section" id="how-it-works">
-        <h2 class="section-title fade-up">It's an API your agents call<span class="gradient-text">.</span></h2>
-        <p class="section-subtitle fade-up">Not another chat tool. Not a plugin. A REST API that gives your multi-agent system shared memory — without changing how your agents work.</p>
+        <h2 class="section-title fade-up" data-i18n="hiw.title">It's an API your agents call<span class="gradient-text">.</span></h2>
+        <p class="section-subtitle fade-up" data-i18n="hiw.subtitle">Not another chat tool. Not a plugin. A REST API that gives your multi-agent system shared memory — without changing how your agents work.</p>
         <div class="steps-grid">
             <div class="step-card fade-up">
                 <div class="num-circle">1</div>
-                <h3>Agent stores knowledge</h3>
-                <p>After any LLM call, your code saves what your agent learned — preferences, decisions, discovered facts.</p>
+                <h3 data-i18n="step1.title">Agent stores knowledge</h3>
+                <p data-i18n="step1.desc">After any LLM call, your code saves what your agent learned — preferences, decisions, discovered facts.</p>
             </div>
             <div class="step-card fade-up">
                 <div class="num-circle">2</div>
@@ -501,6 +537,7 @@
                     We provide <strong>Python SDK</strong> and <strong>framework adapters</strong> for LangGraph, AutoGen, and CrewAI that automate this flow.
                 </div>
             </div>
+
 
         </div>
     </section>
@@ -569,13 +606,13 @@
 
         <div class="cta-row fade-up">
             <a href="/playground/" class="btn btn-primary">🚀 Launch Playground</a>
-            <a href="/docs" class="btn btn-secondary">📖 Full API Docs</a>
+            <a href="/docs" class="btn btn-secondary" data-i18n="cta.api_docs">📖 Full API Docs</a>
             <a href="https://github.com/Damgeed/MemoryBridge" class="btn btn-secondary">🐙 GitHub</a>
         </div>
     </section>
 
     <footer class="footer">
-        <span>Memory Bridge — API for cross-agent memory — MIT License</span> — <a href="https://github.com/Damgeed/MemoryBridge">GitHub</a>
+        <span data-i18n="footer.text">Memory Bridge — API for cross-agent memory — MIT License</span> — <a href="https://github.com/Damgeed/MemoryBridge">GitHub</a>
     </footer>
 
     <script>
@@ -626,6 +663,14 @@
         }
 
         // ── Language Selector ─────────────────────────────────────
+        let langDropdownOpen = false;
+        function toggleLang() {
+            langDropdownOpen = !langDropdownOpen;
+            document.getElementById('lang-dropdown').classList.toggle('open');
+        }
+        function toggleLangMobile() {
+            document.getElementById('lang-dropdown-mobile').classList.toggle('open');
+        }
         document.addEventListener('click', (e) => {
             if (!e.target.closest('.lang-toggle') && !e.target.closest('#lang-dropdown')) {
                 document.getElementById('lang-dropdown')?.classList.remove('open');
@@ -634,12 +679,20 @@
             if (!e.target.closest('#lang-dropdown-mobile') && !e.target.closest('[onclick="toggleLangMobile()"]')) {
                 document.getElementById('lang-dropdown-mobile')?.classList.remove('open');
             }
-        });"]`);
+        });
+        function setLang(code) {
+            localStorage.setItem('mb-lang', code);
+            document.documentElement.lang = code;
+            document.querySelectorAll('.lang-opt').forEach(el => el.classList.remove('active'));
+            const opt = document.querySelector(`.lang-opt[data-lang="${code}"]`);
             if (opt) opt.classList.add('active');
             const codes = {en:'🇬🇧 EN',zh:'🇨🇳 ZH',ja:'🇯🇵 JA',ko:'🇰🇷 KO',es:'🇪🇸 ES',fr:'🇫🇷 FR',de:'🇩🇪 DE'};
             document.getElementById('lang-dropdown').classList.remove('open');
         }
-        (function"]`);
+        (function initLang() {
+            const saved = localStorage.getItem('mb-lang') || 'en';
+            document.querySelectorAll('.lang-opt').forEach(el => el.classList.remove('active'));
+            const opt = document.querySelector(`.lang-opt[data-lang="${saved}"]`);
             if (opt) opt.classList.add('active');
             document.documentElement.lang = saved;
         })();
