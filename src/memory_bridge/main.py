@@ -92,6 +92,15 @@ async def lifespan(app: FastAPI):
     storage = await get_storage()
     await storage.initialize()
 
+    # Initialize Stripe API key at startup so all endpoints (including
+    # recovery) can use it without waiting for BillingService instantiation.
+    import stripe as _stripe
+    _stripe.api_key = os.environ.get("STRIPE_SECRET_KEY", "")
+    if _stripe.api_key:
+        logger.info("Stripe integration enabled (key set, length=%d)", len(_stripe.api_key))
+    else:
+        logger.warning("STRIPE_SECRET_KEY not set — billing & recovery will fail")
+
     # Warn if JWT secret is not configured but auth is enabled
     from .config import get_settings
     _settings = get_settings()
