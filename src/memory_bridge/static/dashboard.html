@@ -374,6 +374,17 @@
         </div>
         <p class="dash-subtitle" id="dash-status">Loading your dashboard...</p>
 
+        <!-- API Key Login Bar -->
+        <div id="key-login-bar" class="dash-card" style="margin-bottom:1.5rem;padding:0.75rem 1rem;display:flex;align-items:center;gap:0.75rem;flex-wrap:wrap;">
+            <span style="font-size:0.85rem;font-weight:600;color:var(--text-muted);">🔑 API Key:</span>
+            <input type="password" id="api-key-input" placeholder="Paste your API key here..."
+                style="flex:1;min-width:180px;padding:0.45rem 0.7rem;border-radius:6px;border:1px solid var(--border-primary);background:var(--bg-tertiary);color:var(--text-primary);font-family:var(--font-mono);font-size:0.82rem;outline:none;"
+            >
+            <button class="btn btn-primary btn-sm" onclick="setApiKey()">Unlock Dashboard</button>
+            <button class="btn btn-secondary btn-sm" onclick="clearApiKey()">Clear</button>
+            <span id="key-login-status" style="font-size:0.82rem;color:var(--text-muted);"></span>
+        </div>
+
         <div class="dash-grid">
             <!-- Subscription Card -->
             <div class="dash-card" id="sub-card">
@@ -535,6 +546,46 @@
             const key = document.getElementById('api-key-input')?.value || localStorage.getItem('mb_api_key') || '';
             if (key) headers['Authorization'] = 'Bearer ' + key;
             return headers;
+        }
+
+        // ── Key Login ───────────────────────────────────────────────
+        function updateKeyLoginStatus() {
+            const stored = localStorage.getItem('mb_api_key');
+            const input = document.getElementById('api-key-input');
+            const status = document.getElementById('key-login-status');
+            if (stored) {
+                status.textContent = '✅ Key saved · ' + stored.substring(0, 12) + '…';
+                if (input) input.value = '';
+            } else if (input && input.value) {
+                status.textContent = '⚠️ Not saved yet — click Unlock to save.';
+            } else {
+                status.textContent = '❌ No key set — paste your key above or go to the Playground.';
+            }
+        }
+
+        function setApiKey() {
+            const input = document.getElementById('api-key-input');
+            const key = (input?.value || '').trim();
+            if (!key) {
+                document.getElementById('key-login-status').textContent = '⚠️ Please paste your API key.';
+                return;
+            }
+            localStorage.setItem('mb_api_key', key);
+            currentApiKey = key;
+            updateKeyLoginStatus();
+            loadDashboard();  // Reload dashboard data with the new key
+        }
+
+        function clearApiKey() {
+            localStorage.removeItem('mb_api_key');
+            currentApiKey = '';
+            document.getElementById('api-key-input').value = '';
+            updateKeyLoginStatus();
+            // Reset dashboard to unauthenticated state
+            document.getElementById('dash-status').textContent = 'Key cleared. Paste your API key above to reconnect.';
+            document.getElementById('sub-content').innerHTML = '<div style=\"color:var(--text-muted);font-size:0.85rem;\">Enter your API key above to load subscription data.</div>';
+            document.getElementById('keys-list').innerHTML =
+                '<div class=\"empty-keys\"><div class=\"icon\">🔑</div><div>Enter your API key to manage keys.</div></div>';
         }
 
         async function api(method, path, body) {
@@ -720,6 +771,12 @@
         // ── Init ──────────────────────────────────────────────────
         document.addEventListener('DOMContentLoaded', () => {
             currentApiKey = localStorage.getItem('mb_api_key') || '';
+            // Fill key input from localStorage if available
+            if (currentApiKey) {
+                const input = document.getElementById('api-key-input');
+                if (input) input.value = currentApiKey;
+            }
+            updateKeyLoginStatus();
             loadDashboard();
         });
     </script>
