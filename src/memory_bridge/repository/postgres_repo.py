@@ -1017,6 +1017,27 @@ class PostgresMemoryRepository(MemoryRepository):
                 updated_at=row["updated_at"] if isinstance(row["updated_at"], datetime) else datetime.fromisoformat(row["updated_at"]),
             )
 
+    async def get_subscription_by_stripe_customer(self, customer_id: str) -> Optional[Subscription]:
+        """Get subscription by Stripe customer ID."""
+        async with self.pool.acquire() as conn:
+            row = await conn.fetchrow(
+                f"SELECT * FROM {self.schema}.subscriptions WHERE stripe_customer_id = $1",
+                customer_id,
+            )
+            if row is None:
+                return None
+            return Subscription(
+                id=row["id"] or "",
+                organization_id=row["organization_id"],
+                stripe_customer_id=row["stripe_customer_id"] or "",
+                tier=row["tier"] or "free",
+                status=row["status"] or "active",
+                current_period_start=row["current_period_start"],
+                current_period_end=row["current_period_end"],
+                created_at=row["created_at"] if isinstance(row["created_at"], datetime) else datetime.fromisoformat(row["created_at"]),
+                updated_at=row["updated_at"] if isinstance(row["updated_at"], datetime) else datetime.fromisoformat(row["updated_at"]),
+            )
+
     async def update_subscription_tier(self, sub_id: str, tier: str) -> Optional[Subscription]:
         """Update the tier of a subscription by Stripe subscription ID."""
         async with self.pool.acquire() as conn:

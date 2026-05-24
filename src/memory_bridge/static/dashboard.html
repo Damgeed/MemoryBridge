@@ -588,7 +588,21 @@
                 <button class="btn btn-secondary btn-sm" onclick="clearApiKey()" data-i18n="dash.clear">Clear</button>
             </div>
             <span id="key-login-status"></span>
-            <a href="/pricing" class="forgot-link" data-i18n="dash.lost_key">Lost your key? Subscribe to get a new one →</a>
+            <div style="width:100%;">
+                <a href="javascript:void(0)" class="forgot-link" onclick="toggleRecoverForm()" id="recover-toggle" data-i18n="dash.lost_key">🔑 Lost your key? Recover with purchase email →</a>
+            </div>
+        </div>
+
+        <!-- Recovery Form -->
+        <div id="recover-form" class="dash-card" style="display:none;padding:1rem;margin-top:-0.75rem;border-top:none;border-radius:0 0 var(--radius-lg) var(--radius-lg);">
+            <div style="margin-bottom:0.75rem;font-weight:600;font-size:0.9rem;">🔐 Recover Your API Key</div>
+            <p style="font-size:0.82rem;color:var(--text-muted);margin-bottom:0.75rem;">Enter the email you used during Stripe checkout. We'll look up your subscription and issue a new API key — no charge.</p>
+            <div style="display:flex;gap:0.5rem;flex-wrap:wrap;">
+                <input type="email" id="recover-email" placeholder="your@email.com" style="flex:1;min-width:180px;padding:0.45rem 0.7rem;border-radius:6px;border:1px solid var(--border-primary);background:var(--bg-tertiary);color:var(--text-primary);font-size:0.82rem;outline:none;">
+                <button class="btn btn-primary btn-sm" onclick="recoverKey()">Recover Keys</button>
+                <button class="btn btn-secondary btn-sm" onclick="toggleRecoverForm()">Cancel</button>
+            </div>
+            <div id="recover-result" style="margin-top:0.75rem;"></div>
         </div>
 
         <div class="dash-grid">
@@ -961,6 +975,53 @@
                     showToast('❌ ' + e.message);
                 }
             });
+        }
+
+        // ── Key Recovery ───────────────────────────────────────────
+        function toggleRecoverForm() {
+            const form = document.getElementById('recover-form');
+            const toggle = document.getElementById('recover-toggle');
+            const isOpen = form.style.display !== 'none';
+            form.style.display = isOpen ? 'none' : 'block';
+            toggle.style.display = isOpen ? '' : 'none';
+            if (!isOpen) document.getElementById('recover-email')?.focus();
+        }
+
+        async function recoverKey() {
+            const email = document.getElementById('recover-email').value.trim();
+            const resultEl = document.getElementById('recover-result');
+            if (!email || !email.includes('@')) {
+                resultEl.innerHTML = '<div class="status error">⚠️ Please enter a valid email address.</div>';
+                return;
+            }
+            resultEl.innerHTML = '<div class="flex-center" style="gap:0.5rem;padding:0.5rem;"><span class="spinner-sm"></span> Looking up your purchase...</div>';
+            try {
+                const res = await fetch('/dashboard/recover?email=' + encodeURIComponent(email));
+                if (!res.ok) {
+                    const err = await res.json().catch(() => ({ detail: 'Request failed' }));
+                    resultEl.innerHTML = `<div class="status error">❌ ${escapeHtml(err.detail || 'Could not recover key.')}</div>`;
+                    return;
+                }
+                const data = await res.json();
+                if (data.key) {
+                    localStorage.setItem('mb_api_key', data.key);
+                    document.getElementById('api-key-input').value = data.key;
+                    document.getElementById('key-login-status').innerHTML = '✅ Key recovered — dashboard ready';
+                    resultEl.innerHTML = `
+                        <div class="key-reveal" style="margin-top:0;">
+                            <div style="margin-bottom:0.5rem;font-weight:700;font-size:0.85rem;">🎉 Key Recovered — ${data.tier} plan</div>
+                            <div class="key-plaintext">${escapeHtml(data.key)}</div>
+                            <div class="key-warning">⚠️ This is the only time you'll see this key. Copy it now.</div>
+                            <div style="margin-top:0.75rem;display:flex;gap:0.5rem;">
+                                <button class="btn btn-primary btn-sm" onclick="copyText(this, '${data.key}')">📋 Copy Key</button>
+                                <button class="btn btn-secondary btn-sm" onclick="document.getElementById('recover-result').innerHTML='';toggleRecoverForm();reconnectDashboard();">Done</button>
+                            </div>
+                        </div>`;
+                    updateKeyLoginStatus();
+                }
+            } catch (e) {
+                resultEl.innerHTML = `<div class="status error">❌ Network error: ${escapeHtml(e.message)}</div>`;
+            }
         }
 
         // ── Confirm Modal ─────────────────────────────────────────

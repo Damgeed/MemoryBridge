@@ -229,3 +229,86 @@ def _resolve_org(request: Request) -> str:
             return "demo"
         return auth.get("project_id") or key_id
     return "default"
+
+
+@router.post("/recover")
+async def recover_api_key(
+    email: str = Query("", description="Email used during Stripe checkout"),
+    storage: MemoryRepository = Depends(get_storage),
+):
+    """Recover a lost API key by verifying the purchaser's email via Stripe.
+
+    Looks up the Stripe customer by email, finds their active subscription,
+    and issues a new API key — no charge. Returns the plaintext key once.
+    """
+    if not email or "@" not in email:
+        raise HTTPException(status_code=400, detail="Please provide a valid email address.")
+
+    import stripe
+    try:
+        customers = stripe.Customer.list(email=email, limit=10)
+    except Exception as e:
+        raise HTTPException(status_code=502, detail=f"Could not verify purchase: {e}")
+
+    if not customers.data:
+        raise HTTPException(
+            status_code=404,
+            detail="No purchase found for that email. Make sure you use the email you paid with.",
+        )
+
+    # Find the most recent customer with an active subscription
+    org_id = None
+    found_tier = "free"
+    for customer in customers.data:
+        try:
+            subs = stripe.Subscription.list(customer=customer.id, limit=5, status="all")
+        except Exception:
+            continue
+        for sub in subs.data:
+            active_statuses = {"active", "trialing", "past_due"}
+            if sub.get("status") not in active_statuses:
+                continue
+            metadata = sub.get("metadata", {})
+            if metadata.get("organization_id"):
+                org_id = metadata["organization_id"]
+                items = sub.get("items", {}).get("data", [])
+                if items:
+                    from ..services.billing_service import PRICE_IDS
+                    price_id = items[0].get("price", {}).get("id", "")
+                    for t, pid in PRICE_IDS.items():
+                        if pid == price_id:
+                            found_tier = t
+                            break
+                break
+        if org_id:
+            break
+
+    if not org_id:
+        # Last resort: check stored subscriptions by stripe_customer_id
+        for customer in customers.data:
+            try:
+                sub = await storage.get_subscription_by_stripe_customer(customer.id)
+            except Exception:
+                continue
+            if sub:
+                org_id = sub.organization_id
+                found_tier = sub.tier
+                break
+
+    if not org_id:
+        raise HTTPException(
+            status_code=404,
+            detail="Found your account but no active subscription. Your plan may have expired.",
+        )
+
+    # Create a new API key for this org
+    result = await storage.create_api_key(label=f"recovered-{found_tier}", project_id=org_id)
+    logger.info("Recovered API key for org=%s, tier=%s", org_id, found_tier)
+    return {
+        "recovered": True,
+        "key": result["key"],
+        "id": result["id"],
+        "label": result["label"],
+        "tier": found_tier,
+        "organization_id": org_id,
+    }
