@@ -379,6 +379,14 @@
         const API_BASE = '';
 
         function getApiKey() {
+            // URL parameter takes priority (?key=...)
+            const urlParams = new URLSearchParams(window.location.search);
+            const urlKey = urlParams.get('api_key');
+            if (urlKey) {
+                localStorage.setItem('mb_api_key', urlKey);
+                document.getElementById('api-key-input').value = urlKey;
+                return urlKey;
+            }
             return localStorage.getItem('mb_api_key') || '';
         }
 
@@ -433,6 +441,10 @@
 
         function applyQueryParams() {
             const params = getQueryParams();
+            if (params.api_key) {
+                localStorage.setItem('mb_api_key', params.api_key);
+                document.getElementById('api-key-input').value = params.api_key;
+            }
             if (params.session || params.session_id) {
                 document.getElementById('session-id').value = params.session || params.session_id;
             }
