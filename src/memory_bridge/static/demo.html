@@ -4,6 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Memory Bridge — Demo</title>
+<link rel="icon" href="/playground/logo.svg" type="image/svg+xml">
+<link rel="stylesheet" href="/playground/style.css">
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
   :root {
@@ -42,54 +44,6 @@
     display: flex;
     flex-direction: column;
   }
-  /* Top bar */
-  .topbar {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-    padding: 0.6rem 1.2rem;
-    border-bottom: 1px solid var(--border);
-    background: var(--card);
-    flex-shrink: 0;
-  }
-  .topbar .logo {
-    font-weight: 800;
-    font-size: 1rem;
-    letter-spacing: -0.02em;
-  }
-  .topbar .logo span { color: var(--accent); }
-  .topbar .nav-links {
-    display: flex;
-    gap: 0.3rem;
-    margin-left: 1.5rem;
-    flex: 1;
-  }
-  .topbar .nav-links a {
-    color: var(--muted);
-    text-decoration: none;
-    font-size: 0.78rem;
-    font-weight: 600;
-    padding: 0.2rem 0.5rem;
-    border-radius: 4px;
-    transition: all 0.2s;
-  }
-  .topbar .nav-links a:hover {
-    color: var(--text);
-    background: rgba(255,255,255,0.05);
-  }
-  .topbar .dots {
-    display: flex;
-    gap: 5px;
-    margin-left: auto;
-  }
-  .topbar .dots span {
-    width: 10px; height: 10px;
-    border-radius: 50%;
-  }
-  .topbar .dots .r { background: #ff5f57; }
-  .topbar .dots .y { background: #febc2e; }
-  .topbar .dots .g { background: #28c840; }
-
   /* Main area */
   .main { display: flex; flex: 1; overflow: hidden; }
 
@@ -287,34 +241,91 @@
     .agent-node { width: 60px; height: 60px; font-size: 0.6rem; }
     .agent-node .emoji { font-size: 1.1rem; }
     .db-node { width: 80px; height: 80px; font-size: 1.6rem; }
-    .topbar .nav-links a { font-size: 0.7rem; padding: 0.15rem 0.3rem; }
   }
 </style>
 </head>
 <body>
-<div class="topbar">
-  <div class="logo">Memory <span>Bridge</span></div>
+<!-- Navbar (matches site theme) -->
+<nav class="navbar">
+  <a href="/" class="logo">
+    <img src="/playground/logo.svg" alt="Memory Bridge">
+    Memory <span class="logo-accent">Bridge</span>
+  </a>
   <div class="nav-links">
     <a href="/">Home</a>
     <a href="/playground/">Playground</a>
-    <a href="/pricing">Pricing</a>
+    <a href="/playground/graph.html">Graph</a>
     <a href="/dashboard/">Dashboard</a>
+    <a href="/pricing">Pricing</a>
   </div>
-  <div style="display:flex;align-items:center;gap:0.5rem;margin-right:0.75rem;">
-    <button onclick="toggleDemoTheme()" style="background:none;border:none;color:var(--muted);cursor:pointer;padding:0.25rem;display:flex;align-items:center;" title="Toggle theme">
-      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16" id="demo-sun">
+  <div class="nav-right">
+    <button class="nav-icon-btn" onclick="toggleDemoTheme()" title="Toggle theme" aria-label="Toggle theme">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="theme-sun">
         <circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/>
         <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
         <line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/>
         <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
       </svg>
-      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16" id="demo-moon" style="display:none">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="theme-moon" style="display:none">
         <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
       </svg>
     </button>
+    <button class="nav-hamburger" onclick="toggleMobileNav()" aria-label="Open menu">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="4" y1="6" x2="20" y2="6"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="18" x2="20" y2="18"/>
+      </svg>
+    </button>
   </div>
-  <div class="dots">
-    <span class="r"></span><span class="y"></span><span class="g"></span>
+</nav>
+
+<!-- Mobile Nav Panel -->
+<div class="nav-mobile-backdrop" id="nav-backdrop" onclick="closeMobileNav()"></div>
+<div class="nav-mobile-panel" id="nav-mobile">
+  <div class="nav-mobile-header">
+    <div class="logo">
+      <img src="/playground/logo.svg" alt="Memory Bridge">
+      Memory <span class="logo-accent">Bridge</span>
+    </div>
+    <button class="nav-mobile-close" onclick="closeMobileNav()" aria-label="Close menu">
+      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+      </svg>
+    </button>
+  </div>
+  <a href="/" onclick="closeMobileNav()">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+    Home
+  </a>
+  <a href="/playground/" onclick="closeMobileNav()">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+    Playground
+  </a>
+  <a href="/playground/graph.html" onclick="closeMobileNav()">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="5" cy="5" r="3"/><circle cx="19" cy="5" r="3"/><circle cx="12" cy="19" r="3"/><line x1="5" y1="5" x2="19" y2="5"/><line x1="5" y1="5" x2="12" y2="19"/><line x1="19" y1="5" x2="12" y2="19"/></svg>
+    Graph
+  </a>
+  <a href="/pricing" onclick="closeMobileNav()">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+    Pricing
+  </a>
+  <a href="/dashboard/" onclick="closeMobileNav()">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+    Dashboard
+  </a>
+  <div class="nav-mobile-divider"></div>
+  <a href="/playground/" class="nav-mobile-cta" onclick="closeMobileNav()">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+    Launch Playground
+  </a>
+  <div class="nav-mobile-footer">
+    <button class="nav-icon-btn" onclick="toggleDemoTheme()" title="Toggle theme" style="flex:1">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="18" height="18">
+        <circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/>
+        <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+        <line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/>
+        <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+      </svg>
+    </button>
   </div>
 </div>
 
@@ -356,28 +367,33 @@
     const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
     html.setAttribute('data-theme', prefersDark ? 'dark' : 'light');
   }
-  updateDemoIcons();
 })();
 function toggleDemoTheme() {
   const html = document.documentElement;
   const next = html.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
   html.setAttribute('data-theme', next);
   localStorage.setItem('mb-theme', next);
-  updateDemoIcons();
 }
-function updateDemoIcons() {
-  const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
-  const sun = document.getElementById('demo-sun');
-  const moon = document.getElementById('demo-moon');
-  if (sun) sun.style.display = isDark ? 'block' : 'none';
-  if (moon) moon.style.display = isDark ? 'none' : 'block';
+
+// ── Mobile Nav ─────────────────────────────────────────
+function toggleMobileNav() {
+  document.getElementById('nav-backdrop').classList.toggle('open');
+  document.getElementById('nav-mobile').classList.toggle('open');
+  document.body.style.overflow = document.getElementById('nav-mobile').classList.contains('open') ? 'hidden' : '';
+}
+function closeMobileNav() {
+  document.getElementById('nav-backdrop').classList.remove('open');
+  document.getElementById('nav-mobile').classList.remove('open');
+  document.body.style.overflow = '';
 }
 
 // ── Demo script ─────────────────────────────────────────
 let paused = false;
 let timeoutId = null;
 
-function sleep(ms) { return new Promise(r => { timeoutId = setTimeout(r, ms); }); }
+function sleep(ms) {
+  return new Promise(r => { timeoutId = setTimeout(r, ms); });
+}
 
 function log(agent, msg, style = 'system') {
   const panel = document.getElementById('log-panel');
@@ -404,7 +420,7 @@ async function animateLine(fromId, toId, duration = 600) {
   const toRect = to.getBoundingClientRect();
   const diagram = document.getElementById('diagram');
   const dRect = diagram.getBoundingClientRect();
-  
+
   const x1 = fromRect.left - dRect.left + fromRect.width/2;
   const y1 = fromRect.top - dRect.top + fromRect.height/2;
   const x2 = toRect.left - dRect.left + toRect.width/2;
