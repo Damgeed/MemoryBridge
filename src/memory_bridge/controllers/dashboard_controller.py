@@ -194,5 +194,9 @@ def _resolve_org(request: Request) -> str:
     """
     auth = getattr(request.state, "auth", None)
     if auth:
-        return auth.get("project_id") or auth.get("key_id", "default")
+        key_id = auth.get("key_id", "")
+        # Nicer display for demo key
+        if key_id == "demo:public":
+            return "demo"
+        return auth.get("project_id") or key_id
     return "default"

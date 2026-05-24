@@ -369,7 +369,6 @@
     <div class="dash-container">
         <!-- Header -->
         <div class="dash-header">
-            <img src="/playground/logo.svg" alt="" style="height:28px;">
             <h1><span class="gradient-text">Dashboard</span></h1>
         </div>
         <p class="dash-subtitle" id="dash-status">Loading your dashboard...</p>
@@ -593,7 +592,9 @@
             try {
                 const data = await api('GET', '/dashboard/data');
                 renderSubscription(data);
-                document.getElementById('dash-status').textContent = `Your organization: ${data.organization_id} · ${data.tier.charAt(0).toUpperCase() + data.tier.slice(1)} plan`;
+                const orgLabel = data.organization_id === 'demo' ? 'Your Account' : `Org: ${data.organization_id}`;
+                const tierLabel = data.tier === 'demo' ? 'Demo' : data.tier.charAt(0).toUpperCase() + data.tier.slice(1);
+                document.getElementById('dash-status').textContent = `${orgLabel} · ${tierLabel} plan`;
             } catch (e) {
                 document.getElementById('dash-status').textContent = '⚠️ Could not load dashboard data. Run the demo key in the playground to get started.';
                 document.getElementById('sub-content').innerHTML = '<div style="color:var(--text-muted);font-size:0.85rem;">Use the <a href="/playground/" style="color:var(--accent);">Playground</a> to generate test data first.</div>';
