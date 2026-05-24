@@ -407,11 +407,13 @@
 
                 renderGraph(graphData);
             } catch (e) {
-                container.innerHTML = `
-                    <div class="error-state">
-                        <h3>⚠️ Failed to load graph</h3>
-                        <p>${e.message}</p>
-                    </div>`;
+                container.innerHTML = '';
+                const errorDiv = document.createElement('div');
+                errorDiv.className = 'error-state';
+                errorDiv.innerHTML = '<h3>⚠️ Failed to load graph</h3>';
+                const p = errorDiv.appendChild(document.createElement('p'));
+                p.textContent = e.message || 'Unknown error';
+                container.appendChild(errorDiv);
             }
         }
 
@@ -471,13 +473,24 @@
 
             nodeElements
                 .on('mouseover', (event, d) => {
-                    const tags = d.tags && d.tags.length > 0
-                        ? '<br><span class="tt-label">Tags:</span> ' + d.tags.join(', ')
-                        : '';
-                    const key = d.key ? '<br><span class="tt-label">Key:</span> ' + d.key : '';
-                    tooltip
-                        .style('display', 'block')
-                        .html(`<strong>${d.label}</strong><br><span class="tt-label">Type:</span> ${d.type}${key}${tags}`);
+                    // Safe tooltip construction — text() escapes HTML
+                    tooltip.selectAll('*').remove();
+                    tooltip.style('display', 'block');
+                    const strong = tooltip.append('strong');
+                    strong.text(d.label || '');
+                    tooltip.append('br');
+                    tooltip.append('span').attr('class', 'tt-label').text('Type: ');
+                    tooltip.append('span').text(d.type || '');
+                    if (d.key) {
+                        tooltip.append('br');
+                        tooltip.append('span').attr('class', 'tt-label').text('Key: ');
+                        tooltip.append('span').text(d.key);
+                    }
+                    if (d.tags && d.tags.length > 0) {
+                        tooltip.append('br');
+                        tooltip.append('span').attr('class', 'tt-label').text('Tags: ');
+                        tooltip.append('span').text(d.tags.join(', '));
+                    }
                 })
                 .on('mousemove', (event) => {
                     const x = event.pageX + 14;

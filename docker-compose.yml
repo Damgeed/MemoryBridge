@@ -6,7 +6,7 @@ services:
     environment:
       POSTGRES_DB: memory_bridge
       POSTGRES_USER: mb
-      POSTGRES_PASSWORD: mb_dev
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-mb_dev}
     ports:
       - "5432:5432"
     volumes:
@@ -33,9 +33,9 @@ services:
       dockerfile: Dockerfile
     environment:
       MEMORY_BRIDGE_USE_SQLITE: "false"
-      MEMORY_BRIDGE_DATABASE_URL: postgres://mb:mb_dev@postgres/memory_bridge
+      MEMORY_BRIDGE_DATABASE_URL: postgres://mb:${POSTGRES_PASSWORD:-mb_dev}@postgres/memory_bridge
       MEMORY_BRIDGE_REDIS_URL: redis://redis:6379
-      MEMORY_BRIDGE_API_KEY: dev-key-change-in-prod
+      MEMORY_BRIDGE_API_KEY: ${MEMORY_BRIDGE_API_KEY:-dev-key-change-in-prod}
     ports:
       - "8000:8000"
     depends_on:

@@ -183,8 +183,8 @@ def create_app() -> FastAPI:
         CORSMiddleware,
         allow_origins=_CORS_ORIGINS,
         allow_credentials=True,
-        allow_methods=["*"],
-        allow_headers=["*"],
+        allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
+        allow_headers=["Authorization", "Content-Type", "X-Request-ID", "Accept"],
     )
 
     # 2. Auth — Bearer token check on non-/health routes

@@ -548,7 +548,7 @@
                 el.style.color = 'var(--green)';
                 document.getElementById('api-base-url').textContent = `API: ${window.location.origin}/`;
             } catch (e) {
-                el.innerHTML = `🔴 API unreachable — ${e.message}`;
+                el.innerHTML = `🔴 API unreachable — ${escapeHtml(e.message)}`;
                 el.style.color = '#ef4444';
             }
         }
@@ -583,7 +583,7 @@
                 document.getElementById('mem-tags').value = '';
                 const resultsDiv = document.getElementById('search-results');
                 if (resultsDiv.children.length > 0 && !resultsDiv.querySelector('.results-empty')) { searchMemories(); }
-            } catch (e) { showStatus('store-result', `❌ ${e.message}`, 'error'); }
+            } catch (e) { showStatus('store-result', `❌ ${escapeHtml(e.message)}`, 'error'); }
             finally { btn.innerHTML = originalText; btn.disabled = false; }
         }
 
@@ -618,7 +618,7 @@
                     data = await api('POST', '/memories/query', body);
                 }
                 renderSearchResults(data.entries || [], data.total || 0, q);
-            } catch (e) { resultsDiv.innerHTML = `<div class="status error">❌ Search failed: ${e.message}</div>`; }
+            } catch (e) { resultsDiv.innerHTML = `<div class="status error">❌ Search failed: ${escapeHtml(e.message)}</div>`; }
         }
 
         async function getAllMemories() {
