@@ -45,16 +45,16 @@ class BillingService:
         self,
         organization_id: str,
         tier: str = "pro",
-        success_url: str = "https://memorybridge.ai/dashboard",
-        cancel_url: str = "https://memorybridge.ai/pricing",
+        success_url: str = "",
+        cancel_url: str = "",
     ) -> Optional[str]:
         """Create a Stripe checkout session for a subscription.
 
         Args:
             organization_id: The org to subscribe
             tier: Tier to subscribe to (starter, pro, enterprise)
-            success_url: Redirect URL on success
-            cancel_url: Redirect URL on cancel
+            success_url: Redirect URL on success (defaults to /dashboard)
+            cancel_url: Redirect URL on cancel (defaults to /pricing)
 
         Returns:
             Checkout URL or None if Stripe is not configured

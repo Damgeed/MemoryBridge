@@ -42,7 +42,7 @@ async def send_welcome_email(email: str, name: str) -> bool:
     return await send_email(
         to=email,
         subject="Welcome to Memory Bridge!",
-        body=f"Hi {name},\n\nWelcome to Memory Bridge! Your account is ready.\n\nGet started: https://memorybridge.ai/docs\n\n- The Memory Bridge Team",
+        body=f"Hi {name},\n\nWelcome to Memory Bridge! Your account is ready.\n\nGet started by visiting your instance's /docs endpoint.\n\n- The Memory Bridge Team",
     )
 
 
@@ -51,7 +51,7 @@ async def send_invoice_email(email: str, amount: str, period: str) -> bool:
     return await send_email(
         to=email,
         subject=f"Your Memory Bridge invoice ({period})",
-        body=f"Thank you for your payment of ${amount} for {period}.\n\nView your billing history: https://memorybridge.ai/billing",
+        body=f"Thank you for your payment of ${amount} for {period}.\n\n- The Memory Bridge Team",
     )
 
 
@@ -60,5 +60,5 @@ async def send_usage_alert(email: str, project: str, usage_pct: int) -> bool:
     return await send_email(
         to=email,
         subject=f"Memory Bridge usage alert — {usage_pct}% of limit used",
-        body=f"Hi,\n\nYour project '{project}' has used {usage_pct}% of its monthly quota.\n\nUpgrade to avoid interruption: https://memorybridge.ai/pricing",
+        body=f"Hi,\n\nYour project '{project}' has used {usage_pct}% of its monthly quota.\n\nUpgrade to avoid interruption via your instance settings.\n- The Memory Bridge Team",
     )
