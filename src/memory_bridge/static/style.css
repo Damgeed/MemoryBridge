@@ -402,7 +402,13 @@ a:hover { color: var(--accent-light); text-decoration: none; }
   background: var(--border-subtle);
   margin: 0.75rem 0;
 }
-/* ── Language dropdown refinement ──────────────────────── */
+.nav-mobile-panel .nav-mobile-footer {
+  margin-top: 1rem;
+  display: flex;
+  gap: 0.5rem;
+}
+
+/* Language dropdown refinement */
 .lang-dropdown {
     position: absolute;
     top: 100%;
