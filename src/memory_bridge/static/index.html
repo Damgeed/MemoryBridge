@@ -287,6 +287,7 @@
         @media (max-width: 768px) {
             .hero-section { flex-direction: column; padding: 1.5rem 1rem 1.5rem; min-height: auto; gap: 1.5rem; }
             .hero-section h1 { font-size: 1.8rem; }
+            .hero-cta { flex-direction: row; flex-wrap: wrap; justify-content: center; }
             .hero-visual { width: 100%; }
             .hero-stats { gap: 1rem; justify-content: center; }
             .hero-stat .num { font-size: 1.3rem; }
@@ -302,9 +303,9 @@
             .hero-section { padding: 1rem 0.75rem; gap: 1.25rem; }
             .hero-section h1 { font-size: 1.5rem; }
             .hero-tagline { font-size: 0.95rem; }
-            .hero-cta { flex-direction: column; }
-            .hero-cta .btn-primary { width: 100%; justify-content: center; }
-            .hero-cta .btn-secondary { width: 100%; justify-content: center; }
+            .hero-cta { flex-direction: row; flex-wrap: wrap; justify-content: center; }
+            .hero-cta .btn-primary { padding: 0.5rem 1rem; font-size: 0.82rem; }
+            .hero-cta .btn-ghost-accent { padding: 0.5rem 1rem; font-size: 0.82rem; }
             .hero-stats { flex-wrap: wrap; gap: 0.75rem; justify-content: center; }
             .hero-stat .num { font-size: 1.1rem; }
             .hero-stat .label { font-size: 0.7rem; }
@@ -690,11 +691,7 @@
             document.getElementById('lang-dropdown').classList.remove('open');
         }
         (function initLang() {
-            const saved = localStorage.getItem('mb-lang') || 'en';
-            document.querySelectorAll('.lang-opt').forEach(el => el.classList.remove('active'));
-            const opt = document.querySelector(`.lang-opt[data-lang="${saved}"]`);
-            if (opt) opt.classList.add('active');
-            document.documentElement.lang = saved;
+            initLanguage();
         })();
 
         // ── Scroll Animations ────────────────────────────────────

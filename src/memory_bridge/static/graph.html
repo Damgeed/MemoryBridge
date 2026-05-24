@@ -617,15 +617,7 @@
             document.getElementById('lang-dropdown').classList.remove('open');
         }
         (function initLang() {
-            const saved = localStorage.getItem('mb-lang') || 'en';
-            document.querySelectorAll('.lang-opt').forEach(el => el.classList.remove('active'));
-            const opt = document.querySelector(`.lang-opt[data-lang="${saved}"]`);
-            if (opt) opt.classList.add('active');
-            document.documentElement.lang = saved;
+            initLanguage();
         })();
-
-        // ── Start ─────────────────────────────────────────────────
-        loadGraph();
-    </script>
 </body>
 </html>
