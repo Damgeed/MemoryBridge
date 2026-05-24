@@ -306,9 +306,10 @@ a:hover { color: var(--accent-light); text-decoration: none; }
   background: rgba(0,0,0,0.4);
   z-index: 99;
   opacity: 0;
+  pointer-events: none;
   transition: opacity 0.25s ease;
 }
-.nav-mobile-backdrop.open { opacity: 1; }
+.nav-mobile-backdrop.open { opacity: 1; pointer-events: auto; }
 
 .nav-mobile-panel {
   display: none;
@@ -323,10 +324,11 @@ a:hover { color: var(--accent-light); text-decoration: none; }
   z-index: 101;
   padding: 1rem;
   transform: translateX(100%);
+  pointer-events: none;
   transition: transform 0.25s ease;
   overflow-y: auto;
 }
-.nav-mobile-panel.open { transform: translateX(0); }
+.nav-mobile-panel.open { transform: translateX(0); pointer-events: auto; }
 .nav-mobile-panel .nav-mobile-header {
   display: flex;
   align-items: center;

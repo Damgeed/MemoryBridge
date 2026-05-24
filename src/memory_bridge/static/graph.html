@@ -11,7 +11,8 @@
         body {
             background: var(--bg-primary);
             color: var(--text-primary);
-            overflow: hidden;
+            overflow-x: hidden;
+            overflow-y: auto;
             height: 100vh;
         }
 
@@ -191,13 +192,13 @@
                     </svg>
                 </button>
                 <div class="lang-dropdown" id="lang-dropdown">
-                    <a href="#" data-lang="en" class="lang-opt active" onclick="setLang('en')">🇬🇧 English</a>
-                    <a href="#" data-lang="zh" class="lang-opt" onclick="setLang('zh')">🇨🇳 中文</a>
-                    <a href="#" data-lang="ja" class="lang-opt" onclick="setLang('ja')">🇯🇵 日本語</a>
-                    <a href="#" data-lang="ko" class="lang-opt" onclick="setLang('ko')">🇰🇷 한국어</a>
-                    <a href="#" data-lang="es" class="lang-opt" onclick="setLang('es')">🇪🇸 Español</a>
-                    <a href="#" data-lang="fr" class="lang-opt" onclick="setLang('fr')">🇫🇷 Français</a>
-                    <a href="#" data-lang="de" class="lang-opt" onclick="setLang('de')">🇩🇪 Deutsch</a>
+                    <a href="javascript:void(0)" data-lang="en" class="lang-opt active" onclick="setLang('en')">🇬🇧 English</a>
+                    <a href="javascript:void(0)" data-lang="zh" class="lang-opt" onclick="setLang('zh')">🇨🇳 中文</a>
+                    <a href="javascript:void(0)" data-lang="ja" class="lang-opt" onclick="setLang('ja')">🇯🇵 日本語</a>
+                    <a href="javascript:void(0)" data-lang="ko" class="lang-opt" onclick="setLang('ko')">🇰🇷 한국어</a>
+                    <a href="javascript:void(0)" data-lang="es" class="lang-opt" onclick="setLang('es')">🇪🇸 Español</a>
+                    <a href="javascript:void(0)" data-lang="fr" class="lang-opt" onclick="setLang('fr')">🇫🇷 Français</a>
+                    <a href="javascript:void(0)" data-lang="de" class="lang-opt" onclick="setLang('de')">🇩🇪 Deutsch</a>
                 </div>
             </div>
             <button class="nav-icon-btn theme-toggle-btn" onclick="toggleTheme()" title="Toggle theme" aria-label="Toggle theme">
@@ -280,13 +281,13 @@
                     </svg>
                 </button>
                 <div class="lang-dropdown" id="lang-dropdown-mobile" style="left:0;right:auto;min-width:160px">
-                    <a href="#" data-lang="en" class="lang-opt active" onclick="setLang('en')">🇬🇧 English</a>
-                    <a href="#" data-lang="zh" class="lang-opt" onclick="setLang('zh')">🇨🇳 中文</a>
-                    <a href="#" data-lang="ja" class="lang-opt" onclick="setLang('ja')">🇯🇵 日本語</a>
-                    <a href="#" data-lang="ko" class="lang-opt" onclick="setLang('ko')">🇰🇷 한국어</a>
-                    <a href="#" data-lang="es" class="lang-opt" onclick="setLang('es')">🇪🇸 Español</a>
-                    <a href="#" data-lang="fr" class="lang-opt" onclick="setLang('fr')">🇫🇷 Français</a>
-                    <a href="#" data-lang="de" class="lang-opt" onclick="setLang('de')">🇩🇪 Deutsch</a>
+                    <a href="javascript:void(0)" data-lang="en" class="lang-opt active" onclick="setLang('en')">🇬🇧 English</a>
+                    <a href="javascript:void(0)" data-lang="zh" class="lang-opt" onclick="setLang('zh')">🇨🇳 中文</a>
+                    <a href="javascript:void(0)" data-lang="ja" class="lang-opt" onclick="setLang('ja')">🇯🇵 日本語</a>
+                    <a href="javascript:void(0)" data-lang="ko" class="lang-opt" onclick="setLang('ko')">🇰🇷 한국어</a>
+                    <a href="javascript:void(0)" data-lang="es" class="lang-opt" onclick="setLang('es')">🇪🇸 Español</a>
+                    <a href="javascript:void(0)" data-lang="fr" class="lang-opt" onclick="setLang('fr')">🇫🇷 Français</a>
+                    <a href="javascript:void(0)" data-lang="de" class="lang-opt" onclick="setLang('de')">🇩🇪 Deutsch</a>
                 </div>
             </div>
         </div>
@@ -295,7 +296,7 @@
     <!-- Toolbar -->
     <div class="graph-toolbar">
         <h2 data-i18n="graph.heading">🧠 Memory Graph</h2>
-        <input id="search" type="text" data-i18n="graph.filter" placeholder="Filter nodes by label..." oninput="filterNodes()">
+        <input id="search" type="text" placeholder="Filter nodes by label..." oninput="filterNodes()">
         <div class="graph-legend">
             <span class="legend-item"><span class="legend-dot" style="background: var(--accent);"></span> <span data-i18n="graph.legend_memory">Memory</span></span>
             <span class="legend-item"><span class="legend-dot" style="background: var(--green);"></span> <span data-i18n="graph.legend_session">Session</span></span>
