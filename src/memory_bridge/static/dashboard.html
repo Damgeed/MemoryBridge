@@ -82,6 +82,20 @@
             gap: 0.4rem;
         }
 
+        /* Smooth expand/collapse for recovery form — no blink */
+        .recover-wrap {
+            overflow: hidden;
+            transition: max-height 0.3s cubic-bezier(0.4,0,0.2,1), opacity 0.25s ease;
+            max-height: 0;
+            opacity: 0;
+            visibility: hidden;
+        }
+        .recover-wrap.open {
+            max-height: 300px;
+            opacity: 1;
+            visibility: visible;
+        }
+
         /* ── API Key Login Bar ─────────────────────── */
         #key-login-bar {
             margin-bottom: 1.5rem;
@@ -575,7 +589,8 @@
         </div>
 
         <!-- Recovery Form -->
-        <div id="recover-form" class="dash-card" style="display:none;padding:1rem;margin-top:-0.75rem;border-top:none;border-radius:0 0 var(--radius-lg) var(--radius-lg);">
+        <div class="recover-wrap" id="recover-wrapper">
+        <div id="recover-form" class="dash-card" style="padding:1rem;margin-top:-0.75rem;border-top:none;border-radius:0 0 var(--radius-lg) var(--radius-lg);">
             <div style="margin-bottom:0.75rem;font-weight:600;font-size:0.9rem;">🔐 Recover Your API Key</div>
             <p style="font-size:0.82rem;color:var(--text-muted);margin-bottom:0.75rem;">Enter the email you used during Stripe checkout. We'll look up your subscription and issue a new API key — no charge.</p>
             <div style="display:flex;gap:0.5rem;flex-wrap:wrap;">
@@ -584,6 +599,7 @@
                 <button class="btn btn-secondary btn-sm" onclick="toggleRecoverForm()">Cancel</button>
             </div>
             <div id="recover-result" style="margin-top:0.75rem;"></div>
+        </div>
         </div>
 
         <div class="dash-grid">
@@ -960,11 +976,10 @@
 
         // ── Key Recovery ───────────────────────────────────────────
         function toggleRecoverForm() {
-            const form = document.getElementById('recover-form');
-            const toggle = document.getElementById('recover-toggle');
-            const isOpen = form.style.display !== 'none';
-            form.style.display = isOpen ? 'none' : 'block';
-            toggle.style.display = isOpen ? '' : 'none';
+            const wrapper = document.getElementById('recover-wrapper');
+            const isOpen = wrapper.classList.contains('open');
+            wrapper.classList.toggle('open');
+            // Don't hide toggle link — keeps layout stable, no blink
             if (!isOpen) document.getElementById('recover-email')?.focus();
         }
 
