@@ -10,7 +10,7 @@ from typing import Any, Optional
 from pathlib import Path
 from uuid import uuid4
 
-from ..models import MemoryEntry, Session
+from ..models import MemoryEntry, Session, Subscription
 from ..config import get_settings
 
 logger = logging.getLogger(__name__)
@@ -92,6 +92,19 @@ _SCHEMA_MIGRATIONS: dict[int, str] = {
         "CREATE INDEX IF NOT EXISTS idx_audit_log_actor ON audit_log(actor_type, actor_id); "
         "CREATE INDEX IF NOT EXISTS idx_audit_log_action ON audit_log(action); "
         "CREATE INDEX IF NOT EXISTS idx_audit_log_project ON audit_log(project_id)"
+    ),
+    11: (
+        "CREATE TABLE IF NOT EXISTS subscriptions ("
+        "  id TEXT PRIMARY KEY, "
+        "  organization_id TEXT NOT NULL UNIQUE, "
+        "  stripe_customer_id TEXT DEFAULT '', "
+        "  tier TEXT NOT NULL DEFAULT 'free', "
+        "  status TEXT NOT NULL DEFAULT 'active', "
+        "  current_period_start TEXT, "
+        "  current_period_end TEXT, "
+        "  created_at TEXT NOT NULL, "
+        "  updated_at TEXT NOT NULL"
+        ")"
     ),
 }
 # ──────────────────────────────────────────────────────────────────────────────
@@ -884,6 +897,82 @@ class SQLiteMemoryRepository(MemoryRepository):
                         pass
                 results.append(entry)
             return results
+
+    # ── Subscription Management ──────────────────────────────────────────────
+
+    async def store_subscription(self, sub: Subscription) -> Subscription:
+        """Store a subscription. Replaces if the same id exists."""
+        async with aiosqlite.connect(self.db_path) as db:
+            await db.execute(
+                """INSERT OR REPLACE INTO subscriptions
+                   (id, organization_id, stripe_customer_id, tier, status,
+                    current_period_start, current_period_end, created_at, updated_at)
+                   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                (
+                    sub.id,
+                    sub.organization_id,
+                    sub.stripe_customer_id,
+                    sub.tier,
+                    sub.status,
+                    sub.current_period_start.isoformat() if sub.current_period_start else None,
+                    sub.current_period_end.isoformat() if sub.current_period_end else None,
+                    sub.created_at.isoformat(),
+                    sub.updated_at.isoformat(),
+                ),
+            )
+            await db.commit()
+        return sub
+
+    async def get_subscription_by_org(self, organization_id: str) -> Optional[Subscription]:
+        """Get subscription by organization ID."""
+        async with aiosqlite.connect(self.db_path) as db:
+            db.row_factory = aiosqlite.Row
+            cursor = await db.execute(
+                "SELECT * FROM subscriptions WHERE organization_id = ?",
+                (organization_id,),
+            )
+            row = await cursor.fetchone()
+            if row is None:
+                return None
+            return Subscription(
+                id=row["id"] or "",
+                organization_id=row["organization_id"],
+                stripe_customer_id=row["stripe_customer_id"] or "",
+                tier=row["tier"] or "free",
+                status=row["status"] or "active",
+                current_period_start=datetime.fromisoformat(row["current_period_start"]) if row["current_period_start"] else None,
+                current_period_end=datetime.fromisoformat(row["current_period_end"]) if row["current_period_end"] else None,
+                created_at=datetime.fromisoformat(row["created_at"]),
+                updated_at=datetime.fromisoformat(row["updated_at"]),
+            )
+
+    async def update_subscription_tier(self, sub_id: str, tier: str) -> Optional[Subscription]:
+        """Update the tier of a subscription by Stripe subscription ID."""
+        async with aiosqlite.connect(self.db_path) as db:
+            db.row_factory = aiosqlite.Row
+            now = datetime.now(timezone.utc)
+            cursor = await db.execute(
+                "UPDATE subscriptions SET tier = ?, updated_at = ? WHERE id = ?",
+                (tier, now.isoformat(), sub_id),
+            )
+            await db.commit()
+            if cursor.rowcount == 0:
+                return None
+            cursor = await db.execute("SELECT * FROM subscriptions WHERE id = ?", (sub_id,))
+            row = await cursor.fetchone()
+            if row is None:
+                return None
+            return Subscription(
+                id=row["id"] or "",
+                organization_id=row["organization_id"],
+                stripe_customer_id=row["stripe_customer_id"] or "",
+                tier=row["tier"] or "free",
+                status=row["status"] or "active",
+                current_period_start=datetime.fromisoformat(row["current_period_start"]) if row["current_period_start"] else None,
+                current_period_end=datetime.fromisoformat(row["current_period_end"]) if row["current_period_end"] else None,
+                created_at=datetime.fromisoformat(row["created_at"]),
+                updated_at=datetime.fromisoformat(row["updated_at"]),
+            )
 
     # ── Additional utilities (beyond the ABC) ────────────────────────────────
 

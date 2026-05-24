@@ -30,6 +30,7 @@ from .controllers import (
     health_controller,
     memory_controller,
     playground_controller,
+    pricing_controller,
     session_controller,
 )
 from .webhooks import router as webhook_router
@@ -274,6 +275,7 @@ def create_app() -> FastAPI:
     app.include_router(billing_controller.router)
     app.include_router(memory_controller.router)
     app.include_router(playground_controller.router)
+    app.include_router(pricing_controller.router)
     app.include_router(session_controller.router)
     app.include_router(graph_controller.router)
     app.include_router(handoff_controller.router)

@@ -31,6 +31,24 @@ class Session(BaseModel):
     """Project scope for multi-tenant isolation."""
 
 
+class Subscription(BaseModel):
+    """Stripe subscription linked to an organization."""
+    id: str = ""
+    """Stripe subscription ID."""
+    organization_id: str
+    """The org that holds this subscription."""
+    stripe_customer_id: str = ""
+    """Stripe customer ID."""
+    tier: str = "free"
+    """Tier name: free, starter, pro, enterprise."""
+    status: str = "active"
+    """Subscription status: active, past_due, canceled, incomplete."""
+    current_period_start: Optional[datetime] = None
+    current_period_end: Optional[datetime] = None
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+
 class HandoffPayload(BaseModel):
     """Payload for agent-to-agent context handoff."""
     from_agent_id: str

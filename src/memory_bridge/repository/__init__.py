@@ -3,7 +3,7 @@
 from abc import ABC, abstractmethod
 from typing import Any, Optional
 
-from ..models import MemoryEntry, Session
+from ..models import MemoryEntry, Session, Subscription
 
 
 class MemoryRepository(ABC):
@@ -138,6 +138,24 @@ class MemoryRepository(ABC):
 
     @abstractmethod
     async def initialize_metric(self, key: str, default_value) -> None:
+        ...
+
+    # ── Subscription Management ──────────────────────────────────────────────
+
+    @abstractmethod
+    async def store_subscription(self, sub: Subscription) -> Subscription:
+        """Store a subscription record. Replace if same id exists."""
+        ...
+
+    @abstractmethod
+    async def get_subscription_by_org(self, organization_id: str) -> Optional[Subscription]:
+        """Get subscription by organization ID. Returns None if not found."""
+        ...
+
+    @abstractmethod
+    async def update_subscription_tier(self, sub_id: str, tier: str) -> Optional[Subscription]:
+        """Update the tier of a subscription by Stripe subscription ID.
+        Returns the updated Subscription or None if not found."""
         ...
 
     # ── Audit Log ───────────────────────────────────────────────────────────

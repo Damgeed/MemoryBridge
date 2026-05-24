@@ -11,7 +11,7 @@ from uuid import uuid4
 
 import asyncpg
 
-from ..models import MemoryEntry, Session
+from ..models import MemoryEntry, Session, Subscription
 from ..config import get_settings
 
 logger = logging.getLogger(__name__)
@@ -95,6 +95,19 @@ _SCHEMA_MIGRATIONS: dict[int, str] = {
         "ON {schema}.audit_log(action); "
         "CREATE INDEX IF NOT EXISTS idx_{schema}_audit_log_project "
         "ON {schema}.audit_log(project_id)"
+    ),
+    12: (
+        "CREATE TABLE IF NOT EXISTS {schema}.subscriptions ("
+        "  id TEXT PRIMARY KEY, "
+        "  organization_id TEXT NOT NULL UNIQUE, "
+        "  stripe_customer_id TEXT DEFAULT '', "
+        "  tier TEXT NOT NULL DEFAULT 'free', "
+        "  status TEXT NOT NULL DEFAULT 'active', "
+        "  current_period_start TIMESTAMPTZ, "
+        "  current_period_end TIMESTAMPTZ, "
+        "  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(), "
+        "  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()"
+        ")"
     ),
 }
 # ──────────────────────────────────────────────────────────────────────────────
@@ -950,6 +963,88 @@ class PostgresMemoryRepository(MemoryRepository):
                     entry["details"] = entry["details"]
                 results.append(entry)
             return results
+
+    # ── Subscription Management ──────────────────────────────────────────────
+
+    async def store_subscription(self, sub: Subscription) -> Subscription:
+        """Store a subscription. Upserts if the same id exists."""
+        async with self.pool.acquire() as conn:
+            await conn.execute(
+                f"""
+                INSERT INTO {self.schema}.subscriptions
+                    (id, organization_id, stripe_customer_id, tier, status,
+                     current_period_start, current_period_end, created_at, updated_at)
+                VALUES ($1, $2, $3, $4, $5, $6::timestamptz, $7::timestamptz, $8::timestamptz, $9::timestamptz)
+                ON CONFLICT (id) DO UPDATE SET
+                    organization_id = EXCLUDED.organization_id,
+                    stripe_customer_id = EXCLUDED.stripe_customer_id,
+                    tier = EXCLUDED.tier,
+                    status = EXCLUDED.status,
+                    current_period_start = EXCLUDED.current_period_start,
+                    current_period_end = EXCLUDED.current_period_end,
+                    updated_at = EXCLUDED.updated_at
+                """,
+                sub.id,
+                sub.organization_id,
+                sub.stripe_customer_id,
+                sub.tier,
+                sub.status,
+                sub.current_period_start,
+                sub.current_period_end,
+                sub.created_at,
+                sub.updated_at,
+            )
+        return sub
+
+    async def get_subscription_by_org(self, organization_id: str) -> Optional[Subscription]:
+        """Get subscription by organization ID."""
+        async with self.pool.acquire() as conn:
+            row = await conn.fetchrow(
+                f"SELECT * FROM {self.schema}.subscriptions WHERE organization_id = $1",
+                organization_id,
+            )
+            if row is None:
+                return None
+            return Subscription(
+                id=row["id"] or "",
+                organization_id=row["organization_id"],
+                stripe_customer_id=row["stripe_customer_id"] or "",
+                tier=row["tier"] or "free",
+                status=row["status"] or "active",
+                current_period_start=row["current_period_start"],
+                current_period_end=row["current_period_end"],
+                created_at=row["created_at"] if isinstance(row["created_at"], datetime) else datetime.fromisoformat(row["created_at"]),
+                updated_at=row["updated_at"] if isinstance(row["updated_at"], datetime) else datetime.fromisoformat(row["updated_at"]),
+            )
+
+    async def update_subscription_tier(self, sub_id: str, tier: str) -> Optional[Subscription]:
+        """Update the tier of a subscription by Stripe subscription ID."""
+        async with self.pool.acquire() as conn:
+            now = datetime.now(timezone.utc)
+            result = await conn.execute(
+                f"UPDATE {self.schema}.subscriptions SET tier = $1, updated_at = $2::timestamptz WHERE id = $3",
+                tier, now, sub_id,
+            )
+            count = int(result.split()[-1]) if result else 0
+            if count == 0:
+                return None
+            row = await conn.fetchrow(
+                f"SELECT * FROM {self.schema}.subscriptions WHERE id = $1",
+                sub_id,
+            )
+            if row is None:
+                return None
+            return Subscription(
+                id=row["id"] or "",
+                organization_id=row["organization_id"],
+                stripe_customer_id=row["stripe_customer_id"] or "",
+                tier=row["tier"] or "free",
+                status=row["status"] or "active",
+                current_period_start=row["current_period_start"],
+                current_period_end=row["current_period_end"],
+                created_at=row["created_at"] if isinstance(row["created_at"], datetime) else datetime.fromisoformat(row["created_at"]),
+                updated_at=row["updated_at"] if isinstance(row["updated_at"], datetime) else datetime.fromisoformat(row["updated_at"]),
+            )
 
     # ── Additional utilities (beyond the ABC) ────────────────────────────────
 
