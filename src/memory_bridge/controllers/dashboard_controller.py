@@ -86,6 +86,34 @@ async def welcome_setup(
     org_id = sess.get("client_reference_id") or sess.metadata.get("organization_id", "default")
     tier = sess.metadata.get("tier", "free")
 
+    # Store subscription record immediately (don't wait for webhook)
+    sub_id = sess.get("subscription", "")
+    if sub_id:
+        try:
+            import stripe
+            sub_data = stripe.Subscription.retrieve(sub_id)
+            items = sub_data.get("items", {}).get("data", [])
+            price_id = items[0].get("price", {}).get("id", "") if items else ""
+            from ..services.billing_service import PRICE_IDS
+            for t, pid in PRICE_IDS.items():
+                if pid == price_id:
+                    tier = t
+                    break
+            from ..models.subscription import Subscription
+            from datetime import datetime, timezone
+            sub = Subscription(
+                id=sub_id,
+                organization_id=org_id,
+                stripe_customer_id=sess.get("customer", "") or "",
+                tier=tier,
+                status=sub_data.get("status", "active"),
+                current_period_start=datetime.fromtimestamp(sub_data.get("current_period_start", 0), tz=timezone.utc) if sub_data.get("current_period_start") else None,
+                current_period_end=datetime.fromtimestamp(sub_data.get("current_period_end", 0), tz=timezone.utc) if sub_data.get("current_period_end") else None,
+            )
+            await storage.store_subscription(sub)
+        except Exception as e:
+            logger.warning("Could not pre-store subscription via welcome: %s", e)
+
     # Check if this org already has keys — if so, just list them
     existing_keys = await storage.list_api_keys()
     user_keys = [k for k in existing_keys if k.get("project_id") == org_id or not k.get("project_id")]
