@@ -82,14 +82,21 @@ async def create_checkout_auth(
     tier: str = "pro",
     billing: BillingService = Depends(_get_billing_service),
 ):
-    """Create a Stripe checkout session, resolving org_id from auth.
+    """Create a Stripe checkout session, resolving org_id from auth or generating one.
 
-    Uses the authenticated API key's project_id or key_id as the
-    organization identifier — no client-side org_id needed.
+    - Authenticated users: org_id = project_id from API key
+    - Unauthenticated users (first-time checkout): generates a UUID org_id,
+      stored in Stripe session metadata for the welcome endpoint to pick up
     """
-    # Resolve org_id from authenticated request (same logic as dashboard)
-    from .dashboard_controller import _resolve_org
-    org_id = _resolve_org(request)
+    import uuid
+    auth = getattr(request.state, "auth", None)
+    if auth and auth.get("project_id"):
+        org_id = auth["project_id"]
+    elif auth and auth.get("key_id"):
+        org_id = auth["key_id"]
+    else:
+        # First-time user — generate a unique org ID for the Stripe session
+        org_id = str(uuid.uuid4())
     url = await billing.create_checkout_session(
         organization_id=org_id,
         tier=tier,
