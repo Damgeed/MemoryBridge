@@ -3,11 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Memory Bridge — Your AI Agents Have Amnesia. Fix It.</title>
+    <title>Memory Bridge — Give Your AI Agents a Shared Memory</title>
     <link rel="icon" href="/playground/logo.svg" type="image/svg+xml">
     <link rel="stylesheet" href="/playground/style.css">
     <style>
-        /* ── Hero Split ────────────────────────────────── */
         .hero-split {
             display: flex;
             max-width: 1100px;
@@ -34,14 +33,9 @@
             margin-bottom: 0.75rem;
         }
         .hero-right .bubble:last-child { margin-bottom: 0; }
-        .hero-right .agent-label {
-            font-weight: 600;
-            font-size: 0.8rem;
-            margin-bottom: 0.25rem;
-        }
+        .hero-right .agent-label { font-weight: 600; font-size: 0.8rem; margin-bottom: 0.25rem; }
         .hero-right .agent-label.henry { color: #58a6ff; }
         .hero-right .agent-label.fred { color: #3fb950; }
-        .hero-right .fade { opacity: 0.4; }
 
         .hero h1 {
             font-size: 2.6rem;
@@ -62,18 +56,17 @@
             line-height: 1.5;
         }
 
-        /* ── "It's this simple" section ─────────────────── */
-        .story {
-            max-width: 800px;
+        .section-wrap {
+            max-width: 900px;
             margin: 0 auto;
             padding: 2rem 1.5rem;
+        }
+        .section-wrap h2 {
             text-align: center;
-        }
-        .story h2 {
+            margin-bottom: 1.5rem;
             font-size: 1.4rem;
-            margin-bottom: 0.75rem;
         }
-        .story p { color: var(--text-muted); font-size: 0.95rem; line-height: 1.6; }
+        .section-wrap p { color: var(--text-muted); font-size: 0.95rem; line-height: 1.6; text-align: center; }
 
         .steps {
             display: flex;
@@ -91,31 +84,20 @@
             padding: 1.5rem;
         }
         .step .num {
-            width: 32px;
-            height: 32px;
-            border-radius: 50%;
-            background: var(--accent-blue);
-            color: #fff;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: 700;
-            font-size: 0.9rem;
-            margin: 0 auto 0.75rem;
+            width: 32px; height: 32px; border-radius: 50%;
+            background: var(--accent-blue); color: #fff;
+            display: flex; align-items: center; justify-content: center;
+            font-weight: 700; font-size: 0.9rem; margin: 0 auto 0.75rem;
         }
         .step h3 { margin-bottom: 0.4rem; }
         .step p { color: var(--text-muted); font-size: 0.85rem; line-height: 1.5; }
 
-        /* ── Demo section ──────────────────────────────── */
         .demo-section {
             max-width: 900px;
             margin: 0 auto;
             padding: 0 1.5rem 2rem;
         }
-        .demo-section h2 {
-            text-align: center;
-            margin-bottom: 1.5rem;
-        }
+        .demo-section h2 { text-align: center; margin-bottom: 1.5rem; }
 
         .demo-card {
             background: var(--bg-secondary);
@@ -134,18 +116,11 @@
             font-weight: 600;
             font-size: 0.9rem;
         }
-        .demo-card-body {
-            padding: 1.25rem;
-        }
+        .demo-card-body { padding: 1.25rem; }
         .demo-code {
-            background: #0d1117;
-            border: 1px solid #21262d;
-            border-radius: var(--radius-sm);
-            padding: 1rem;
-            font-family: var(--font-mono);
-            font-size: 0.82rem;
-            line-height: 1.5;
-            overflow-x: auto;
+            background: #0d1117; border: 1px solid #21262d;
+            border-radius: var(--radius-sm); padding: 1rem;
+            font-family: var(--font-mono); font-size: 0.82rem; line-height: 1.5; overflow-x: auto;
         }
         .demo-code .prompt { color: #8b949e; }
         .demo-code .resp { color: #3fb950; }
@@ -154,104 +129,145 @@
         .demo-code .comment { color: #484f58; }
 
         .demo-result {
-            background: #1a2a3a;
-            border: 1px solid #1f6feb33;
-            border-radius: var(--radius-sm);
-            padding: 0.75rem 1rem;
-            margin-top: 0.75rem;
-            color: #58a6ff;
-            font-size: 0.85rem;
+            background: #1a2a3a; border: 1px solid #1f6feb33;
+            border-radius: var(--radius-sm); padding: 0.75rem 1rem; margin-top: 0.75rem;
+            color: #58a6ff; font-size: 0.85rem;
         }
         .demo-result .label { color: var(--text-muted); font-size: 0.75rem; margin-bottom: 0.25rem; }
 
-        /* ── API Key Box ───────────────────────────────── */
-        .key-box {
+        /* ── Q&A Grid ─────────────────────────────────── */
+        .qa-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.25rem;
+            max-width: 900px;
+            margin: 2rem auto;
+            padding: 0 1.5rem;
+        }
+        .qa-card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-primary);
+            border-radius: var(--radius-lg);
+            padding: 1.5rem;
+        }
+        .qa-card .q {
+            font-weight: 600;
+            font-size: 0.95rem;
+            margin-bottom: 0.5rem;
             display: flex;
             align-items: center;
-            gap: 0.75rem;
+            gap: 0.4rem;
+        }
+        .qa-card .a {
+            color: var(--text-muted);
+            font-size: 0.88rem;
+            line-height: 1.6;
+        }
+        .qa-card .a code {
+            background: var(--bg-tertiary);
+            padding: 0.1rem 0.3rem;
+            border-radius: 3px;
+            font-size: 0.8rem;
+            color: var(--accent-green);
+        }
+
+        /* ── Data Model Diagram ──────────────────────── */
+        .model-diagram {
             background: var(--bg-secondary);
-            border: 1px solid var(--accent-blue);
-            border-radius: var(--radius-md);
-            padding: 0.75rem 1.25rem;
+            border: 1px solid var(--border-primary);
+            border-radius: var(--radius-lg);
+            padding: 1.5rem;
+            max-width: 900px;
             margin: 1.5rem auto;
-            max-width: 650px;
+        }
+        .model-diagram h3 { margin-bottom: 1rem; text-align: center; }
+        .model-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.85rem;
+        }
+        .model-table th {
+            text-align: left;
+            color: var(--text-muted);
+            font-weight: 500;
+            padding: 0.5rem 0.75rem;
+            border-bottom: 1px solid var(--border-primary);
+        }
+        .model-table td {
+            padding: 0.5rem 0.75rem;
+            border-bottom: 1px solid var(--border-secondary);
+            color: var(--text-secondary);
+        }
+        .model-table td:first-child {
+            font-family: var(--font-mono);
+            color: var(--accent-blue);
+            font-weight: 600;
+        }
+
+        /* ── Integrations ────────────────────────────── */
+        .integrations {
+            display: flex;
+            gap: 1rem;
+            max-width: 900px;
+            margin: 1.5rem auto;
+            padding: 0 1.5rem;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        .integrations .chip {
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-primary);
+            border-radius: 100px;
+            padding: 0.5rem 1rem;
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+        .integrations .chip.active { border-color: var(--accent-blue); color: var(--accent-blue); }
+
+        .key-box {
+            display: flex; align-items: center; gap: 0.75rem;
+            background: var(--bg-secondary); border: 1px solid var(--accent-blue);
+            border-radius: var(--radius-md); padding: 0.75rem 1.25rem;
+            margin: 1.5rem auto; max-width: 650px;
         }
         .key-box label { margin: 0; white-space: nowrap; color: var(--accent-blue); }
         .key-box code {
-            flex: 1;
-            padding: 0.4rem 0.6rem;
-            background: var(--bg-tertiary);
-            border: 1px solid var(--border-primary);
-            border-radius: 4px;
-            font-size: 0.75rem;
-            color: var(--accent-green);
-            word-break: break-all;
+            flex: 1; padding: 0.4rem 0.6rem; background: var(--bg-tertiary);
+            border: 1px solid var(--border-primary); border-radius: 4px;
+            font-size: 0.75rem; color: var(--accent-green); word-break: break-all;
         }
         .key-box .btn { white-space: nowrap; }
 
         .btn-cta {
-            display: inline-flex;
-            align-items: center;
-            gap: 0.5rem;
-            padding: 0.75rem 1.75rem;
-            font-size: 1rem;
+            display: inline-flex; align-items: center; gap: 0.5rem;
+            padding: 0.75rem 1.75rem; font-size: 1rem;
             background: linear-gradient(135deg, #238636, #2ea043);
-            border-radius: var(--radius-sm);
-            border: none;
-            color: white;
-            font-weight: 600;
-            cursor: pointer;
-            transition: transform 0.1s, box-shadow 0.1s;
+            border-radius: var(--radius-sm); border: none; color: white;
+            font-weight: 600; cursor: pointer; transition: transform 0.1s, box-shadow 0.1s;
         }
-        .btn-cta:hover {
-            transform: translateY(-1px);
-            box-shadow: 0 4px 12px rgba(46,160,67,0.3);
-            text-decoration: none;
-        }
-
+        .btn-cta:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(46,160,67,0.3); text-decoration: none; }
         .btn-cta-secondary {
-            display: inline-flex;
-            align-items: center;
-            gap: 0.5rem;
-            padding: 0.75rem 1.75rem;
-            font-size: 1rem;
-            background: var(--btn-secondary);
-            border: 1px solid var(--border-primary);
-            border-radius: var(--radius-sm);
-            color: var(--text-primary);
-            font-weight: 600;
-            cursor: pointer;
-            transition: border-color 0.15s;
+            display: inline-flex; align-items: center; gap: 0.5rem;
+            padding: 0.75rem 1.75rem; font-size: 1rem;
+            background: var(--btn-secondary); border: 1px solid var(--border-primary);
+            border-radius: var(--radius-sm); color: var(--text-primary);
+            font-weight: 600; cursor: pointer; transition: border-color 0.15s;
         }
-        .btn-cta-secondary:hover {
-            border-color: var(--accent-blue);
-            text-decoration: none;
-        }
+        .btn-cta-secondary:hover { border-color: var(--accent-blue); text-decoration: none; }
 
         .cta-row {
-            display: flex;
-            gap: 1rem;
-            justify-content: center;
-            margin: 1.5rem 0;
-            flex-wrap: wrap;
-        }
-
-        .footer-links {
-            display: flex;
-            justify-content: center;
-            gap: 1rem;
-            padding: 1rem 1.5rem 2rem;
-            flex-wrap: wrap;
-        }
-        .footer-links a {
-            color: var(--text-faint);
-            font-size: 0.85rem;
+            display: flex; gap: 1rem;
+            justify-content: center; margin: 1.5rem 0; flex-wrap: wrap;
         }
 
         @media (max-width: 768px) {
             .hero-split { flex-direction: column; }
             .hero h1 { font-size: 1.8rem; }
             .steps { flex-direction: column; }
+            .qa-grid { grid-template-columns: 1fr; }
         }
     </style>
 </head>
@@ -259,159 +275,172 @@
     <!-- Navbar -->
     <nav class="navbar">
         <a href="/" class="logo">
-            <img src="/playground/logo.svg" alt="Memory Bridge">
-            Memory Bridge
+            <img src="/playground/logo.svg" alt="Memory Bridge"> Memory Bridge
         </a>
         <div class="nav-links">
             <a href="/" class="active">Home</a>
-            <a href="/playground/">Playground</a>
+            <a href="/playground/?api_key=mb-prod-3a2166c2083744bb90ac8933519d14790e56902d5ec1ba9a">Playground</a>
             <a href="/playground/graph.html">Graph</a>
             <a href="/docs">API Docs</a>
         </div>
     </nav>
 
-    <!-- ═════════════ HERO ═════════════ -->
+    <!-- ═══ HERO ═══ -->
     <div class="hero-split">
         <div class="hero-left hero">
             <h1>Your AI agents have <span class="highlight">amnesia</span>.</h1>
             <p class="tagline">
-                Every new conversation, your agents start blank. Memory Bridge is the shared brain
-                that lets them remember — across sessions, across agents, across teams.
+                You're building a team of AI agents — but every conversation is a fresh start.
+                Memory Bridge is the API every agent calls to store and find shared context.
             </p>
             <div class="cta-row">
-                <a href="/playground/?api_key=mb-prod-3a2166c2083744bb90ac8933519d14790e56902d5ec1ba9a" class="btn-cta">
-                    🚀 Try It Now — No Signup
-                </a>
-                <a href="#how" class="btn-cta-secondary">How It Works ↓</a>
+                <a href="/playground/?api_key=mb-prod-3a2166c2083744bb90ac8933519d14790e56902d5ec1ba9a" class="btn-cta">🚀 Try It Now — No Signup</a>
+                <a href="#qa" class="btn-cta-secondary">How It Works ↓</a>
             </div>
         </div>
         <div class="hero-right">
             <div class="bubble">
                 <div class="agent-label henry">🧠 Henry (AI Expert)</div>
-                <div>"Found this: the user prefers Python 3.12, dark mode, and fast iteration."</div>
+                <div>"User prefers Python 3.12, dark mode, fast iteration. Stored."</div>
             </div>
             <div class="bubble" style="opacity:0.4;">
                 <div class="agent-label fred">🚀 Fred (Co-founder)</div>
-                <div>"Okay team, let's build. What do we know about the user?"</div>
+                <div>"What do we know about the user? Let me check memory."</div>
             </div>
             <div class="bubble" style="border-color: #3fb95066;">
-                <div class="agent-label fred">🚀 Fred (Co-founder)</div>
-                <div>"Found it in Memory Bridge. Python 3.12 ✓, dark mode ✓. Henry already scoped this out. Let's ship."</div>
+                <div class="agent-label fred">🚀 Fred (Builder)</div>
+                <div>"Found it: Python 3.12 ✓, dark mode ✓. Henry already did the research. Ship it."</div>
             </div>
             <div style="text-align:center;margin-top:0.5rem;color:var(--accent-green);font-size:0.8rem;">
-                ↔ No copy-paste. No repeating yourself. Fred just knows.
+                ↔ Henry wrote it. Fred found it. No hand-holding needed.
             </div>
         </div>
     </div>
 
-    <!-- ═════════════ THE STORY ═════════════ -->
-    <div class="story" id="how">
-        <h2>It's one shared memory for all your agents</h2>
-        <p>
-            You're building with AI agents. A researcher, a coder, a reviewer. Each one is sharp —
-            but they don't share a brain. Every new session is a fresh start. You're the only one
-            holding context in your head.
-        </p>
+    <!-- ═══ HOW IT WORKS ═══ -->
+    <div class="section-wrap" id="qa">
+        <h2>It's an API your agents call — not another chat tool</h2>
+        <p>You write code that stores and retrieves context. Your agents get shared memory without changing how they work.</p>
     </div>
 
     <div class="steps">
         <div class="step">
             <div class="num">1</div>
-            <h3>Agent stores a memory</h3>
-            <p>Henry explores, discovers a fact, writes it to Memory Bridge. Session doesn't matter — the memory persists.</p>
+            <h3>Agent stores knowledge</h3>
+            <p>After any LLM call, your code saves what your agent learned — preferences, decisions, discovered facts.</p>
         </div>
         <div class="step">
             <div class="num">2</div>
-            <h3>Another agent picks it up</h3>
-            <p>Fred starts a new session, queries Memory Bridge. The fact Henry stored is there — no hand-holding needed.</p>
+            <h3>Next agent queries it</h3>
+            <p>Before calling the LLM, your code fetches relevant memories. The new agent starts with full context.</p>
         </div>
         <div class="step">
             <div class="num">3</div>
-            <h3>Handoff with full context</h3>
-            <p>Alice hands off to Bob with a structured handoff packet. Bob gets everything — context, unresolved issues, history.</p>
+            <h3>Handoff between agents</h3>
+            <p>When agent A passes to agent B, Memory Bridge delivers a structured context packet. Nothing lost in translation.</p>
         </div>
     </div>
 
-    <!-- ═════════════ DEMO ═════════════ -->
-    <div class="demo-section">
-        <h2>⚡ See It In Action</h2>
-
-        <div class="demo-card">
-            <div class="demo-card-header">
-                <span>💾</span> Henry stores a memory
-            </div>
-            <div class="demo-card-body">
-                <div class="demo-code">
-                    <span class="comment"># Henry discovers the user's preferences</span><br>
-                    <span class="prompt">$</span> <span class="cmd">curl</span> -X POST /memories \<br>
-                    &nbsp;&nbsp;-H <span class="str">"Authorization: Bearer &lt;key&gt;"</span> \<br>
-                    &nbsp;&nbsp;-d <span class="str">'{
-  "session_id": "session-1",
-  "agent_id": "henry",
-  "key": "user_preferences",
-  "value": "{\"python\":\"3.12\",\"theme\":\"dark\"}",
-  "tags": ["user-profile", "important"]
-}'</span><br><br>
-                    <span class="comment"># Response: ✓ memory stored with ID mem_abc123</span>
-                </div>
-                <div class="demo-result">
-                    <div class="label">✅ Memory persisted. Henry's session can end — the knowledge stays.</div>
-                </div>
+    <!-- ═══ Q&A : WHERE DATA GOES + WHY THESE FIELDS ═══ -->
+    <div class="qa-grid">
+        <div class="qa-card">
+            <div class="q">🗄️ Where does my data actually go?</div>
+            <div class="a">
+                In production, to <strong>your PostgreSQL database</strong> hosted on Railway (or anywhere you point it).<br><br>
+                Every memory is a row in a table you own. Export it, query it, delete it, audit it — it's your data, not locked in a proprietary store.<br><br>
+                Self-hosted option runs on SQLite. No vendor lock-in either way.
             </div>
         </div>
-
-        <div class="demo-card">
-            <div class="demo-card-header">
-                <span>🔍</span> Fred queries in a brand new session
-            </div>
-            <div class="demo-card-body">
-                <div class="demo-code">
-                    <span class="comment"># Fred starts fresh — asks "what do we know?"</span><br>
-                    <span class="prompt">$</span> <span class="cmd">curl</span> /memories/query \<br>
-                    &nbsp;&nbsp;-H <span class="str">"Authorization: Bearer &lt;key&gt;"</span> \<br>
-                    &nbsp;&nbsp;-d <span class="str">'{"tags": ["user-profile", "important"]}'</span><br><br>
-                    <span class="resp">{
-  "entries": [{
-    "agent_id": "henry",
-    "key": "user_preferences",
-    "value": {"python": "3.12", "theme": "dark"},
-    "tags": ["user-profile", "important"]
-  }]
-}</span>
-                </div>
-                <div class="demo-result">
-                    <div class="label">✅ Fred has Henry's knowledge without a single conversation between them.</div>
-                </div>
+        <div class="qa-card">
+            <div class="q">🧩 How do I connect ChatGPT / Gemini / local models?</div>
+            <div class="a">
+                Memory Bridge is an <strong>API, not a plugin</strong>. The pattern is always the same:
+                <br><br>
+                <code>Query → Inject → Call LLM → Store</code><br><br>
+                1. Before your LLM call, <code>GET /memories/query</code> for relevant context<br>
+                2. Inject that context into the system prompt<br>
+                3. Call ChatGPT / Gemini / Ollama / whatever<br>
+                4. After, <code>POST /memories</code> with what was learned<br><br>
+                We provide <strong>Python SDK</strong> and <strong>framework adapters</strong> for LangGraph, AutoGen, and CrewAI that automate this flow.
             </div>
         </div>
-
-        <div class="demo-card">
-            <div class="demo-card-header">
-                <span>🤝</span> Alice hands off to Bob
+        <div class="qa-card">
+            <div class="q">📋 Why session_id, agent_id, key, value?</div>
+            <div class="a">
+                These 4 fields are the <strong>who, where, what, and content</strong> of every memory:
+                <br><br>
+                <strong>agent_id</strong> = "who wrote this?" — Henry vs Fred. Filter by agent to get the right expert's knowledge.<br><br>
+                <strong>session_id</strong> = "which conversation?" — Sessions form a tree (parent → child). Memory from "deploy setup" doesn't bleed into "fix login bug" unless you allow it.<br><br>
+                <strong>key</strong> = "what kind of fact?" — Like a filename. <code>user_preference</code>, <code>architecture_decision</code>, <code>code_review</code>.<br><br>
+                <strong>value</strong> = the actual data — string, JSON, whatever.
             </div>
-            <div class="demo-card-body">
-                <div class="demo-code">
-                    <span class="comment"># Alice passes context to Bob in one call</span><br>
-                    <span class="prompt">$</span> <span class="cmd">curl</span> -X POST /handoff/execute \<br>
-                    &nbsp;&nbsp;-H <span class="str">"Authorization: Bearer &lt;key&gt;"</span> \<br>
-                    &nbsp;&nbsp;-d <span class="str">'{
-  "from_agent_id": "alice",
-  "to_agent_id": "bob",
-  "session_id": "session-1",
-  "context": {"task": "implement login", "findings": "use OAuth2"}
-}'</span>
-                </div>
-                <div class="demo-result">
-                    <div class="label">✅ Bob gets context + guardrails. No lost context, no "what were we doing?"</div>
-                </div>
+        </div>
+        <div class="qa-card">
+            <div class="q">🔄 How is this different from memorybridge.ai?</div>
+            <div class="a">
+                <strong>memorybridge.ai</strong> is for <em>you as a person</em> — it remembers what you told ChatGPT so you don't repeat yourself. Browser extension, inbox review, personal use.<br><br>
+                <strong>Memory Bridge (ours)</strong> is for <em>your agents as a team</em> — it's a REST API that agents call programmatically. Henry stores, Fred finds, Alice hands off to Bob. Developer-first, framework-native, open source.<br><br>
+                Different tools for different problems.
             </div>
         </div>
     </div>
 
-    <!-- ═════════════ TRY IT ═════════════ -->
-    <div class="story">
-        <h2>🔑 Your Demo Key (one-click ready)</h2>
-        <p>Copy this key, click the playground — you're in. No registration, no email.</p>
+    <!-- ═══ DATA MODEL DIAGRAM ═══ -->
+    <div class="model-diagram">
+        <h3>📊 The Data Model</h3>
+        <table class="model-table">
+            <thead>
+                <tr><th>Field</th><th>What it stores</th><th>Example</th></tr>
+            </thead>
+            <tbody>
+                <tr><td>agent_id</td><td>Which agent wrote this memory</td><td><code>henry</code>, <code>code-reviewer</code>, <code>assistant</code></td></tr>
+                <tr><td>session_id</td><td>Which conversation/task this belongs to</td><td><code>session-1</code>, <code>deploy-prod-2024</code></td></tr>
+                <tr><td>key</td><td>The kind of fact (like a filename)</td><td><code>user_preference</code>, <code>architecture_decision</code></td></tr>
+                <tr><td>value</td><td>The actual content (string or JSON)</td><td><code>{"theme": "dark"}</code>, <code>"use OAuth2"</code></td></tr>
+                <tr><td>tags</td><td>Labels for filtering/searching</td><td><code>["user-profile", "important"]</code></td></tr>
+                <tr><td>ttl_seconds</td><td>Optional expiry (auto-cleanup)</td><td><code>86400</code> (24h), <code>null</code> (permanent)</td></tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- ═══ INTEGRATIONS ═══ -->
+    <div class="section-wrap">
+        <h2>🔌 Works with every LLM + framework</h2>
+        <p>Memory Bridge sits between your code and any LLM. The integration pattern is the same for all of them.</p>
+    </div>
+
+    <div class="integrations">
+        <span class="chip">OpenAI / ChatGPT</span>
+        <span class="chip">Anthropic / Claude</span>
+        <span class="chip">Google Gemini</span>
+        <span class="chip">Ollama (local)</span>
+        <span class="chip">llama.cpp</span>
+        <span class="chip">OpenRouter</span>
+        <span class="chip active">LangGraph</span>
+        <span class="chip active">AutoGen</span>
+        <span class="chip active">CrewAI</span>
+    </div>
+
+    <div style="max-width:900px;margin:1rem auto;padding:0 1.5rem;">
+        <div class="demo-code">
+            <span class="comment"># Python SDK — the "Query → Inject → Call → Store" pattern</span><br>
+            <span class="prompt">>>> from</span> memory_bridge_client import Client<br><br>
+            <span class="prompt">>>> async with</span> Client(url<span class="str">"https://your-instance.com"</span>, api_key<span class="str">"..."</span>) <span class="prompt">as</span> mb:<br><br>
+            &nbsp;&nbsp;&nbsp;&nbsp;<span class="comment"># 1. Before calling the LLM, get context</span><br>
+            &nbsp;&nbsp;&nbsp;&nbsp;ctx = await mb.query_memories(agent_id<span class="str">"henry"</span>, tags<span class="str">["user-profile"]</span>)<br><br>
+            &nbsp;&nbsp;&nbsp;&nbsp;<span class="comment"># 2. Inject context into the system prompt</span><br>
+            &nbsp;&nbsp;&nbsp;&nbsp;prompt = <span class="str">f"You already know: {ctx['entries']}"</span><br><br>
+            &nbsp;&nbsp;&nbsp;&nbsp;<span class="comment"># 3. Call any LLM (OpenAI, Claude, Ollama...)</span><br>
+            &nbsp;&nbsp;&nbsp;&nbsp;response = await openai.chat.completions.create(prompt=prompt)<br><br>
+            &nbsp;&nbsp;&nbsp;&nbsp;<span class="comment"># 4. Store what was learned</span><br>
+            &nbsp;&nbsp;&nbsp;&nbsp;await mb.create_memory(session_id<span class="str">"s1"</span>, agent_id<span class="str">"fred"</span>, key<span class="str">"plan"</span>, value=response)
+        </div>
+    </div>
+
+    <!-- ═══ CTA ═══ -->
+    <div class="section-wrap">
+        <h2>🔑 Your Demo Key</h2>
+        <p>No registration, no email. Copy the key and go.</p>
     </div>
 
     <div class="key-box">
@@ -421,26 +450,19 @@
     </div>
 
     <div class="cta-row">
-        <a href="/playground/?api_key=mb-prod-3a2166c2083744bb90ac8933519d14790e56902d5ec1ba9a" class="btn-cta">
-            🚀 Launch Playground (Key Pre-loaded)
-        </a>
-        <a href="/docs" class="btn-cta-secondary">📖 Browse API Docs</a>
-        <a href="/playground/graph.html" class="btn-cta-secondary">🕸️ View Memory Graph</a>
+        <a href="/playground/?api_key=mb-prod-3a2166c2083744bb90ac8933519d14790e56902d5ec1ba9a" class="btn-cta">🚀 Launch Playground (Key Pre-loaded)</a>
+        <a href="/docs" class="btn-cta-secondary">📖 Full API Docs</a>
+        <a href="https://github.com/Damgeed/MemoryBridge" class="btn-cta-secondary">🐙 GitHub</a>
     </div>
 
-    <!-- ═════════════ FOOTER ═════════════ -->
     <footer class="footer">
-        Memory Bridge v0.2.0 — <a href="https://github.com/Damgeed/MemoryBridge">GitHub</a> — Cross-session memory for multi-agent AI teams
+        Memory Bridge v0.2.0 — <a href="https://github.com/Damgeed/MemoryBridge">GitHub</a> — API for cross-agent memory
     </footer>
 
     <script>
-        // On page load, pre-populate key in demo box
         document.addEventListener('DOMContentLoaded', () => {
             const key = document.getElementById('demo-key').textContent;
-            if (key) {
-                // Pre-save to localStorage for seamless playground experience
-                localStorage.setItem('mb_api_key', key);
-            }
+            if (key) localStorage.setItem('mb_api_key', key);
         });
     </script>
 </body>
