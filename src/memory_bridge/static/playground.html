@@ -152,6 +152,11 @@
             .playground-container { padding: 1rem 0.75rem; }
             .api-key-bar { flex-direction: column; align-items: stretch; }
             .api-key-bar input { min-width: 0; }
+            .api-key-bar .api-key-btns {
+                display: flex;
+                gap: 0.5rem;
+            }
+            .api-key-bar .api-key-btns .btn { flex: 1; justify-content: center; }
             .page-header h1 { font-size: 1.3rem; }
             .store-card h2, .search-card h2 { font-size: 0.95rem; }
         }
@@ -307,8 +312,10 @@
         <div class="api-key-bar card">
             <label>🔑 API Key</label>
             <input id="api-key-input" type="password" placeholder="Paste your API key here…" spellcheck="false">
-            <button class="btn btn-secondary btn-sm" onclick="setApiKey()">Save</button>
-            <button class="btn btn-secondary btn-sm" onclick="useDemoKey()">Use Demo Key (5 req/min)</button>
+            <div class="api-key-btns">
+                <button class="btn btn-secondary btn-sm" onclick="setApiKey()">Save</button>
+                <button class="btn btn-secondary btn-sm" onclick="useDemoKey()">Use Demo Key (5 req/min)</button>
+            </div>
             <span class="key-status" id="api-key-status"></span>
         </div>
 
