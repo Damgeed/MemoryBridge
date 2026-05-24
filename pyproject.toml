@@ -36,3 +36,6 @@ asyncio_mode = "auto"
 markers = [
     "postgres: mark test as requiring PostgreSQL (skipped if not available)",
 ]
+
+[tool.setuptools.package-data]
+memory_bridge = ["static/*"]
