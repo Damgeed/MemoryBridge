@@ -431,17 +431,16 @@
                 <div class="step-flow">
                     <div class="step-num">1</div>
                     <div class="step-content">
-                        <h3>Run the server</h3>
-                        <p>Clone the repo and start Memory Bridge locally. It runs on <strong>http://localhost:8000</strong>.</p>
+                        <h3>Run with Docker</h3>
+                        <p>Pull the image and start Memory Bridge on <strong>http://localhost:8000</strong>.</p>
                     </div>
                 </div>
                 <div class="term-block">
-                    <button class="term-copy-btn" onclick="copyCmd(this,'git clone https://github.com/Damgeed/MemoryBridge.git && cd MemoryBridge && pip install -e . && memory-bridge')" title="Copy command">
+                    <button class="term-copy-btn" onclick="copyCmd(this,'docker run -p 8000:8000 memorybridge/memory-bridge:latest')" title="Copy command">
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
                         Copy
                     </button>
-                    <span class="term-prompt">$</span> <span class="term-line">git clone https://github.com/Damgeed/MemoryBridge.git</span><br>
-                    <span class="term-line" style="padding-left:1.5rem;">cd MemoryBridge && pip install -e . && memory-bridge</span>
+                    <span class="term-prompt">$</span> <span class="term-line">docker run -p 8000:8000 memorybridge/memory-bridge</span>
                 </div>
 
                 <div class="step-flow">

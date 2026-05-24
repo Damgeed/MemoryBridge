@@ -305,6 +305,25 @@ def create_app() -> FastAPI:
             headers={"Cache-Control": "no-cache, no-store, must-revalidate"},
         )
 
+    # ── Demo Page ──────────────────────────────────────
+    @app.get("/demo", include_in_schema=False)
+    async def demo_page():
+        """Serve the animated demo page."""
+        static_dir = os.path.join(os.path.dirname(__file__), "static")
+        html_path = os.path.join(static_dir, "demo.html")
+        if os.path.exists(html_path):
+            with open(html_path) as f:
+                content = f.read()
+            return Response(
+                content=content,
+                media_type="text/html",
+                headers={"Cache-Control": "no-cache, no-store, must-revalidate"},
+            )
+        return Response(
+            content="Demo page not found",
+            status_code=404,
+        )
+
     # ── Static Assets (logo.svg, etc.) ─────────────────────────────
     static_dir = os.path.join(os.path.dirname(__file__), "static")
     if os.path.exists(static_dir):

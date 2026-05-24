@@ -1,0 +1,469 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Memory Bridge — Demo</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  :root {
+    --bg: #0a0a0f;
+    --card: #13131a;
+    --border: #1e1e2a;
+    --text: #e2e2ee;
+    --muted: #6c7086;
+    --accent: #7c5cfc;
+    --accent2: #a78bfa;
+    --green: #4ade80;
+    --pink: #e879f9;
+    --orange: #fb923c;
+    --blue: #60a5fa;
+    --font: 'SF Mono', 'Menlo', 'Monaco', 'Courier New', monospace;
+  }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+    overflow: hidden;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+  /* Top bar */
+  .topbar {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.6rem 1.2rem;
+    border-bottom: 1px solid var(--border);
+    background: var(--card);
+    flex-shrink: 0;
+  }
+  .topbar .logo {
+    font-weight: 800;
+    font-size: 1rem;
+    letter-spacing: -0.02em;
+  }
+  .topbar .logo span { color: var(--accent); }
+  .topbar .dots {
+    display: flex;
+    gap: 5px;
+    margin-left: auto;
+  }
+  .topbar .dots span {
+    width: 10px; height: 10px;
+    border-radius: 50%;
+  }
+  .topbar .dots .r { background: #ff5f57; }
+  .topbar .dots .y { background: #febc2e; }
+  .topbar .dots .g { background: #28c840; }
+
+  /* Main area */
+  .main { display: flex; flex: 1; overflow: hidden; }
+
+  /* Left panel - terminal/logs */
+  .left {
+    flex: 1;
+    padding: 1.2rem;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+  }
+  .left::-webkit-scrollbar { width: 6px; }
+  .left::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+  /* Right panel - diagram */
+  .right {
+    width: 45%;
+    min-width: 320px;
+    border-left: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 1.5rem;
+    position: relative;
+  }
+
+  /* Terminal log entry */
+  .log {
+    font-family: var(--font);
+    font-size: 0.82rem;
+    line-height: 1.6;
+    padding: 0.5rem 0.7rem;
+    border-radius: 6px;
+    background: rgba(30,30,42,0.5);
+    border-left: 3px solid transparent;
+    opacity: 0;
+    transform: translateY(8px);
+    animation: logIn 0.4s ease forwards;
+  }
+  .log.henry { border-left-color: var(--blue); }
+  .log.nova { border-left-color: var(--pink); }
+  .log.rex { border-left-color: var(--orange); }
+  .log.fred { border-left-color: var(--green); }
+  .log.system { border-left-color: var(--accent); }
+  .log .agent {
+    display: inline-block;
+    font-weight: 700;
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    padding: 0.1rem 0.4rem;
+    border-radius: 3px;
+    margin-right: 0.4rem;
+  }
+  .log.henry .agent { background: rgba(96,165,250,0.2); color: var(--blue); }
+  .log.nova .agent { background: rgba(232,121,249,0.2); color: var(--pink); }
+  .log.rex .agent { background: rgba(251,146,60,0.2); color: var(--orange); }
+  .log.fred .agent { background: rgba(74,222,128,0.2); color: var(--green); }
+  .log.system .agent { background: rgba(124,92,252,0.2); color: var(--accent); }
+  .log .arrow { color: var(--muted); font-size: 0.7rem; }
+  .log .key { color: var(--accent2); }
+  .log .val { color: var(--text); }
+  .log .status-good { color: var(--green); }
+  .log .status-warn { color: var(--orange); }
+
+  @keyframes logIn {
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* Right panel - diagram elements */
+  .diagram {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .agent-node {
+    width: 82px;
+    height: 82px;
+    border-radius: 50%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 0.72rem;
+    position: absolute;
+    transition: all 0.6s ease;
+    opacity: 0;
+    box-shadow: 0 0 20px rgba(0,0,0,0.3);
+  }
+  .agent-node.show { opacity: 1; }
+  .agent-node .emoji { font-size: 1.5rem; }
+  .agent-node.henry { background: linear-gradient(135deg, #1e3a5f, #2563eb); color: var(--blue); top: 5%; left: 10%; }
+  .agent-node.nova { background: linear-gradient(135deg, #4a1d6b, #a21caf); color: var(--pink); top: 5%; right: 10%; }
+  .agent-node.rex { background: linear-gradient(135deg, #5c3d1e, #d97706); color: var(--orange); bottom: 15%; left: 5%; }
+  .agent-node.fred { background: linear-gradient(135deg, #1a4731, #16a34a); color: var(--green); bottom: 15%; right: 5%; }
+
+  /* Center database */
+  .db-node {
+    width: 110px;
+    height: 110px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--accent), var(--pink));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2.2rem;
+    position: absolute;
+    box-shadow: 0 0 40px rgba(124,92,252,0.3);
+    animation: pulse 2s ease-in-out infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { box-shadow: 0 0 30px rgba(124,92,252,0.2); }
+    50% { box-shadow: 0 0 60px rgba(124,92,252,0.5); }
+  }
+
+  /* Connection lines */
+  .conn {
+    position: absolute;
+    border: 1px dashed rgba(124,92,252,0.2);
+    opacity: 0;
+    transition: opacity 0.5s;
+  }
+  .conn.show { opacity: 1; }
+
+  /* Labels on connections */
+  .flow-label {
+    font-size: 0.65rem;
+    color: var(--muted);
+    position: absolute;
+    font-family: var(--font);
+    opacity: 0;
+    transition: opacity 0.3s;
+  }
+  .flow-label.show { opacity: 1; }
+
+  /* Step indicator */
+  .step-indicator {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    font-size: 0.72rem;
+    color: var(--muted);
+    font-family: var(--font);
+  }
+
+  /* Play / pause controls */
+  .controls {
+    position: absolute;
+    bottom: 1rem;
+    display: flex;
+    gap: 0.5rem;
+  }
+  .controls button {
+    background: var(--card);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 0.35rem 0.8rem;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.72rem;
+    transition: all 0.2s;
+  }
+  .controls button:hover { border-color: var(--accent); color: var(--accent); }
+
+  /* Memory card floating from center */
+  .mem-card {
+    position: absolute;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 0.5rem 0.7rem;
+    font-size: 0.68rem;
+    font-family: var(--font);
+    max-width: 180px;
+    opacity: 0;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+    z-index: 10;
+    pointer-events: none;
+    transition: opacity 0.3s;
+  }
+  .mem-card.show { opacity: 1; }
+
+  @media (max-width: 768px) {
+    .main { flex-direction: column; }
+    .right { width: 100%; min-width: unset; height: 45vh; border-left: none; border-top: 1px solid var(--border); }
+    .left { height: 55vh; }
+    .agent-node { width: 60px; height: 60px; font-size: 0.6rem; }
+    .agent-node .emoji { font-size: 1.1rem; }
+    .db-node { width: 80px; height: 80px; font-size: 1.6rem; }
+  }
+</style>
+</head>
+<body>
+<div class="topbar">
+  <div class="logo">Memory <span>Bridge</span></div>
+  <div style="font-size:0.72rem;color:var(--muted);">demo.memorybridge.io</div>
+  <div class="dots">
+    <span class="r"></span><span class="y"></span><span class="g"></span>
+  </div>
+</div>
+
+<div class="main">
+  <div class="left" id="log-panel"></div>
+  <div class="right">
+    <svg class="conn" id="conn-h-d" style="
+      position:absolute; top:0; left:0; width:100%; height:100%;
+      pointer-events:none; z-index:0;">
+      <line id="line-hd" x1="0" y1="0" x2="0" y2="0" stroke="rgba(124,92,252,0.3)" stroke-width="1.5" stroke-dasharray="6,4"/>
+      <line id="line-nd" x1="0" y1="0" x2="0" y2="0" stroke="rgba(124,92,252,0.3)" stroke-width="1.5" stroke-dasharray="6,4"/>
+      <line id="line-rd" x1="0" y1="0" x2="0" y2="0" stroke="rgba(124,92,252,0.3)" stroke-width="1.5" stroke-dasharray="6,4"/>
+      <line id="line-fd" x1="0" y1="0" x2="0" y2="0" stroke="rgba(124,92,252,0.3)" stroke-width="1.5" stroke-dasharray="6,4"/>
+    </svg>
+
+    <div class="diagram" id="diagram">
+      <div class="db-node" id="db-node">🧠</div>
+      <div class="agent-node henry" id="agent-henry"><span class="emoji">🔬</span>HENRY</div>
+      <div class="agent-node nova" id="agent-nova"><span class="emoji">🎨</span>NOVA</div>
+      <div class="agent-node rex" id="agent-rex"><span class="emoji">🔍</span>REX</div>
+      <div class="agent-node fred" id="agent-fred"><span class="emoji">⚡</span>FRED</div>
+    </div>
+
+    <div class="step-indicator" id="step-indicator">Ready</div>
+    <div class="controls">
+      <button onclick="resetDemo()">⟳ Restart</button>
+      <button onclick="togglePause()" id="pause-btn">⏸ Pause</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── Demo script ─────────────────────────────────────────
+let paused = false;
+let timeoutId = null;
+
+function sleep(ms) { return new Promise(r => { timeoutId = setTimeout(r, ms); }); }
+
+function log(agent, msg, style = 'system') {
+  const panel = document.getElementById('log-panel');
+  const el = document.createElement('div');
+  el.className = `log ${style}`;
+  el.innerHTML = `<span class="agent">${agent}</span> ${msg}`;
+  panel.appendChild(el);
+  el.scrollIntoView({ behavior: 'smooth', block: 'end' });
+  return el;
+}
+
+function updateStep(text) {
+  document.getElementById('step-indicator').textContent = '⏳ ' + text;
+}
+
+function showAgent(id) {
+  document.getElementById(id).classList.add('show');
+}
+
+async function animateLine(fromId, toId, duration = 600) {
+  const from = document.getElementById(fromId);
+  const to = document.getElementById(toId);
+  const fromRect = from.getBoundingClientRect();
+  const toRect = to.getBoundingClientRect();
+  const diagram = document.getElementById('diagram');
+  const dRect = diagram.getBoundingClientRect();
+  
+  const x1 = fromRect.left - dRect.left + fromRect.width/2;
+  const y1 = fromRect.top - dRect.top + fromRect.height/2;
+  const x2 = toRect.left - dRect.left + toRect.width/2;
+  const y2 = toRect.top - dRect.top + toRect.height/2;
+
+  const lineId = { 'agent-henry': 'line-hd', 'agent-nova': 'line-nd', 'agent-rex': 'line-rd', 'agent-fred': 'line-fd' }[fromId];
+  const line = document.getElementById(lineId);
+  if (line) {
+    line.setAttribute('x1', x1);
+    line.setAttribute('y1', y1);
+    line.setAttribute('x2', x2);
+    line.setAttribute('y2', y2);
+    line.style.opacity = 1;
+  }
+}
+
+async function runDemo() {
+  // Phase 1: System startup
+  updateStep('Initializing agent network...');
+  log('SYSTEM', 'Memory Bridge <span class="status-good">v0.2.0</span> — API for cross-agent memory', 'system');
+  await sleep(600);
+  showAgent('agent-henry');
+  log('HENRY', '<span class="status-good">online</span> · Researcher agent', 'henry');
+  await sleep(400);
+  showAgent('agent-nova');
+  log('NOVA', '<span class="status-good">online</span> · Architect / Designer agent', 'nova');
+  await sleep(400);
+  showAgent('agent-rex');
+  log('REX', '<span class="status-good">online</span> · Reviewer / Security agent', 'rex');
+  await sleep(400);
+  showAgent('agent-fred');
+  log('FRED', '<span class="status-good">online</span> · Builder / Execution agent', 'fred');
+  await sleep(600);
+
+  // Phase 2: Henry stores knowledge
+  updateStep('Henry stores user preferences...');
+  await animateLine('agent-henry', 'db-node');
+  log('HENRY', '→ <span class="key">POST /memories</span> { session_id, agent_id: "henry", key: "user_pref_language" }', 'henry');
+  await sleep(500);
+  log('HENRY', '  <span class="arrow">└─</span> <span class="val">"User prefers English, concise replies, bullet points."</span>', 'henry');
+  await sleep(300);
+  log('HENRY', '→ <span class="key">POST /memories</span> { key: "user_pref_tech_stack", value: "..." }', 'henry');
+  await sleep(300);
+  log('HENRY', '  <span class="arrow">└─</span> <span class="val">"FastAPI + PostgreSQL + Redis. Python 3.12, dark mode."</span>', 'henry');
+  await sleep(300);
+  log('MEMORY', '<span class="status-good">✓ 2 memories stored</span> · Agent: henry · Session: demo-session', 'system');
+  await sleep(800);
+
+  // Phase 3: Nova designs architecture
+  updateStep('Nova designs architecture...');
+  await animateLine('agent-nova', 'db-node');
+  log('NOVA', '→ <span class="key">POST /memories</span> { key: "arch_memory_bridge" }', 'nova');
+  await sleep(600);
+  log('NOVA', '  <span class="arrow">└─</span> <span class="val">"FastAPI backend, asyncpg PG, Redis rate limiting. Schema-per-tenant for Pro."</span>', 'nova');
+  await sleep(300);
+  log('MEMORY', '<span class="status-good">✓ Architecture stored</span> · Agent: nova', 'system');
+  await sleep(800);
+
+  // Phase 4: Rex reviews Nova's work
+  updateStep('Rex reviews architecture...');
+  await animateLine('agent-rex', 'db-node');
+  log('REX', '→ <span class="key">POST /memories/query</span> { key: "arch_memory_bridge" }', 'rex');
+  await sleep(500);
+  log('REX', '  <span class="arrow">└─</span> <span class="val">Found Nova\'s architecture plan</span>', 'rex');
+  await sleep(400);
+  log('REX', '→ <span class="key">POST /memories</span> { key: "review_arch" }', 'rex');
+  await sleep(500);
+  log('REX', '  <span class="arrow">└─</span> <span class="val">"Review: Solid. Add connection pooling, rate limit headers, Prometheus metrics."</span>', 'rex');
+  await sleep(300);
+  log('MEMORY', '<span class="status-good">✓ Review stored</span> · Rex reviewed what Nova designed — without being told', 'system');
+  await sleep(1000);
+
+  // Phase 5: Fred synthesizes
+  updateStep('Fred reads everything and builds...');
+  await animateLine('agent-fred', 'db-node');
+  log('FRED', '→ <span class="key">POST /memories/query</span> { session_id: "demo-session" }', 'fred');
+  await sleep(500);
+  log('FRED', '  <span class="arrow">└─</span> <span class="val">Found 4 memories from Henry, Nova, Rex</span>', 'fred');
+  await sleep(400);
+  log('FRED', '<span class="status-good">∘</span> Henry\'s research: language pref, tech stack', 'fred');
+  await sleep(200);
+  log('FRED', '<span class="status-good">∘</span> Nova\'s design: architecture plan', 'fred');
+  await sleep(200);
+  log('FRED', '<span class="status-good">∘</span> Rex\'s review: security recommendations', 'fred');
+  await sleep(500);
+  log('FRED', '<span class="status-good">✓ Complete picture synthesized.</span> Building execution plan...', 'fred');
+  await sleep(300);
+  log('FRED', '→ <span class="key">POST /memories</span> { key: "execution_plan" }', 'fred');
+  await sleep(300);
+  log('FRED', '  <span class="arrow">└─</span> <span class="val">"Phase 1: Auth. Phase 2: API. Phase 3: Deploy. Dependencies from Henry\'s research."</span>', 'fred');
+  await sleep(600);
+
+  // Phase 6: Summary
+  updateStep('✅ Demo complete');
+  log('SYSTEM', '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━', 'system');
+  log('SYSTEM', '<span class="status-good">✅ 4 agents · 6 memories · 1 shared database</span>', 'system');
+  log('SYSTEM', 'Henry researched → Nova designed → Rex reviewed → Fred built', 'system');
+  log('SYSTEM', 'All communicated through Memory Bridge. <span class="status-good">No meetings needed.</span>', 'system');
+  log('SYSTEM', '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━', 'system');
+  await sleep(500);
+
+  document.getElementById('step-indicator').textContent = '✅ Complete';
+}
+
+function togglePause() {
+  paused = !paused;
+  document.getElementById('pause-btn').textContent = paused ? '▶ Resume' : '⏸ Pause';
+}
+
+function resetDemo() {
+  if (timeoutId) clearTimeout(timeoutId);
+  document.getElementById('log-panel').innerHTML = '';
+  document.querySelectorAll('.agent-node').forEach(n => n.classList.remove('show'));
+  document.querySelectorAll('.conn').forEach(c => c.style.opacity = 0);
+  document.getElementById('step-indicator').textContent = 'Ready';
+  paused = false;
+  document.getElementById('pause-btn').textContent = '⏸ Pause';
+  setTimeout(runDemo, 300);
+}
+
+// Override sleep to handle pause
+const origSleep = sleep;
+async function sleep(ms) {
+  return new Promise(r => {
+    const check = () => {
+      if (!paused) {
+        timeoutId = setTimeout(r, ms);
+      } else {
+        setTimeout(check, 100);
+      }
+    };
+    check();
+  });
+}
+
+document.addEventListener('DOMContentLoaded', runDemo);
+</script>
+</body>
+</html>
