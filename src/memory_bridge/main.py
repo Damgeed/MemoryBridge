@@ -324,6 +324,25 @@ def create_app() -> FastAPI:
             status_code=404,
         )
 
+    # ── API Docs Page (with navbar) ────────────────────
+    @app.get("/api-docs", include_in_schema=False)
+    async def api_docs_page():
+        """Serve the API docs page with custom navbar."""
+        static_dir = os.path.join(os.path.dirname(__file__), "static")
+        html_path = os.path.join(static_dir, "api-docs.html")
+        if os.path.exists(html_path):
+            with open(html_path) as f:
+                content = f.read()
+            return Response(
+                content=content,
+                media_type="text/html",
+                headers={"Cache-Control": "no-cache, no-store, must-revalidate"},
+            )
+        return Response(
+            content="API docs page not found",
+            status_code=404,
+        )
+
     # ── Static Assets (logo.svg, etc.) ─────────────────────────────
     static_dir = os.path.join(os.path.dirname(__file__), "static")
     if os.path.exists(static_dir):

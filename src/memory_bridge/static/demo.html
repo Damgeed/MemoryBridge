@@ -20,6 +20,19 @@
     --blue: #60a5fa;
     --font: 'SF Mono', 'Menlo', 'Monaco', 'Courier New', monospace;
   }
+  [data-theme="light"] {
+    --bg: #f5f5fa;
+    --card: #ffffff;
+    --border: #d4d4e0;
+    --text: #1a1a2e;
+    --muted: #6b6b80;
+    --accent: #6d4cf5;
+    --accent2: #8b6cf5;
+    --green: #22c55e;
+    --pink: #d946ef;
+    --orange: #ea580c;
+    --blue: #3b82f6;
+  }
   body {
     background: var(--bg);
     color: var(--text);
@@ -287,6 +300,19 @@
     <a href="/pricing">Pricing</a>
     <a href="/dashboard/">Dashboard</a>
   </div>
+  <div style="display:flex;align-items:center;gap:0.5rem;margin-right:0.75rem;">
+    <button onclick="toggleDemoTheme()" style="background:none;border:none;color:var(--muted);cursor:pointer;padding:0.25rem;display:flex;align-items:center;" title="Toggle theme">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16" id="demo-sun">
+        <circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/>
+        <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+        <line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/>
+        <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+      </svg>
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16" id="demo-moon" style="display:none">
+        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+      </svg>
+    </button>
+  </div>
   <div class="dots">
     <span class="r"></span><span class="y"></span><span class="g"></span>
   </div>
@@ -321,6 +347,32 @@
 </div>
 
 <script>
+// ── Theme ──────────────────────────────────────────────
+(function initDemoTheme() {
+  const saved = localStorage.getItem('mb-theme');
+  const html = document.documentElement;
+  if (saved) html.setAttribute('data-theme', saved);
+  else {
+    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    html.setAttribute('data-theme', prefersDark ? 'dark' : 'light');
+  }
+  updateDemoIcons();
+})();
+function toggleDemoTheme() {
+  const html = document.documentElement;
+  const next = html.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+  html.setAttribute('data-theme', next);
+  localStorage.setItem('mb-theme', next);
+  updateDemoIcons();
+}
+function updateDemoIcons() {
+  const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+  const sun = document.getElementById('demo-sun');
+  const moon = document.getElementById('demo-moon');
+  if (sun) sun.style.display = isDark ? 'block' : 'none';
+  if (moon) moon.style.display = isDark ? 'none' : 'block';
+}
+
 // ── Demo script ─────────────────────────────────────────
 let paused = false;
 let timeoutId = null;
