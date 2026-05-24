@@ -45,6 +45,25 @@
     letter-spacing: -0.02em;
   }
   .topbar .logo span { color: var(--accent); }
+  .topbar .nav-links {
+    display: flex;
+    gap: 0.3rem;
+    margin-left: 1.5rem;
+    flex: 1;
+  }
+  .topbar .nav-links a {
+    color: var(--muted);
+    text-decoration: none;
+    font-size: 0.78rem;
+    font-weight: 600;
+    padding: 0.2rem 0.5rem;
+    border-radius: 4px;
+    transition: all 0.2s;
+  }
+  .topbar .nav-links a:hover {
+    color: var(--text);
+    background: rgba(255,255,255,0.05);
+  }
   .topbar .dots {
     display: flex;
     gap: 5px;
@@ -255,13 +274,19 @@
     .agent-node { width: 60px; height: 60px; font-size: 0.6rem; }
     .agent-node .emoji { font-size: 1.1rem; }
     .db-node { width: 80px; height: 80px; font-size: 1.6rem; }
+    .topbar .nav-links a { font-size: 0.7rem; padding: 0.15rem 0.3rem; }
   }
 </style>
 </head>
 <body>
 <div class="topbar">
   <div class="logo">Memory <span>Bridge</span></div>
-  <div style="font-size:0.72rem;color:var(--muted);">demo.memorybridge.io</div>
+  <div class="nav-links">
+    <a href="/">Home</a>
+    <a href="/playground/">Playground</a>
+    <a href="/pricing">Pricing</a>
+    <a href="/dashboard/">Dashboard</a>
+  </div>
   <div class="dots">
     <span class="r"></span><span class="y"></span><span class="g"></span>
   </div>
