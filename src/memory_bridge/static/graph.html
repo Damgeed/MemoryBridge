@@ -383,7 +383,6 @@
                         <p>${e.message}</p>
                     </div>`;
             }
-        }
 
         // ── Render D3 Force-Directed Graph ────────────────────────
         function renderGraph(data) {
@@ -563,20 +562,16 @@
             if (e.key === '/' && e.target.tagName !== 'INPUT') {
                 e.preventDefault();
                 document.getElementById('search').focus();
-            }
-        });
+            });
 
         // ── Language Selector ─────────────────────────────────────
         function toggleLang() {
             document.getElementById('lang-dropdown').classList.toggle('open');
         }
-        }
         document.addEventListener('click', (e) => {
             if (!e.target.closest('.lang-toggle') && !e.target.closest('#lang-dropdown')) {
                 document.getElementById('lang-dropdown')?.classList.remove('open');
-            }
-            }
-        });
+            });
         function setLang(code) {
             localStorage.setItem('mb-lang', code);
             document.querySelectorAll('.lang-opt').forEach(el => el.classList.remove('active'));

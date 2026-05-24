@@ -639,14 +639,11 @@
             langDropdownOpen = !langDropdownOpen;
             document.getElementById('lang-dropdown').classList.toggle('open');
         }
-        }
         document.addEventListener('click', (e) => {
             if (!e.target.closest('.lang-toggle') && !e.target.closest('#lang-dropdown')) {
                 document.getElementById('lang-dropdown')?.classList.remove('open');
                 langDropdownOpen = false;
-            }
-            }
-        });
+            });
         function setLang(code) {
             localStorage.setItem('mb-lang', code);
             document.querySelectorAll('.lang-opt').forEach(el => el.classList.remove('active'));
