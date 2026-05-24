@@ -1,273 +1,328 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Memory Bridge — Give Your AI Agents a Shared Memory</title>
+    <title>Memory Bridge — Cross-Session Memory for AI Agent Teams</title>
     <link rel="icon" href="/playground/logo.svg" type="image/svg+xml">
     <link rel="stylesheet" href="/playground/style.css">
     <style>
-        .hero-split {
+        /* ── Hero ───────────────────────────────────────────── */
+        .hero-section {
             display: flex;
+            align-items: center;
+            gap: 3rem;
+            padding: 4rem 1.5rem 3rem;
             max-width: 1100px;
             margin: 0 auto;
-            padding: 3rem 1.5rem 2rem;
-            gap: 2.5rem;
-            align-items: center;
+            min-height: 80vh;
         }
-        .hero-left { flex: 1.2; }
-        .hero-right {
-            flex: 1;
-            background: var(--bg-secondary);
+        .hero-content { flex: 1.2; }
+        .hero-visual { flex: 1; }
+
+        .hero-section h1 {
+            font-size: clamp(2.2rem, 5vw, 3.2rem);
+            font-weight: 900;
+            line-height: 1.1;
+            letter-spacing: -0.03em;
+            margin-bottom: 1rem;
+        }
+        .hero-section h1 .gradient-text {
+            background: linear-gradient(135deg, var(--accent), var(--pink), var(--accent));
+            background-size: 200% 200%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: hue-shift 6s ease-in-out infinite;
+        }
+        @keyframes hue-shift {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+
+        .hero-tagline {
+            font-size: 1.1rem;
+            color: var(--text-muted);
+            line-height: 1.6;
+            margin-bottom: 2rem;
+            max-width: 540px;
+        }
+
+        .hero-cta { display: flex; gap: 0.75rem; flex-wrap: wrap; margin-bottom: 1.5rem; }
+        .hero-cta .btn-primary { padding: 0.8rem 1.8rem; font-size: 1rem; }
+
+        /* ── Hero Bubbles ──────────────────────────────────── */
+        .bubbles {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+        .bubble {
+            background: var(--bg-glass-strong);
+            backdrop-filter: blur(16px) saturate(1.5);
             border: 1px solid var(--border-primary);
             border-radius: var(--radius-lg);
-            padding: 1.5rem;
-            font-size: 0.85rem;
-            line-height: 1.6;
+            padding: 1rem 1.25rem;
+            box-shadow: var(--shadow-md);
+            transition: all var(--transition-base);
+            animation: bubble-in 0.6s ease both;
         }
-        .hero-right .bubble {
-            background: var(--bg-tertiary);
-            border: 1px solid var(--border-secondary);
-            border-radius: var(--radius-md);
-            padding: 0.8rem 1rem;
-            margin-bottom: 0.75rem;
+        .bubble:nth-child(2) { animation-delay: 0.3s; }
+        .bubble:nth-child(3) { animation-delay: 0.6s; }
+        .bubble:hover { transform: translateX(4px); border-color: var(--accent); }
+        @keyframes bubble-in {
+            from { opacity: 0; transform: translateY(12px) scale(0.97); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
         }
-        .hero-right .bubble:last-child { margin-bottom: 0; }
-        .hero-right .agent-label { font-weight: 600; font-size: 0.8rem; margin-bottom: 0.25rem; }
-        .hero-right .agent-label.henry { color: #58a6ff; }
-        .hero-right .agent-label.fred { color: #3fb950; }
+        .bubble .agent-label {
+            font-weight: 700;
+            font-size: 0.78rem;
+            margin-bottom: 0.3rem;
+            display: flex;
+            align-items: center;
+            gap: 0.35rem;
+        }
+        .bubble .agent-label .henry-dot { color: var(--accent); }
+        .bubble .agent-label .fred-dot { color: var(--green); }
+        .bubble .bubble-text { color: var(--text-secondary); font-size: 0.88rem; line-height: 1.5; }
+        .bubble .bubble-foot {
+            text-align: center;
+            margin-top: 0.6rem;
+            color: var(--green);
+            font-size: 0.78rem;
+            font-weight: 600;
+        }
 
-        .hero h1 {
-            font-size: 2.6rem;
-            margin-bottom: 1rem;
-            line-height: 1.15;
-            letter-spacing: -0.03em;
+        .hero-stats {
+            display: flex;
+            gap: 2rem;
+            margin-top: 1.5rem;
         }
-        .hero h1 .highlight {
-            background: linear-gradient(135deg, #58a6ff, #3fb950);
+        .hero-stat { text-align: center; }
+        .hero-stat .num {
+            font-size: 1.8rem;
+            font-weight: 800;
+            background: var(--accent-gradient);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
         }
-        .hero p.tagline {
-            font-size: 1.1rem;
+        .hero-stat .label { font-size: 0.78rem; color: var(--text-muted); }
+
+        /* ── Section Common ────────────────────────────────── */
+        .section {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 3rem 1.5rem;
+        }
+        .section-title {
+            text-align: center;
+            font-size: 1.6rem;
+            font-weight: 800;
+            letter-spacing: -0.02em;
+            margin-bottom: 0.5rem;
+        }
+        .section-subtitle {
+            text-align: center;
             color: var(--text-muted);
-            margin-bottom: 1.5rem;
-            line-height: 1.5;
+            font-size: 0.95rem;
+            max-width: 600px;
+            margin: 0 auto 2.5rem;
+            line-height: 1.6;
         }
 
-        .section-wrap {
-            max-width: 900px;
-            margin: 0 auto;
-            padding: 2rem 1.5rem;
+        /* ── Steps ─────────────────────────────────────────── */
+        .steps-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1.25rem;
         }
-        .section-wrap h2 {
-            text-align: center;
-            margin-bottom: 1.5rem;
-            font-size: 1.4rem;
-        }
-        .section-wrap p { color: var(--text-muted); font-size: 0.95rem; line-height: 1.6; text-align: center; }
-
-        .steps {
-            display: flex;
-            gap: 1.5rem;
-            max-width: 900px;
-            margin: 2rem auto;
-            padding: 0 1.5rem;
-        }
-        .step {
-            flex: 1;
-            text-align: center;
-            background: var(--bg-secondary);
+        .step-card {
+            background: var(--bg-glass);
+            backdrop-filter: blur(12px);
             border: 1px solid var(--border-primary);
             border-radius: var(--radius-lg);
-            padding: 1.5rem;
-        }
-        .step .num {
-            width: 32px; height: 32px; border-radius: 50%;
-            background: var(--accent-blue); color: #fff;
-            display: flex; align-items: center; justify-content: center;
-            font-weight: 700; font-size: 0.9rem; margin: 0 auto 0.75rem;
-        }
-        .step h3 { margin-bottom: 0.4rem; }
-        .step p { color: var(--text-muted); font-size: 0.85rem; line-height: 1.5; }
-
-        .demo-section {
-            max-width: 900px;
-            margin: 0 auto;
-            padding: 0 1.5rem 2rem;
-        }
-        .demo-section h2 { text-align: center; margin-bottom: 1.5rem; }
-
-        .demo-card {
-            background: var(--bg-secondary);
-            border: 1px solid var(--border-primary);
-            border-radius: var(--radius-lg);
+            padding: 1.75rem 1.5rem;
+            text-align: center;
+            transition: all var(--transition-base);
+            position: relative;
             overflow: hidden;
-            margin-bottom: 1rem;
         }
-        .demo-card-header {
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-            padding: 1rem 1.25rem;
-            background: var(--bg-tertiary);
-            border-bottom: 1px solid var(--border-secondary);
-            font-weight: 600;
-            font-size: 0.9rem;
+        .step-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 60%;
+            height: 3px;
+            background: var(--accent-gradient);
+            border-radius: 0 0 4px 4px;
+            opacity: 0.6;
         }
-        .demo-card-body { padding: 1.25rem; }
-        .demo-code {
-            background: #0d1117; border: 1px solid #21262d;
-            border-radius: var(--radius-sm); padding: 1rem;
-            font-family: var(--font-mono); font-size: 0.82rem; line-height: 1.5; overflow-x: auto;
+        .step-card:hover {
+            transform: translateY(-4px);
+            border-color: var(--accent);
+            box-shadow: var(--shadow-lg);
         }
-        .demo-code .prompt { color: #8b949e; }
-        .demo-code .resp { color: #3fb950; }
-        .demo-code .cmd { color: #58a6ff; }
-        .demo-code .str { color: #a5d6ff; }
-        .demo-code .comment { color: #484f58; }
+        .step-card .num-circle {
+            width: 40px; height: 40px;
+            border-radius: 50%;
+            background: var(--accent-gradient);
+            color: #fff;
+            display: flex; align-items: center; justify-content: center;
+            font-weight: 800; font-size: 1rem;
+            margin: 0 auto 1rem;
+        }
+        .step-card h3 { font-size: 1rem; font-weight: 700; margin-bottom: 0.5rem; }
+        .step-card p { color: var(--text-muted); font-size: 0.85rem; line-height: 1.55; }
 
-        .demo-result {
-            background: #1a2a3a; border: 1px solid #1f6feb33;
-            border-radius: var(--radius-sm); padding: 0.75rem 1rem; margin-top: 0.75rem;
-            color: #58a6ff; font-size: 0.85rem;
-        }
-        .demo-result .label { color: var(--text-muted); font-size: 0.75rem; margin-bottom: 0.25rem; }
-
-        /* ── Q&A Grid ─────────────────────────────────── */
+        /* ── Q&A Grid ──────────────────────────────────────── */
         .qa-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
             gap: 1.25rem;
-            max-width: 900px;
-            margin: 2rem auto;
-            padding: 0 1.5rem;
         }
         .qa-card {
-            background: var(--bg-secondary);
+            background: var(--card-bg);
             border: 1px solid var(--border-primary);
             border-radius: var(--radius-lg);
             padding: 1.5rem;
+            transition: all var(--transition-base);
+        }
+        .qa-card:hover {
+            border-color: var(--accent);
+            box-shadow: var(--shadow-md);
+            transform: translateY(-2px);
         }
         .qa-card .q {
-            font-weight: 600;
+            font-weight: 700;
             font-size: 0.95rem;
-            margin-bottom: 0.5rem;
+            margin-bottom: 0.65rem;
             display: flex;
-            align-items: center;
-            gap: 0.4rem;
+            align-items: flex-start;
+            gap: 0.5rem;
         }
+        .qa-card .q .q-icon { flex-shrink: 0; }
         .qa-card .a {
             color: var(--text-muted);
             font-size: 0.88rem;
-            line-height: 1.6;
+            line-height: 1.65;
         }
         .qa-card .a code {
             background: var(--bg-tertiary);
-            padding: 0.1rem 0.3rem;
-            border-radius: 3px;
-            font-size: 0.8rem;
-            color: var(--accent-green);
+            padding: 0.1rem 0.35rem;
+            border-radius: 4px;
+            font-family: var(--font-mono);
+            font-size: 0.78rem;
+            color: var(--accent);
         }
+        .qa-card .a strong { color: var(--text-secondary); }
 
-        /* ── Data Model Diagram ──────────────────────── */
-        .model-diagram {
-            background: var(--bg-secondary);
+        /* ── Data Model ────────────────────────────────────── */
+        .model-card {
+            background: var(--card-bg);
             border: 1px solid var(--border-primary);
             border-radius: var(--radius-lg);
-            padding: 1.5rem;
-            max-width: 900px;
-            margin: 1.5rem auto;
+            padding: 1.75rem;
+            overflow: hidden;
         }
-        .model-diagram h3 { margin-bottom: 1rem; text-align: center; }
+        .model-card h3 {
+            font-size: 1.1rem;
+            font-weight: 700;
+            margin-bottom: 1.25rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
         .model-table {
             width: 100%;
             border-collapse: collapse;
-            font-size: 0.85rem;
+            font-size: 0.88rem;
         }
         .model-table th {
             text-align: left;
             color: var(--text-muted);
-            font-weight: 500;
-            padding: 0.5rem 0.75rem;
+            font-weight: 600;
+            padding: 0.6rem 0.75rem;
             border-bottom: 1px solid var(--border-primary);
+            font-size: 0.78rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
         }
         .model-table td {
-            padding: 0.5rem 0.75rem;
-            border-bottom: 1px solid var(--border-secondary);
+            padding: 0.6rem 0.75rem;
+            border-bottom: 1px solid var(--border-subtle);
             color: var(--text-secondary);
         }
+        .model-table tr:last-child td { border-bottom: none; }
         .model-table td:first-child {
             font-family: var(--font-mono);
-            color: var(--accent-blue);
+            color: var(--accent);
             font-weight: 600;
+            font-size: 0.85rem;
         }
+        .model-table tr:hover td { background: var(--btn-secondary-hover); }
 
-        /* ── Integrations ────────────────────────────── */
+        /* ── Integrations ──────────────────────────────────── */
         .integrations {
             display: flex;
-            gap: 1rem;
-            max-width: 900px;
-            margin: 1.5rem auto;
-            padding: 0 1.5rem;
+            gap: 0.6rem;
             flex-wrap: wrap;
             justify-content: center;
+            margin: 0 auto;
+            max-width: 700px;
         }
-        .integrations .chip {
+
+        /* ── Key Box ───────────────────────────────────────── */
+        .key-box {
             display: flex;
             align-items: center;
-            gap: 0.4rem;
-            background: var(--bg-secondary);
-            border: 1px solid var(--border-primary);
-            border-radius: 100px;
-            padding: 0.5rem 1rem;
-            font-size: 0.85rem;
-            color: var(--text-secondary);
+            gap: 0.75rem;
+            background: var(--bg-glass);
+            backdrop-filter: blur(12px);
+            border: 1px solid var(--accent);
+            border-radius: var(--radius-md);
+            padding: 0.75rem 1.25rem;
+            max-width: 650px;
+            margin: 0 auto;
         }
-        .integrations .chip.active { border-color: var(--accent-blue); color: var(--accent-blue); }
-
-        .key-box {
-            display: flex; align-items: center; gap: 0.75rem;
-            background: var(--bg-secondary); border: 1px solid var(--accent-blue);
-            border-radius: var(--radius-md); padding: 0.75rem 1.25rem;
-            margin: 1.5rem auto; max-width: 650px;
+        .key-box label {
+            margin: 0;
+            white-space: nowrap;
+            color: var(--accent);
+            text-transform: none;
+            font-weight: 700;
+            letter-spacing: normal;
         }
-        .key-box label { margin: 0; white-space: nowrap; color: var(--accent-blue); }
         .key-box code {
-            flex: 1; padding: 0.4rem 0.6rem; background: var(--bg-tertiary);
-            border: 1px solid var(--border-primary); border-radius: 4px;
-            font-size: 0.75rem; color: var(--accent-green); word-break: break-all;
+            flex: 1;
+            padding: 0.4rem 0.6rem;
+            background: var(--input-bg);
+            border: 1px solid var(--border-primary);
+            border-radius: 4px;
+            font-family: var(--font-mono);
+            font-size: 0.75rem;
+            color: var(--green);
+            word-break: break-all;
         }
-        .key-box .btn { white-space: nowrap; }
-
-        .btn-cta {
-            display: inline-flex; align-items: center; gap: 0.5rem;
-            padding: 0.75rem 1.75rem; font-size: 1rem;
-            background: linear-gradient(135deg, #238636, #2ea043);
-            border-radius: var(--radius-sm); border: none; color: white;
-            font-weight: 600; cursor: pointer; transition: transform 0.1s, box-shadow 0.1s;
-        }
-        .btn-cta:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(46,160,67,0.3); text-decoration: none; }
-        .btn-cta-secondary {
-            display: inline-flex; align-items: center; gap: 0.5rem;
-            padding: 0.75rem 1.75rem; font-size: 1rem;
-            background: var(--btn-secondary); border: 1px solid var(--border-primary);
-            border-radius: var(--radius-sm); color: var(--text-primary);
-            font-weight: 600; cursor: pointer; transition: border-color 0.15s;
-        }
-        .btn-cta-secondary:hover { border-color: var(--accent-blue); text-decoration: none; }
+        .key-box .btn { white-space: nowrap; flex-shrink: 0; }
 
         .cta-row {
-            display: flex; gap: 1rem;
-            justify-content: center; margin: 1.5rem 0; flex-wrap: wrap;
+            display: flex;
+            gap: 0.75rem;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-top: 1.5rem;
         }
 
         @media (max-width: 768px) {
-            .hero-split { flex-direction: column; }
-            .hero h1 { font-size: 1.8rem; }
-            .steps { flex-direction: column; }
+            .hero-section { flex-direction: column; padding: 2rem 1rem 1.5rem; min-height: auto; gap: 2rem; }
+            .hero-visual { width: 100%; }
+            .steps-grid { grid-template-columns: 1fr; }
             .qa-grid { grid-template-columns: 1fr; }
+            .hero-stats { justify-content: center; }
+            .section { padding: 2rem 1rem; }
         }
     </style>
 </head>
@@ -275,191 +330,250 @@
     <!-- Navbar -->
     <nav class="navbar">
         <a href="/" class="logo">
-            <img src="/playground/logo.svg" alt="Memory Bridge"> Memory Bridge
+            <img src="/playground/logo.svg" alt="Bridge icon">
+            Memory <span class="logo-accent">Bridge</span>
         </a>
         <div class="nav-links">
             <a href="/" class="active">Home</a>
             <a href="/playground/?api_key=mb-prod-3a2166c2083744bb90ac8933519d14790e56902d5ec1ba9a">Playground</a>
             <a href="/playground/graph.html">Graph</a>
             <a href="/docs">API Docs</a>
+            <button class="theme-toggle" onclick="toggleTheme()" title="Toggle theme" aria-label="Toggle theme">🌙</button>
         </div>
     </nav>
 
     <!-- ═══ HERO ═══ -->
-    <div class="hero-split">
-        <div class="hero-left hero">
-            <h1>Your AI agents have <span class="highlight">amnesia</span>.</h1>
-            <p class="tagline">
+    <section class="hero-section hero-bg">
+        <div class="hero-content">
+            <h1>
+                Your AI agents have<br>
+                <span class="gradient-text">amnesia</span>.
+            </h1>
+            <p class="hero-tagline">
                 You're building a team of AI agents — but every conversation is a fresh start.
-                Memory Bridge is the API every agent calls to store and find shared context.
+                Memory Bridge is the API every agent calls to <strong>store and find shared context</strong>.
             </p>
-            <div class="cta-row">
-                <a href="/playground/?api_key=mb-prod-3a2166c2083744bb90ac8933519d14790e56902d5ec1ba9a" class="btn-cta">🚀 Try It Now — No Signup</a>
-                <a href="#qa" class="btn-cta-secondary">How It Works ↓</a>
+            <div class="hero-cta">
+                <a href="/playground/?api_key=mb-prod-3a2166c2083744bb90ac8933519d14790e56902d5ec1ba9a" class="btn-primary">🚀 Try It Now — No Signup</a>
+                <a href="#how-it-works" class="btn-secondary">How It Works ↓</a>
+            </div>
+            <div class="hero-stats">
+                <div class="hero-stat"><div class="num">198</div><div class="label">Tests</div></div>
+                <div class="hero-stat"><div class="num">56</div><div class="label">PG Tests</div></div>
+                <div class="hero-stat"><div class="num">3</div><div class="label">Adapters</div></div>
+                <div class="hero-stat"><div class="num">OSS</div><div class="label">Open Source</div></div>
             </div>
         </div>
-        <div class="hero-right">
-            <div class="bubble">
-                <div class="agent-label henry">🧠 Henry (AI Expert)</div>
-                <div>"User prefers Python 3.12, dark mode, fast iteration. Stored."</div>
-            </div>
-            <div class="bubble" style="opacity:0.4;">
-                <div class="agent-label fred">🚀 Fred (Co-founder)</div>
-                <div>"What do we know about the user? Let me check memory."</div>
-            </div>
-            <div class="bubble" style="border-color: #3fb95066;">
-                <div class="agent-label fred">🚀 Fred (Builder)</div>
-                <div>"Found it: Python 3.12 ✓, dark mode ✓. Henry already did the research. Ship it."</div>
-            </div>
-            <div style="text-align:center;margin-top:0.5rem;color:var(--accent-green);font-size:0.8rem;">
-                ↔ Henry wrote it. Fred found it. No hand-holding needed.
+        <div class="hero-visual">
+            <div class="bubbles">
+                <div class="bubble">
+                    <div class="agent-label"><span class="henry-dot">🧠</span> Henry (AI Expert)</div>
+                    <div class="bubble-text">"User prefers Python 3.12, dark mode, fast iteration. Stored."</div>
+                </div>
+                <div class="bubble" style="margin-left: 1.5rem;">
+                    <div class="agent-label"><span class="fred-dot">🚀</span> Fred (Co-founder)</div>
+                    <div class="bubble-text">"What do we know about the user? Let me check memory."</div>
+                </div>
+                <div class="bubble" style="border-color: var(--green-glow);">
+                    <div class="agent-label"><span class="fred-dot">🚀</span> Fred (Builder)</div>
+                    <div class="bubble-text">"Found it: Python 3.12 ✓, dark mode ✓. Henry already did the research. <strong style="color:var(--green)">Ship it.</strong>"</div>
+                    <div class="bubble-foot">↔ Henry wrote it. Fred found it. No hand-holding needed.</div>
+                </div>
             </div>
         </div>
-    </div>
+    </section>
 
     <!-- ═══ HOW IT WORKS ═══ -->
-    <div class="section-wrap" id="qa">
-        <h2>It's an API your agents call — not another chat tool</h2>
-        <p>You write code that stores and retrieves context. Your agents get shared memory without changing how they work.</p>
-    </div>
+    <section class="section" id="how-it-works">
+        <h2 class="section-title fade-up">It's an API your agents call<span class="gradient-text">.</span></h2>
+        <p class="section-subtitle fade-up">Not another chat tool. Not a plugin. A REST API that gives your multi-agent system shared memory — without changing how your agents work.</p>
+        <div class="steps-grid">
+            <div class="step-card fade-up">
+                <div class="num-circle">1</div>
+                <h3>Agent stores knowledge</h3>
+                <p>After any LLM call, your code saves what your agent learned — preferences, decisions, discovered facts.</p>
+            </div>
+            <div class="step-card fade-up">
+                <div class="num-circle">2</div>
+                <h3>Next agent queries it</h3>
+                <p>Before calling the LLM, your code fetches relevant memories. The new agent starts with full context.</p>
+            </div>
+            <div class="step-card fade-up">
+                <div class="num-circle">3</div>
+                <h3>Handoff between agents</h3>
+                <p>When agent A passes to agent B, Memory Bridge delivers a structured context packet. Nothing lost in translation.</p>
+            </div>
+        </div>
+    </section>
 
-    <div class="steps">
-        <div class="step">
-            <div class="num">1</div>
-            <h3>Agent stores knowledge</h3>
-            <p>After any LLM call, your code saves what your agent learned — preferences, decisions, discovered facts.</p>
+    <!-- ═══ Q&A ═══ -->
+    <section class="section" id="qa">
+        <h2 class="section-title fade-up">Everything you need to know<span class="gradient-text">.</span></h2>
+        <p class="section-subtitle fade-up">Memory Bridge solves the hard problems so your agent team can focus on shipping.</p>
+        <div class="qa-grid">
+            <div class="qa-card fade-up">
+                <div class="q"><span class="q-icon">🗄️</span> Where does my data actually go?</div>
+                <div class="a">
+                    In production, to <strong>your PostgreSQL database</strong> hosted on Railway (or anywhere you point it).<br><br>
+                    Every memory is a row in a table you own. Export it, query it, delete it, audit it — it's your data, not locked in a proprietary store.<br><br>
+                    Self-hosted option runs on SQLite. No vendor lock-in either way.
+                </div>
+            </div>
+            <div class="qa-card fade-up">
+                <div class="q"><span class="q-icon">🧩</span> How do I connect ChatGPT / Gemini / local models?</div>
+                <div class="a">
+                    Memory Bridge is an <strong>API, not a plugin</strong>. The pattern is always the same:
+                    <br><br>
+                    <code>Query → Inject → Call LLM → Store</code><br><br>
+                    1. Before your LLM call, <code>GET /memories/query</code> for relevant context<br>
+                    2. Inject that context into the system prompt<br>
+                    3. Call ChatGPT / Gemini / Ollama / whatever<br>
+                    4. After, <code>POST /memories</code> with what was learned<br><br>
+                    We provide <strong>Python SDK</strong> and <strong>framework adapters</strong> for LangGraph, AutoGen, and CrewAI that automate this flow.
+                </div>
+            </div>
+            <div class="qa-card fade-up">
+                <div class="q"><span class="q-icon">📋</span> Why session_id, agent_id, key, value?</div>
+                <div class="a">
+                    These 4 fields are the <strong>who, where, what, and content</strong> of every memory:
+                    <br><br>
+                    <strong>agent_id</strong> = "who wrote this?" — Henry vs Fred. Filter by agent to get the right expert's knowledge.<br><br>
+                    <strong>session_id</strong> = "which conversation?" — Sessions form a tree (parent → child). Memory from "deploy setup" doesn't bleed into "fix login bug" unless you allow it.<br><br>
+                    <strong>key</strong> = "what kind of fact?" — Like a filename. <code>user_preference</code>, <code>architecture_decision</code>, <code>code_review</code>.<br><br>
+                    <strong>value</strong> = the actual data — string, JSON, whatever.
+                </div>
+            </div>
+            <div class="qa-card fade-up">
+                <div class="q"><span class="q-icon">🔄</span> How is this different from memorybridge.ai?</div>
+                <div class="a">
+                    <strong>memorybridge.ai</strong> is for <em>you as a person</em> — it remembers what you told ChatGPT so you don't repeat yourself. Browser extension, inbox review, personal use.<br><br>
+                    <strong>Memory Bridge (ours)</strong> is for <em>your agents as a team</em> — it's a REST API that agents call programmatically. Henry stores, Fred finds, Alice hands off to Bob. Developer-first, framework-native, open source.<br><br>
+                    Different tools for different problems.
+                </div>
+            </div>
         </div>
-        <div class="step">
-            <div class="num">2</div>
-            <h3>Next agent queries it</h3>
-            <p>Before calling the LLM, your code fetches relevant memories. The new agent starts with full context.</p>
-        </div>
-        <div class="step">
-            <div class="num">3</div>
-            <h3>Handoff between agents</h3>
-            <p>When agent A passes to agent B, Memory Bridge delivers a structured context packet. Nothing lost in translation.</p>
-        </div>
-    </div>
+    </section>
 
-    <!-- ═══ Q&A : WHERE DATA GOES + WHY THESE FIELDS ═══ -->
-    <div class="qa-grid">
-        <div class="qa-card">
-            <div class="q">🗄️ Where does my data actually go?</div>
-            <div class="a">
-                In production, to <strong>your PostgreSQL database</strong> hosted on Railway (or anywhere you point it).<br><br>
-                Every memory is a row in a table you own. Export it, query it, delete it, audit it — it's your data, not locked in a proprietary store.<br><br>
-                Self-hosted option runs on SQLite. No vendor lock-in either way.
-            </div>
+    <!-- ═══ DATA MODEL ═══ -->
+    <section class="section">
+        <h2 class="section-title fade-up">The data model<span class="gradient-text">.</span></h2>
+        <p class="section-subtitle fade-up">Four core fields. Everything else is metadata.</p>
+        <div class="model-card fade-up">
+            <h3>📊 Memory Table Schema</h3>
+            <table class="model-table">
+                <thead>
+                    <tr><th>Field</th><th>What it stores</th><th>Example</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td>agent_id</td><td>Which agent wrote this memory</td><td><code>henry</code>, <code>code-reviewer</code>, <code>assistant</code></td></tr>
+                    <tr><td>session_id</td><td>Which conversation/task this belongs to</td><td><code>session-1</code>, <code>deploy-prod-2024</code></td></tr>
+                    <tr><td>key</td><td>The kind of fact (like a filename)</td><td><code>user_preference</code>, <code>architecture_decision</code></td></tr>
+                    <tr><td>value</td><td>The actual content (string or JSON)</td><td><code>{"theme": "dark"}</code>, <code>"use OAuth2"</code></td></tr>
+                    <tr><td>tags</td><td>Labels for filtering/searching</td><td><code>["user-profile", "important"]</code></td></tr>
+                    <tr><td>ttl_seconds</td><td>Optional expiry (auto-cleanup)</td><td><code>86400</code> (24h), <code>null</code> (permanent)</td></tr>
+                </tbody>
+            </table>
         </div>
-        <div class="qa-card">
-            <div class="q">🧩 How do I connect ChatGPT / Gemini / local models?</div>
-            <div class="a">
-                Memory Bridge is an <strong>API, not a plugin</strong>. The pattern is always the same:
-                <br><br>
-                <code>Query → Inject → Call LLM → Store</code><br><br>
-                1. Before your LLM call, <code>GET /memories/query</code> for relevant context<br>
-                2. Inject that context into the system prompt<br>
-                3. Call ChatGPT / Gemini / Ollama / whatever<br>
-                4. After, <code>POST /memories</code> with what was learned<br><br>
-                We provide <strong>Python SDK</strong> and <strong>framework adapters</strong> for LangGraph, AutoGen, and CrewAI that automate this flow.
-            </div>
-        </div>
-        <div class="qa-card">
-            <div class="q">📋 Why session_id, agent_id, key, value?</div>
-            <div class="a">
-                These 4 fields are the <strong>who, where, what, and content</strong> of every memory:
-                <br><br>
-                <strong>agent_id</strong> = "who wrote this?" — Henry vs Fred. Filter by agent to get the right expert's knowledge.<br><br>
-                <strong>session_id</strong> = "which conversation?" — Sessions form a tree (parent → child). Memory from "deploy setup" doesn't bleed into "fix login bug" unless you allow it.<br><br>
-                <strong>key</strong> = "what kind of fact?" — Like a filename. <code>user_preference</code>, <code>architecture_decision</code>, <code>code_review</code>.<br><br>
-                <strong>value</strong> = the actual data — string, JSON, whatever.
-            </div>
-        </div>
-        <div class="qa-card">
-            <div class="q">🔄 How is this different from memorybridge.ai?</div>
-            <div class="a">
-                <strong>memorybridge.ai</strong> is for <em>you as a person</em> — it remembers what you told ChatGPT so you don't repeat yourself. Browser extension, inbox review, personal use.<br><br>
-                <strong>Memory Bridge (ours)</strong> is for <em>your agents as a team</em> — it's a REST API that agents call programmatically. Henry stores, Fred finds, Alice hands off to Bob. Developer-first, framework-native, open source.<br><br>
-                Different tools for different problems.
-            </div>
-        </div>
-    </div>
-
-    <!-- ═══ DATA MODEL DIAGRAM ═══ -->
-    <div class="model-diagram">
-        <h3>📊 The Data Model</h3>
-        <table class="model-table">
-            <thead>
-                <tr><th>Field</th><th>What it stores</th><th>Example</th></tr>
-            </thead>
-            <tbody>
-                <tr><td>agent_id</td><td>Which agent wrote this memory</td><td><code>henry</code>, <code>code-reviewer</code>, <code>assistant</code></td></tr>
-                <tr><td>session_id</td><td>Which conversation/task this belongs to</td><td><code>session-1</code>, <code>deploy-prod-2024</code></td></tr>
-                <tr><td>key</td><td>The kind of fact (like a filename)</td><td><code>user_preference</code>, <code>architecture_decision</code></td></tr>
-                <tr><td>value</td><td>The actual content (string or JSON)</td><td><code>{"theme": "dark"}</code>, <code>"use OAuth2"</code></td></tr>
-                <tr><td>tags</td><td>Labels for filtering/searching</td><td><code>["user-profile", "important"]</code></td></tr>
-                <tr><td>ttl_seconds</td><td>Optional expiry (auto-cleanup)</td><td><code>86400</code> (24h), <code>null</code> (permanent)</td></tr>
-            </tbody>
-        </table>
-    </div>
+    </section>
 
     <!-- ═══ INTEGRATIONS ═══ -->
-    <div class="section-wrap">
-        <h2>🔌 Works with every LLM + framework</h2>
-        <p>Memory Bridge sits between your code and any LLM. The integration pattern is the same for all of them.</p>
-    </div>
-
-    <div class="integrations">
-        <span class="chip">OpenAI / ChatGPT</span>
-        <span class="chip">Anthropic / Claude</span>
-        <span class="chip">Google Gemini</span>
-        <span class="chip">Ollama (local)</span>
-        <span class="chip">llama.cpp</span>
-        <span class="chip">OpenRouter</span>
-        <span class="chip active">LangGraph</span>
-        <span class="chip active">AutoGen</span>
-        <span class="chip active">CrewAI</span>
-    </div>
-
-    <div style="max-width:900px;margin:1rem auto;padding:0 1.5rem;">
-        <div class="demo-code">
-            <span class="comment"># Python SDK — the "Query → Inject → Call → Store" pattern</span><br>
-            <span class="prompt">>>> from</span> memory_bridge_client import Client<br><br>
-            <span class="prompt">>>> async with</span> Client(url<span class="str">"https://your-instance.com"</span>, api_key<span class="str">"..."</span>) <span class="prompt">as</span> mb:<br><br>
-            &nbsp;&nbsp;&nbsp;&nbsp;<span class="comment"># 1. Before calling the LLM, get context</span><br>
-            &nbsp;&nbsp;&nbsp;&nbsp;ctx = await mb.query_memories(agent_id<span class="str">"henry"</span>, tags<span class="str">["user-profile"]</span>)<br><br>
-            &nbsp;&nbsp;&nbsp;&nbsp;<span class="comment"># 2. Inject context into the system prompt</span><br>
-            &nbsp;&nbsp;&nbsp;&nbsp;prompt = <span class="str">f"You already know: {ctx['entries']}"</span><br><br>
-            &nbsp;&nbsp;&nbsp;&nbsp;<span class="comment"># 3. Call any LLM (OpenAI, Claude, Ollama...)</span><br>
-            &nbsp;&nbsp;&nbsp;&nbsp;response = await openai.chat.completions.create(prompt=prompt)<br><br>
-            &nbsp;&nbsp;&nbsp;&nbsp;<span class="comment"># 4. Store what was learned</span><br>
-            &nbsp;&nbsp;&nbsp;&nbsp;await mb.create_memory(session_id<span class="str">"s1"</span>, agent_id<span class="str">"fred"</span>, key<span class="str">"plan"</span>, value=response)
+    <section class="section">
+        <h2 class="section-title fade-up">🔌 Works with every LLM + framework</h2>
+        <p class="section-subtitle fade-up">Memory Bridge sits between your code and any LLM. The integration pattern is the same for all of them.</p>
+        <div class="integrations fade-up">
+            <span class="chip">OpenAI / ChatGPT</span>
+            <span class="chip">Anthropic / Claude</span>
+            <span class="chip">Google Gemini</span>
+            <span class="chip">Ollama (local)</span>
+            <span class="chip">llama.cpp</span>
+            <span class="chip">OpenRouter</span>
+            <span class="chip chip-active">LangGraph</span>
+            <span class="chip chip-active">AutoGen</span>
+            <span class="chip chip-active">CrewAI</span>
         </div>
-    </div>
+
+        <div class="fade-up" style="margin-top:2rem;">
+            <div class="code-block">
+                <span class="comment"># Python SDK — the "Query → Inject → Call → Store" pattern</span><br>
+                <span class="prompt">>>> from</span> <span class="keyword">memory_bridge_client</span> <span class="prompt">import</span> Client<br><br>
+                <span class="prompt">>>> async with</span> Client(url=<span class="string">"https://your-instance.com"</span>, api_key=<span class="string">"..."</span>) <span class="prompt">as</span> mb:<br><br>
+                &nbsp;&nbsp;&nbsp;&nbsp;<span class="comment"># 1. Before calling the LLM, get context</span><br>
+                &nbsp;&nbsp;&nbsp;&nbsp;ctx = <span class="prompt">await</span> <span class="func">mb.query_memories</span>(agent_id=<span class="string">"henry"</span>, tags=[<span class="string">"user-profile"</span>])<br><br>
+                &nbsp;&nbsp;&nbsp;&nbsp;<span class="comment"># 2. Inject context into the system prompt</span><br>
+                &nbsp;&nbsp;&nbsp;&nbsp;prompt = <span class="string">f"<span class="label-color">You already know:</span> {ctx['entries']}"</span><br><br>
+                &nbsp;&nbsp;&nbsp;&nbsp;<span class="comment"># 3. Call any LLM (OpenAI, Claude, Ollama...)</span><br>
+                &nbsp;&nbsp;&nbsp;&nbsp;response = <span class="prompt">await</span> <span class="func">openai.chat.completions.create</span>(prompt=prompt)<br><br>
+                &nbsp;&nbsp;&nbsp;&nbsp;<span class="comment"># 4. Store what was learned</span><br>
+                &nbsp;&nbsp;&nbsp;&nbsp;<span class="prompt">await</span> <span class="func">mb.create_memory</span>(session_id=<span class="string">"s1"</span>, agent_id=<span class="string">"fred"</span>, key=<span class="string">"plan"</span>, value=response)
+            </div>
+        </div>
+    </section>
 
     <!-- ═══ CTA ═══ -->
-    <div class="section-wrap">
-        <h2>🔑 Your Demo Key</h2>
-        <p>No registration, no email. Copy the key and go.</p>
-    </div>
+    <section class="section">
+        <div class="fade-up">
+            <h2 class="section-title">🔑 <span class="gradient-text">Your Demo Key</span></h2>
+            <p class="section-subtitle">No registration, no email. Copy the key and go.</p>
+        </div>
 
-    <div class="key-box">
-        <label>🔑 API Key</label>
-        <code id="demo-key">mb-prod-3a2166c2083744bb90ac8933519d14790e56902d5ec1ba9a</code>
-        <button class="btn" onclick="navigator.clipboard.writeText(document.getElementById('demo-key').textContent).then(()=>{this.textContent='✅ Copied';setTimeout(()=>{this.textContent='📋 Copy'},1500)})">📋 Copy</button>
-    </div>
+        <div class="key-box fade-up">
+            <label>🔑 API Key</label>
+            <code id="demo-key">mb-prod-3a2166c2083744bb90ac8933519d14790e56902d5ec1ba9a</code>
+            <button class="btn btn-primary btn-sm" onclick="navigator.clipboard.writeText(document.getElementById('demo-key').textContent).then(()=>{this.textContent='✅ Copied';setTimeout(()=>{this.textContent='📋 Copy'},1500)})">📋 Copy</button>
+        </div>
 
-    <div class="cta-row">
-        <a href="/playground/?api_key=mb-prod-3a2166c2083744bb90ac8933519d14790e56902d5ec1ba9a" class="btn-cta">🚀 Launch Playground (Key Pre-loaded)</a>
-        <a href="/docs" class="btn-cta-secondary">📖 Full API Docs</a>
-        <a href="https://github.com/Damgeed/MemoryBridge" class="btn-cta-secondary">🐙 GitHub</a>
-    </div>
+        <div class="cta-row fade-up">
+            <a href="/playground/?api_key=mb-prod-3a2166c2083744bb90ac8933519d14790e56902d5ec1ba9a" class="btn btn-primary">🚀 Launch Playground (Key Pre-loaded)</a>
+            <a href="/docs" class="btn btn-secondary">📖 Full API Docs</a>
+            <a href="https://github.com/Damgeed/MemoryBridge" class="btn btn-secondary">🐙 GitHub</a>
+        </div>
+    </section>
 
     <footer class="footer">
         Memory Bridge v0.2.0 — <a href="https://github.com/Damgeed/MemoryBridge">GitHub</a> — API for cross-agent memory
     </footer>
 
     <script>
+        // ── Theme Toggle ──────────────────────────────────────────
+        (function initTheme() {
+            const saved = localStorage.getItem('mb-theme');
+            if (saved) document.documentElement.setAttribute('data-theme', saved);
+            else {
+                const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+                document.documentElement.setAttribute('data-theme', prefersDark ? 'dark' : 'light');
+            }
+            updateToggleIcon();
+        })();
+
+        function toggleTheme() {
+            const html = document.documentElement;
+            const current = html.getAttribute('data-theme');
+            const next = current === 'dark' ? 'light' : 'dark';
+            html.setAttribute('data-theme', next);
+            localStorage.setItem('mb-theme', next);
+            updateToggleIcon();
+        }
+
+        function updateToggleIcon() {
+            const theme = document.documentElement.getAttribute('data-theme');
+            const btn = document.querySelector('.theme-toggle');
+            if (btn) btn.textContent = theme === 'dark' ? '🌙' : '☀️';
+        }
+
+        // ── Scroll Animations ────────────────────────────────────
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('visible');
+                }
+            });
+        }, { threshold: 0.1, rootMargin: '0px 0px -50px 0px' });
+
+        document.addEventListener('DOMContentLoaded', () => {
+            document.querySelectorAll('.fade-up').forEach(el => observer.observe(el));
+        });
+
+        // ── Demo Key ─────────────────────────────────────────────
         document.addEventListener('DOMContentLoaded', () => {
             const key = document.getElementById('demo-key').textContent;
             if (key) localStorage.setItem('mb_api_key', key);

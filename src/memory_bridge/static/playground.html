@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7,172 +7,109 @@
     <link rel="icon" href="/playground/logo.svg" type="image/svg+xml">
     <link rel="stylesheet" href="/playground/style.css">
     <style>
-        /* ── Reset & Base ─────────────────────────────────────────────── */
-        * { box-sizing: border-box; margin: 0; padding: 0; }
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
-            background: #0d1117;
-            color: #e6edf3;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+        }
+        .playground-container {
             max-width: 1000px;
             margin: 0 auto;
             padding: 2rem 1.5rem;
-            min-height: 100vh;
         }
-
-        /* ── Typography ───────────────────────────────────────────────── */
-        h1 {
-            font-size: 1.8rem;
-            margin-bottom: 0.25rem;
+        .page-header {
             display: flex;
             align-items: center;
-            gap: 0.5rem;
+            gap: 0.75rem;
+            margin-bottom: 0.25rem;
+        }
+        .page-header h1 {
+            font-size: 1.6rem;
+            font-weight: 800;
             letter-spacing: -0.02em;
         }
-        h2 {
-            font-size: 1.15rem;
-            margin-bottom: 1rem;
-            color: #f0f6fc;
-            display: flex;
-            align-items: center;
-            gap: 0.4rem;
+        .page-header h1 span.gradient-text {
+            background: linear-gradient(135deg, var(--accent), var(--pink));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
         }
-        .subtitle {
-            color: #8b949e;
+        .page-subtitle {
+            color: var(--text-muted);
             margin-bottom: 2rem;
-            font-size: 0.95rem;
+            font-size: 0.92rem;
         }
-        a { color: #58a6ff; }
+        .page-subtitle a { color: var(--accent); }
+        .page-subtitle strong { color: var(--green); }
 
-        /* ── Cards ────────────────────────────────────────────────────── */
-        .card {
-            background: #161b22;
-            border: 1px solid #30363d;
-            border-radius: 10px;
-            padding: 1.5rem;
-            margin-bottom: 1.25rem;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.3);
-        }
-
-        /* ── Form Elements ────────────────────────────────────────────── */
-        label {
-            display: block;
-            margin-bottom: 0.3rem;
-            font-weight: 500;
-            font-size: 0.85rem;
-            color: #c9d1d9;
-        }
-        input, textarea, select {
-            width: 100%;
-            padding: 0.6rem 0.75rem;
-            margin-bottom: 0.85rem;
-            background: #0d1117;
-            border: 1px solid #30363d;
-            border-radius: 6px;
-            color: #e6edf3;
-            font-size: 0.9rem;
-            transition: border-color 0.15s;
-            font-family: inherit;
-        }
-        input:focus, textarea:focus, select:focus {
-            outline: none;
-            border-color: #58a6ff;
-            box-shadow: 0 0 0 2px rgba(88,166,255,0.15);
-        }
-        textarea { resize: vertical; min-height: 60px; }
-        ::placeholder { color: #484f58; }
-
-        button {
-            background: #238636;
-            color: white;
-            border: none;
-            padding: 0.6rem 1.3rem;
-            border-radius: 6px;
-            cursor: pointer;
-            font-weight: 600;
-            font-size: 0.9rem;
-            transition: background 0.15s;
-            display: inline-flex;
+        .section-header {
+            display: flex;
             align-items: center;
-            gap: 0.4rem;
-        }
-        button:hover { background: #2ea043; }
-        button:active { background: #1e7a2f; }
-        button.secondary {
-            background: #21262d;
-            border: 1px solid #30363d;
-            color: #c9d1d9;
-        }
-        button.secondary:hover { background: #30363d; border-color: #484f58; }
-        button.danger {
-            background: #da3633;
-        }
-        button.danger:hover { background: #e5534b; }
-        button.small {
-            padding: 0.35rem 0.7rem;
-            font-size: 0.8rem;
-        }
-
-        .btn-group {
-            display: flex;
             gap: 0.5rem;
-            flex-wrap: wrap;
-            margin-top: 0.25rem;
+            font-size: 1.05rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            color: var(--text-primary);
         }
 
-        /* ── Layout Helpers ───────────────────────────────────────────── */
-        .flex-row {
+        .api-key-bar {
+            background: var(--bg-glass-strong);
+            backdrop-filter: blur(12px) saturate(1.5);
+            border: 1px solid var(--border-primary);
+            border-radius: var(--radius-md);
+            padding: 0.75rem 1.25rem;
             display: flex;
-            gap: 1rem;
+            align-items: center;
+            gap: 0.75rem;
+            flex-wrap: wrap;
+            margin-bottom: 1.5rem;
         }
-        .flex-row > * { flex: 1; }
-        .flex-center { display: flex; align-items: center; gap: 0.5rem; }
+        .api-key-bar label {
+            margin: 0;
+            white-space: nowrap;
+            text-transform: none;
+            letter-spacing: normal;
+            font-weight: 700;
+            color: var(--accent);
+        }
+        .api-key-bar input {
+            flex: 1;
+            min-width: 200px;
+            padding: 0.45rem 0.7rem;
+            background: var(--input-bg);
+            border: 1px solid var(--border-primary);
+            border-radius: var(--radius-sm);
+            color: var(--text-primary);
+            font-size: 0.82rem;
+            font-family: var(--font-mono);
+            outline: none;
+            transition: border-color var(--transition-fast);
+            margin: 0;
+        }
+        .api-key-bar input:focus { border-color: var(--accent); }
+        .api-key-bar .key-status { font-size: 0.8rem; color: var(--text-muted); }
 
-        @media (max-width: 640px) {
-            .flex-row { flex-direction: column; }
-            body { padding: 1.25rem 1rem; }
-            h1 { font-size: 1.4rem; }
-        }
-
-        /* ── Status Messages ──────────────────────────────────────────── */
-        .status {
-            padding: 0.6rem 0.9rem;
-            border-radius: 6px;
-            margin-top: 0.5rem;
-            font-size: 0.88rem;
-            line-height: 1.4;
-        }
-        .status.success { background: #1a3a2a; color: #3fb950; border: 1px solid #23863633; }
-        .status.error   { background: #3a1a1a; color: #f85149; border: 1px solid #da363333; }
-        .status.info    { background: #1a2a3a; color: #58a6ff; border: 1px solid #1f6feb33; }
-
-        /* ── Results ──────────────────────────────────────────────────── */
-        .results { margin-top: 0.75rem; }
-        .results-empty {
-            text-align: center;
-            padding: 2rem 1rem;
-            color: #484f58;
-        }
-        .results-empty .icon { font-size: 2rem; margin-bottom: 0.5rem; }
+        .store-card h2, .search-card h2 { font-size: 1.05rem; font-weight: 700; margin-bottom: 1rem; display: flex; align-items: center; gap: 0.4rem; }
 
         .result-item {
-            background: #0d1117;
-            border: 1px solid #21262d;
-            border-radius: 8px;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-primary);
+            border-radius: var(--radius-md);
             padding: 1rem;
             margin-bottom: 0.5rem;
-            transition: border-color 0.15s;
+            transition: border-color var(--transition-fast);
         }
-        .result-item:hover { border-color: #30363d; }
+        .result-item:hover { border-color: var(--border-strong); }
         .result-item .key {
-            color: #58a6ff;
+            color: var(--accent);
             font-weight: 600;
-            font-size: 0.9rem;
-            font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
+            font-size: 0.88rem;
+            font-family: var(--font-mono);
         }
         .result-item .value {
-            color: #a5d6ff;
+            color: var(--text-secondary);
             margin: 0.4rem 0;
-            font-size: 0.9rem;
+            font-size: 0.88rem;
             line-height: 1.5;
             white-space: pre-wrap;
             word-break: break-word;
@@ -181,205 +118,199 @@
             display: flex;
             gap: 0.75rem;
             flex-wrap: wrap;
-            font-size: 0.78rem;
-            color: #484f58;
-            margin-top: 0.35rem;
-        }
-        .result-item .meta span {
-            display: inline-flex;
-            align-items: center;
-            gap: 0.25rem;
-        }
-        .result-item .tags {
-            display: flex;
-            gap: 0.3rem;
-            flex-wrap: wrap;
-            margin-top: 0.35rem;
-        }
-        .tag {
-            background: #1f6feb33;
-            color: #58a6ff;
-            padding: 0.15rem 0.55rem;
-            border-radius: 12px;
             font-size: 0.75rem;
-            font-weight: 500;
+            color: var(--text-faint);
+            margin-top: 0.35rem;
+            font-family: var(--font-mono);
         }
-        .result-item .actions {
-            margin-top: 0.5rem;
-        }
+        .result-item .meta span { display: inline-flex; align-items: center; gap: 0.2rem; }
+        .result-item .tags { display: flex; gap: 0.3rem; flex-wrap: wrap; margin-top: 0.35rem; }
         .result-count {
-            font-size: 0.85rem;
-            color: #8b949e;
+            font-size: 0.82rem;
+            color: var(--text-muted);
             margin-bottom: 0.5rem;
         }
-
-        /* ── Loading Spinner ──────────────────────────────────────────── */
-        .spinner {
-            display: inline-block;
-            width: 16px;
-            height: 16px;
-            border: 2px solid #30363d;
-            border-top-color: #58a6ff;
-            border-radius: 50%;
-            animation: spin 0.6s linear infinite;
-            margin-right: 0.4rem;
-            vertical-align: middle;
-        }
-        @keyframes spin { to { transform: rotate(360deg); } }
-
-        /* ── Footer ───────────────────────────────────────────────────── */
-        .footer {
+        .results-empty {
             text-align: center;
-            color: #484f58;
+            padding: 2rem 1rem;
+            color: var(--text-faint);
+        }
+        .results-empty .icon { font-size: 2rem; margin-bottom: 0.5rem; }
+
+        .playground-footer {
+            text-align: center;
+            color: var(--text-faint);
             font-size: 0.8rem;
             padding: 2rem 0 1rem;
-            border-top: 1px solid #21262d;
+            border-top: 1px solid var(--border-subtle);
             margin-top: 2rem;
         }
-        .footer a { color: #58a6ff; }
+        .playground-footer a { color: var(--text-muted); }
+        .playground-footer a:hover { color: var(--accent); }
 
-        /* ── Scrollbar ────────────────────────────────────────────────── */
-        ::-webkit-scrollbar { width: 8px; }
-        ::-webkit-scrollbar-track { background: #0d1117; }
-        ::-webkit-scrollbar-thumb { background: #30363d; border-radius: 4px; }
-        ::-webkit-scrollbar-thumb:hover { background: #484f58; }
+        @media (max-width: 640px) {
+            .playground-container { padding: 1.25rem 1rem; }
+            .api-key-bar { flex-direction: column; align-items: stretch; }
+            .api-key-bar input { min-width: 0; }
+        }
     </style>
 </head>
 <body>
-
     <!-- Navbar -->
     <nav class="navbar">
         <a href="/" class="logo">
-            <img src="/playground/logo.svg" alt="Memory Bridge">
-            Memory Bridge
+            <img src="/playground/logo.svg" alt="Bridge icon">
+            Memory <span class="logo-accent">Bridge</span>
         </a>
         <div class="nav-links">
             <a href="/">Home</a>
             <a href="/playground/" class="active">Playground</a>
             <a href="/playground/graph.html">Graph</a>
             <a href="/docs">API Docs</a>
+            <button class="theme-toggle" onclick="toggleTheme()" title="Toggle theme" aria-label="Toggle theme">🌙</button>
         </div>
     </nav>
 
-    <!-- ════════ HEADER ════════ -->
-    <header>
-        <h1><img src="/playground/logo.svg" alt="Memory Bridge" style="height: 28px; vertical-align: middle; margin-right: 8px;">Playground</h1>
-        <p class="subtitle">
+    <div class="playground-container">
+        <!-- Header -->
+        <div class="page-header">
+            <img src="/playground/logo.svg" alt="" style="height:28px;">
+            <h1><span class="gradient-text">Playground</span></h1>
+        </div>
+        <p class="page-subtitle">
             Cross-session memory for multi-agent AI teams.
             <a href="#" onclick="return false;" id="api-status" style="margin-left:0.5rem;">⚪ Checking API…</a>
         </p>
-    </header>
 
-    <!-- ════════ API KEY ════════ -->
-    <section class="card" style="padding: 0.75rem 1.5rem; display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap;">
-        <label for="api-key-input" style="margin:0; white-space:nowrap; font-weight:600;">🔑 API Key</label>
-        <input id="api-key-input" type="password" placeholder="Paste your MEMORY_BRIDGE_API_KEY here…" spellcheck="false" style="flex:1; min-width:200px; margin:0; padding:0.4rem 0.6rem; font-size:0.8rem;">
-        <button class="secondary" onclick="setApiKey()" style="padding:0.4rem 0.8rem; font-size:0.8rem;">Save</button>
-        <span id="api-key-status" style="font-size:0.8rem; color:#8b949e;"></span>
-    </section>
+        <!-- API Key -->
+        <div class="api-key-bar card">
+            <label>🔑 API Key</label>
+            <input id="api-key-input" type="password" placeholder="Paste your MEMORY_BRIDGE_API_KEY here…" spellcheck="false">
+            <button class="btn btn-secondary btn-sm" onclick="setApiKey()">Save</button>
+            <span class="key-status" id="api-key-status"></span>
+        </div>
 
-    <!-- ════════ STORE MEMORY ════════ -->
-    <section class="card" id="store-card">
-        <h2>💾 Store a Memory</h2>
-        <div class="flex-row">
-            <div>
-                <label for="session-id">Session ID</label>
-                <input id="session-id" placeholder="e.g., demo-session" spellcheck="false">
+        <!-- Store Memory -->
+        <div class="card store-card" id="store-card">
+            <h2>💾 Store a Memory</h2>
+            <div class="flex-row">
+                <div>
+                    <label for="session-id">Session ID</label>
+                    <input class="input" id="session-id" placeholder="e.g., demo-session" spellcheck="false">
+                </div>
+                <div>
+                    <label for="agent-id">Agent ID</label>
+                    <input class="input" id="agent-id" placeholder="e.g., agent-alice" spellcheck="false">
+                </div>
             </div>
-            <div>
-                <label for="agent-id">Agent ID</label>
-                <input id="agent-id" placeholder="e.g., agent-alice" spellcheck="false">
+            <div class="flex-row">
+                <div>
+                    <label for="mem-key">Key</label>
+                    <input class="input" id="mem-key" placeholder="e.g., user_preference" spellcheck="false">
+                </div>
+                <div>
+                    <label for="mem-tags">Tags (comma-separated)</label>
+                    <input class="input" id="mem-tags" placeholder="e.g., important, user-pref" spellcheck="false">
+                </div>
             </div>
+            <label for="mem-value">Value</label>
+            <textarea class="input" id="mem-value" rows="2" placeholder='e.g., {"theme": "dark", "language": "en"} or just text'></textarea>
+            <div class="btn-group">
+                <button class="btn btn-primary" onclick="storeMemory()">💾 Store Memory</button>
+                <button class="btn btn-secondary" onclick="clearStoreForm()">Clear</button>
+            </div>
+            <div id="store-result"></div>
         </div>
-        <div class="flex-row">
-            <div>
-                <label for="mem-key">Key</label>
-                <input id="mem-key" placeholder="e.g., user_preference" spellcheck="false">
-            </div>
-            <div>
-                <label for="mem-tags">Tags (comma-separated)</label>
-                <input id="mem-tags" placeholder="e.g., important, user-pref" spellcheck="false">
-            </div>
-        </div>
-        <label for="mem-value">Value</label>
-        <textarea id="mem-value" rows="2" placeholder='e.g., {"theme": "dark", "language": "en"} or just text'></textarea>
-        <div class="btn-group">
-            <button onclick="storeMemory()">💾 Store Memory</button>
-            <button class="secondary" onclick="clearStoreForm()">Clear</button>
-        </div>
-        <div id="store-result"></div>
-    </section>
 
-    <!-- ════════ SEARCH / QUERY ════════ -->
-    <section class="card" id="search-card">
-        <h2>🔍 Search &amp; Browse</h2>
-        <div class="flex-row">
-            <div style="flex:3;">
-                <label for="search-query">Search text (value / key)</label>
-                <input id="search-query" placeholder="Search memory values…" spellcheck="false">
+        <!-- Search & Browse -->
+        <div class="card search-card" id="search-card">
+            <h2>🔍 Search &amp; Browse</h2>
+            <div class="flex-row">
+                <div style="flex:3;">
+                    <label for="search-query">Search text (value / key)</label>
+                    <input class="input" id="search-query" placeholder="Search memory values…" spellcheck="false">
+                </div>
+                <div style="flex:1;">
+                    <label for="search-session">Session filter (optional)</label>
+                    <input class="input" id="search-session" placeholder="demo-session" spellcheck="false">
+                </div>
             </div>
-            <div style="flex:1;">
-                <label for="search-session">Session filter (optional)</label>
-                <input id="search-session" placeholder="demo-session" spellcheck="false">
+            <div class="flex-row" style="margin-top:0.25rem;">
+                <div style="flex:1;">
+                    <label for="search-agent">Agent filter (optional)</label>
+                    <input class="input" id="search-agent" placeholder="agent-alice" spellcheck="false">
+                </div>
+                <div style="flex:1;">
+                    <label for="search-limit">Limit</label>
+                    <select class="input" id="search-limit">
+                        <option value="10">10</option>
+                        <option value="25" selected>25</option>
+                        <option value="50">50</option>
+                        <option value="100">100</option>
+                    </select>
+                </div>
             </div>
+            <div class="btn-group">
+                <button class="btn btn-secondary" onclick="searchMemories()">🔍 Search</button>
+                <button class="btn btn-secondary" onclick="getAllMemories()">📋 Show All</button>
+                <button class="btn btn-secondary btn-sm" onclick="clearSearchResults()">Clear Results</button>
+            </div>
+            <div id="search-results" class="results" style="margin-top:0.75rem;"></div>
         </div>
-        <div class="flex-row" style="margin-top:0.25rem;">
-            <div style="flex:1;">
-                <label for="search-agent">Agent filter (optional)</label>
-                <input id="search-agent" placeholder="agent-alice" spellcheck="false">
-            </div>
-            <div style="flex:1;">
-                <label for="search-limit">Limit</label>
-                <select id="search-limit">
-                    <option value="10">10</option>
-                    <option value="25" selected>25</option>
-                    <option value="50">50</option>
-                    <option value="100">100</option>
-                </select>
-            </div>
-        </div>
-        <div class="btn-group">
-            <button class="secondary" onclick="searchMemories()">🔍 Search</button>
-            <button class="secondary" onclick="getAllMemories()">📋 Show All</button>
-            <button class="secondary small" onclick="clearSearchResults()">Clear Results</button>
-        </div>
-        <div id="search-results" class="results"></div>
-    </section>
 
-    <!-- ════════ QUICK START ════════ -->
-    <section class="card" id="quickstart-card">
-        <h2>⚡ Quick Start Examples</h2>
-        <p style="margin-bottom:0.75rem; color:#8b949e; font-size:0.9rem;">
-            Click an example to pre-fill the form, then press <strong>Store Memory</strong>.
-        </p>
-        <div class="btn-group">
-            <button class="secondary" onclick="loadExample('user-prefs')">🎨 User Preferences</button>
-            <button class="secondary" onclick="loadExample('conversation')">💬 Agent Conversation</button>
-            <button class="secondary" onclick="loadExample('config')">⚙️ Deployment Config</button>
-            <button class="secondary" onclick="loadExample('task')">📋 Active Task</button>
+        <!-- Quick Start -->
+        <div class="card" id="quickstart-card">
+            <h2 class="section-header">⚡ Quick Start Examples</h2>
+            <p style="margin-bottom:0.75rem; color:var(--text-muted); font-size:0.9rem;">
+                Click an example to pre-fill the form, then press <strong style="color:var(--accent);">Store Memory</strong>.
+            </p>
+            <div class="btn-group">
+                <button class="btn btn-secondary btn-sm" onclick="loadExample('user-prefs')">🎨 User Preferences</button>
+                <button class="btn btn-secondary btn-sm" onclick="loadExample('conversation')">💬 Agent Conversation</button>
+                <button class="btn btn-secondary btn-sm" onclick="loadExample('config')">⚙️ Deployment Config</button>
+                <button class="btn btn-secondary btn-sm" onclick="loadExample('task')">📋 Active Task</button>
+            </div>
         </div>
-    </section>
+    </div>
 
-    <!-- ════════ FOOTER ════════ -->
-    <footer class="footer">
+    <footer class="playground-footer">
         <p>
             <a href="#" id="api-base-url">API: /</a>
             &nbsp;·&nbsp;
             <a href="/docs" target="_blank">📖 API Docs</a>
             &nbsp;·&nbsp;
-            <a href="https://hermes-agent.nousresearch.com/docs" target="_blank">Hermes Agent</a>
+            <a href="https://github.com/Damgeed/MemoryBridge" target="_blank">🐙 GitHub</a>
         </p>
     </footer>
 
     <script>
-        // ═══════════════════════════════════════════════════════════════════
-        //  API Client
-        // ═══════════════════════════════════════════════════════════════════
+        // ── Theme ──────────────────────────────────────────────────
+        (function initTheme() {
+            const saved = localStorage.getItem('mb-theme');
+            if (saved) document.documentElement.setAttribute('data-theme', saved);
+            else {
+                const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+                document.documentElement.setAttribute('data-theme', prefersDark ? 'dark' : 'light');
+            }
+            updateToggleIcon();
+        })();
+        function toggleTheme() {
+            const html = document.documentElement;
+            const next = html.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+            html.setAttribute('data-theme', next);
+            localStorage.setItem('mb-theme', next);
+            updateToggleIcon();
+        }
+        function updateToggleIcon() {
+            const theme = document.documentElement.getAttribute('data-theme');
+            const btn = document.querySelector('.theme-toggle');
+            if (btn) btn.textContent = theme === 'dark' ? '🌙' : '☀️';
+        }
 
+        // ── API Client ────────────────────────────────────────────
         const API_BASE = '';
 
         function getApiKey() {
-            // URL parameter takes priority (?key=...)
             const urlParams = new URLSearchParams(window.location.search);
             const urlKey = urlParams.get('api_key');
             if (urlKey) {
@@ -408,34 +339,22 @@
                 headers: { 'Content-Type': 'application/json' },
             };
             const apiKey = getApiKey();
-            if (apiKey) {
-                opts.headers['Authorization'] = 'Bearer ' + apiKey;
-            }
+            if (apiKey) { opts.headers['Authorization'] = 'Bearer ' + apiKey; }
             if (body !== undefined) opts.body = JSON.stringify(body);
             const res = await fetch(API_BASE + path, opts);
             if (!res.ok) {
                 let detail;
-                try {
-                    const err = await res.json();
-                    detail = err.detail || err.message || res.statusText;
-                } catch {
-                    detail = res.statusText || `HTTP ${res.status}`;
-                }
+                try { const err = await res.json(); detail = err.detail || err.message || res.statusText; }
+                catch { detail = res.statusText || `HTTP ${res.status}`; }
                 throw new Error(detail);
             }
             return res.json();
         }
 
-        // ═══════════════════════════════════════════════════════════════════
-        //  URL Parameter Parsing (for sharing via URL)
-        // ═══════════════════════════════════════════════════════════════════
-
         function getQueryParams() {
             const params = new URLSearchParams(window.location.search);
             const result = {};
-            for (const [key, value] of params.entries()) {
-                result[key] = value;
-            }
+            for (const [key, value] of params.entries()) { result[key] = value; }
             return result;
         }
 
@@ -445,53 +364,31 @@
                 localStorage.setItem('mb_api_key', params.api_key);
                 document.getElementById('api-key-input').value = params.api_key;
             }
-            if (params.session || params.session_id) {
-                document.getElementById('session-id').value = params.session || params.session_id;
-            }
-            if (params.agent || params.agent_id) {
-                document.getElementById('agent-id').value = params.agent || params.agent_id;
-            }
-            if (params.key) {
-                document.getElementById('mem-key').value = params.key;
-            }
-            if (params.value) {
-                document.getElementById('mem-value').value = params.value;
-            }
-            if (params.tags) {
-                document.getElementById('mem-tags').value = params.tags;
-            }
-            if (params.q || params.query) {
-                document.getElementById('search-query').value = params.q || params.query;
-            }
-            if (params.search_session) {
-                document.getElementById('search-session').value = params.search_session;
-            }
-            if (params.search_agent) {
-                document.getElementById('search-agent').value = params.search_agent;
-            }
+            if (params.session || params.session_id) { document.getElementById('session-id').value = params.session || params.session_id; }
+            if (params.agent || params.agent_id) { document.getElementById('agent-id').value = params.agent || params.agent_id; }
+            if (params.key) { document.getElementById('mem-key').value = params.key; }
+            if (params.value) { document.getElementById('mem-value').value = params.value; }
+            if (params.tags) { document.getElementById('mem-tags').value = params.tags; }
+            if (params.q || params.query) { document.getElementById('search-query').value = params.q || params.query; }
+            if (params.search_session) { document.getElementById('search-session').value = params.search_session; }
+            if (params.search_agent) { document.getElementById('search-agent').value = params.search_agent; }
         }
 
-        // ═══════════════════════════════════════════════════════════════════
-        //  API Health Check
-        // ═══════════════════════════════════════════════════════════════════
-
+        // ── Health Check ──────────────────────────────────────────
         async function checkApiStatus() {
             const el = document.getElementById('api-status');
             try {
                 const data = await api('GET', '/health');
                 el.innerHTML = `🟢 Connected — ${data.service} v${data.version}`;
-                el.style.color = '#3fb950';
+                el.style.color = 'var(--green)';
                 document.getElementById('api-base-url').textContent = `API: ${window.location.origin}/`;
             } catch (e) {
                 el.innerHTML = `🔴 API unreachable — ${e.message}`;
-                el.style.color = '#f85149';
+                el.style.color = '#ef4444';
             }
         }
 
-        // ═══════════════════════════════════════════════════════════════════
-        //  Store Memory
-        // ═══════════════════════════════════════════════════════════════════
-
+        // ── Store Memory ──────────────────────────────────────────
         async function storeMemory() {
             const sessionId = document.getElementById('session-id').value.trim() || 'demo-session';
             const agentId = document.getElementById('agent-id').value.trim() || 'agent-alice';
@@ -499,60 +396,30 @@
             const value = document.getElementById('mem-value').value.trim();
             const tagsStr = document.getElementById('mem-tags').value.trim();
 
-            if (!key) {
-                showStatus('store-result', '⚠️ Please provide a key', 'error');
-                return;
-            }
-            if (!value) {
-                showStatus('store-result', '⚠️ Please provide a value', 'error');
-                return;
-            }
+            if (!key) { showStatus('store-result', '⚠️ Please provide a key', 'error'); return; }
+            if (!value) { showStatus('store-result', '⚠️ Please provide a value', 'error'); return; }
 
-            // Try to parse value as JSON
             let parsedValue;
             try { parsedValue = JSON.parse(value); } catch { parsedValue = value; }
-
             const tags = tagsStr ? tagsStr.split(',').map(t => t.trim()).filter(Boolean) : [];
 
-            const btn = document.querySelector('#store-card button');
+            const btn = document.querySelector('#store-card .btn-primary');
             const originalText = btn.innerHTML;
-            btn.innerHTML = '<span class="spinner"></span>Storing…';
+            btn.innerHTML = '<span class="spinner"></span> Storing…';
             btn.disabled = true;
 
             try {
-                // Create session first (idempotent)
-                await api('POST', '/sessions', {
-                    session_id: sessionId,
-                    agent_id: agentId,
-                }).catch(() => {});
-
-                const result = await api('POST', '/memories', {
-                    session_id: sessionId,
-                    agent_id: agentId,
-                    key,
-                    value: parsedValue,
-                    tags,
-                });
-
+                await api('POST', '/sessions', { session_id: sessionId, agent_id: agentId }).catch(() => {});
+                const result = await api('POST', '/memories', { session_id: sessionId, agent_id: agentId, key, value: parsedValue, tags });
                 const idShort = result.id ? result.id.slice(0, 8) : '…';
                 showStatus('store-result', `✅ Stored <strong>${result.key}</strong> (id: ${idShort}…)`, 'success');
-
-                // Clear fields on success
                 document.getElementById('mem-key').value = '';
                 document.getElementById('mem-value').value = '';
                 document.getElementById('mem-tags').value = '';
-
-                // Refresh results if any are showing
                 const resultsDiv = document.getElementById('search-results');
-                if (resultsDiv.children.length > 0 && !resultsDiv.querySelector('.results-empty')) {
-                    searchMemories();
-                }
-            } catch (e) {
-                showStatus('store-result', `❌ ${e.message}`, 'error');
-            } finally {
-                btn.innerHTML = originalText;
-                btn.disabled = false;
-            }
+                if (resultsDiv.children.length > 0 && !resultsDiv.querySelector('.results-empty')) { searchMemories(); }
+            } catch (e) { showStatus('store-result', `❌ ${e.message}`, 'error'); }
+            finally { btn.innerHTML = originalText; btn.disabled = false; }
         }
 
         function clearStoreForm() {
@@ -562,44 +429,34 @@
             document.getElementById('store-result').innerHTML = '';
         }
 
-        // ═══════════════════════════════════════════════════════════════════
-        //  Search / Query
-        // ═══════════════════════════════════════════════════════════════════
-
+        // ── Search ────────────────────────────────────────────────
         async function searchMemories() {
             const q = document.getElementById('search-query').value.trim();
             const sessionFilter = document.getElementById('search-session').value.trim();
             const agentFilter = document.getElementById('search-agent').value.trim();
             const limit = parseInt(document.getElementById('search-limit').value, 10);
-
             const resultsDiv = document.getElementById('search-results');
-            resultsDiv.innerHTML = '<div class="flex-center" style="padding:1.5rem;"><span class="spinner"></span> Searching…</div>';
+            resultsDiv.innerHTML = '<div class="flex-center" style="padding:1.5rem;justify-content:center;"><span class="spinner"></span> Searching…</div>';
 
             try {
                 let data;
                 if (q) {
-                    // Full-text search
                     const params = new URLSearchParams({ q });
                     if (sessionFilter) params.set('session_id', sessionFilter);
                     if (agentFilter) params.set('agent_id', agentFilter);
                     if (limit) params.set('limit', limit);
                     data = await api('GET', `/memories/search?${params.toString()}`);
                 } else {
-                    // Browse — use query endpoint
                     const body = { limit };
                     if (sessionFilter) body.session_id = sessionFilter;
                     if (agentFilter) body.agent_id = agentFilter;
                     data = await api('POST', '/memories/query', body);
                 }
-
                 renderSearchResults(data.entries || [], data.total || 0, q);
-            } catch (e) {
-                resultsDiv.innerHTML = `<div class="status error">❌ Search failed: ${e.message}</div>`;
-            }
+            } catch (e) { resultsDiv.innerHTML = `<div class="status error">❌ Search failed: ${e.message}</div>`; }
         }
 
         async function getAllMemories() {
-            // Clear search query to browse all
             document.getElementById('search-query').value = '';
             return searchMemories();
         }
@@ -607,28 +464,23 @@
         function renderSearchResults(entries, total, query) {
             const resultsDiv = document.getElementById('search-results');
             const count = entries.length;
-
             if (count === 0) {
                 resultsDiv.innerHTML = `
                     <div class="results-empty">
                         <div class="icon">📭</div>
                         <div>No memories found${query ? ` for "<strong>${escapeHtml(query)}</strong>"` : ''}</div>
-                        <div style="font-size:0.85rem;margin-top:0.3rem;color:#484f58;">
+                        <div style="font-size:0.85rem;margin-top:0.3rem;color:var(--text-faint);">
                             Store a memory above to get started!
                         </div>
                     </div>`;
                 return;
             }
-
             let html = `<div class="result-count">Showing ${count} of ${total} result${total !== 1 ? 's' : ''}</div>`;
             for (const entry of entries) {
-                const valueStr = typeof entry.value === 'object'
-                    ? JSON.stringify(entry.value, null, 2)
-                    : String(entry.value);
+                const valueStr = typeof entry.value === 'object' ? JSON.stringify(entry.value, null, 2) : String(entry.value);
                 const tags = (entry.tags || []).map(t => `<span class="tag">${escapeHtml(t)}</span>`).join('');
                 const idShort = entry.id ? entry.id.slice(0, 8) : '…';
                 const createdAt = entry.created_at ? new Date(entry.created_at).toLocaleString() : '—';
-
                 html += `
                     <div class="result-item">
                         <div class="key">${escapeHtml(entry.key)}</div>
@@ -652,67 +504,29 @@
             document.getElementById('search-agent').value = '';
         }
 
-        // ═══════════════════════════════════════════════════════════════════
-        //  Quick Start Examples
-        // ═══════════════════════════════════════════════════════════════════
-
+        // ── Quick Start Examples ──────────────────────────────────
         const EXAMPLES = {
             'user-prefs': {
-                session: 'demo-session',
-                agent: 'agent-alice',
-                key: 'user_preferences',
-                value: JSON.stringify({
-                    theme: 'dark',
-                    language: 'en',
-                    notifications: true,
-                    timezone: 'UTC',
-                }, null, 2),
+                session: 'demo-session', agent: 'agent-alice', key: 'user_preferences',
+                value: JSON.stringify({ theme: 'dark', language: 'en', notifications: true, timezone: 'UTC' }, null, 2),
                 tags: 'important,user-pref',
             },
             'conversation': {
-                session: 'team-chat',
-                agent: 'agent-bob',
-                key: 'conversation_context',
-                value: JSON.stringify({
-                    topic: 'Memory Bridge architecture',
-                    participants: ['Alice', 'Bob', 'Charlie'],
-                    last_message: 'How do we handle cross-session memory?',
-                    priority: 'high',
-                }, null, 2),
+                session: 'team-chat', agent: 'agent-bob', key: 'conversation_context',
+                value: JSON.stringify({ topic: 'Memory Bridge architecture', participants: ['Alice', 'Bob', 'Charlie'], last_message: 'How do we handle cross-session memory?', priority: 'high' }, null, 2),
                 tags: 'conversation,context',
             },
             'config': {
-                session: 'infra-session',
-                agent: 'agent-deploy',
-                key: 'deployment_config',
-                value: JSON.stringify({
-                    environment: 'staging',
-                    replicas: 3,
-                    memory_limit: '512MB',
-                    features: {
-                        webhooks: true,
-                        handoff: true,
-                        metrics: true,
-                    },
-                }, null, 2),
+                session: 'infra-session', agent: 'agent-deploy', key: 'deployment_config',
+                value: JSON.stringify({ environment: 'staging', replicas: 3, memory_limit: '512MB', features: { webhooks: true, handoff: true, metrics: true } }, null, 2),
                 tags: 'config,deployment,infra',
             },
             'task': {
-                session: 'sprint-23',
-                agent: 'agent-planner',
-                key: 'active_task',
-                value: JSON.stringify({
-                    id: 'TASK-42',
-                    title: 'Build Playground HTML page',
-                    status: 'in-progress',
-                    assignee: 'agent-planner',
-                    priority: 'high',
-                    due: '2026-05-24',
-                }, null, 2),
+                session: 'sprint-23', agent: 'agent-planner', key: 'active_task',
+                value: JSON.stringify({ id: 'TASK-42', title: 'Build Playground HTML page', status: 'in-progress', assignee: 'agent-planner', priority: 'high', due: '2026-05-24' }, null, 2),
                 tags: 'task,sprint-23,frontend',
             },
         };
-
         function loadExample(name) {
             const ex = EXAMPLES[name];
             if (!ex) return;
@@ -721,63 +535,40 @@
             document.getElementById('mem-key').value = ex.key;
             document.getElementById('mem-value').value = ex.value;
             document.getElementById('mem-tags').value = ex.tags;
-
-            // Scroll to store card
             document.getElementById('store-card').scrollIntoView({ behavior: 'smooth', block: 'start' });
-
             showStatus('store-result', `✨ Loaded example: <strong>${ex.key}</strong> — click "Store Memory" to save it.`, 'info');
         }
 
-        // ═══════════════════════════════════════════════════════════════════
-        //  Utilities
-        // ═══════════════════════════════════════════════════════════════════
-
+        // ── Utilities ─────────────────────────────────────────────
         function showStatus(elementId, message, type) {
             const el = document.getElementById(elementId);
             el.innerHTML = `<div class="status ${type}">${message}</div>`;
-            // Auto-clear after 6 seconds for success/info
             if (type === 'success' || type === 'info') {
                 clearTimeout(el._timeout);
                 el._timeout = setTimeout(() => { el.innerHTML = ''; }, 6000);
             }
         }
-
         function escapeHtml(str) {
             const div = document.createElement('div');
             div.textContent = str;
             return div.innerHTML;
         }
 
-        // ═══════════════════════════════════════════════════════════════════
-        //  Keyboard Shortcuts
-        // ═══════════════════════════════════════════════════════════════════
-
+        // ── Keyboard Shortcuts ────────────────────────────────────
         document.addEventListener('keydown', (e) => {
-            // Ctrl+Enter or Cmd+Enter in value textarea → store
             if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
                 const active = document.activeElement;
-                if (active && active.id === 'mem-value') {
-                    e.preventDefault();
-                    storeMemory();
-                }
+                if (active && active.id === 'mem-value') { e.preventDefault(); storeMemory(); }
             }
-            // Enter in search field → search
             if (e.key === 'Enter') {
                 const active = document.activeElement;
-                if (active && active.id === 'search-query') {
-                    e.preventDefault();
-                    searchMemories();
-                }
+                if (active && active.id === 'search-query') { e.preventDefault(); searchMemories(); }
             }
         });
 
-        // ═══════════════════════════════════════════════════════════════════
-        //  Init
-        // ═══════════════════════════════════════════════════════════════════
-
+        // ── Init ──────────────────────────────────────────────────
         document.addEventListener('DOMContentLoaded', () => {
             applyQueryParams();
-            // Load saved API key into input field
             const savedKey = getApiKey();
             if (savedKey) {
                 document.getElementById('api-key-input').value = savedKey;

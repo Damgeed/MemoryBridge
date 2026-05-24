@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -8,250 +8,235 @@
     <link rel="stylesheet" href="/playground/style.css">
     <script src="https://d3js.org/d3.v7.min.js"></script>
     <style>
-        /* ── Reset & Base ─────────────────────────────────────────────── */
-        * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
-            background: #0d1117;
-            color: #e6edf3;
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
             overflow: hidden;
             height: 100vh;
         }
 
-        /* ── Toolbar ──────────────────────────────────────────────────── */
-        .toolbar {
+        .graph-toolbar {
             display: flex;
             align-items: center;
             gap: 1rem;
-            padding: 0.75rem 1.5rem;
-            background: #161b22;
-            border-bottom: 1px solid #30363d;
+            padding: 0.6rem 1.5rem;
+            background: var(--bg-glass-strong);
+            backdrop-filter: blur(16px) saturate(1.5);
+            border-bottom: 1px solid var(--border-subtle);
             height: 56px;
         }
-        .toolbar h2 {
+        .graph-toolbar h2 {
             font-size: 1rem;
-            color: #58a6ff;
+            font-weight: 700;
+            color: var(--accent);
             white-space: nowrap;
             display: flex;
             align-items: center;
             gap: 0.4rem;
         }
-        .toolbar input {
-            background: #0d1117;
-            border: 1px solid #30363d;
+        .graph-toolbar input {
+            background: var(--input-bg);
+            border: 1px solid var(--border-primary);
             padding: 0.4rem 0.8rem;
-            border-radius: 6px;
-            color: #e6edf3;
+            border-radius: var(--radius-sm);
+            color: var(--text-primary);
             font-size: 0.85rem;
             flex: 1;
             max-width: 300px;
             outline: none;
-            transition: border-color 0.15s;
+            transition: border-color var(--transition-fast);
+            font-family: var(--font-sans);
         }
-        .toolbar input:focus {
-            border-color: #58a6ff;
-        }
-        .toolbar input::placeholder {
-            color: #484f58;
-        }
+        .graph-toolbar input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-glow); }
+        .graph-toolbar input::placeholder { color: var(--text-faint); }
 
-        /* ── Legend ───────────────────────────────────────────────────── */
-        .legend {
+        .graph-legend {
             display: flex;
             gap: 1rem;
-            font-size: 0.8rem;
+            font-size: 0.78rem;
             margin-left: auto;
         }
         .legend-item {
             display: flex;
             align-items: center;
             gap: 0.3rem;
+            color: var(--text-muted);
         }
         .legend-dot {
-            width: 10px;
-            height: 10px;
+            width: 10px; height: 10px;
             border-radius: 50%;
             display: inline-block;
             flex-shrink: 0;
         }
 
-        /* ── Graph Container ──────────────────────────────────────────── */
         #graph {
             width: 100vw;
             height: calc(100vh - 56px);
             position: relative;
+            background: var(--bg-primary);
         }
-        #graph svg {
-            width: 100%;
-            height: 100%;
-            display: block;
-        }
+        #graph svg { width: 100%; height: 100%; display: block; }
 
-        /* ── Tooltip ──────────────────────────────────────────────────── */
-        .tooltip {
+        .graph-tooltip {
             position: absolute;
-            background: #1c2333;
-            border: 1px solid #30363d;
-            padding: 0.6rem 0.85rem;
-            border-radius: 6px;
+            background: var(--bg-glass-strong);
+            backdrop-filter: blur(16px) saturate(1.5);
+            border: 1px solid var(--border-primary);
+            padding: 0.65rem 0.9rem;
+            border-radius: var(--radius-md);
             font-size: 0.8rem;
             line-height: 1.5;
             pointer-events: none;
             display: none;
             z-index: 100;
             max-width: 280px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+            box-shadow: var(--shadow-lg);
+            color: var(--text-primary);
         }
-        .tooltip strong {
-            color: #f0f6fc;
-        }
-        .tooltip .tt-label {
-            color: #8b949e;
-            font-size: 0.75rem;
-        }
+        .graph-tooltip strong { color: var(--text-primary); }
+        .graph-tooltip .tt-label { color: var(--text-muted); font-size: 0.72rem; }
 
-        /* ── D3 Elements ──────────────────────────────────────────────── */
         .node {
             cursor: pointer;
-            stroke: #1c2333;
+            stroke: var(--bg-primary);
             stroke-width: 1.5px;
             transition: stroke-width 0.1s;
         }
         .node:hover {
-            stroke: #f0f6fc;
+            stroke: var(--accent);
             stroke-width: 2.5px;
         }
-        .node.highlighted {
-            stroke: #f0f6fc;
-            stroke-width: 2.5px;
-        }
-        .node.dimmed {
-            opacity: 0.15;
-        }
+        .node.highlighted { stroke: var(--accent); stroke-width: 2.5px; }
+        .node.dimmed { opacity: 0.15; }
+
         .link {
-            stroke: #30363d;
+            stroke: var(--border-primary);
             stroke-opacity: 0.5;
             stroke-width: 1px;
         }
         .link.highlighted {
-            stroke: #58a6ff;
+            stroke: var(--accent);
             stroke-opacity: 0.8;
             stroke-width: 1.5px;
         }
-        .link.dimmed {
-            stroke-opacity: 0.05;
-        }
+        .link.dimmed { stroke-opacity: 0.05; }
+
         .label {
             font-size: 10px;
-            fill: #8b949e;
+            fill: var(--text-muted);
             pointer-events: none;
-            font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+            font-family: var(--font-sans);
         }
-        .label.dimmed {
-            opacity: 0.2;
-        }
+        .label.dimmed { opacity: 0.2; }
 
-        /* ── Empty State ──────────────────────────────────────────────── */
         .empty-state {
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
             height: 100%;
-            color: #484f58;
+            color: var(--text-faint);
         }
-        .empty-state h3 {
-            font-size: 1.2rem;
-            margin-bottom: 0.5rem;
-            color: #8b949e;
-        }
-        .empty-state p {
-            font-size: 0.9rem;
-        }
+        .empty-state h3 { font-size: 1.2rem; margin-bottom: 0.5rem; color: var(--text-muted); }
+        .empty-state p { font-size: 0.9rem; }
 
-        /* ── Loading ──────────────────────────────────────────────────── */
-        .loading {
+        .loading-state {
             display: flex;
             align-items: center;
             justify-content: center;
             height: 100%;
-            color: #8b949e;
+            color: var(--text-muted);
             font-size: 0.9rem;
+            gap: 0.75rem;
         }
-        .spinner {
-            width: 24px;
-            height: 24px;
-            border: 3px solid #30363d;
-            border-top-color: #58a6ff;
-            border-radius: 50%;
-            animation: spin 0.8s linear infinite;
-            margin-right: 0.75rem;
-        }
-        @keyframes spin { to { transform: rotate(360deg); } }
 
-        /* ── Responsive ───────────────────────────────────────────────── */
+        .error-state {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+        }
+        .error-state h3 { font-size: 1.1rem; margin-bottom: 0.5rem; color: var(--red); }
+        .error-state p { font-size: 0.9rem; color: var(--text-muted); }
+
         @media (max-width: 640px) {
-            .toolbar { flex-wrap: wrap; height: auto; padding: 0.5rem 1rem; gap: 0.5rem; }
-            .toolbar input { max-width: 100%; }
-            .legend { margin-left: 0; flex-wrap: wrap; gap: 0.5rem; }
+            .graph-toolbar { flex-wrap: wrap; height: auto; padding: 0.5rem 1rem; gap: 0.5rem; }
+            .graph-toolbar input { max-width: 100%; }
+            .graph-legend { margin-left: 0; flex-wrap: wrap; gap: 0.5rem; }
             #graph { height: calc(100vh - 120px); }
         }
     </style>
 </head>
 <body>
-
     <!-- Navbar -->
     <nav class="navbar">
         <a href="/" class="logo">
-            <img src="/playground/logo.svg" alt="Memory Bridge">
-            Memory Bridge
+            <img src="/playground/logo.svg" alt="Bridge icon">
+            Memory <span class="logo-accent">Bridge</span>
         </a>
         <div class="nav-links">
             <a href="/">Home</a>
             <a href="/playground/">Playground</a>
             <a href="/playground/graph.html" class="active">Graph</a>
             <a href="/docs">API Docs</a>
+            <button class="theme-toggle" onclick="toggleTheme()" title="Toggle theme" aria-label="Toggle theme">🌙</button>
         </div>
     </nav>
 
-    <!-- ── Toolbar ──────────────────────────────────────── -->
-    <div class="toolbar">
+    <!-- Toolbar -->
+    <div class="graph-toolbar">
         <h2>🧠 Memory Graph</h2>
         <input id="search" type="text" placeholder="Filter nodes by label..." oninput="filterNodes()">
-        <div class="legend">
-            <span class="legend-item">
-                <span class="legend-dot" style="background: #58a6ff;"></span> Memory
-            </span>
-            <span class="legend-item">
-                <span class="legend-dot" style="background: #3fb950;"></span> Session
-            </span>
-            <span class="legend-item">
-                <span class="legend-dot" style="background: #d29922;"></span> Agent
-            </span>
-            <span class="legend-item">
-                <span class="legend-dot" style="background: #bc8cff;"></span> Tag
-            </span>
+        <div class="graph-legend">
+            <span class="legend-item"><span class="legend-dot" style="background: var(--accent);"></span> Memory</span>
+            <span class="legend-item"><span class="legend-dot" style="background: var(--green);"></span> Session</span>
+            <span class="legend-item"><span class="legend-dot" style="background: var(--orange);"></span> Agent</span>
+            <span class="legend-item"><span class="legend-dot" style="background: #c084fc;"></span> Tag</span>
         </div>
     </div>
 
-    <!-- ── Graph ────────────────────────────────────────────────── -->
+    <!-- Graph -->
     <div id="graph">
-        <div class="loading">
-            <div class="spinner"></div>
+        <div class="loading-state">
+            <span class="spinner" style="width:24px;height:24px;border-width:3px;"></span>
             Loading graph data...
         </div>
     </div>
 
-    <!-- ── Tooltip ──────────────────────────────────────────────── -->
-    <div id="tooltip" class="tooltip"></div>
+    <!-- Tooltip -->
+    <div id="tooltip" class="graph-tooltip"></div>
 
     <script>
-        // ── Configuration ───────────────────────────────────────────────
+        // ── Theme ──────────────────────────────────────────────────
+        (function initTheme() {
+            const saved = localStorage.getItem('mb-theme');
+            if (saved) document.documentElement.setAttribute('data-theme', saved);
+            else {
+                const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+                document.documentElement.setAttribute('data-theme', prefersDark ? 'dark' : 'light');
+            }
+            updateToggleIcon();
+        })();
+        function toggleTheme() {
+            const html = document.documentElement;
+            const next = html.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+            html.setAttribute('data-theme', next);
+            localStorage.setItem('mb-theme', next);
+            updateToggleIcon();
+        }
+        function updateToggleIcon() {
+            const theme = document.documentElement.getAttribute('data-theme');
+            const btn = document.querySelector('.theme-toggle');
+            if (btn) btn.textContent = theme === 'dark' ? '🌙' : '☀️';
+        }
+
+        // ── Configuration ─────────────────────────────────────────
         const COLORS = {
-            memory:  '#58a6ff',
-            session: '#3fb950',
-            agent:   '#d29922',
-            tag:     '#bc8cff',
+            memory:  '#a78bfa',
+            session: '#34d399',
+            agent:   '#f59e0b',
+            tag:     '#c084fc',
         };
 
         const API_ENDPOINT = '/graph/data';
@@ -259,12 +244,11 @@
         let svg, g, simulation, linkElements, nodeElements, labelElements;
         let graphData = null;
 
-        // ── Load Data ───────────────────────────────────────────────────
+        // ── Load Data ─────────────────────────────────────────────
         async function loadGraph() {
             const container = document.getElementById('graph');
 
             try {
-                // Build query params from URL
                 const params = new URLSearchParams(window.location.search);
                 const limit = params.get('limit') || '200';
                 const sessionId = params.get('session_id') || '';
@@ -275,9 +259,7 @@
                 if (project)   url += `&project=${encodeURIComponent(project)}`;
 
                 const response = await fetch(url);
-                if (!response.ok) {
-                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-                }
+                if (!response.ok) throw new Error(`HTTP ${response.status}: ${response.statusText}`);
 
                 graphData = await response.json();
 
@@ -293,14 +275,14 @@
                 renderGraph(graphData);
             } catch (e) {
                 container.innerHTML = `
-                    <div class="empty-state">
+                    <div class="error-state">
                         <h3>⚠️ Failed to load graph</h3>
-                        <p style="color: #f85149;">${e.message}</p>
+                        <p>${e.message}</p>
                     </div>`;
             }
         }
 
-        // ── Render D3 Force-Directed Graph ──────────────────────────────
+        // ── Render D3 Force-Directed Graph ────────────────────────
         function renderGraph(data) {
             const container = document.getElementById('graph');
             container.innerHTML = '';
@@ -313,25 +295,18 @@
                 .attr('width', width)
                 .attr('height', height);
 
-            // ── Zoom ────────────────────────────────────────────────────
             const zoom = d3.zoom()
                 .scaleExtent([0.1, 5])
-                .on('zoom', (event) => {
-                    g.attr('transform', event.transform);
-                });
+                .on('zoom', (event) => { g.attr('transform', event.transform); });
 
             svg.call(zoom);
-
-            // Center group
             g = svg.append('g');
 
-            // ── Links ───────────────────────────────────────────────────
             linkElements = g.selectAll('line')
                 .data(data.edges)
                 .join('line')
                 .attr('class', 'link');
 
-            // ── Nodes ───────────────────────────────────────────────────
             nodeElements = g.selectAll('circle')
                 .data(data.nodes)
                 .join('circle')
@@ -341,21 +316,15 @@
                 .call(d3.drag()
                     .on('start', (event, d) => {
                         if (!event.active) simulation.alphaTarget(0.3).restart();
-                        d.fx = d.x;
-                        d.fy = d.y;
+                        d.fx = d.x; d.fy = d.y;
                     })
-                    .on('drag', (event, d) => {
-                        d.fx = event.x;
-                        d.fy = event.y;
-                    })
+                    .on('drag', (event, d) => { d.fx = event.x; d.fy = event.y; })
                     .on('end', (event, d) => {
                         if (!event.active) simulation.alphaTarget(0);
-                        d.fx = null;
-                        d.fy = null;
+                        d.fx = null; d.fy = null;
                     })
                 );
 
-            // ── Labels ──────────────────────────────────────────────────
             labelElements = g.selectAll('text')
                 .data(data.nodes)
                 .join('text')
@@ -364,7 +333,6 @@
                 .attr('dx', d => d.type === 'memory' ? 10 : 12)
                 .attr('dy', 4);
 
-            // ── Tooltip ─────────────────────────────────────────────────
             const tooltip = d3.select('#tooltip');
             const tooltipEl = document.getElementById('tooltip');
 
@@ -373,31 +341,22 @@
                     const tags = d.tags && d.tags.length > 0
                         ? '<br><span class="tt-label">Tags:</span> ' + d.tags.join(', ')
                         : '';
-                    const key = d.key
-                        ? '<br><span class="tt-label">Key:</span> ' + d.key
-                        : '';
+                    const key = d.key ? '<br><span class="tt-label">Key:</span> ' + d.key : '';
                     tooltip
                         .style('display', 'block')
-                        .html(`
-                            <strong>${d.label}</strong><br>
-                            <span class="tt-label">Type:</span> ${d.type}${key}${tags}
-                        `);
+                        .html(`<strong>${d.label}</strong><br><span class="tt-label">Type:</span> ${d.type}${key}${tags}`);
                 })
                 .on('mousemove', (event) => {
                     const x = event.pageX + 14;
                     const y = event.pageY - 10;
-                    // Keep tooltip in viewport
                     const tw = tooltipEl.offsetWidth || 200;
                     const th = tooltipEl.offsetHeight || 100;
                     tooltip
                         .style('left', (x + tw > window.innerWidth ? event.pageX - tw - 14 : x) + 'px')
                         .style('top', (y + th > window.innerHeight ? event.pageY - th - 10 : y) + 'px');
                 })
-                .on('mouseout', () => {
-                    tooltip.style('display', 'none');
-                });
+                .on('mouseout', () => { tooltip.style('display', 'none'); });
 
-            // ── Simulation ──────────────────────────────────────────────
             simulation = d3.forceSimulation(data.nodes)
                 .force('link', d3.forceLink(data.edges)
                     .id(d => d.id)
@@ -416,23 +375,14 @@
                         .attr('y1', d => d.source.y)
                         .attr('x2', d => d.target.x)
                         .attr('y2', d => d.target.y);
-                    nodeElements
-                        .attr('cx', d => d.x)
-                        .attr('cy', d => d.y);
-                    labelElements
-                        .attr('x', d => d.x)
-                        .attr('y', d => d.y);
+                    nodeElements.attr('cx', d => d.x).attr('cy', d => d.y);
+                    labelElements.attr('x', d => d.x).attr('y', d => d.y);
                 });
 
-            // ── Initial zoom to fit ─────────────────────────────────────
             setTimeout(() => {
                 const bounds = g.node()?.getBBox();
                 if (bounds && bounds.width > 0 && bounds.height > 0) {
-                    const scale = Math.min(
-                        width / (bounds.width + 100),
-                        height / (bounds.height + 100),
-                        1.5
-                    );
+                    const scale = Math.min(width / (bounds.width + 100), height / (bounds.height + 100), 1.5);
                     const tx = width / 2 - (bounds.x + bounds.width / 2) * scale;
                     const ty = height / 2 - (bounds.y + bounds.height / 2) * scale;
                     svg.transition().duration(500).call(
@@ -443,21 +393,18 @@
             }, 100);
         }
 
-        // ── Filter Nodes ────────────────────────────────────────────────
+        // ── Filter Nodes ──────────────────────────────────────────
         function filterNodes() {
             const query = document.getElementById('search').value.toLowerCase().trim();
-
             if (!graphData || !graphData.nodes) return;
 
             if (!query) {
-                // Reset all
                 nodeElements.classed('dimmed highlighted', false);
                 linkElements.classed('dimmed highlighted', false);
                 labelElements.classed('dimmed', false);
                 return;
             }
 
-            // Find matching node IDs
             const matchIds = new Set();
             graphData.nodes.forEach(d => {
                 if (d.label.toLowerCase().includes(query) ||
@@ -467,7 +414,6 @@
                 }
             });
 
-            // Find connected edge targets
             const connectedIds = new Set(matchIds);
             graphData.edges.forEach(e => {
                 const sId = typeof e.source === 'object' ? e.source.id : e.source;
@@ -479,7 +425,6 @@
             nodeElements
                 .classed('dimmed', d => !connectedIds.has(d.id))
                 .classed('highlighted', d => matchIds.has(d.id));
-
             linkElements
                 .classed('dimmed', d => {
                     const sId = typeof d.source === 'object' ? d.source.id : d.source;
@@ -491,16 +436,14 @@
                     const tId = typeof d.target === 'object' ? d.target.id : d.target;
                     return matchIds.has(sId) && matchIds.has(tId);
                 });
-
             labelElements.classed('dimmed', d => !connectedIds.has(d.id));
         }
 
-        // ── Handle Resize ───────────────────────────────────────────────
+        // ── Handle Resize ─────────────────────────────────────────
         let resizeTimeout;
         window.addEventListener('resize', () => {
             clearTimeout(resizeTimeout);
             resizeTimeout = setTimeout(() => {
-                // Reload the graph to adapt to new dimensions
                 if (graphData) {
                     const container = document.getElementById('graph');
                     const width = container.clientWidth;
@@ -512,7 +455,7 @@
             }, 200);
         });
 
-        // ── Keyboard shortcut ───────────────────────────────────────────
+        // ── Keyboard shortcut ─────────────────────────────────────
         document.addEventListener('keydown', (e) => {
             if (e.key === '/' && e.target.tagName !== 'INPUT') {
                 e.preventDefault();
@@ -520,7 +463,7 @@
             }
         });
 
-        // ── Start ───────────────────────────────────────────────────────
+        // ── Start ─────────────────────────────────────────────────
         loadGraph();
     </script>
 </body>
