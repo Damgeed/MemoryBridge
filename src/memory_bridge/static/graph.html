@@ -166,6 +166,7 @@
             .graph-toolbar input { font-size: 0.75rem; padding: 0.3rem 0.5rem; }
         }
     </style>
+    <script src="/playground/i18n.js"></script>
 </head>
 <body>
     <!-- Navbar -->
@@ -175,10 +176,10 @@
             Memory <span class="logo-accent">Bridge</span>
         </a>
         <div class="nav-links">
-            <a href="/">Home</a>
-            <a href="/playground/">Playground</a>
-            <a href="/playground/graph.html" class="active">Graph</a>
-            <a href="/pricing">Pricing</a>
+            <a href="/" data-i18n="nav.home">Home</a>
+            <a href="/playground/" data-i18n="nav.playground">Playground</a>
+            <a href="/playground/graph.html" class="active" data-i18n="nav.graph">Graph</a>
+            <a href="/pricing" data-i18n="nav.pricing">Pricing</a>
             <div style="position:relative;display:inline-flex;">
             <button class="lang-toggle" onclick="toggleLang()" title="Switch language" aria-label="Switch language">🌐</button>
             <div class="lang-dropdown" id="lang-dropdown">
@@ -197,13 +198,13 @@
 
     <!-- Toolbar -->
     <div class="graph-toolbar">
-        <h2>🧠 Memory Graph</h2>
-        <input id="search" type="text" placeholder="Filter nodes by label..." oninput="filterNodes()">
+        <h2 data-i18n="graph.heading">🧠 Memory Graph</h2>
+        <input id="search" type="text" data-i18n="graph.filter" placeholder="Filter nodes by label..." oninput="filterNodes()">
         <div class="graph-legend">
-            <span class="legend-item"><span class="legend-dot" style="background: var(--accent);"></span> Memory</span>
-            <span class="legend-item"><span class="legend-dot" style="background: var(--green);"></span> Session</span>
-            <span class="legend-item"><span class="legend-dot" style="background: var(--orange);"></span> Agent</span>
-            <span class="legend-item"><span class="legend-dot" style="background: #c084fc;"></span> Tag</span>
+            <span class="legend-item"><span class="legend-dot" style="background: var(--accent);"></span> <span data-i18n="graph.legend_memory">Memory</span></span>
+            <span class="legend-item"><span class="legend-dot" style="background: var(--green);"></span> <span data-i18n="graph.legend_session">Session</span></span>
+            <span class="legend-item"><span class="legend-dot" style="background: var(--orange);"></span> <span data-i18n="graph.legend_agent">Agent</span></span>
+            <span class="legend-item"><span class="legend-dot" style="background: #c084fc;"></span> <span data-i18n="graph.legend_tag">Tag</span></span>
         </div>
     </div>
 
@@ -211,7 +212,7 @@
     <div id="graph">
         <div class="loading-state">
             <span class="spinner" style="width:24px;height:24px;border-width:3px;"></span>
-            Loading graph data...
+            <span data-i18n="graph.loading">Loading graph data...</span>
         </div>
     </div>
 
@@ -277,8 +278,8 @@
                 if (!graphData.nodes || graphData.nodes.length === 0) {
                     container.innerHTML = `
                         <div class="empty-state">
-                            <h3>No memories found</h3>
-                            <p>Create some memories first, then visit this page.</p>
+                            <h3 data-i18n="graph.empty">No memories found</h3>
+                            <p data-i18n="graph.empty_desc">Create some memories first, then visit this page.</p>
                         </div>`;
                     return;
                 }
@@ -371,15 +372,15 @@
             simulation = d3.forceSimulation(data.nodes)
                 .force('link', d3.forceLink(data.edges)
                     .id(d => d.id)
-                    .distance(d => d.type === 'tagged' ? 80 : 120)
-                    .strength(0.4)
+                    .distance(d => d.type === 'tagged' ? 30 : 50)
+                    .strength(0.6)
                 )
                 .force('charge', d3.forceManyBody()
-                    .strength(d => d.type === 'session' ? -400 : d.type === 'agent' ? -350 : -200)
+                    .strength(d => d.type === 'session' ? -120 : d.type === 'agent' ? -100 : -60)
                 )
                 .force('center', d3.forceCenter(width / 2, height / 2))
-                .force('collision', d3.forceCollide().radius(12))
-                .alphaDecay(0.02)
+                .force('collision', d3.forceCollide().radius(6))
+                .alphaDecay(0.08)
                 .on('tick', () => {
                     linkElements
                         .attr('x1', d => d.source.x)

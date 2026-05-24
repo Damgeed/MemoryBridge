@@ -300,6 +300,7 @@
             .faq-item .faq-a { font-size: 0.82rem; }
         }
     </style>
+    <script src="/playground/i18n.js"></script>
 </head>
 <body>
     <!-- Navbar -->
@@ -309,10 +310,10 @@
             Memory <span class="logo-accent">Bridge</span>
         </a>
         <div class="nav-links">
-            <a href="/">Home</a>
-            <a href="/playground/">Playground</a>
-            <a href="/playground/graph.html">Graph</a>
-            <a href="/pricing" class="active">Pricing</a>
+            <a href="/" data-i18n="nav.home">Home</a>
+            <a href="/playground/" data-i18n="nav.playground">Playground</a>
+            <a href="/playground/graph.html" data-i18n="nav.graph">Graph</a>
+            <a href="/pricing" class="active" data-i18n="nav.pricing">Pricing</a>
 <div style="position:relative;display:inline-flex;">
             <button class="lang-toggle" onclick="toggleLang()" title="Switch language" aria-label="Switch language">🌐</button>
             <div class="lang-dropdown" id="lang-dropdown">
@@ -331,69 +332,69 @@
 
     <!-- ═══ PRICING HERO ═══ -->
     <section class="pricing-hero hero-bg fade-up">
-        <h1>Simple, transparent <span class="gradient-text">pricing</span></h1>
-        <p class="subtitle">Start free. Upgrade when your agent team grows.</p>
+        <h1 data-i18n="pricing.title">Simple, transparent <span class="gradient-text">pricing</span></h1>
+        <p class="subtitle" data-i18n="pricing.subtitle">Start free. Upgrade when your agent team grows.</p>
     </section>
 
     <!-- ═══ PRICING CARDS ═══ -->
     <div class="pricing-grid">
         <!-- Free Tier -->
         <div class="pricing-card fade-up">
-            <div class="tier-name">Free</div>
-            <div class="price"><span class="currency">$</span>0<span class="period">/mo</span></div>
-            <p class="price-note">For trying things out</p>
+            <div class="tier-name" data-i18n="pricing.free_name">Free</div>
+            <div class="price" data-i18n="pricing.free_price"><span class="currency">$</span>0<span class="period">/mo</span></div>
+            <p class="price-note" data-i18n="pricing.free_note">For trying things out</p>
             <ul class="features">
-                <li><span class="check">✓</span> 1,000 memories</li>
-                <li><span class="check">✓</span> 100 sessions</li>
-                <li><span class="check">✓</span> 5 API keys</li>
-                <li><span class="check">✓</span> 7-day retention</li>
-                <li><span class="check">✓</span> 60 req/min rate limit</li>
-                <li><span class="check">✓</span> Community support</li>
+                <li data-i18n="pricing.free_feat1"><span class="check">✓</span> 1,000 memories</li>
+                <li data-i18n="pricing.free_feat2"><span class="check">✓</span> 100 sessions</li>
+                <li data-i18n="pricing.free_feat3"><span class="check">✓</span> 5 API keys</li>
+                <li data-i18n="pricing.free_feat4"><span class="check">✓</span> 7-day retention</li>
+                <li data-i18n="pricing.free_feat5"><span class="check">✓</span> 60 req/min rate limit</li>
+                <li data-i18n="pricing.free_feat6"><span class="check">✓</span> Community support</li>
             </ul>
-            <a href="/playground/" class="btn btn-secondary">Get Started Free</a>
+            <a href="/playground/" class="btn btn-secondary" data-i18n="pricing.free_btn">Get Started Free</a>
         </div>
 
         <!-- Starter Tier -->
         <div class="pricing-card fade-up">
-            <div class="tier-name">Starter</div>
-            <div class="price"><span class="currency">$</span>29<span class="period">/mo</span></div>
-            <p class="price-note">For small agent teams</p>
+            <div class="tier-name" data-i18n="pricing.starter_name">Starter</div>
+            <div class="price" data-i18n="pricing.starter_price"><span class="currency">$</span>29<span class="period">/mo</span></div>
+            <p class="price-note" data-i18n="pricing.starter_note">For small agent teams</p>
             <ul class="features">
-                <li><span class="check">✓</span> 100,000 memories</li>
-                <li><span class="check">✓</span> 1,000 sessions</li>
-                <li><span class="check">✓</span> 25 API keys</li>
-                <li><span class="check">✓</span> 90-day retention</li>
-                <li><span class="check">✓</span> 300 req/min rate limit</li>
-                <li><span class="check">✓</span> Email support</li>
-                <li><span class="check">✓</span> Webhook access</li>
+                <li data-i18n="pricing.starter_feat1"><span class="check">✓</span> 100,000 memories</li>
+                <li data-i18n="pricing.starter_feat2"><span class="check">✓</span> 1,000 sessions</li>
+                <li data-i18n="pricing.starter_feat3"><span class="check">✓</span> 25 API keys</li>
+                <li data-i18n="pricing.starter_feat4"><span class="check">✓</span> 90-day retention</li>
+                <li data-i18n="pricing.starter_feat5"><span class="check">✓</span> 300 req/min rate limit</li>
+                <li data-i18n="pricing.starter_feat6"><span class="check">✓</span> Email support</li>
+                <li data-i18n="pricing.starter_feat7"><span class="check">✓</span> Webhook access</li>
             </ul>
-            <a href="#" onclick="checkout('starter')" class="btn btn-primary">Subscribe</a>
+            <a href="#" onclick="checkout('starter')" class="btn btn-primary" data-i18n="pricing.starter_btn">Subscribe</a>
         </div>
 
         <!-- Pro Tier (Featured) -->
         <div class="pricing-card featured fade-up">
-            <div class="popular-badge">Most Popular</div>
-            <div class="tier-name">Pro</div>
-            <div class="price"><span class="currency">$</span>99<span class="period">/mo</span></div>
-            <p class="price-note">For production deployments</p>
+            <div class="popular-badge" data-i18n="pricing.pro_badge">Most Popular</div>
+            <div class="tier-name" data-i18n="pricing.pro_name">Pro</div>
+            <div class="price" data-i18n="pricing.pro_price"><span class="currency">$</span>99<span class="period">/mo</span></div>
+            <p class="price-note" data-i18n="pricing.pro_note">For production deployments</p>
             <ul class="features">
-                <li><span class="check">✓</span> 1,000,000 memories</li>
-                <li><span class="check">✓</span> 10,000 sessions</li>
-                <li><span class="check">✓</span> 100 API keys</li>
-                <li><span class="check">✓</span> 365-day retention</li>
-                <li><span class="check">✓</span> 600 req/min rate limit</li>
-                <li><span class="check">✓</span> Priority support</li>
-                <li><span class="check">✓</span> Webhooks + HMAC signing</li>
-                <li><span class="check">✓</span> Team management</li>
+                <li data-i18n="pricing.pro_feat1"><span class="check">✓</span> 1,000,000 memories</li>
+                <li data-i18n="pricing.pro_feat2"><span class="check">✓</span> 10,000 sessions</li>
+                <li data-i18n="pricing.pro_feat3"><span class="check">✓</span> 100 API keys</li>
+                <li data-i18n="pricing.pro_feat4"><span class="check">✓</span> 365-day retention</li>
+                <li data-i18n="pricing.pro_feat5"><span class="check">✓</span> 600 req/min rate limit</li>
+                <li data-i18n="pricing.pro_feat6"><span class="check">✓</span> Priority support</li>
+                <li data-i18n="pricing.pro_feat7"><span class="check">✓</span> Webhooks + HMAC signing</li>
+                <li data-i18n="pricing.pro_feat8"><span class="check">✓</span> Team management</li>
             </ul>
-            <a href="#" onclick="checkout('pro')" class="btn btn-primary">Subscribe</a>
+            <a href="#" onclick="checkout('pro')" class="btn btn-primary" data-i18n="pricing.pro_btn">Subscribe</a>
         </div>
     </div>
 
     <!-- ═══ ENTERPRISE ═══ -->
     <section class="enterprise-section fade-up">
         <div class="enterprise-card">
-            <h2>Enterprise <span class="gradient-text">🏢</span></h2>
+            <h2 data-i18n="pricing.enterprise_title">Enterprise <span class="gradient-text">🏢</span></h2>
             <p class="enterprise-desc">
                 Custom pricing for teams that need dedicated infrastructure, advanced security, and guaranteed SLAs.
             </p>
@@ -405,41 +406,41 @@
                 <span class="ef-item"><span class="check">✓</span> SLA guarantees</span>
                 <span class="ef-item"><span class="check">✓</span> Dedicated support engineer</span>
             </div>
-            <a href="mailto:sales@memorybridge.dev" class="btn btn-primary">Contact Sales</a>
+            <a href="mailto:sales@memorybridge.dev" class="btn btn-primary" data-i18n="pricing.enterprise_btn">Contact Sales</a>
         </div>
     </section>
 
     <!-- ═══ FAQ ═══ -->
     <section class="faq-section" id="faq">
-        <h2 class="section-title fade-up">Frequently asked <span class="gradient-text">questions</span></h2>
+        <h2 class="section-title fade-up" data-i18n="pricing.faq_title">Frequently asked <span class="gradient-text">questions</span></h2>
         <div class="faq-grid">
             <div class="faq-item fade-up">
-                <div class="faq-q"><span class="q-icon">🛠️</span> Can I self-host for free?</div>
+                <div class="faq-q" data-i18n="pricing.faq1_q"><span class="q-icon">🛠️</span> Can I self-host for free?</div>
                 <div class="faq-a">
                     Yes! Memory Bridge is <strong>MIT licensed</strong>. Self-host with Docker Compose on any machine. No limits, no restrictions.
                 </div>
             </div>
             <div class="faq-item fade-up">
-                <div class="faq-q"><span class="q-icon">⚠️</span> What happens if I exceed my tier?</div>
-                <div class="faq-a">
+                <div class="faq-q" data-i18n="pricing.faq2_q"><span class="q-icon">⚠️</span> What happens if I exceed my tier?</div>
+                <div class="faq-a" data-i18n="pricing.faq2_a">
                     API calls above the rate limit return <code>429</code>. We store all memories until you hit the cap, then new storage fails. Upgrade to unlock higher limits.
                 </div>
             </div>
             <div class="faq-item fade-up">
-                <div class="faq-q"><span class="q-icon">🔄</span> Can I switch tiers?</div>
-                <div class="faq-a">
+                <div class="faq-q" data-i18n="pricing.faq3_q"><span class="q-icon">🔄</span> Can I switch tiers?</div>
+                <div class="faq-a" data-i18n="pricing.faq3_a">
                     Yes, upgrade or downgrade anytime. Changes apply immediately. Credits are prorated.
                 </div>
             </div>
             <div class="faq-item fade-up">
-                <div class="faq-q"><span class="q-icon">🗄️</span> How is data stored?</div>
-                <div class="faq-a">
+                <div class="faq-q" data-i18n="pricing.faq4_q"><span class="q-icon">🗄️</span> How is data stored?</div>
+                <div class="faq-a" data-i18n="pricing.faq4_a">
                     Your data lives in <strong>your PostgreSQL database</strong> (our cloud or self-hosted). You can export, query, and delete it freely.
                 </div>
             </div>
             <div class="faq-item fade-up">
-                <div class="faq-q"><span class="q-icon">🏢</span> Is there an Enterprise plan?</div>
-                <div class="faq-a">
+                <div class="faq-q" data-i18n="pricing.faq5_q"><span class="q-icon">🏢</span> Is there an Enterprise plan?</div>
+                <div class="faq-a" data-i18n="pricing.faq5_a">
                     Yes, <a href="mailto:sales@memorybridge.dev">contact us</a> for custom pricing, dedicated infrastructure, and SLA guarantees.
                 </div>
             </div>
@@ -447,7 +448,7 @@
     </section>
 
     <footer class="footer">
-        Memory Bridge v0.2.0 — <a href="https://github.com/Damgeed/MemoryBridge">GitHub</a> — API for cross-agent memory
+        <span data-i18n="footer.text">Memory Bridge — API for cross-agent memory — MIT License</span> — <a href="https://github.com/Damgeed/MemoryBridge">GitHub</a>
     </footer>
 
     <script>
@@ -494,40 +495,9 @@
             }
         }
 
-        // ── Language Selector ─────────────────────────────────────
-        function toggleLang() {
-            document.getElementById('lang-dropdown').classList.toggle('open');
-        }
-        document.addEventListener('click', (e) => {
-            if (!e.target.closest('.lang-toggle') && !e.target.closest('.lang-dropdown')) {
-                document.getElementById('lang-dropdown')?.classList.remove('open');
-            }
-        });
-
-        const TRANSLATIONS = {
-            en: {},
-            zh: {},
-            ja: {},
-            ko: {},
-            es: {},
-            fr: {},
-            de: {},
-        };
-
-        function setLang(code) {
-            localStorage.setItem('mb-lang', code);
-            document.documentElement.lang = code;
-            document.querySelectorAll('.lang-opt').forEach(el => el.classList.remove('active'));
-            const opt = document.querySelector(`.lang-opt[data-lang="${code}"]`);
-            if (opt) opt.classList.add('active');
-            const codes = {en:'🇬🇧 EN',zh:'🇨🇳 ZH',ja:'🇯🇵 JA',ko:'🇰🇷 KO',es:'🇪🇸 ES',fr:'🇫🇷 FR',de:'🇩🇪 DE'};
-            document.getElementById('lang-dropdown').classList.remove('open');
-        }
-
-        // ── Init Language on page load ──────────────────────────
+        // ── Language Selector (in i18n.js) ─────────────────────────
         (function initLang() {
-            const saved = localStorage.getItem('mb-lang') || 'en';
-            setLang(saved);
+            initLanguage();
         })();
 
         // ── Scroll Animations ────────────────────────────────────

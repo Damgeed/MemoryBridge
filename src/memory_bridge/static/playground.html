@@ -166,6 +166,7 @@
             .result-item .meta { font-size: 0.68rem; gap: 0.4rem; }
         }
     </style>
+    <script src="/playground/i18n.js"></script>
 </head>
 <body>
     <!-- Navbar -->
@@ -175,10 +176,10 @@
             Memory <span class="logo-accent">Bridge</span>
         </a>
         <div class="nav-links">
-            <a href="/">Home</a>
-            <a href="/playground/" class="active">Playground</a>
-            <a href="/playground/graph.html">Graph</a>
-            <a href="/pricing">Pricing</a>
+            <a href="/" data-i18n="nav.home">Home</a>
+            <a href="/playground/" class="active" data-i18n="nav.playground">Playground</a>
+            <a href="/playground/graph.html" data-i18n="nav.graph">Graph</a>
+            <a href="/pricing" data-i18n="nav.pricing">Pricing</a>
             <div style="position:relative;display:inline-flex;">
             <button class="lang-toggle" onclick="toggleLang()" title="Switch language" aria-label="Switch language">🌐</button>
             <div class="lang-dropdown" id="lang-dropdown">
@@ -223,13 +224,13 @@
                     <input class="input" id="session-id" placeholder="e.g., demo-session" spellcheck="false">
                 </div>
                 <div>
-                    <label for="agent-id">Agent ID</label>
+                    <label for="agent-id" data-i18n="playground.store_agent">Agent ID</label>
                     <input class="input" id="agent-id" placeholder="e.g., agent-alice" spellcheck="false">
                 </div>
             </div>
             <div class="flex-row">
                 <div>
-                    <label for="mem-key">Key</label>
+                    <label for="mem-key" data-i18n="playground.store_key">Key</label>
                     <input class="input" id="mem-key" placeholder="e.g., user_preference" spellcheck="false">
                 </div>
                 <div>
@@ -237,10 +238,10 @@
                     <input class="input" id="mem-tags" placeholder="e.g., important, user-pref" spellcheck="false">
                 </div>
             </div>
-            <label for="mem-value">Value</label>
+            <label for="mem-value" data-i18n="playground.store_value">Value</label>
             <textarea class="input" id="mem-value" rows="2" placeholder='e.g., {"theme": "dark", "language": "en"} or just text'></textarea>
             <div class="btn-group">
-                <button class="btn btn-primary" onclick="storeMemory()">💾 Store Memory</button>
+                <button class="btn btn-primary" onclick="storeMemory()" data-i18n="playground.store_btn">💾 Store Memory</button>
                 <button class="btn btn-secondary" onclick="clearStoreForm()">Clear</button>
             </div>
             <div id="store-result"></div>
@@ -275,7 +276,7 @@
                 </div>
             </div>
             <div class="btn-group">
-                <button class="btn btn-secondary" onclick="searchMemories()">🔍 Search</button>
+                <button class="btn btn-secondary" onclick="searchMemories()" data-i18n="playground.search_btn">🔍 Search</button>
                 <button class="btn btn-secondary" onclick="getAllMemories()">📋 Show All</button>
                 <button class="btn btn-secondary btn-sm" onclick="clearSearchResults()">Clear Results</button>
             </div>
@@ -301,7 +302,7 @@
         <p>
             <a href="#" id="api-base-url">API: /</a>
             &nbsp;·&nbsp;
-            <a href="/docs" target="_blank">📖 API Docs</a>
+            <a href="/docs" target="_blank" data-i18n="playground.api_docs">📖 API Docs</a>
             &nbsp;·&nbsp;
             <a href="https://github.com/Damgeed/MemoryBridge" target="_blank">🐙 GitHub</a>
         </p>
