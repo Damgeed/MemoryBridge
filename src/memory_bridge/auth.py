@@ -14,6 +14,9 @@ from .dependencies import get_storage
 
 logger = logging.getLogger(__name__)
 
+# Well-known demo key for public playground testing (5 req/min rate limit)
+DEMO_API_KEY = "mb_demo_public_test"
+
 
 EXEMPT_PATHS = {"/", "/health", "/docs", "/openapi.json", "/redoc", "/playground", "/badge", "/graph", "/billing/webhook", "/pricing"}
 
@@ -89,7 +92,12 @@ class APIKeyMiddleware(BaseHTTPMiddleware):
             request.state.auth = {"key_id": "env", "label": "env-key", "project_id": None}
             return await call_next(request)
 
-        # 2. Check against stored API keys
+        # 2. Check against well-known demo key (rate-limited to 5 req/min)
+        if token == DEMO_API_KEY:
+            request.state.auth = {"key_id": "demo:public", "label": "demo-key", "tier": "demo", "project_id": None}
+            return await call_next(request)
+
+        # 3. Check against stored API keys
         try:
             storage = await get_storage()
             key_info = await storage.authenticate_key(token)

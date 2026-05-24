@@ -306,8 +306,9 @@
         <!-- API Key -->
         <div class="api-key-bar card">
             <label>🔑 API Key</label>
-            <input id="api-key-input" type="password" placeholder="Paste your MEMORY_BRIDGE_API_KEY here…" spellcheck="false">
+            <input id="api-key-input" type="password" placeholder="Paste your API key here…" spellcheck="false">
             <button class="btn btn-secondary btn-sm" onclick="setApiKey()">Save</button>
+            <button class="btn btn-secondary btn-sm" onclick="useDemoKey()">Use Demo Key (5 req/min)</button>
             <span class="key-status" id="api-key-status"></span>
         </div>
 
@@ -451,6 +452,7 @@
 
         // ── API Client ────────────────────────────────────────────
         const API_BASE = '';
+        const DEMO_API_KEY = 'mb_demo_public_test';
 
         function getApiKey() {
             const urlParams = new URLSearchParams(window.location.search);
@@ -474,6 +476,20 @@
                 document.getElementById('api-key-status').textContent = '🗑️ Cleared';
             }
         }
+
+        function useDemoKey() {
+            document.getElementById('api-key-input').value = DEMO_API_KEY;
+            localStorage.setItem('mb_api_key', DEMO_API_KEY);
+            document.getElementById('api-key-status').textContent = '✅ Demo key loaded (5 req/min)';
+            document.getElementById('api-key-status').style.color = 'var(--green)';
+        }
+
+        // Auto-fill demo key if no key saved
+        (function initDemoKey() {
+            if (!localStorage.getItem('mb_api_key')) {
+                useDemoKey();
+            }
+        })();
 
         async function api(method, path, body) {
             const opts = {
