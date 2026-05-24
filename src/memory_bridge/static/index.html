@@ -614,9 +614,7 @@
         </div>
     </section>
 
-    <footer class="footer">
-        <span data-i18n="footer.text">© 2026 Memory Bridge — API for cross-agent memory. All rights reserved.</span> — <a href="https://github.com/Damgeed/MemoryBridge">GitHub</a>
-    </footer>
+    <footer class="footer" data-i18n="footer.text">© 2026 Memory Bridge — API for cross-agent memory. All rights reserved.</footer>
 
     <script>
         // ── Theme Toggle ──────────────────────────────────────────
@@ -685,12 +683,12 @@
         });
         function setLang(code) {
             localStorage.setItem('mb-lang', code);
-            document.documentElement.lang = code;
             document.querySelectorAll('.lang-opt').forEach(el => el.classList.remove('active'));
             const opt = document.querySelector(`.lang-opt[data-lang="${code}"]`);
             if (opt) opt.classList.add('active');
-            const codes = {en:'🇬🇧 EN',zh:'🇨🇳 ZH',ja:'🇯🇵 JA',ko:'🇰🇷 KO',es:'🇪🇸 ES',fr:'🇫🇷 FR',de:'🇩🇪 DE'};
+            applyTranslations();
             document.getElementById('lang-dropdown').classList.remove('open');
+            document.getElementById('lang-dropdown-mobile')?.classList.remove('open');
         }
         (function initLang() {
             initLanguage();

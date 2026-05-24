@@ -388,7 +388,10 @@
                 if (sessionId) url += `&session_id=${encodeURIComponent(sessionId)}`;
                 if (project)   url += `&project=${encodeURIComponent(project)}`;
 
-                const response = await fetch(url);
+                const controller = new AbortController();
+                const timeout = setTimeout(() => controller.abort(), 10000);
+                const response = await fetch(url, { signal: controller.signal });
+                clearTimeout(timeout);
                 if (!response.ok) throw new Error(`HTTP ${response.status}: ${response.statusText}`);
 
                 graphData = await response.json();
@@ -610,12 +613,12 @@
         });
         function setLang(code) {
             localStorage.setItem('mb-lang', code);
-            document.documentElement.lang = code;
             document.querySelectorAll('.lang-opt').forEach(el => el.classList.remove('active'));
             const opt = document.querySelector(`.lang-opt[data-lang="${code}"]`);
             if (opt) opt.classList.add('active');
-            const codes = {en:'🇬🇧 EN',zh:'🇨🇳 ZH',ja:'🇯🇵 JA',ko:'🇰🇷 KO',es:'🇪🇸 ES',fr:'🇫🇷 FR',de:'🇩🇪 DE'};
+            applyTranslations();
             document.getElementById('lang-dropdown').classList.remove('open');
+            document.getElementById('lang-dropdown-mobile')?.classList.remove('open');
         }
         (function initLang() {
             initLanguage();

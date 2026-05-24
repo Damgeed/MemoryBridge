@@ -1,48 +1,47 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128">
   <defs>
-    <linearGradient id="g1" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#6c5ce7"/>
-      <stop offset="100%" stop-color="#8b7cf7"/>
+    <linearGradient id="p-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#7c3aed"/>
+      <stop offset="100%" stop-color="#a78bfa"/>
     </linearGradient>
-    <linearGradient id="g2" x1="100%" y1="0%" x2="0%" y2="100%">
+    <linearGradient id="t-grad" x1="0%" y1="100%" x2="100%" y2="0%">
       <stop offset="0%" stop-color="#06d6a0"/>
       <stop offset="100%" stop-color="#34d399"/>
     </linearGradient>
-    <linearGradient id="bridge-g" x1="0%" y1="0%" x2="100%" y2="0%">
-      <stop offset="0%" stop-color="#8b7cf7"/>
+    <linearGradient id="flow-grad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#a78bfa"/>
       <stop offset="50%" stop-color="#7c3aed"/>
       <stop offset="100%" stop-color="#34d399"/>
     </linearGradient>
   </defs>
 
-  <!-- Subtle outer glow halo -->
-  <circle cx="64" cy="56" r="54" fill="url(#g1)" opacity="0.06"/>
+  <!-- Background glow -->
+  <circle cx="64" cy="64" r="56" fill="#a78bfa" opacity="0.06"/>
 
-  <!-- Left node (purple) — simplified bold circle -->
-  <circle cx="38" cy="44" r="26" fill="url(#g1)"/>
-  <circle cx="38" cy="44" r="26" fill="none" stroke="#fff" stroke-width="2.5" opacity="0.12"/>
+  <!-- Left module — tilted hexagon (purple) -->
+  <polygon points="40,36 64,22 88,36 88,68 64,82 40,68" fill="url(#p-grad)" stroke="#a78bfa" stroke-width="1" opacity="0.15"/>
+  <polygon points="40,36 58,26 82,36 82,60 64,70 40,60" fill="url(#p-grad)"/>
 
-  <!-- Right node (teal) — simplified bold circle -->
-  <circle cx="90" cy="44" r="26" fill="url(#g2)"/>
-  <circle cx="90" cy="44" r="26" fill="none" stroke="#fff" stroke-width="2.5" opacity="0.12"/>
+  <!-- Right module — tilted hexagon (teal) -->
+  <polygon points="40,78 64,64 88,78 88,110 64,124 40,110" fill="url(#t-grad)" stroke="#34d399" stroke-width="1" opacity="0.15"/>
+  <polygon points="46,76 64,66 82,76 82,98 64,108 46,98" fill="url(#t-grad)"/>
 
-  <!-- Bridge connection (thick, bold) -->
-  <path d="M 26 68 Q 64 92 102 68" fill="none" stroke="url(#bridge-g)" stroke-width="7" stroke-linecap="round" opacity="0.9"/>
+  <!-- Connection channels — flowing data between modules -->
+  <line x1="60" y1="68" x2="56" y2="76" stroke="#a78bfa" stroke-width="3" stroke-linecap="round" opacity="0.7"/>
+  <line x1="72" y1="68" x2="72" y2="76" stroke="#34d399" stroke-width="3" stroke-linecap="round" opacity="0.7"/>
 
-  <!-- Pillar support lines -->
-  <line x1="48" y1="52" x2="48" y2="72" stroke="#6c5ce7" stroke-width="4" stroke-linecap="round" opacity="0.5"/>
-  <line x1="80" y1="52" x2="80" y2="72" stroke="#06d6a0" stroke-width="4" stroke-linecap="round" opacity="0.5"/>
+  <!-- Center bridge node — shared memory point -->
+  <circle cx="64" cy="76" r="5" fill="#fff"/>
+  <circle cx="64" cy="76" r="3" fill="url(#flow-grad)"/>
+  <circle cx="64" cy="76" r="8" fill="none" stroke="url(#flow-grad)" stroke-width="1.5" opacity="0.5"/>
 
-  <!-- Data flow dots on the bridge arc -->
-  <circle cx="56" cy="74" r="4" fill="#8b7cf7" opacity="0.7"/>
-  <circle cx="64" cy="76" r="4" fill="#7c3aed" opacity="0.9"/>
-  <circle cx="72" cy="74" r="4" fill="#34d399" opacity="0.7"/>
+  <!-- Data flow dots -->
+  <circle cx="50" cy="50" r="2" fill="#c4b5fd" opacity="0.8"/>
+  <circle cx="56" cy="44" r="1.5" fill="#c4b5fd" opacity="0.6"/>
+  <circle cx="72" cy="48" r="2" fill="#34d399" opacity="0.8"/>
+  <circle cx="66" cy="54" r="1.5" fill="#34d399" opacity="0.6"/>
 
-  <!-- Minimal inner node accents (just a thin ring, no brain icon — cleaner at small sizes) -->
-  <circle cx="38" cy="44" r="14" fill="none" stroke="#fff" stroke-width="1.2" opacity="0.15"/>
-  <circle cx="90" cy="44" r="14" fill="none" stroke="#fff" stroke-width="1.2" opacity="0.15"/>
-
-  <!-- Subtle highlight on nodes -->
-  <ellipse cx="30" cy="36" rx="8" ry="5" fill="#fff" opacity="0.08" transform="rotate(-20,30,36)"/>
-  <ellipse cx="82" cy="36" rx="8" ry="5" fill="#fff" opacity="0.08" transform="rotate(-20,82,36)"/>
+  <!-- Highlight glints -->
+  <ellipse cx="54" cy="32" rx="6" ry="3" fill="#fff" opacity="0.15" transform="rotate(-30,54,32)"/>
+  <ellipse cx="54" cy="86" rx="6" ry="3" fill="#fff" opacity="0.15" transform="rotate(-30,54,86)"/>
 </svg>
