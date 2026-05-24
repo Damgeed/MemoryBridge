@@ -544,7 +544,6 @@
                 const data = await api('GET', '/health');
                 el.innerHTML = `🟢 Connected — ${data.service} v${data.version}`;
                 el.style.color = 'var(--green)';
-                document.getElementById('api-base-url').textContent = `API: ${window.location.origin}/`;
             } catch (e) {
                 el.innerHTML = `🔴 API unreachable — ${escapeHtml(e.message)}`;
                 el.style.color = '#ef4444';
