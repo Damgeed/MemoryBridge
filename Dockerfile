@@ -16,6 +16,10 @@ COPY --from=builder /app/dist/*.whl .
 
 RUN pip install --no-cache-dir *.whl && rm *.whl
 
+# Copy startup script
+COPY run.sh .
+RUN chmod +x run.sh
+
 EXPOSE 8000
 
-CMD ["memory-bridge"]
+CMD ["./run.sh"]

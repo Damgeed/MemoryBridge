@@ -5,5 +5,5 @@
 [deploy]
   startCommand = "memory-bridge"
   healthcheckPath = "/health"
-  healthcheckTimeout = 5
+  healthcheckTimeout = 30
   restarts = "always"

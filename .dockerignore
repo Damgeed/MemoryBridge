@@ -1,11 +1,8 @@
-.venv/
-.git/
-__pycache__/
-*.py[cod]
-*.egg-info/
+.git
+.venv
+__pycache__
+*.pyc
+.pytest_cache
 .env
 *.db
-tests/
-docs/
-smoke_test.sh
-.github/
+uv.lock
