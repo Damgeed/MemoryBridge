@@ -59,7 +59,11 @@ async def create_checkout(
     tier: str = "pro",
     billing: BillingService = Depends(_get_billing_service),
 ):
-    """Create a Stripe checkout session for upgrading."""
+    """Create a Stripe checkout session for upgrading.
+
+    The org_id comes from the URL path. For authenticated users, a
+    separate /checkout endpoint (without org_id) resolves from auth.
+    """
     url = await billing.create_checkout_session(
         organization_id=org_id,
         tier=tier,
@@ -70,6 +74,32 @@ async def create_checkout(
             detail="Could not create checkout session. Is Stripe configured?",
         )
     return {"checkout_url": url}
+
+
+@router.post("/checkout")
+async def create_checkout_auth(
+    request: Request,
+    tier: str = "pro",
+    billing: BillingService = Depends(_get_billing_service),
+):
+    """Create a Stripe checkout session, resolving org_id from auth.
+
+    Uses the authenticated API key's project_id or key_id as the
+    organization identifier — no client-side org_id needed.
+    """
+    # Resolve org_id from authenticated request (same logic as dashboard)
+    from .dashboard_controller import _resolve_org
+    org_id = _resolve_org(request)
+    url = await billing.create_checkout_session(
+        organization_id=org_id,
+        tier=tier,
+    )
+    if url is None:
+        raise HTTPException(
+            status_code=400,
+            detail="Could not create checkout session. Is Stripe configured?",
+        )
+    return {"checkout_url": url, "organization_id": org_id}
 
 
 @router.post("/cancel/{org_id}")

@@ -596,12 +596,13 @@
 
         // ── Checkout ─────────────────────────────────────────────
         async function checkout(tier) {
-            const key = localStorage.getItem('mb_api_key');
-            const orgId = 'demo';
             try {
-                const res = await fetch('/billing/checkout/' + orgId + '?tier=' + tier, {
+                const res = await fetch('/billing/checkout?tier=' + tier, {
                     method: 'POST',
-                    headers: key ? { 'Authorization': 'Bearer ' + key } : {},
+                    headers: {
+                        'Authorization': 'Bearer ' + (localStorage.getItem('mb_api_key') || ''),
+                        'Content-Type': 'application/json',
+                    },
                 });
                 if (!res.ok) throw new Error('Stripe not configured');
                 const data = await res.json();
