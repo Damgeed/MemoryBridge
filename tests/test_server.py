@@ -510,10 +510,9 @@ async def test_cors_headers():
     """Response includes Access-Control-Allow-Origin header when request has Origin."""
     transport = ASGITransport(app=app)
     async with AsyncClient(transport=transport, base_url="http://test") as client:
-        resp = await client.get("/health", headers={"Origin": "http://example.com"})
+        resp = await client.get("/health", headers={"Origin": "http://localhost:8000"})
         assert resp.status_code == 200
         assert "access-control-allow-origin" in resp.headers
-        # Value varies by Starlette version — either "*" or echo'd origin
 
 
 @pytest.mark.asyncio

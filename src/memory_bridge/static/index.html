@@ -3,6 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#0a0a0f" media="(prefers-color-scheme: dark)">
+    <meta name="theme-color" content="#f8f9fc" media="(prefers-color-scheme: light)">
     <title>Memory Bridge — Cross-Session Memory for AI Agent Teams</title>
     <link rel="icon" href="/playground/logo.svg" type="image/svg+xml">
     <link rel="stylesheet" href="/playground/style.css">
@@ -317,12 +319,45 @@
         }
 
         @media (max-width: 768px) {
-            .hero-section { flex-direction: column; padding: 2rem 1rem 1.5rem; min-height: auto; gap: 2rem; }
+            .hero-section { flex-direction: column; padding: 1.5rem 1rem 1.5rem; min-height: auto; gap: 1.5rem; }
+            .hero-section h1 { font-size: 1.8rem; }
             .hero-visual { width: 100%; }
+            .hero-stats { gap: 1rem; justify-content: center; }
+            .hero-stat .num { font-size: 1.3rem; }
             .steps-grid { grid-template-columns: 1fr; }
             .qa-grid { grid-template-columns: 1fr; }
-            .hero-stats { justify-content: center; }
-            .section { padding: 2rem 1rem; }
+            .section { padding: 1.5rem 1rem; }
+            .section-title { font-size: 1.3rem; }
+            .key-box { flex-wrap: wrap; padding: 0.6rem 1rem; }
+            .key-box code { font-size: 0.68rem; min-width: 0; width: 100%; order: 3; }
+            .key-box .btn { order: 2; }
+            .bubble { padding: 0.8rem 1rem; }
+            .bubble .bubble-text { font-size: 0.82rem; }
+        }
+
+        @media (max-width: 480px) {
+            .hero-section { padding: 1rem 0.75rem; gap: 1.25rem; }
+            .hero-section h1 { font-size: 1.5rem; }
+            .hero-tagline { font-size: 0.95rem; }
+            .hero-cta { flex-direction: column; }
+            .hero-cta .btn-primary { width: 100%; justify-content: center; }
+            .hero-cta .btn-secondary { width: 100%; justify-content: center; }
+            .hero-stats { flex-wrap: wrap; gap: 0.75rem; justify-content: center; }
+            .hero-stat .num { font-size: 1.1rem; }
+            .hero-stat .label { font-size: 0.7rem; }
+            .section-title { font-size: 1.15rem; }
+            .section-subtitle { font-size: 0.85rem; }
+            .step-card { padding: 1.25rem 1rem; }
+            .qa-card { padding: 1.1rem; }
+            .qa-card .q { font-size: 0.88rem; }
+            .qa-card .a { font-size: 0.82rem; }
+            .bubble:nth-child(2) { margin-left: 0.75rem !important; }
+            .cta-row { flex-direction: column; }
+            .cta-row .btn { width: 100%; justify-content: center; }
+            .model-card { padding: 1rem; overflow-x: auto; }
+            .model-table { font-size: 0.75rem; }
+            .model-table th,
+            .model-table td { padding: 0.4rem 0.5rem; }
         }
     </style>
 </head>

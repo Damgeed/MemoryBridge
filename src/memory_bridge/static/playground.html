@@ -149,9 +149,21 @@
         .playground-footer a:hover { color: var(--accent); }
 
         @media (max-width: 640px) {
-            .playground-container { padding: 1.25rem 1rem; }
+            .playground-container { padding: 1rem 0.75rem; }
             .api-key-bar { flex-direction: column; align-items: stretch; }
             .api-key-bar input { min-width: 0; }
+            .page-header h1 { font-size: 1.3rem; }
+            .store-card h2, .search-card h2 { font-size: 0.95rem; }
+        }
+
+        @media (max-width: 480px) {
+            .playground-container { padding: 0.75rem 0.5rem; }
+            .page-header h1 { font-size: 1.15rem; }
+            .page-subtitle { font-size: 0.82rem; }
+            .btn-group { flex-direction: column; }
+            .btn-group .btn { width: 100%; justify-content: center; }
+            .result-item { padding: 0.75rem; }
+            .result-item .meta { font-size: 0.68rem; gap: 0.4rem; }
         }
     </style>
 </head>
