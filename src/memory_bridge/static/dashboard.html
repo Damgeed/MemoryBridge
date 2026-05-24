@@ -502,55 +502,55 @@
     <div class="dash-container">
         <!-- Header -->
         <div class="dash-header">
-            <h1><span class="gradient-text">Dashboard</span></h1>
+            <h1><span class="gradient-text" data-i18n="dash.heading">Dashboard</span></h1>
         </div>
-        <p class="dash-subtitle" id="dash-status">Loading your dashboard...</p>
+        <p class="dash-subtitle" id="dash-status" data-i18n="dash.loading">Loading your dashboard...</p>
 
         <!-- API Key Login Bar -->
         <div id="key-login-bar" class="dash-card">
-            <span class="key-login-label">🔑 API Key:</span>
+            <span class="key-login-label" data-i18n="dash.key_label">🔑 API Key:</span>
             <input type="password" id="api-key-input" placeholder="Paste your API key here...">
             <div class="key-login-row">
-                <button class="btn btn-primary btn-sm" onclick="setApiKey()">Unlock Dashboard</button>
-                <button class="btn btn-secondary btn-sm" onclick="clearApiKey()">Clear</button>
+                <button class="btn btn-primary btn-sm" onclick="setApiKey()" data-i18n="dash.unlock">Unlock Dashboard</button>
+                <button class="btn btn-secondary btn-sm" onclick="clearApiKey()" data-i18n="dash.clear">Clear</button>
             </div>
             <span id="key-login-status"></span>
-            <a href="/pricing" class="forgot-link">Lost your key? Subscribe to get a new one →</a>
+            <a href="/pricing" class="forgot-link" data-i18n="dash.lost_key">Lost your key? Subscribe to get a new one →</a>
         </div>
 
         <div class="dash-grid">
             <!-- Subscription Card -->
             <div class="dash-card" id="sub-card">
-                <div class="card-title">💳 Subscription</div>
+                <div class="card-title" data-i18n="dash.sub_card">💳 Subscription</div>
                 <div id="sub-content">
-                    <div class="flex-center" style="gap:0.5rem;"><span class="spinner-sm"></span> Loading...</div>
+                    <div class="flex-center" style="gap:0.5rem;" data-i18n="dash.sub_loading"><span class="spinner-sm"></span> Loading...</div>
                 </div>
             </div>
 
             <!-- API Keys Card -->
             <div class="dash-card" id="keys-card">
-                <div class="card-title">🔑 API Keys</div>
+                <div class="card-title" data-i18n="dash.keys_card">🔑 API Keys</div>
                 <div style="margin-bottom:1rem;">
-                    <button class="btn btn-primary btn-sm" onclick="generateKey()">+ Generate New Key</button>
+                    <button class="btn btn-primary btn-sm" onclick="generateKey()" data-i18n="dash.keys_generate">+ Generate New Key</button>
                 </div>
                 <div id="keys-list">
-                    <div class="flex-center" style="gap:0.5rem;"><span class="spinner-sm"></span> Loading keys...</div>
+                    <div class="flex-center" style="gap:0.5rem;" data-i18n="dash.keys_loading"><span class="spinner-sm"></span> Loading keys...</div>
                 </div>
                 <div id="key-reveal-area"></div>
             </div>
 
             <!-- Setup Guide -->
             <div class="dash-card" id="setup-card">
-                <div class="card-title">🚀 Setup Guide</div>
-                <p style="margin-bottom:1.25rem;color:var(--text-muted);font-size:0.88rem;">
+                <div class="card-title" data-i18n="dash.setup_card">🚀 Setup Guide</div>
+                <p style="margin-bottom:1.25rem;color:var(--text-muted);font-size:0.88rem;" data-i18n="dash.setup_desc">
                     Get started in 2 steps. Your API key goes in the <code style="background:var(--bg-tertiary);padding:0.1rem 0.35rem;border-radius:4px;color:var(--accent);">Authorization</code> header.
                 </p>
 
                 <div class="step-flow">
                     <div class="step-num">1</div>
                     <div class="step-content">
-                        <h3>Run with Docker</h3>
-                        <p>Pull the image and start Memory Bridge on <strong>http://localhost:8000</strong>.</p>
+                        <h3 data-i18n="dash.step1_title">Run with Docker</h3>
+                        <p data-i18n="dash.step1_desc">Pull the image and start Memory Bridge on <strong>http://localhost:8000</strong>.</p>
                     </div>
                 </div>
                 <div class="term-block">
@@ -564,8 +564,8 @@
                 <div class="step-flow">
                     <div class="step-num">2</div>
                     <div class="step-content">
-                        <h3>Store your first memory</h3>
-                        <p>Replace <code style="font-size:0.78rem;">YOUR_API_KEY</code> with your key from above.</p>
+                        <h3 data-i18n="dash.step2_title">Store your first memory</h3>
+                        <p data-i18n="dash.step2_desc">Replace <code style="font-size:0.78rem;">YOUR_API_KEY</code> with your key from above.</p>
                     </div>
                 </div>
                 <div class="term-block">
@@ -632,7 +632,7 @@
             document.body.style.overflow = '';
         }
 
-        // ── Language ────────────────────────────────────────────────
+        // ── Language Selector ─────────────────────────────────────
         function toggleLang() {
             document.getElementById('lang-dropdown').classList.toggle('open');
         }
@@ -653,7 +653,32 @@
             document.querySelectorAll('.lang-opt').forEach(el => el.classList.remove('active'));
             const opt = document.querySelector(`.lang-opt[data-lang="${saved}"]`);
             if (opt) opt.classList.add('active');
+            // Apply translations
+            const lang = localStorage.getItem('mb-lang') || 'en';
+            const t = window.TRANSLATIONS?.[lang] || window.TRANSLATIONS?.en || {};
+            document.querySelectorAll('[data-i18n]').forEach(el => {
+                const key = el.getAttribute('data-i18n');
+                const text = t[key];
+                if (text) {
+                    if (key.endsWith('_loading') || key.endsWith('_desc')) {
+                        el.innerHTML = text;
+                    } else {
+                        el.innerHTML = text;
+                    }
+                }
+            });
         })();
+        function __(key, vars) {
+            const lang = localStorage.getItem('mb-lang') || 'en';
+            let text = (window.TRANSLATIONS?.[lang] || window.TRANSLATIONS?.en || {})[key];
+            if (!text) return key;
+            if (vars) {
+                for (const [k, v] of Object.entries(vars)) {
+                    text = text.replace(`{${k}}`, v);
+                }
+            }
+            return text;
+        }
 
         // ── API Client ──────────────────────────────────────────────
         const API_BASE = '';
@@ -672,12 +697,12 @@
             const input = document.getElementById('api-key-input');
             const status = document.getElementById('key-login-status');
             if (stored) {
-                status.textContent = '✅ Key saved — dashboard ready' ;
+                status.innerHTML = __( 'dash.key_saved');
                 if (input && !input.value) input.value = stored;
             } else if (input && input.value) {
-                status.textContent = '⚠️ Not saved yet — click Unlock to save.';
+                status.innerHTML = __( 'dash.key_not_saved');
             } else {
-                status.textContent = '❌ No key set — paste your key above or go to the Playground.';
+                status.innerHTML = __( 'dash.no_key');
             }
         }
 
@@ -709,9 +734,9 @@
             updateKeyLoginStatus();
             // Reset dashboard to unauthenticated state
             document.getElementById('dash-status').textContent = 'Key cleared. Paste your API key above to reconnect.';
-            document.getElementById('sub-content').innerHTML = '<div style=\"color:var(--text-muted);font-size:0.85rem;\">Enter your API key above to load subscription data.</div>';
+            document.getElementById('sub-content').innerHTML = `<div style="color:var(--text-muted);font-size:0.85rem;">${__('dash.sub_none')}</div>`;
             document.getElementById('keys-list').innerHTML =
-                '<div class=\"empty-keys\"><div class=\"icon\">🔑</div><div>Enter your API key to manage keys.</div></div>';
+                '<div class="empty-keys"><div class="icon">🔑</div><div>' + __('dash.keys_no_permission') + '</div></div>';
         }
 
         async function api(method, path, body) {
@@ -737,7 +762,7 @@
                 document.getElementById('dash-status').textContent = `${orgLabel} · ${tierLabel} plan`;
             } catch (e) {
                 document.getElementById('dash-status').textContent = '⚠️ Could not load dashboard data. Run the demo key in the playground to get started.';
-                document.getElementById('sub-content').innerHTML = '<div style="color:var(--text-muted);font-size:0.85rem;">Use the <a href="/playground/" style="color:var(--accent);">Playground</a> to generate test data first.</div>';
+                document.getElementById('sub-content').innerHTML = `<div style="color:var(--text-muted);font-size:0.85rem;">${__('dash.no_sub_tip')}</div>`;
             }
             loadKeys();
         }
@@ -753,9 +778,9 @@
             el.innerHTML = `
                 <div style="display:flex;align-items:center;gap:1rem;flex-wrap:wrap;">
                     <span class="tier-badge ${tierClass}">${tierLabel}</span>
-                    <span style="font-size:0.85rem;color:var(--text-muted);">Status: <strong style="color:var(--green);">${data.status}</strong></span>
-                    <span style="font-size:0.85rem;color:var(--text-muted);">Keys: <strong>${data.active_keys}</strong> active</span>
-                    ${periodEnd !== '—' ? `<span style="font-size:0.82rem;color:var(--text-faint);">Period ends: ${periodEnd}</span>` : ''}
+                    <span style="font-size:0.85rem;color:var(--text-muted);">${__( data.status === 'active' ? 'dash.status_active' : 'dash.status_canceled')}</span>
+                    <span style="font-size:0.85rem;color:var(--text-muted);">${__('dash.keys_count', {count: data.active_keys})}</span>
+                    ${periodEnd !== '—' ? `<span style="font-size:0.82rem;color:var(--text-faint);">${__('dash.period_ends', {date: periodEnd})}</span>` : ''}
                 </div>
             `;
         }
@@ -767,7 +792,7 @@
                 renderKeys(data.keys || []);
             } catch (e) {
                 document.getElementById('keys-list').innerHTML =
-                    '<div class="empty-keys"><div class="icon">🔑</div><div>Use the Playground first or set an API key.</div></div>';
+                    `<div class="empty-keys"><div class="icon">🔑</div><div>${__('dash.keys_no_permission')}</div></div>`;
             }
         }
 
@@ -777,8 +802,8 @@
                 el.innerHTML = `
                     <div class="empty-keys">
                         <div class="icon">🔑</div>
-                        <div>No API keys yet.</div>
-                        <div style="font-size:0.82rem;margin-top:0.3rem;color:var(--text-faint);">Click "Generate New Key" to create one.</div>
+                        <div>${__('dash.keys_empty')}</div>
+                        <div style="font-size:0.82rem;margin-top:0.3rem;color:var(--text-faint);">${__('dash.keys_empty_hint')}</div>
                     </div>`;
                 return;
             }
@@ -832,7 +857,13 @@
         }
 
         async function revokeKey(keyId) {
-            if (!confirm('Revoke this API key? It will stop working immediately.')) return;
+            // Count current keys to warn about deleting the last one
+            const keyItems = document.querySelectorAll('#keys-list .key-item');
+            const isLast = keyItems.length <= 1;
+            const msg = isLast
+                ? '⚠️ This is your LAST API key. If you revoke it, you will lose access to your account. To recover, use the "Lost your key?" link on the dashboard.\n\nAre you sure?'
+                : 'Revoke this API key? It will stop working immediately.';
+            if (!confirm(msg)) return;
             try {
                 await api('DELETE', '/dashboard/keys/' + keyId);
                 showToast('🗑️ Key revoked');
