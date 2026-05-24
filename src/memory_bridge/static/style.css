@@ -415,23 +415,6 @@ select.input { cursor: pointer; }
 /* ── Tag / Chip ────────────────────────────────────────── */
 
 /* ── Language Selector ─────────────────────────────────── */
-.lang-selector {
-    position: relative;
-    display: inline-flex;
-    align-items: center;
-    cursor: pointer;
-    padding: 0.25rem 0.5rem;
-    border-radius: var(--radius-sm);
-    font-size: 0.78rem;
-    color: var(--text-muted);
-    user-select: none;
-    transition: all var(--transition-fast);
-}
-.lang-selector:hover {
-    color: var(--text-primary);
-    background: var(--btn-secondary-hover);
-}
-.lang-current { font-weight: 600; letter-spacing: 0.02em; }
 .lang-dropdown {
     position: absolute;
     top: 100%;
@@ -463,6 +446,7 @@ select.input { cursor: pointer; }
     color: var(--accent) !important;
     background: var(--accent-glow);
 }
+
 .chip {
   display: inline-flex;
   align-items: center;

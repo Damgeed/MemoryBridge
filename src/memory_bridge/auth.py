@@ -15,7 +15,7 @@ from .dependencies import get_storage
 logger = logging.getLogger(__name__)
 
 
-EXEMPT_PATHS = {"/", "/health", "/docs", "/openapi.json", "/redoc", "/playground", "/badge", "/graph"}
+EXEMPT_PATHS = {"/", "/health", "/docs", "/openapi.json", "/redoc", "/playground", "/badge", "/graph", "/billing/webhook", "/pricing"}
 
 
 class APIKeyMiddleware(BaseHTTPMiddleware):

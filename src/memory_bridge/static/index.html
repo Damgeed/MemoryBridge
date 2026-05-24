@@ -333,12 +333,12 @@
         </a>
         <div class="nav-links">
             <a href="/" class="active">Home</a>
-            <a href="/playground/?api_key=mb-prod-3a2166c2083744bb90ac8933519d14790e56902d5ec1ba9a">Playground</a>
+            <a href="/playground/">Playground</a>
             <a href="/playground/graph.html">Graph</a>
             <a href="/pricing">Pricing</a>
             <a href="/docs">API Docs</a>
-            <div class="lang-selector" onclick="toggleLang()">
-            <span class="lang-current">🌐 EN</span>
+<div style="position:relative;display:inline-flex;">
+            <button class="theme-toggle" onclick="toggleLang()" title="Switch language" aria-label="Switch language">🌐</button>
             <div class="lang-dropdown" id="lang-dropdown">
                 <a href="#" data-lang="en" class="lang-opt active" onclick="setLang('en')">🇬🇧 English</a>
                 <a href="#" data-lang="zh" class="lang-opt" onclick="setLang('zh')">🇨🇳 中文</a>
@@ -349,7 +349,7 @@
                 <a href="#" data-lang="de" class="lang-opt" onclick="setLang('de')">🇩🇪 Deutsch</a>
             </div>
         </div>
-        <button class="theme-toggle" onclick="toggleTheme()" title="Toggle theme" aria-label="Toggle theme">🌙</button>
+            <button class="theme-toggle" onclick="toggleTheme()" title="Toggle theme" aria-label="Toggle theme">🌙</button>
         </div>
     </nav>
 
@@ -553,7 +553,7 @@
             document.getElementById('lang-dropdown').classList.toggle('open');
         }
         document.addEventListener('click', (e) => {
-            if (!e.target.closest('.lang-selector')) {
+            if (!e.target.closest('.theme-toggle') && !e.target.closest('.lang-dropdown')) {
                 document.getElementById('lang-dropdown')?.classList.remove('open');
             }
         });
