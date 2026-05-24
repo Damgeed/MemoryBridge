@@ -460,6 +460,7 @@ a:hover { color: var(--accent-light); text-decoration: none; }
   border: 1px solid var(--border-primary);
   border-radius: var(--radius-lg);
   padding: 1.5rem;
+  margin-bottom: 1.25rem;
   box-shadow: var(--shadow-sm);
   transition: all var(--transition-base);
 }
