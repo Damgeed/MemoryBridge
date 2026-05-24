@@ -312,10 +312,9 @@
             <a href="/">Home</a>
             <a href="/playground/">Playground</a>
             <a href="/playground/graph.html">Graph</a>
-            <a href="/docs">API Docs</a>
             <a href="/pricing" class="active">Pricing</a>
 <div style="position:relative;display:inline-flex;">
-            <button class="theme-toggle" onclick="toggleLang()" title="Switch language" aria-label="Switch language">🌐</button>
+            <button class="lang-toggle" onclick="toggleLang()" title="Switch language" aria-label="Switch language">🌐</button>
             <div class="lang-dropdown" id="lang-dropdown">
                 <a href="#" data-lang="en" class="lang-opt active" onclick="setLang('en')">🇬🇧 English</a>
                 <a href="#" data-lang="zh" class="lang-opt" onclick="setLang('zh')">🇨🇳 中文</a>
@@ -326,7 +325,7 @@
                 <a href="#" data-lang="de" class="lang-opt" onclick="setLang('de')">🇩🇪 Deutsch</a>
             </div>
         </div>
-            <button class="theme-toggle" onclick="toggleTheme()" title="Toggle theme" aria-label="Toggle theme">🌙</button>
+            <button class="theme-toggle-btn" onclick="toggleTheme()" title="Toggle theme" aria-label="Toggle theme">🌙</button>
         </div>
     </nav>
 
@@ -387,7 +386,7 @@
                 <li><span class="check">✓</span> Webhooks + HMAC signing</li>
                 <li><span class="check">✓</span> Team management</li>
             </ul>
-            <a href="#" onclick="checkout('starter')" class="btn btn-primary">Subscribe</a>
+            <a href="#" onclick="checkout('pro')" class="btn btn-primary">Subscribe</a>
         </div>
     </div>
 
@@ -474,7 +473,7 @@
 
         function updateToggleIcon() {
             const theme = document.documentElement.getAttribute('data-theme');
-            const btn = document.querySelector('.theme-toggle');
+            const btn = document.querySelector('.theme-toggle-btn');
             if (btn) btn.textContent = theme === 'dark' ? '🌙' : '☀️';
         }
 
@@ -500,7 +499,7 @@
             document.getElementById('lang-dropdown').classList.toggle('open');
         }
         document.addEventListener('click', (e) => {
-            if (!e.target.closest('.theme-toggle') && !e.target.closest('.lang-dropdown')) {
+            if (!e.target.closest('.lang-toggle') && !e.target.closest('.lang-dropdown')) {
                 document.getElementById('lang-dropdown')?.classList.remove('open');
             }
         });
@@ -522,7 +521,6 @@
             const opt = document.querySelector(`.lang-opt[data-lang="${code}"]`);
             if (opt) opt.classList.add('active');
             const codes = {en:'🇬🇧 EN',zh:'🇨🇳 ZH',ja:'🇯🇵 JA',ko:'🇰🇷 KO',es:'🇪🇸 ES',fr:'🇫🇷 FR',de:'🇩🇪 DE'};
-            document.querySelector('.lang-current').textContent = codes[code] || '🌐 EN';
             document.getElementById('lang-dropdown').classList.remove('open');
         }
 
