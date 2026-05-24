@@ -383,6 +383,7 @@
             <button class="btn btn-primary btn-sm" onclick="setApiKey()">Unlock Dashboard</button>
             <button class="btn btn-secondary btn-sm" onclick="clearApiKey()">Clear</button>
             <span id="key-login-status" style="font-size:0.82rem;color:var(--text-muted);"></span>
+            <a href="/pricing" style="font-size:0.78rem;color:var(--accent);text-decoration:underline;white-space:nowrap;">Lost your key? Subscribe to get a new one →</a>
         </div>
 
         <div class="dash-grid">
@@ -771,6 +772,14 @@
         // ── Init ──────────────────────────────────────────────────
         document.addEventListener('DOMContentLoaded', () => {
             currentApiKey = localStorage.getItem('mb_api_key') || '';
+
+            // Detect Stripe checkout redirect — call welcome endpoint
+            const params = new URLSearchParams(window.location.search);
+            const sessionId = params.get('session_id');
+            if (sessionId) {
+                handleStripeWelcome(sessionId);
+            }
+
             // Fill key input from localStorage if available
             if (currentApiKey) {
                 const input = document.getElementById('api-key-input');
@@ -779,6 +788,48 @@
             updateKeyLoginStatus();
             loadDashboard();
         });
+
+        async function handleStripeWelcome(sessionId) {
+            const statusEl = document.getElementById('dash-status');
+            statusEl.textContent = '🎉 Welcome! Setting up your account...';
+            try {
+                const res = await fetch('/dashboard/welcome?session_id=' + encodeURIComponent(sessionId));
+                if (!res.ok) {
+                    const err = await res.json().catch(() => ({}));
+                    statusEl.textContent = '⚠️ Could not verify purchase: ' + (err.detail || 'try again later');
+                    return;
+                }
+                const data = await res.json();
+                if (data.has_keys) {
+                    statusEl.textContent = '✅ Welcome back! You have ' + data.key_count + ' existing key(s). Paste one in the login bar above.';
+                } else if (data.key) {
+                    // First-time user — save key and show it
+                    localStorage.setItem('mb_api_key', data.key);
+                    currentApiKey = data.key;
+                    const input = document.getElementById('api-key-input');
+                    if (input) input.value = data.key;
+                    updateKeyLoginStatus();
+                    statusEl.textContent = '🎉 Welcome! Your new API key has been saved.';
+                    // Clear session_id from URL without reload
+                    window.history.replaceState({}, '', '/dashboard/');
+
+                    // Show the key in a reveal card
+                    document.getElementById('key-reveal-area').innerHTML = `
+                        <div class="key-reveal">
+                            <div style="margin-bottom:0.5rem;font-weight:700;font-size:0.85rem;">🎉 Your New API Key</div>
+                            <div class="key-plaintext">${escapeHtml(data.key)}</div>
+                            <div class="key-warning">⚠️ This is the only time you'll see the full key. It's saved in your browser.</div>
+                            <div style="margin-top:0.75rem;display:flex;gap:0.5rem;">
+                                <button class="btn btn-primary btn-sm" onclick="copyText(this, '${data.key}')">📋 Copy Key</button>
+                                <button class="btn btn-secondary btn-sm" onclick="document.getElementById('key-reveal-area').innerHTML='';">Dismiss</button>
+                            </div>
+                        </div>`;
+                    loadDashboard();
+                }
+            } catch (e) {
+                statusEl.textContent = '⚠️ Could not verify purchase: ' + e.message;
+            }
+        }
     </script>
 </body>
 </html>

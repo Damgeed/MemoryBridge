@@ -61,6 +61,60 @@ async def create_api_key(
     }
 
 
+@router.get("/welcome")
+async def welcome_setup(
+    session_id: str = Query("", description="Stripe checkout session ID"),
+    storage: MemoryRepository = Depends(get_storage),
+):
+    """Create a welcome API key for a user who just completed Stripe checkout.
+
+    This endpoint is rate-limited (1 call per session_id) and validates the
+    Stripe session before creating a key. Returns the plaintext key once.
+    """
+    if not session_id:
+        raise HTTPException(status_code=400, detail="Missing session_id parameter")
+
+    import stripe
+    try:
+        sess = stripe.checkout.Session.retrieve(session_id)
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Invalid Stripe session: {e}")
+
+    if sess.status != "complete":
+        raise HTTPException(status_code=400, detail="Stripe checkout not yet completed")
+
+    org_id = sess.get("client_reference_id") or sess.metadata.get("organization_id", "default")
+    tier = sess.metadata.get("tier", "free")
+
+    # Check if this org already has keys — if so, just list them
+    existing_keys = await storage.list_api_keys()
+    user_keys = [k for k in existing_keys if k.get("project_id") == org_id or not k.get("project_id")]
+    if user_keys:
+        # Return the most recent key's last-6 (don't show full key again)
+        return {
+            "welcome": True,
+            "has_keys": True,
+            "tier": tier,
+            "organization_id": org_id,
+            "key_count": len(user_keys),
+            "latest_key_id": user_keys[-1]["id"],
+            "hint": "Paste your existing key in the login bar above, or revoke old keys and generate a new one."
+        }
+
+    # Create first API key for this org
+    result = await storage.create_api_key(label=f"welcome-{tier}", project_id=org_id)
+    return {
+        "welcome": True,
+        "has_keys": False,
+        "key": result["key"],
+        "id": result["id"],
+        "label": result["label"],
+        "tier": tier,
+        "organization_id": org_id,
+        "created_at": result["created_at"],
+    }
+
+
 @router.get("/keys")
 async def list_api_keys(
     request: Request,

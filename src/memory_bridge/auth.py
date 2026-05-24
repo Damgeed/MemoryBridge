@@ -18,7 +18,7 @@ logger = logging.getLogger(__name__)
 DEMO_API_KEY = "mb_demo_public_test"
 
 
-EXEMPT_PATHS = {"/", "/health", "/docs", "/openapi.json", "/redoc", "/playground", "/badge", "/graph", "/billing/webhook", "/pricing", "/dashboard", "/dashboard/"}
+EXEMPT_PATHS = {"/", "/health", "/docs", "/openapi.json", "/redoc", "/playground", "/badge", "/graph", "/billing/webhook", "/pricing", "/dashboard", "/dashboard/", "/dashboard/welcome"}
 
 
 class APIKeyMiddleware(BaseHTTPMiddleware):
