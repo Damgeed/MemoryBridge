@@ -262,36 +262,6 @@
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
             Launch Playground
         </a>
-        <div class="nav-mobile-footer">
-            <button class="nav-icon-btn" onclick="toggleTheme()" title="Toggle theme" style="flex:1">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="18" height="18">
-                    <circle cx="12" cy="12" r="5"/>
-                    <line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/>
-                    <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
-                    <line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/>
-                    <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
-                </svg>
-            </button>
-            <div style="position:relative;flex:1">
-                <button class="nav-icon-btn" onclick="toggleLangMobile()" title="Language" style="width:100%">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="18" height="18">
-                        <circle cx="12" cy="12" r="10"/>
-                        <line x1="2" y1="12" x2="22" y2="12"/>
-                        <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
-                    </svg>
-                </button>
-                <div class="lang-dropdown" id="lang-dropdown-mobile" style="left:0;right:auto;min-width:160px">
-                    <a href="javascript:void(0)" data-lang="en" class="lang-opt active" onclick="setLang('en')">🇬🇧 English</a>
-                    <a href="javascript:void(0)" data-lang="zh" class="lang-opt" onclick="setLang('zh')">🇨🇳 中文</a>
-                    <a href="javascript:void(0)" data-lang="ja" class="lang-opt" onclick="setLang('ja')">🇯🇵 日本語</a>
-                    <a href="javascript:void(0)" data-lang="ko" class="lang-opt" onclick="setLang('ko')">🇰🇷 한국어</a>
-                    <a href="javascript:void(0)" data-lang="es" class="lang-opt" onclick="setLang('es')">🇪🇸 Español</a>
-                    <a href="javascript:void(0)" data-lang="fr" class="lang-opt" onclick="setLang('fr')">🇫🇷 Français</a>
-                    <a href="javascript:void(0)" data-lang="de" class="lang-opt" onclick="setLang('de')">🇩🇪 Deutsch</a>
-                </div>
-            </div>
-        </div>
-    </div>
 
     <!-- Toolbar -->
     <div class="graph-toolbar">
@@ -600,15 +570,11 @@
         function toggleLang() {
             document.getElementById('lang-dropdown').classList.toggle('open');
         }
-        function toggleLangMobile() {
-            document.getElementById('lang-dropdown-mobile').classList.toggle('open');
         }
         document.addEventListener('click', (e) => {
             if (!e.target.closest('.lang-toggle') && !e.target.closest('#lang-dropdown')) {
                 document.getElementById('lang-dropdown')?.classList.remove('open');
             }
-            if (!e.target.closest('#lang-dropdown-mobile') && !e.target.closest('[onclick="toggleLangMobile()"]')) {
-                document.getElementById('lang-dropdown-mobile')?.classList.remove('open');
             }
         });
         function setLang(code) {
@@ -618,7 +584,6 @@
             if (opt) opt.classList.add('active');
             applyTranslations();
             document.getElementById('lang-dropdown').classList.remove('open');
-            document.getElementById('lang-dropdown-mobile')?.classList.remove('open');
         }
         (function initLang() {
             initLanguage();
@@ -626,5 +591,6 @@
 
         // ── Load Graph ───────────────────────────────────────────────
         document.addEventListener('DOMContentLoaded', loadGraph);
+    </script>
 </body>
 </html>
