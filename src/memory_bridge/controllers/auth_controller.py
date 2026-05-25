@@ -103,3 +103,27 @@ async def get_my_api_key(request: Request):
         raise HTTPException(status_code=404, detail="No API keys found for your account. Use the dashboard to generate one.")
 
     return {"key_id": user_keys[0]["id"], "key_count": len(user_keys)}
+
+
+@router.get("/my-key-value")
+async def get_my_api_key_value(request: Request):
+    """Return the raw API key value for the authenticated user's org.
+
+    Requires a valid JWT in the Authorization header.
+    This returns the actual key string used to authenticate Memory Bridge API calls.
+    """
+    from ..dependencies import get_storage
+
+    auth = getattr(request.state, "auth", None)
+    if not auth or not auth.get("project_id"):
+        raise HTTPException(status_code=401, detail="Authentication required")
+
+    storage = await get_storage()
+    all_keys = await storage.list_api_keys()
+    org_id = auth["project_id"]
+    user_keys = [k for k in all_keys if k.get("project_id") == org_id and k.get("is_active") is not False]
+
+    if not user_keys:
+        raise HTTPException(status_code=404, detail="No API keys found for your account. Use the dashboard to generate one.")
+
+    return {"key": user_keys[0]["key"], "key_id": user_keys[0]["id"], "key_count": len(user_keys)}

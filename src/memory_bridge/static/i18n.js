@@ -169,16 +169,9 @@ const TRANSLATIONS = {
 
     // ── Dashboard ────────────────────────────────────
     "dash.heading": "Dashboard",
-    "dash.subtitle": "Your account status and API keys.",
     "dash.loading": "Loading your dashboard...",
-    "dash.key_label": "🔑 API Key:",
-    "dash.key_placeholder": "Paste your API key here...",
-    "dash.unlock": "Unlock Dashboard",
-    "dash.clear": "Clear",
-    "dash.key_saved": "✅ Key saved — dashboard ready",
-    "dash.key_not_saved": "⚠️ Not saved yet — click Unlock to save.",
-    "dash.no_key": "❌ No key set — paste your key above or go to the Playground.",
-    "dash.lost_key": "Lost your key? Subscribe to get a new one →",
+    "dash.sign_out": "Sign Out",
+    "dash.signed_out": "Signed out. Sign in again.",
 
     "dash.sub_card": "💳 Subscription",
     "dash.sub_loading": '<span class=\"spinner-sm\"></span> Loading...',

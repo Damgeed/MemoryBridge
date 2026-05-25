@@ -82,69 +82,6 @@
             gap: 0.4rem;
         }
 
-        /* Smooth expand/collapse for recovery form — no blink */
-        .recover-wrap {
-            overflow: hidden;
-            transition: max-height 0.3s cubic-bezier(0.4,0,0.2,1), opacity 0.25s ease;
-            max-height: 0;
-            opacity: 0;
-            visibility: hidden;
-        }
-        .recover-wrap.open {
-            max-height: 300px;
-            opacity: 1;
-            visibility: visible;
-        }
-
-        /* ── API Key Login Bar ─────────────────────── */
-        #key-login-bar {
-            margin-bottom: 1.5rem;
-            padding: 0.75rem 1rem;
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-            flex-wrap: wrap;
-        }
-        #key-login-bar input {
-            flex: 1;
-            min-width: 180px;
-            padding: 0.45rem 0.7rem;
-            border-radius: 6px;
-            border: 1px solid var(--border-primary);
-            background: var(--bg-tertiary);
-            color: var(--text-primary);
-            font-family: var(--font-mono);
-            font-size: 0.82rem;
-            outline: none;
-        }
-        #key-login-bar input:focus {
-            border-color: var(--accent);
-            box-shadow: 0 0 0 2px var(--accent-glow);
-        }
-        #key-login-bar .btn-sm { flex-shrink: 0; }
-        .key-login-label { font-size: 0.85rem; font-weight: 600; color: var(--text-muted); }
-        .key-login-row { display: flex; gap: 0.5rem; }
-        .forgot-link {
-            display: inline-flex;
-            align-items: center;
-            gap: 0.35rem;
-            font-size: 0.82rem;
-            color: var(--accent);
-            text-decoration: none;
-            font-weight: 600;
-            padding: 0.35rem 0.85rem;
-            border-radius: 6px;
-            background: var(--accent-glow);
-            border: 1px solid transparent;
-            transition: all 0.2s;
-        }
-        .forgot-link:hover {
-            border-color: var(--accent);
-            text-decoration: none;
-            color: var(--accent);
-            background: var(--accent-glow);
-        }
-
         /* ── API Key List ──────────────────────────── */
         .key-item {
             display: flex;
@@ -389,14 +326,6 @@
             .dash-grid { gap: 1rem; }
             .dash-card { padding: 1rem; }
 
-            /* Key login bar stacks vertically */
-            #key-login-bar { flex-direction: column; align-items: stretch; gap: 0.5rem; padding: 0.75rem; }
-            #key-login-bar input { min-width: unset; width: 100%; font-size: 0.82rem; }
-            #key-login-bar .btn-sm { width: 100%; justify-content: center; }
-            #key-login-bar .key-login-row { display: flex; gap: 0.5rem; }
-            #key-login-bar .key-login-row .btn-sm { flex: 1; }
-            #key-login-bar .forgot-link { display: block; text-align: center; }
-
             /* Key items — compact layout: label + date + actions on row 1, key on row 2 */
             .key-item {
                 display: grid;
@@ -449,10 +378,6 @@
             .dash-header h1 { font-size: 1.1rem; }
             .dash-card { padding: 0.85rem; }
             .dash-card .card-title { font-size: 0.9rem; margin-bottom: 0.7rem; }
-            #key-login-bar { padding: 0.6rem; gap: 0.4rem; }
-            #key-login-bar input { font-size: 0.75rem; padding: 0.35rem 0.5rem; }
-            #key-login-bar .btn-sm { font-size: 0.72rem; padding: 0.3rem 0.5rem; }
-            .key-login-row { gap: 0.3rem; }
             .key-item .key-label { font-size: 0.72rem; }
             .key-item .key-value { font-size: 0.68rem; }
             .key-item .key-date { font-size: 0.6rem; }
@@ -510,6 +435,10 @@
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="theme-moon" style="display:none">
                     <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
                 </svg>
+            </button>
+            <button class="nav-icon-btn auth-btn" id="auth-nav-btn" onclick="openSignup()" title="Sign in / Sign up" style="display:inline-flex;align-items:center;gap:0.3rem;padding:0.3rem 0.75rem;border-radius:6px;background:var(--accent-glow);color:var(--accent);border:1px solid transparent;font-size:0.82rem;font-weight:600;cursor:pointer;white-space:nowrap;font-family:var(--font-sans);transition:all 0.2s;" onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='transparent'">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                <span id="auth-btn-label">Sign In</span>
             </button>
             <a href="/playground/" class="nav-cta">
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
@@ -574,34 +503,6 @@
         </div>
         <p class="dash-subtitle" id="dash-status" data-i18n="dash.loading">Loading your dashboard...</p>
 
-        <!-- API Key Login Bar -->
-        <div id="key-login-bar" class="dash-card">
-            <span class="key-login-label" data-i18n="dash.key_label">🔑 API Key:</span>
-            <input type="password" id="api-key-input" placeholder="Paste your API key here...">
-            <div class="key-login-row">
-                <button class="btn btn-primary btn-sm" onclick="setApiKey()" data-i18n="dash.unlock">Unlock Dashboard</button>
-                <button class="btn btn-secondary btn-sm" onclick="clearApiKey()" data-i18n="dash.clear">Clear</button>
-            </div>
-            <span id="key-login-status"></span>
-            <div style="width:100%;">
-                <a href="javascript:void(0)" class="forgot-link" onclick="toggleRecoverForm()" id="recover-toggle" data-i18n="dash.lost_key">🔑 Lost your key? Recover with purchase email →</a>
-            </div>
-        </div>
-
-        <!-- Recovery Form -->
-        <div class="recover-wrap" id="recover-wrapper">
-        <div id="recover-form" class="dash-card" style="padding:1rem;margin-top:-0.75rem;border-top:none;border-radius:0 0 var(--radius-lg) var(--radius-lg);">
-            <div style="margin-bottom:0.75rem;font-weight:600;font-size:0.9rem;">🔐 Recover Your API Key</div>
-            <p style="font-size:0.82rem;color:var(--text-muted);margin-bottom:0.75rem;">Enter the email you used during Stripe checkout. We'll look up your subscription and issue a new API key — no charge.</p>
-            <div style="display:flex;gap:0.5rem;flex-wrap:wrap;">
-                <input type="email" id="recover-email" placeholder="your@email.com" style="flex:1;min-width:180px;padding:0.45rem 0.7rem;border-radius:6px;border:1px solid var(--border-primary);background:var(--bg-tertiary);color:var(--text-primary);font-size:0.82rem;outline:none;">
-                <button class="btn btn-primary btn-sm" onclick="recoverKey()">Recover Keys</button>
-                <button class="btn btn-secondary btn-sm" onclick="toggleRecoverForm()">Cancel</button>
-            </div>
-            <div id="recover-result" style="margin-top:0.75rem;"></div>
-        </div>
-        </div>
-
         <!-- Sign Up / Sign In Modal -->
         <div class="modal-overlay" id="signup-overlay"></div>
         <div class="modal" id="signup-modal" style="text-align:center;max-width:420px;">
@@ -634,7 +535,7 @@
             </div>
             <div id="auth-result" style="margin-top:0.75rem;min-height:1.5rem;"></div>
             <div style="margin-top:0.75rem;font-size:0.78rem;color:var(--text-muted);">
-                <a href="javascript:void(0)" onclick="closeSignup()" style="color:var(--accent);font-weight:500;text-decoration:none;">Continue without account →</a>
+                <a href="javascript:void(0)" onclick="closeSignup()" style="color:var(--text-faint);font-weight:500;text-decoration:none;">Close</a>
             </div>
         </div>
 
@@ -818,59 +719,52 @@
 
         function getAuthHeaders() {
             const headers = { 'Content-Type': 'application/json' };
-            const key = document.getElementById('api-key-input')?.value || localStorage.getItem('mb_api_key') || '';
+            const key = currentApiKey || localStorage.getItem('mb_api_key') || '';
             if (key) headers['Authorization'] = 'Bearer ' + key;
             return headers;
         }
 
-        // ── Key Login ───────────────────────────────────────────────
-        function updateKeyLoginStatus() {
-            const stored = localStorage.getItem('mb_api_key');
-            const input = document.getElementById('api-key-input');
-            const status = document.getElementById('key-login-status');
-            if (stored) {
-                status.innerHTML = __( 'dash.key_saved');
-                if (input && !input.value) input.value = stored;
-            } else if (input && input.value) {
-                status.innerHTML = __( 'dash.key_not_saved');
+        // ── Auth ──────────────────────────────────────────────────────
+        function updateAuthButton() {
+            const btn = document.getElementById('auth-nav-btn');
+            const label = document.getElementById('auth-btn-label');
+            const jwt = localStorage.getItem('mb_jwt');
+            const key = localStorage.getItem('mb_api_key');
+            if (jwt && key) {
+                btn.onclick = logout;
+                btn.title = 'Sign out';
+                label.textContent = 'Sign Out';
+                btn.style.display = 'inline-flex';
+            } else if (key) {
+                btn.onclick = openSignup;
+                btn.title = 'Sign in / Sign up';
+                label.textContent = 'Sign In';
+                btn.style.display = 'inline-flex';
             } else {
-                status.innerHTML = __( 'dash.no_key');
+                btn.onclick = openSignup;
+                btn.title = 'Sign in / Sign up';
+                label.textContent = 'Sign In';
+                btn.style.display = 'inline-flex';
             }
         }
 
-        function setApiKey() {
-            const input = document.getElementById('api-key-input');
-            const key = (input?.value || '').trim();
-            if (!key) {
-                document.getElementById('key-login-status').textContent = '⚠️ Please paste your API key.';
-                return;
-            }
-            localStorage.setItem('mb_api_key', key);
-            currentApiKey = key;
-            updateKeyLoginStatus();
-            reconnectDashboard();
-        }
-
-        function reconnectDashboard() {
-            // Force-reload all dashboard data with current key
-            const el = document.getElementById('dash-status');
-            el.textContent = '🔄 Reconnecting...';
-            document.getElementById('key-reveal-area').innerHTML = '';
-            loadDashboard();
-        }
-
-        function clearApiKey() {
+        function logout() {
+            localStorage.removeItem('mb_jwt');
             localStorage.removeItem('mb_api_key');
             currentApiKey = '';
-            document.getElementById('api-key-input').value = '';
-            updateKeyLoginStatus();
-            // Reset dashboard to unauthenticated state
-            document.getElementById('dash-status').textContent = 'Key cleared. Paste your API key above to reconnect.';
+            updateAuthButton();
+            document.getElementById('dash-status').textContent = '👋 Signed out. Sign in again to continue.';
             document.getElementById('sub-content').innerHTML = `<div style="color:var(--text-muted);font-size:0.85rem;">${__('dash.sub_none')}</div>`;
             document.getElementById('keys-list').innerHTML =
                 '<div class="empty-keys"><div class="icon">🔑</div><div>' + __('dash.keys_no_permission') + '</div></div>';
-            // Show sign-up modal so user can get a new free key
-            openSignup();
+            showToast('👋 Signed out');
+        }
+
+        function reloadDashboard() {
+            const el = document.getElementById('dash-status');
+            el.textContent = '🔄 Loading...';
+            document.getElementById('key-reveal-area').innerHTML = '';
+            loadDashboard();
         }
 
         async function api(method, path, body) {
@@ -999,7 +893,7 @@
             const icon = '🗑️';
             const title = isLast ? 'Revoke last API key?' : 'Revoke API key?';
             const text = isLast
-                ? 'This is your <strong>LAST active API key</strong>. If you revoke it, you will lose access to your account.<br><br>To recover, use the <strong>"Lost your key?"</strong> link below the login bar and re-subscribe.'
+                ? 'This is your <strong>LAST active API key</strong>. If you revoke it, you will lose access to your account.<br><br>To recover, <strong>Sign In</strong> with your email above to get a new key.'
                 : 'This API key will stop working <strong>immediately</strong>. Any services using it will lose access.';
             showConfirm(icon, title, text, 'Revoke Key', async () => {
                 try {
@@ -1010,52 +904,6 @@
                     showToast('❌ ' + e.message);
                 }
             });
-        }
-
-        // ── Key Recovery ───────────────────────────────────────────
-        function toggleRecoverForm() {
-            const wrapper = document.getElementById('recover-wrapper');
-            const isOpen = wrapper.classList.contains('open');
-            wrapper.classList.toggle('open');
-            // Don't hide toggle link — keeps layout stable, no blink
-            if (!isOpen) document.getElementById('recover-email')?.focus();
-        }
-
-        async function recoverKey() {
-            const email = document.getElementById('recover-email').value.trim();
-            const resultEl = document.getElementById('recover-result');
-            if (!email || !email.includes('@')) {
-                resultEl.innerHTML = '<div class="status error">⚠️ Please enter a valid email address.</div>';
-                return;
-            }
-            resultEl.innerHTML = '<div class="flex-center" style="gap:0.5rem;padding:0.5rem;"><span class="spinner-sm"></span> Looking up your purchase...</div>';
-            try {
-                const res = await fetch('/dashboard/recover?email=' + encodeURIComponent(email), { method: 'POST' });
-                if (!res.ok) {
-                    const err = await res.json().catch(() => ({ detail: 'Request failed' }));
-                    resultEl.innerHTML = `<div class="status error">❌ ${escapeHtml(err.detail || 'Could not recover key.')}</div>`;
-                    return;
-                }
-                const data = await res.json();
-                if (data.key) {
-                    localStorage.setItem('mb_api_key', data.key);
-                    document.getElementById('api-key-input').value = data.key;
-                    document.getElementById('key-login-status').innerHTML = '✅ Key recovered — dashboard ready';
-                    resultEl.innerHTML = `
-                        <div class="key-reveal" style="margin-top:0;">
-                            <div style="margin-bottom:0.5rem;font-weight:700;font-size:0.85rem;">🎉 Key Recovered — ${data.tier} plan</div>
-                            <div class="key-plaintext">${escapeHtml(data.key)}</div>
-                            <div class="key-warning">⚠️ This is the only time you'll see this key. Copy it now.</div>
-                            <div style="margin-top:0.75rem;display:flex;gap:0.5rem;">
-                                <button class="btn btn-primary btn-sm" onclick="copyText(this, '${data.key}')">📋 Copy Key</button>
-                                <button class="btn btn-secondary btn-sm" onclick="document.getElementById('recover-result').innerHTML='';toggleRecoverForm();reconnectDashboard();">Done</button>
-                            </div>
-                        </div>`;
-                    updateKeyLoginStatus();
-                }
-            } catch (e) {
-                resultEl.innerHTML = `<div class="status error">❌ Network error: ${escapeHtml(e.message)}</div>`;
-            }
         }
 
         // ── Auth Modal ──────────────────────────────────────────────
@@ -1079,8 +927,6 @@
         function closeSignup() {
             document.getElementById('signup-overlay').classList.remove('open');
             document.getElementById('signup-modal').classList.remove('open');
-            const keyInput = document.getElementById('api-key-input');
-            if (keyInput) setTimeout(() => keyInput.focus(), 200);
         }
 
         async function signupUser() {
@@ -1117,24 +963,35 @@
                 }
                 const regData = await regRes.json();
 
-                // 2. Get free API key (also creates user-backed org)
-                const keyRes = await fetch('/dashboard/free-signup?email=' + encodeURIComponent(email), { method: 'POST' });
-                if (!keyRes.ok) {
-                    const err = await keyRes.json().catch(() => ({detail: 'Could not get key'}));
-                    resultEl.innerHTML = `<div class="status error" style="font-size:0.82rem;">❌ ${escapeHtml(err.detail || 'Could not get API key')}</div>`;
-                    btn.disabled = false;
-                    return;
-                }
-                const keyData = await keyRes.json();
-
-                // 3. Save key + login
-                localStorage.setItem('mb_api_key', keyData.key);
+                // 2. Save JWT so my-key-value endpoint can authenticate
                 localStorage.setItem('mb_jwt', regData.token);
-                document.getElementById('api-key-input').value = keyData.key;
-                currentApiKey = keyData.key;
-                updateKeyLoginStatus();
+
+                // 3. Get or create the first API key for the user's org
+                let keyData;
+                const kvRes = await fetch('/auth/my-key-value', {
+                    headers: {'Authorization': 'Bearer ' + regData.token, 'Content-Type': 'application/json'},
+                });
+                if (!kvRes.ok) {
+                    // No key yet — create one via free-signup
+                    const fsRes = await fetch('/dashboard/free-signup?email=' + encodeURIComponent(email), { method: 'POST' });
+                    if (!fsRes.ok) {
+                        const err = await fsRes.json().catch(() => ({detail: 'Could not get key'}));
+                        resultEl.innerHTML = `<div class="status error" style="font-size:0.82rem;">❌ ${escapeHtml(err.detail || 'Could not create API key')}</div>`;
+                        btn.disabled = false;
+                        return;
+                    }
+                    keyData = await fsRes.json();
+                } else {
+                    keyData = await kvRes.json();
+                }
+
+                // 4. Save key + login
+                const apiKey = keyData.key || keyData.key;
+                localStorage.setItem('mb_api_key', apiKey);
+                currentApiKey = apiKey;
+                updateAuthButton();
                 closeSignup();
-                reconnectDashboard();
+                reloadDashboard();
                 showToast('🎉 Account created! Key saved.');
             } catch (e) {
                 resultEl.innerHTML = `<div class="status error" style="font-size:0.82rem;">❌ ${escapeHtml(e.message)}</div>`;
@@ -1172,30 +1029,30 @@
                 const loginData = await loginRes.json();
                 localStorage.setItem('mb_jwt', loginData.token);
 
-                // Look for an existing API key in localStorage
-                let apiKey = localStorage.getItem('mb_api_key');
-
-                if (!apiKey) {
-                    // Try to recover via the user's org — create a new key if needed
-                    const keyRes = await fetch('/dashboard/free-signup?email=' + encodeURIComponent(email), { method: 'POST' });
-                    if (keyRes.ok) {
-                        const keyData = await keyRes.json();
-                        apiKey = keyData.key;
+                // Fetch API key using JWT auth
+                const kvRes = await fetch('/auth/my-key-value', {
+                    headers: {'Authorization': 'Bearer ' + loginData.token, 'Content-Type': 'application/json'},
+                });
+                if (!kvRes.ok) {
+                    // No key yet — create one
+                    const fsRes = await fetch('/dashboard/free-signup?email=' + encodeURIComponent(email), { method: 'POST' });
+                    if (!fsRes.ok) {
+                        resultEl.innerHTML = '<div class="status error" style="font-size:0.82rem;">❌ No API key found for this account. Use <strong>Sign Up</strong> to create one.</div>';
+                        btn.disabled = false;
+                        return;
                     }
+                    const keyData = await fsRes.json();
+                    localStorage.setItem('mb_api_key', keyData.key);
+                    currentApiKey = keyData.key;
+                } else {
+                    const keyData = await kvRes.json();
+                    localStorage.setItem('mb_api_key', keyData.key);
+                    currentApiKey = keyData.key;
                 }
 
-                if (!apiKey) {
-                    resultEl.innerHTML = '<div class="status error" style="font-size:0.82rem;">❌ No API key found. Use Sign Up tab to create one.</div>';
-                    btn.disabled = false;
-                    return;
-                }
-
-                localStorage.setItem('mb_api_key', apiKey);
-                document.getElementById('api-key-input').value = apiKey;
-                currentApiKey = apiKey;
-                updateKeyLoginStatus();
+                updateAuthButton();
                 closeSignup();
-                reconnectDashboard();
+                reloadDashboard();
                 showToast('✅ Welcome back!');
             } catch (e) {
                 resultEl.innerHTML = `<div class="status error" style="font-size:0.82rem;">❌ ${escapeHtml(e.message)}</div>`;
@@ -1285,22 +1142,46 @@
         // ── Init ──────────────────────────────────────────────────
         document.addEventListener('DOMContentLoaded', () => {
             currentApiKey = localStorage.getItem('mb_api_key') || '';
+            const jwt = localStorage.getItem('mb_jwt');
 
             // Detect Stripe checkout redirect — call welcome endpoint
             const params = new URLSearchParams(window.location.search);
             const sessionId = params.get('session_id');
             if (sessionId) {
                 handleStripeWelcome(sessionId);
+                return;
             }
 
-            // Fill key input from localStorage if available
-            if (currentApiKey) {
-                const input = document.getElementById('api-key-input');
-                if (input) input.value = currentApiKey;
-                updateKeyLoginStatus();
-                loadDashboard();
+            // Check JWT first — auto-login and fetch API key
+            if (jwt && !currentApiKey) {
+                (async () => {
+                    try {
+                        const kvRes = await fetch('/auth/my-key-value', {
+                            headers: {'Authorization': 'Bearer ' + jwt, 'Content-Type': 'application/json'},
+                        });
+                        if (kvRes.ok) {
+                            const data = await kvRes.json();
+                            localStorage.setItem('mb_api_key', data.key);
+                            currentApiKey = data.key;
+                        }
+                    } catch (e) {
+                        // JWT expired or invalid — ignore
+                        localStorage.removeItem('mb_jwt');
+                    }
+                    updateAuthButton();
+                    if (currentApiKey) {
+                        reloadDashboard();
+                    } else {
+                        openSignup();
+                    }
+                })();
+            } else if (jwt && currentApiKey) {
+                updateAuthButton();
+                reloadDashboard();
+            } else if (currentApiKey) {
+                updateAuthButton();
+                reloadDashboard();
             } else {
-                // Show sign-up modal for first-time users
                 openSignup();
             }
         });
@@ -1317,14 +1198,12 @@
                 }
                 const data = await res.json();
                 if (data.has_keys) {
-                    statusEl.textContent = '✅ Welcome back! You have ' + data.key_count + ' existing key(s). Paste one in the login bar above.';
+                    statusEl.textContent = '✅ Welcome back! You have ' + data.key_count + ' existing key(s). Sign in below to access them.';
                 } else if (data.key) {
                     // First-time user — save key and show it
                     localStorage.setItem('mb_api_key', data.key);
                     currentApiKey = data.key;
-                    const input = document.getElementById('api-key-input');
-                    if (input) input.value = data.key;
-                    updateKeyLoginStatus();
+                    updateAuthButton();
                     statusEl.textContent = '🎉 Welcome! Your new API key has been saved.';
                     // Clear session_id from URL without reload
                     window.history.replaceState({}, '', '/dashboard/');
