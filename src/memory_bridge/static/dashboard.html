@@ -847,12 +847,6 @@
                 const orgLabel = data.organization_id === 'demo' ? 'Your Account' : `Org: ${data.organization_id}`;
                 const tierLabel = data.tier === 'demo' ? 'Demo' : data.tier.charAt(0).toUpperCase() + data.tier.slice(1);
                 document.getElementById('dash-status').textContent = `${orgLabel} · ${tierLabel} plan`;
-                const dashStatus = document.getElementById('dash-status');
-                const origStatus = dashStatus.textContent;
-                // If showing Free but user likely paid, try to restore from Stripe
-                if (data.tier === 'free' && data.organization_id && data.organization_id !== 'demo' && data.organization_id !== 'default') {
-                    restoreSubscription(origStatus);
-                }
             } catch (e) {
                 document.getElementById('dash-status').textContent = '⚠️ Could not load dashboard data. Run the demo key in the playground to get started.';
                 document.getElementById('sub-content').innerHTML = `<div style="color:var(--text-muted);font-size:0.85rem;">${__('dash.no_sub_tip')}</div>`;
@@ -860,22 +854,21 @@
             loadKeys();
         }
 
-        async function restoreSubscription(fallbackText) {
+        function restoreSubscription() {
             const statusEl = document.getElementById('dash-status');
-            const fallback = fallbackText || statusEl.textContent || 'Org: ... · Free plan';
+            const fallback = statusEl.textContent || 'Org: ... · Free plan';
             statusEl.textContent = '🔄 Checking for existing subscription...';
-            try {
-                const data = await api('POST', '/dashboard/restore-subscription');
+            api('POST', '/dashboard/restore-subscription').then(data => {
                 if (data.restored && data.tier !== 'free') {
                     statusEl.textContent = '✅ Subscription restored! Reloading...';
                     setTimeout(() => loadDashboard(), 500);
                 } else {
                     statusEl.textContent = fallback;
                 }
-            } catch (e) {
-                statusEl.textContent = '⚠️ Could not refresh subscription. ' + (e.message || '');
+            }).catch(e => {
+                statusEl.textContent = '⚠️ ' + (e.message || 'Refresh failed');
                 setTimeout(() => { statusEl.textContent = fallback; }, 3000);
-            }
+            });
         }
 
         function renderSubscription(data) {
@@ -962,6 +955,7 @@
                         </div>
                     </div>`;
                 loadKeys();
+                loadDashboard();  // Refresh subscription card key count
             } catch (e) {
                 if (e.message && (e.message.includes('max') && e.message.includes('API keys'))) {
                     document.getElementById('key-reveal-area').innerHTML = `
@@ -990,6 +984,7 @@
                     const result = await api('DELETE', '/dashboard/keys/' + keyId);
                     showToast('🗑️ Key revoked');
                     loadKeys();
+                    loadDashboard();  // Refresh subscription card key count
                 } catch (e) {
                     showToast('❌ ' + e.message);
                 }
