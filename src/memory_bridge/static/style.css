@@ -429,8 +429,9 @@ a:hover { color: var(--accent-light); text-decoration: none; }
   border: 1px solid #dadce0;
 }
 .auth-social-btn .s-icon.phone {
-  background: var(--accent);
-  color: #fff;
+  background: #fff;
+  border: 1px solid #dadce0;
+  color: #000;
 }
 .auth-social-btn .s-icon.email-icon {
   background: var(--bg-tertiary);
@@ -441,6 +442,11 @@ a:hover { color: var(--accent-light); text-decoration: none; }
 [data-theme="dark"] .auth-social-btn .s-icon.google {
   background: #2a2a3a;
   border-color: #3a3a4a;
+}
+[data-theme="dark"] .auth-social-btn .s-icon.phone {
+  background: #2a2a3a;
+  border-color: #3a3a4a;
+  color: #fff;
 }
 .auth-social-btn .s-arrow {
   color: var(--text-faint);

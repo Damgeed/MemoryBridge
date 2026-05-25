@@ -508,25 +508,39 @@
             <div class="qa-card fade-up">
                 <div class="q"><span class="q-icon">🗄️</span> Where does my data actually go?</div>
                 <div class="a">
-                    In production, to <strong>your PostgreSQL database</strong> hosted on Railway (or anywhere you point it).<br><br>
-                    Every memory is a row in a table you own. Export it, query it, delete it, audit it — it's your data, not locked in a proprietary store.<br><br>
-                    Self-hosted option runs on SQLite. No vendor lock-in either way.
+                    In production, to <strong>your PostgreSQL database</strong> on Railway (or your own server).<br><br>
+                    Every memory is a row in a table you own. No vendor lock-in — self-host with SQLite, or scale up to PostgreSQL. Export, query, delete, audit: it's your data.
+                </div>
+            </div>
+            <div class="qa-card fade-up">
+                <div class="q"><span class="q-icon">🪪</span> How do I sign up? Do you store my password?</div>
+                <div class="a">
+                    <strong>No passwords.</strong> Type your email → get a 6-digit code → enter it. That's it.<br><br>
+                    Or sign in with <strong>Google</strong>, <strong>Apple</strong>, or <strong>Phone (SMS)</strong>. All authentication is handled by <strong>Auth0</strong> — we never see or store your password because there isn't one.<br><br>
+                    Forgot your password? Doesn't exist. Every login sends a fresh code.
+                </div>
+            </div>
+            <div class="qa-card fade-up">
+                <div class="q"><span class="q-icon">🔐</span> Is my instance secure?</div>
+                <div class="a">
+                    <strong>Yes.</strong> Authentication is delegated to <strong>Auth0</strong> (SOC 2 certified, used by Fortune 500 companies).<br><br>
+                    API calls are authenticated via <strong>JWT</strong> or <strong>API keys</strong> with role-based access. Rate limiting per tier (Free: 60 req/min, Starter: 300, Pro: 600).<br><br>
+                    Your database is <strong>yours alone</strong> — multi-tenancy via schema-per-tenant with Row-Level Security.
                 </div>
             </div>
             <div class="qa-card fade-up">
                 <div class="q"><span class="q-icon">🧩</span> How do I connect ChatGPT / Gemini / local models?</div>
                 <div class="a">
-                    Memory Bridge is an <strong>API, not a plugin</strong>. The pattern is always the same:
+                    Memory Bridge is an <strong>API</strong> — not a plugin. The pattern is always the same:
                     <br><br>
                     <code>Query → Inject → Call LLM → Store</code><br><br>
                     1. Before your LLM call, <code>GET /memories/query</code> for relevant context<br>
-                    2. Inject that context into the system prompt<br>
-                    3. Call ChatGPT / Gemini / Ollama / whatever<br>
+                    2. Inject context into the system prompt<br>
+                    3. Call ChatGPT, Claude, Gemini, Ollama — anything with an API<br>
                     4. After, <code>POST /memories</code> with what was learned<br><br>
-                    We provide <strong>Python SDK</strong> and <strong>framework adapters</strong> for LangGraph, AutoGen, and CrewAI that automate this flow.
+                    <strong>Python SDK</strong> and <strong>framework adapters</strong> for LangGraph, AutoGen, and CrewAI automate the loop.
                 </div>
             </div>
-
 
         </div>
     </section>
