@@ -597,8 +597,8 @@
                 if (!res.ok) throw new Error('Stripe not configured');
                 const data = await res.json();
                 if (data.checkout_url) { window.location.href = data.checkout_url; }
-            } catch {
-                alert('Subscription is unavailable right now. Please try again.');
+            } catch (e) {
+                alert('Unable to start subscription: ' + (e.message || 'Please try again.'));
             }
         }
 
