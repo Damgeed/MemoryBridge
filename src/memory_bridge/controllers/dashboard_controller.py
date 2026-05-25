@@ -279,7 +279,7 @@ async def free_signup(
     org_id = str(uuid.uuid4())
 
     # Store subscription record for free tier tracking
-    from ..models.subscription import Subscription
+    from ..models import Subscription
     sub = Subscription(
         id=f"free-{org_id[:8]}",
         organization_id=org_id,
