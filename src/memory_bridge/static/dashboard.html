@@ -1338,11 +1338,10 @@
                     // Clean redirect — fresh state, no races
                     setTimeout(() => { window.location.href = '/dashboard/'; }, 800);
                 } else if (data.key) {
-                    // Save the key, then clean redirect to avoid stale-state races
+                    // Save the key, then show dashboard + redirect to clear stale state
                     localStorage.setItem('mb_api_key', data.key);
                     currentApiKey = data.key;
                     updateAuthButton();
-                    // Show welcome + key briefly, then redirect to fresh dashboard
                     statusEl.textContent = '🎉 Welcome to the ' + data.tier.charAt(0).toUpperCase() + data.tier.slice(1) + ' plan!';
                     document.getElementById('key-reveal-area').innerHTML = `
                         <div class="key-reveal">
@@ -1354,6 +1353,8 @@
                                 <button class="btn btn-secondary btn-sm" onclick="window.location.href='/dashboard/'">Continue →</button>
                             </div>
                         </div>`;
+                    // Populate dashboard immediately, then redirect cleans stale state
+                    loadDashboard();
                 }
             } catch (e) {
                 statusEl.textContent = '⚠️ Could not verify purchase: ' + e.message;
