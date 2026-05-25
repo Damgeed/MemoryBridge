@@ -3,7 +3,7 @@
  * Translations for all 4 pages in 7 languages.
  * Keys are data-i18n attribute values.
  */
-const TRANSLATIONS = {
+window.TRANSLATIONS = {
   en: {
     // ── Navbar ──────────────────────────────────────
     "nav.home": "Home",
