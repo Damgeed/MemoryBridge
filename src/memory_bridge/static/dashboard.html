@@ -602,15 +602,24 @@
         </div>
         </div>
 
-        <!-- Free Signup (visible when not authenticated) -->
-        <div id="free-signup-section" class="dash-card" style="margin-top:0.5rem;margin-bottom:1.5rem;text-align:center;">
-            <div style="font-size:1.1rem;font-weight:700;margin-bottom:0.3rem;">🚀 Get Your Free API Key</div>
-            <p style="font-size:0.85rem;color:var(--text-muted);margin-bottom:0.75rem;">Full API access with 1,000 memories, 100 sessions, 5 keys. Enter your email to start.</p>
-            <div style="display:flex;gap:0.5rem;max-width:400px;margin:0 auto;flex-wrap:wrap;justify-content:center;">
-                <input type="email" id="free-email" placeholder="your@email.com" style="flex:1;min-width:200px;padding:0.5rem 0.7rem;border-radius:6px;border:1px solid var(--border-primary);background:var(--bg-tertiary);color:var(--text-primary);font-size:0.88rem;outline:none;">
-                <button class="btn btn-primary" onclick="claimFreeKey()" id="free-claim-btn">Get Free Key</button>
+        <!-- Sign Up / Sign In Modal -->
+        <div class="modal-overlay" id="signup-overlay"></div>
+        <div class="modal" id="signup-modal" style="text-align:center;max-width:400px;">
+            <div style="font-size:2rem;margin-bottom:0.5rem;">🚀</div>
+            <div class="modal-title" style="margin-bottom:0.25rem;">Get Your Free API Key</div>
+            <p style="font-size:0.85rem;color:var(--text-muted);margin-bottom:1.25rem;">
+                Full API access — 1,000 memories, 100 sessions, 5 keys, 7-day retention.
+            </p>
+            <div id="signup-form">
+                <input type="email" id="signup-email" placeholder="your@email.com"
+                       style="width:100%;padding:0.6rem 0.8rem;margin-bottom:0.75rem;border-radius:6px;border:1px solid var(--border-primary);background:var(--bg-tertiary);color:var(--text-primary);font-size:0.9rem;outline:none;box-sizing:border-box;">
+                <button class="btn btn-primary" onclick="signupFree()" id="signup-btn" style="width:100%;">Get Free Key</button>
             </div>
-            <div id="free-result" style="margin-top:0.75rem;"></div>
+            <div id="signup-result" style="margin-top:0.75rem;"></div>
+            <div style="margin-top:1rem;font-size:0.82rem;color:var(--text-muted);">
+                Already have a key?
+                <a href="javascript:void(0)" onclick="closeSignup()" style="color:var(--accent);font-weight:600;text-decoration:none;">Log in</a>
+            </div>
         </div>
 
         <div class="dash-grid">
@@ -820,9 +829,6 @@
                 document.getElementById('key-login-status').textContent = '⚠️ Please paste your API key.';
                 return;
             }
-            // Hide free signup section once key is entered
-            const freeSection = document.getElementById('free-signup-section');
-            if (freeSection) freeSection.style.display = 'none';
             localStorage.setItem('mb_api_key', key);
             currentApiKey = key;
             updateKeyLoginStatus();
@@ -847,6 +853,8 @@
             document.getElementById('sub-content').innerHTML = `<div style="color:var(--text-muted);font-size:0.85rem;">${__('dash.sub_none')}</div>`;
             document.getElementById('keys-list').innerHTML =
                 '<div class="empty-keys"><div class="icon">🔑</div><div>' + __('dash.keys_no_permission') + '</div></div>';
+            // Show sign-up modal so user can get a new free key
+            openSignup();
         }
 
         async function api(method, path, body) {
@@ -1034,22 +1042,36 @@
             }
         }
 
-        // ── Free Signup ────────────────────────────────────────────
-        async function claimFreeKey() {
-            const email = document.getElementById('free-email').value.trim();
-            const resultEl = document.getElementById('free-result');
-            const btn = document.getElementById('free-claim-btn');
+        // ── Sign Up Modal ────────────────────────────────────────────
+        function openSignup() {
+            document.getElementById('signup-overlay').classList.add('open');
+            document.getElementById('signup-modal').classList.add('open');
+            setTimeout(() => document.getElementById('signup-email')?.focus(), 100);
+        }
+        function closeSignup() {
+            document.getElementById('signup-overlay').classList.remove('open');
+            document.getElementById('signup-modal').classList.remove('open');
+            // Focus the API key input for log in users
+            const keyInput = document.getElementById('api-key-input');
+            if (keyInput) setTimeout(() => keyInput.focus(), 200);
+        }
+
+        async function signupFree() {
+            const email = document.getElementById('signup-email').value.trim();
+            const resultEl = document.getElementById('signup-result');
+            const btn = document.getElementById('signup-btn');
+            const form = document.getElementById('signup-form');
             if (!email || !email.includes('@')) {
-                resultEl.innerHTML = '<div class="status error">⚠️ Please enter a valid email address.</div>';
+                resultEl.innerHTML = '<div class="status error" style="font-size:0.85rem;">⚠️ Please enter a valid email address.</div>';
                 return;
             }
-            resultEl.innerHTML = '<div class="flex-center" style="gap:0.5rem;padding:0.5rem;"><span class="spinner-sm"></span> Generating your free key...</div>';
+            resultEl.innerHTML = '<div style="padding:0.5rem;"><span class="spinner-sm"></span> Generating your free key...</div>';
             btn.disabled = true;
             try {
                 const res = await fetch('/dashboard/free-signup?email=' + encodeURIComponent(email), { method: 'POST' });
                 if (!res.ok) {
                     const err = await res.json().catch(() => ({ detail: 'Request failed' }));
-                    resultEl.innerHTML = `<div class="status error">❌ ${escapeHtml(err.detail || 'Could not create free key.')}</div>`;
+                    resultEl.innerHTML = `<div class="status error" style="font-size:0.85rem;">❌ ${escapeHtml(err.detail || 'Could not create free key.')}</div>`;
                     btn.disabled = false;
                     return;
                 }
@@ -1058,21 +1080,13 @@
                     localStorage.setItem('mb_api_key', data.key);
                     document.getElementById('api-key-input').value = data.key;
                     currentApiKey = data.key;
-                    document.getElementById('free-signup-section').style.display = 'none';
                     updateKeyLoginStatus();
+                    closeSignup();
                     reconnectDashboard();
-                    resultEl.innerHTML = `
-                        <div class="key-reveal" style="margin-top:0;">
-                            <div style="margin-bottom:0.5rem;font-weight:700;font-size:0.85rem;">🎉 Free Tier Ready</div>
-                            <div class="key-plaintext">${escapeHtml(data.key)}</div>
-                            <div class="key-warning">⚠️ Copy this key now — you won't see it again.</div>
-                            <div style="margin-top:0.75rem;display:flex;gap:0.5rem;justify-content:center;">
-                                <button class="btn btn-primary btn-sm" onclick="copyText(this, '${data.key}')">📋 Copy Key</button>
-                            </div>
-                        </div>`;
+                    showToast('🎉 Free tier ready! Key saved.');
                 }
             } catch (e) {
-                resultEl.innerHTML = `<div class="status error">❌ Network error: ${escapeHtml(e.message)}</div>`;
+                resultEl.innerHTML = `<div class="status error" style="font-size:0.85rem;">❌ Network error: ${escapeHtml(e.message)}</div>`;
                 btn.disabled = false;
             }
         }
@@ -1171,9 +1185,12 @@
             if (currentApiKey) {
                 const input = document.getElementById('api-key-input');
                 if (input) input.value = currentApiKey;
+                updateKeyLoginStatus();
+                loadDashboard();
+            } else {
+                // Show sign-up modal for first-time users
+                openSignup();
             }
-            updateKeyLoginStatus();
-            loadDashboard();
         });
 
         async function handleStripeWelcome(sessionId) {
