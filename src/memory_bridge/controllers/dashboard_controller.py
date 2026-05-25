@@ -94,81 +94,99 @@ async def create_api_key(
 @router.get("/welcome")
 async def welcome_setup(
     session_id: str = Query("", description="Stripe checkout session ID"),
+    organization_id: str = Query("", description="Organization ID passed from checkout response"),
+    tier: str = Query("", description="Tier passed from checkout (starter/pro/enterprise)"),
     storage: MemoryRepository = Depends(get_storage),
 ):
     """Create a welcome API key for a user who just completed Stripe checkout.
 
-    This endpoint is resilient — it works even if the Stripe API is temporarily
-    unavailable or the subscription hasn't propagated yet. The webhook will
-    finalize the subscription record asynchronously.
+    Accepts organization_id and tier directly from the frontend (saved during
+    the checkout redirect), so it works even if Stripe API is unavailable.
+    The Stripe webhook will finalize the subscription record asynchronously.
+
+    Falls back to retrieving org_id from Stripe session metadata when the
+    frontend doesn't provide it (legacy / direct-Stripe-redirect flow).
     """
-    if not session_id:
-        raise HTTPException(status_code=400, detail="Missing session_id parameter")
+    # 1. Use org_id + tier from frontend if provided (no Stripe needed)
+    org_id = organization_id.strip() if organization_id else ""
+    actual_tier = tier.strip().lower() if tier.strip() else ""
 
-    # Resolve org_id from session metadata or generate a new one
-    org_id = ""
-    tier = "free"
-
-    if session_id:
+    # 2. Fallback: try to get org_id from Stripe session metadata
+    if not org_id and session_id:
         try:
             import stripe
             sess = stripe.checkout.Session.retrieve(session_id)
-            if sess.status != "complete":
-                raise HTTPException(status_code=400, detail="Stripe checkout not yet completed")
-
-            # Get org_id from session (client_reference_id or metadata)
+            # Get org_id
             if hasattr(sess, "client_reference_id") and sess.client_reference_id:
                 org_id = sess.client_reference_id
-            elif sess.metadata and isinstance(sess.metadata, dict):
+            elif sess.metadata:
                 org_id = sess.metadata.get("organization_id", "")
-            elif hasattr(sess.metadata, "get"):
-                org_id = sess.metadata.get("organization_id", "")
-
-            tier = sess.metadata.get("tier", "free") if sess.metadata else "free"
-
-            logger.info("Welcome: session=%s, org_id=%s, tier=%s", session_id, org_id, tier)
-        except ImportError:
-            logger.warning("Stripe not installed — welcome endpoint limited")
-        except stripe.error.AuthenticationError:
-            logger.error("Stripe authentication failed — STRIPE_SECRET_KEY may be invalid")
+            if not actual_tier and sess.metadata:
+                actual_tier = sess.metadata.get("tier", "free")
+            logger.info("Welcome (Stripe fallback): session=%s, org_id=%s, tier=%s", session_id, org_id, actual_tier)
         except Exception as e:
-            logger.warning("Welcome endpoint: could not verify Stripe session: %s", e)
-            # Continue anyway — create a key for the user
-            if not org_id:
-                import uuid
-                org_id = str(uuid.uuid4())
+            logger.warning("Welcome: Stripe session retrieval failed: %s", e)
 
+    # 3. Generate a new org_id only as last resort
     if not org_id:
         import uuid
         org_id = str(uuid.uuid4())
+        logger.info("Welcome: generated new org_id=%s (no org_id from frontend or Stripe)", org_id)
 
-    # Attempt to store subscription record (best-effort, webhook will finalize)
+    if not actual_tier:
+        actual_tier = "free"
+
+    # 4. Attempt to store subscription record (best-effort, webhook finalizes)
     try:
-        import stripe
-        sess = stripe.checkout.Session.retrieve(session_id)
-        sub_id = sess.get("subscription", "") if hasattr(sess, "get") else getattr(sess, "subscription", "")
-        if sub_id:
-            sub_data = stripe.Subscription.retrieve(sub_id)
-            items = sub_data.get("items", {}).get("data", [])
-            price_id = items[0].get("price", {}).get("id", "") if items else ""
-            from ..services.billing_service import PRICE_IDS
-            for t, pid in PRICE_IDS.items():
-                if pid == price_id:
-                    tier = t
-                    break
-            from ..models.subscription import Subscription
-            from datetime import datetime, timezone
-            sub = Subscription(
-                id=sub_id,
-                organization_id=org_id,
-                stripe_customer_id=sess.get("customer", "") or "",
-                tier=tier,
-                status=sub_data.get("status", "active"),
-                current_period_start=datetime.fromtimestamp(sub_data.get("current_period_start", 0), tz=timezone.utc) if sub_data.get("current_period_start") else None,
-                current_period_end=datetime.fromtimestamp(sub_data.get("current_period_end", 0), tz=timezone.utc) if sub_data.get("current_period_end") else None,
-            )
-            await storage.store_subscription(sub)
-            logger.info("Welcome: stored subscription for org=%s tier=%s", org_id, tier)
+        from ..models.subscription import Subscription
+        from datetime import datetime, timezone
+
+        # See if we have a Stripe subscription ID to store
+        sub_id = ""
+        stripe_customer = ""
+        sub_status = "active"
+        period_start = None
+        period_end = None
+
+        if session_id:
+            try:
+                import stripe
+                sess = stripe.checkout.Session.retrieve(session_id)
+                stripe_customer = sess.get("customer", "") if hasattr(sess, "get") else getattr(sess, "customer", "")
+                sid = sess.get("subscription", "") if hasattr(sess, "get") else getattr(sess, "subscription", "")
+                if sid:
+                    sub_id = sid
+                    sub_data = stripe.Subscription.retrieve(sid)
+                    sub_status = sub_data.get("status", "active") if hasattr(sub_data, "get") else getattr(sub_data, "status", "active")
+                    ps = sub_data.get("current_period_start", 0) if hasattr(sub_data, "get") else getattr(sub_data, "current_period_start", 0)
+                    pe = sub_data.get("current_period_end", 0) if hasattr(sub_data, "get") else getattr(sub_data, "current_period_end", 0)
+                    if ps:
+                        period_start = datetime.fromtimestamp(ps, tz=timezone.utc)
+                    if pe:
+                        period_end = datetime.fromtimestamp(pe, tz=timezone.utc)
+                    # Override tier from actual Stripe price
+                    items = sub_data.get("items", {}).get("data", []) if hasattr(sub_data, "get") else getattr(sub_data, "items", {}).get("data", [])
+                    if items:
+                        price_id = items[0].get("price", {}).get("id", "")
+                        from ..services.billing_service import PRICE_IDS
+                        for t, pid in PRICE_IDS.items():
+                            if pid == price_id:
+                                actual_tier = t
+                                break
+            except Exception as e:
+                logger.warning("Welcome: could not fetch Stripe subscription details: %s", e)
+
+        sub = Subscription(
+            id=sub_id or f"manual-{org_id[:8]}",
+            organization_id=org_id,
+            stripe_customer_id=stripe_customer,
+            tier=actual_tier,
+            status=sub_status,
+            current_period_start=period_start or datetime.now(timezone.utc),
+            current_period_end=period_end or datetime.now(timezone.utc).replace(year=datetime.now(timezone.utc).year + 1),
+        )
+        await storage.store_subscription(sub)
+        logger.info("Welcome: stored subscription for org=%s tier=%s", org_id, actual_tier)
     except Exception as e:
         logger.warning("Welcome: could not pre-store subscription: %s", e)
 
@@ -180,7 +198,7 @@ async def welcome_setup(
         return {
             "welcome": True,
             "has_keys": True,
-            "tier": tier,
+            "tier": actual_tier,
             "organization_id": org_id,
             "key_count": len(active_keys),
             "latest_key_id": active_keys[-1]["id"],
@@ -189,14 +207,14 @@ async def welcome_setup(
 
     # Create first API key for this org
     try:
-        result = await storage.create_api_key(label=f"welcome-{tier}", project_id=org_id)
+        result = await storage.create_api_key(label=f"welcome-{actual_tier}", project_id=org_id)
         return {
             "welcome": True,
             "has_keys": False,
             "key": result["key"],
             "id": result["id"],
             "label": result["label"],
-            "tier": tier,
+            "tier": actual_tier,
             "organization_id": org_id,
             "created_at": result["created_at"],
         }

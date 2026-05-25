@@ -413,30 +413,33 @@ a:hover { color: var(--accent-light); text-decoration: none; }
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  font-size: 1rem;
-  font-weight: 700;
+}
+.auth-social-btn .s-icon svg {
+  width: 20px;
+  height: 20px;
+  display: block;
 }
 .auth-social-btn .s-icon.google {
   background: #fff;
-  color: #333;
   border: 1px solid #dadce0;
-  font-size: 1.1rem;
 }
 .auth-social-btn .s-icon.apple {
   background: #000;
-  color: #fff;
-  font-size: 1.2rem;
 }
 .auth-social-btn .s-icon.microsoft {
-  background: #0078d4;
-  color: #fff;
-  font-size: 0.9rem;
-  font-weight: 600;
+  background: #fff;
+  border: 1px solid #dadce0;
 }
 .auth-social-btn .s-icon.email-icon {
   background: var(--bg-tertiary);
   color: var(--text-muted);
   font-size: 1rem;
+}
+/* Dark theme icon backgrounds */
+[data-theme="dark"] .auth-social-btn .s-icon.google,
+[data-theme="dark"] .auth-social-btn .s-icon.microsoft {
+  background: #2a2a3a;
+  border-color: #3a3a4a;
 }
 .auth-social-btn .s-arrow {
   margin-left: auto;
