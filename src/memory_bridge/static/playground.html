@@ -790,8 +790,8 @@
             <span>or continue with email</span>
             <hr>
           </div>
-          <input type="email" class="auth-social-btn" id="pl-email" placeholder="you@example.com" autocomplete="email" onkeydown="if(event.key==='Enter')continueWithEmail()">
-          <button class="auth-social-btn" onclick="continueWithEmail()" id="pl-email-btn" style="justify-content:center;font-weight:600;color:var(--accent);"><span>Continue</span><span class="s-arrow">→</span></button>
+          <input type="email" class="auth-email-field" id="pl-email" placeholder="you@example.com" autocomplete="email" onkeydown="if(event.key==='Enter')continueWithEmail()">
+          <button class="auth-email-cta" onclick="continueWithEmail()" id="pl-email-btn">Continue →</button>
           <div class="auth-error" id="auth-error-main"></div>
         </div>
 
@@ -823,10 +823,59 @@
 
     <style>
       /* ── Auth Modal: Passwordless ────────────────────── */
-      input.auth-social-btn:focus {
+      .auth-email-field {
+        width: 100%;
+        padding: 0.7rem 1rem 0.7rem 2.5rem;
+        border-radius: var(--radius-sm);
+        border: 1px solid var(--border-primary);
+        background: var(--bg-glass);
+        color: var(--text-primary);
+        font-size: 0.88rem;
+        font-family: var(--font-sans);
+        transition: all var(--transition-fast);
+        outline: none;
+        box-sizing: border-box;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23888888' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='2' y='4' width='20' height='16' rx='2'/%3E%3Cpath d='M22 7l-10 7L2 7'/%3E%3C/svg%3E");
+        background-repeat: no-repeat;
+        background-position: 0.75rem center;
+        background-size: 16px;
+      }
+      .auth-email-field:focus {
         border-color: var(--accent);
         box-shadow: 0 0 0 2px var(--accent-glow);
-        outline: none;
+      }
+      .auth-email-field::placeholder {
+        color: var(--text-faint);
+      }
+      .auth-email-cta {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 100%;
+        padding: 0.7rem 1rem;
+        border-radius: var(--radius-sm);
+        border: none;
+        background: var(--accent-gradient);
+        color: #fff;
+        font-size: 0.88rem;
+        font-weight: 700;
+        font-family: var(--font-sans);
+        cursor: pointer;
+        transition: all var(--transition-fast);
+        gap: 0.4rem;
+      }
+      .auth-email-cta:hover {
+        opacity: 0.9;
+        transform: translateY(-1px);
+        box-shadow: var(--shadow-sm);
+      }
+      .auth-email-cta:active {
+        transform: translateY(0);
+      }
+      .auth-email-cta:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+        transform: none;
       }
       .auth-code-info {
         text-align: center;

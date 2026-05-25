@@ -245,7 +245,46 @@
   }
 
   /* ── Auth Modal: Passwordless ────────────────────── */
-  input.auth-social-btn:focus {
+  .auth-email-field {
+    width: 100%;
+    padding: 0.7rem 0.9rem;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--card);
+    color: var(--text);
+    font-size: 0.92rem;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+  .auth-email-field:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 2px var(--accent-glow);
+    outline: none;
+  }
+  .auth-email-cta {
+    width: 100%;
+    padding: 0.7rem 0.9rem;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--card);
+    color: var(--accent);
+    font-size: 0.92rem;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.4rem;
+    transition: border-color 0.2s, background 0.2s, color 0.2s;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  }
+  .auth-email-cta:hover {
+    border-color: var(--accent);
+    background: rgba(124,92,252,0.08);
+    color: var(--accent2);
+  }
+  .auth-email-cta:focus {
     border-color: var(--accent);
     box-shadow: 0 0 0 2px var(--accent-glow);
     outline: none;
@@ -675,8 +714,8 @@ document.addEventListener('DOMContentLoaded', runDemo);
             <span>or continue with email</span>
             <hr>
           </div>
-          <input type="email" class="auth-social-btn" id="pl-email" placeholder="you@example.com" autocomplete="email" onkeydown="if(event.key==='Enter')continueWithEmail()">
-          <button class="auth-social-btn" onclick="continueWithEmail()" id="pl-email-btn" style="justify-content:center;font-weight:600;color:var(--accent);"><span>Continue</span><span class="s-arrow">→</span></button>
+          <input type="email" class="auth-email-field" id="pl-email" placeholder="you@example.com" autocomplete="email" onkeydown="if(event.key==='Enter')continueWithEmail()">
+          <button class="auth-email-cta" onclick="continueWithEmail()" id="pl-email-btn" style="justify-content:center;font-weight:600;color:var(--accent);"><span>Continue</span><span class="s-arrow">→</span></button>
           <div class="auth-error" id="auth-error-main"></div>
         </div>
 
