@@ -54,6 +54,13 @@
         .tier-badge.starter { background: var(--accent-glow); color: var(--accent); border: 1px solid var(--accent); }
         .tier-badge.pro { background: var(--accent-glow); color: var(--accent); border: 1px solid var(--accent); }
         .tier-badge.enterprise { background: var(--green-bg); color: var(--green); border: 1px solid var(--green); }
+        .refresh-sub-btn {
+            background: none; border: 1px solid var(--border-primary); border-radius: 50%;
+            width: 28px; height: 28px; display: inline-flex; align-items: center; justify-content: center;
+            cursor: pointer; color: var(--text-muted); font-size: 1rem; padding: 0; transition: all 0.2s;
+        }
+        .refresh-sub-btn:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-glow); }
+        .refresh-sub-btn:active { transform: rotate(180deg); }
 
         .dash-grid {
             display: grid;
@@ -833,11 +840,34 @@
                 const orgLabel = data.organization_id === 'demo' ? 'Your Account' : `Org: ${data.organization_id}`;
                 const tierLabel = data.tier === 'demo' ? 'Demo' : data.tier.charAt(0).toUpperCase() + data.tier.slice(1);
                 document.getElementById('dash-status').textContent = `${orgLabel} · ${tierLabel} plan`;
+                // If showing Free but user likely paid, try to restore from Stripe
+                if (data.tier === 'free' && data.organization_id && data.organization_id !== 'demo' && data.organization_id !== 'default') {
+                    restoreSubscription();
+                }
             } catch (e) {
                 document.getElementById('dash-status').textContent = '⚠️ Could not load dashboard data. Run the demo key in the playground to get started.';
                 document.getElementById('sub-content').innerHTML = `<div style="color:var(--text-muted);font-size:0.85rem;">${__('dash.no_sub_tip')}</div>`;
             }
             loadKeys();
+        }
+
+        async function restoreSubscription() {
+            try {
+                const statusEl = document.getElementById('dash-status');
+                statusEl.textContent = '🔄 Checking for existing subscription...';
+                const res = await api('POST', '/dashboard/restore-subscription');
+                if (!res.ok) return;
+                const data = await res.json();
+                if (data.restored && data.tier !== 'free') {
+                    // Reload dashboard with correct tier
+                    statusEl.textContent = '✅ Subscription restored! Reloading...';
+                    setTimeout(() => loadDashboard(), 500);
+                } else if (data.restored === false && data.reason === 'Stripe not configured') {
+                    // Stripe not set up — nothing to restore, show free normally
+                }
+            } catch (e) {
+                // Silently fail — not critical
+            }
         }
 
         function renderSubscription(data) {
@@ -854,6 +884,7 @@
                     <span style="font-size:0.85rem;color:var(--text-muted);">${__( data.status === 'active' ? 'dash.status_active' : 'dash.status_canceled')}</span>
                     <span style="font-size:0.85rem;color:var(--text-muted);">${__('dash.keys_count', {count: data.active_keys})}</span>
                     ${periodEnd !== '—' ? `<span style="font-size:0.82rem;color:var(--text-faint);">${__('dash.period_ends', {date: periodEnd})}</span>` : ''}
+                    ${data.tier === 'free' ? `<button class="refresh-sub-btn" onclick="restoreSubscription()" title="Refresh subscription status">↻</button>` : ''}
                 </div>
             `;
         }

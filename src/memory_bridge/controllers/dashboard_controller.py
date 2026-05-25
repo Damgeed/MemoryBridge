@@ -252,6 +252,83 @@ async def revoke_api_key(
     return {"revoked": True, "key_id": key_id}
 
 
+@router.post("/restore-subscription")
+async def restore_subscription(
+    request: Request,
+    storage: MemoryRepository = Depends(get_storage),
+):
+    """Restore a subscription record from Stripe for the current org.
+
+    For users who paid before the welcome endpoint reliably stored
+    their subscription locally. Searches Stripe for a checkout session
+    matching this org_id and recreates the local subscription record.
+    """
+    org_id = _resolve_org(request)
+    if not org_id or org_id in ("default", "demo", ""):
+        return {"restored": False, "tier": "free", "reason": "No org_id"}
+
+    # Check if already have a subscription
+    try:
+        existing = await storage.get_subscription_by_org(org_id)
+        if existing and existing.status not in ("canceled",):
+            return {"restored": False, "tier": existing.tier, "reason": "Already exists"}
+    except Exception:
+        pass
+
+    # Try to find Stripe checkout session by client_reference_id
+    try:
+        import stripe
+        stripe.api_key = os.environ.get("STRIPE_SECRET_KEY", "")
+        if not stripe.api_key:
+            return {"restored": False, "tier": "free", "reason": "Stripe not configured"}
+
+        sessions = stripe.checkout.Session.list(
+            client_reference_id=org_id,
+            limit=5,
+            expand=["data.subscription"],
+        )
+        for sess in sessions.data:
+            if sess.status == "complete" and sess.subscription:
+                sub_data = sess.subscription
+                from ..models.subscription import Subscription
+                from datetime import datetime, timezone
+                from ..services.billing_service import PRICE_IDS
+
+                # Resolve tier from price
+                tier = sess.metadata.get("tier", "free") if sess.metadata else "free"
+                items = sub_data.get("items", {}).get("data", [])
+                if items:
+                    price_id = items[0].get("price", {}).get("id", "")
+                    for t, pid in PRICE_IDS.items():
+                        if pid == price_id:
+                            tier = t
+                            break
+
+                sub = Subscription(
+                    id=sub_data.get("id", f"restored-{org_id[:8]}"),
+                    organization_id=org_id,
+                    stripe_customer_id=sess.get("customer", "") or "",
+                    tier=tier,
+                    status=sub_data.get("status", "active"),
+                    current_period_start=datetime.fromtimestamp(
+                        sub_data.get("current_period_start", 0), tz=timezone.utc
+                    ) if sub_data.get("current_period_start") else datetime.now(timezone.utc),
+                    current_period_end=datetime.fromtimestamp(
+                        sub_data.get("current_period_end", 0), tz=timezone.utc
+                    ) if sub_data.get("current_period_end") else None,
+                )
+                await storage.store_subscription(sub)
+                logger.info("Subscription restored: org=%s tier=%s sub=%s", org_id, tier, sub.id)
+                return {"restored": True, "tier": tier}
+
+        return {"restored": False, "tier": "free", "reason": "No matching Stripe session"}
+    except ImportError:
+        return {"restored": False, "tier": "free", "reason": "Stripe not installed"}
+    except Exception as e:
+        logger.warning("Restore subscription failed for org=%s: %s", org_id, e)
+        return {"restored": False, "tier": "free", "reason": str(e)}
+
+
 @router.get("/data")
 async def get_dashboard_data(
     request: Request,
