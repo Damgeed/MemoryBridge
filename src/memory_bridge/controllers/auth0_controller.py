@@ -163,9 +163,23 @@ async def auth0_callback(
             logger.error("Auth0 user creation failed: %s", e)
             raise HTTPException(status_code=500, detail="Could not create user account")
 
+        # Create free subscription + API key for new user so dashboard can load
+        try:
+            from ..models import Subscription
+            sub = Subscription(id=f"free-{org_id[:8]}", organization_id=org_id, tier="free", status="active")
+            await storage.store_subscription(sub)
+        except Exception as e:
+            logger.warning("Could not create subscription for new user: %s", e)
+        try:
+            from datetime import datetime, timezone
+            key_label = f"auth0-key-{datetime.now(timezone.utc).strftime('%Y%m%d')}"
+            await storage.create_api_key(label=key_label, project_id=org_id)
+        except Exception as e:
+            logger.warning("Could not create API key for new user: %s", e)
+
     # Generate our own JWT for the app
     user_data = {
-        "id": user_id if existing_user else (result.get("id", "") if not existing_user else ""),
+        "id": user_id,
         "email": email,
         "name": name,
         "organization_id": org_id,
@@ -314,18 +328,28 @@ async def passwordless_verify(
             logger.error("Passwordless user creation failed: %s", e)
             raise HTTPException(status_code=500, detail="Could not create user account")
 
+        # Create free subscription + API key for new user so dashboard can load
+        try:
+            from ..models import Subscription
+            sub = Subscription(id=f"free-{org_id[:8]}", organization_id=org_id, tier="free", status="active")
+            await storage.store_subscription(sub)
+        except Exception as e:
+            logger.warning("Could not create subscription for new user: %s", e)
+        try:
+            from datetime import datetime, timezone
+            key_label = f"auth0-key-{datetime.now(timezone.utc).strftime('%Y%m%d')}"
+            await storage.create_api_key(label=key_label, project_id=org_id)
+        except Exception as e:
+            logger.warning("Could not create API key for new user: %s", e)
+
     # Generate our JWT
     user_data = {
-        "id": user_id if existing_user else User,
+        "id": user_id,
         "email": email,
         "name": name,
         "organization_id": org_id,
         "role": "member",
     }
-    if existing_user:
-        user_data["id"] = existing_user.get("id", "")
-    else:
-        user_data["id"] = result.get("id", "")
 
     try:
         jwt_token = await user_svc.generate_token(user_data)
