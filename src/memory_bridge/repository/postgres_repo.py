@@ -985,10 +985,10 @@ class PostgresMemoryRepository(MemoryRepository):
                     (id, organization_id, stripe_customer_id, tier, status,
                      current_period_start, current_period_end, created_at, updated_at)
                 VALUES ($1, $2, $3, $4, $5, $6::timestamptz, $7::timestamptz, $8::timestamptz, $9::timestamptz)
-                ON CONFLICT (id) DO UPDATE SET
-                    organization_id = EXCLUDED.organization_id,
-                    stripe_customer_id = EXCLUDED.stripe_customer_id,
+                ON CONFLICT (organization_id) DO UPDATE SET
+                    id = EXCLUDED.id,
                     tier = EXCLUDED.tier,
+                    stripe_customer_id = EXCLUDED.stripe_customer_id,
                     status = EXCLUDED.status,
                     current_period_start = EXCLUDED.current_period_start,
                     current_period_end = EXCLUDED.current_period_end,

@@ -129,18 +129,31 @@ async def welcome_setup(
     try:
         from ..models.subscription import Subscription
         from datetime import datetime, timezone
-        sub = Subscription(
-            id=f"welcome-{org_id[:8]}",
-            organization_id=org_id,
-            stripe_customer_id="",
-            tier=actual_tier,
-            status="active",
-            current_period_start=datetime.now(timezone.utc),
-            current_period_end=datetime.now(timezone.utc).replace(year=datetime.now(timezone.utc).year + 1),
-        )
-        await storage.store_subscription(sub)
-    except Exception:
-        pass
+
+        # Check if a subscription already exists for this org (UNIQUE constraint on org_id)
+        existing = await storage.get_subscription_by_org(org_id)
+        if existing:
+            # Update existing subscription tier
+            existing.tier = actual_tier
+            existing.status = "active"
+            existing.updated_at = datetime.now(timezone.utc)
+            await storage.store_subscription(existing)
+            logger.info("Welcome: updated existing subscription for org=%s to tier=%s", org_id, actual_tier)
+        else:
+            # Create new subscription
+            sub = Subscription(
+                id=f"welcome-{org_id[:8]}",
+                organization_id=org_id,
+                stripe_customer_id="",
+                tier=actual_tier,
+                status="active",
+                current_period_start=datetime.now(timezone.utc),
+                current_period_end=datetime.now(timezone.utc).replace(year=datetime.now(timezone.utc).year + 1),
+            )
+            await storage.store_subscription(sub)
+            logger.info("Welcome: stored new subscription for org=%s tier=%s", org_id, actual_tier)
+    except Exception as e:
+        logger.error("Welcome: subscription storage failed for org=%s: %s", org_id, e)
 
     # Create API key for this org
     try:
