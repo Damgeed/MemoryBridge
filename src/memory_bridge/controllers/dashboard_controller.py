@@ -53,10 +53,10 @@ async def create_api_key(
     """
     org_id = _resolve_org(request)
 
-    # Check tier limit for free users — max 5 keys
+    # Check tier limit for free users — max 5 keys TOTAL (including revoked)
     all_keys = await storage.list_api_keys()
-    org_keys = [k for k in all_keys if k.get("project_id") == org_id and k.get("is_active") is not False]
-    if len(org_keys) >= 5:
+    org_keys_total = [k for k in all_keys if k.get("project_id") == org_id]
+    if len(org_keys_total) >= 5:
         # Check the tier to give a correct error message
         try:
             from ..models import Subscription
@@ -69,7 +69,7 @@ async def create_api_key(
         if tier == "free":
             raise HTTPException(
                 status_code=429,
-                detail="Free tier: max 5 API keys reached. Revoke an unused key or upgrade to a paid plan for unlimited keys.",
+                detail="Free tier: max 5 API keys total. This account has already generated 5 keys. Delete an unused key or upgrade to a paid plan for unlimited keys.",
             )
 
     result = await storage.create_api_key(label=label, project_id=org_id)

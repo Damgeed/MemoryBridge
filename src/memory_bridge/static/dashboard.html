@@ -436,7 +436,7 @@
                     <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
                 </svg>
             </button>
-            <button class="nav-icon-btn auth-btn" id="auth-nav-btn" onclick="openSignup()" title="Sign in / Sign up" style="display:inline-flex;align-items:center;gap:0.3rem;padding:0.3rem 0.75rem;border-radius:6px;background:var(--accent-glow);color:var(--accent);border:1px solid transparent;font-size:0.82rem;font-weight:600;cursor:pointer;white-space:nowrap;font-family:var(--font-sans);transition:all 0.2s;" onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='transparent'">
+            <button class="nav-icon-btn auth-btn" id="auth-nav-btn" onclick="openSignup()" title="Sign in / Sign up">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
                 <span id="auth-btn-label">Sign In</span>
             </button>
@@ -892,7 +892,8 @@
                         <div class="key-reveal" style="border-color:var(--orange);">
                             <div style="margin-bottom:0.5rem;font-weight:700;font-size:0.85rem;color:var(--orange);">⚠️ Key Limit Reached</div>
                             <div style="font-size:0.82rem;color:var(--text-muted);margin-bottom:0.75rem;">
-                                Free tier is limited to 5 API keys. Revoke an unused key or upgrade to unlock unlimited keys.
+                                Free tier is limited to 5 API keys total. This account has already generated 5 keys.
+                                Upgrade to unlock unlimited keys.
                             </div>
                             <div style="display:flex;gap:0.5rem;">
                                 <a href="/pricing" class="btn btn-primary btn-sm">Upgrade Plan →</a>
