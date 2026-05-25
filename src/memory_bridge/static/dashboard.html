@@ -767,8 +767,15 @@
 
         function getAuthHeaders() {
             const headers = { 'Content-Type': 'application/json' };
+            // Use JWT for dashboard API calls (more secure than exposing API key)
+            // Only fall back to API key when no JWT is available
+            const jwt = localStorage.getItem('mb_jwt');
             const key = currentApiKey || localStorage.getItem('mb_api_key') || '';
-            if (key) headers['Authorization'] = 'Bearer ' + key;
+            if (jwt) {
+                headers['Authorization'] = 'Bearer ' + jwt;
+            } else if (key) {
+                headers['Authorization'] = 'Bearer ' + key;
+            }
             return headers;
         }
 
