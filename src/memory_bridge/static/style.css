@@ -425,9 +425,6 @@ a:hover { color: var(--accent-light); text-decoration: none; }
   border: 1px solid #dadce0;
 }
 .auth-social-btn .s-icon.apple {
-  background: #000;
-}
-.auth-social-btn .s-icon.microsoft {
   background: #fff;
   border: 1px solid #dadce0;
 }
