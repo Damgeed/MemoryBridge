@@ -924,13 +924,12 @@
                     </div>`;
                 loadKeys();
             } catch (e) {
-                if (e.message && e.message.includes('max 5 API keys')) {
+                if (e.message && (e.message.includes('max') && e.message.includes('API keys'))) {
                     document.getElementById('key-reveal-area').innerHTML = `
                         <div class="key-reveal" style="border-color:var(--orange);">
                             <div style="margin-bottom:0.5rem;font-weight:700;font-size:0.85rem;color:var(--orange);">⚠️ Key Limit Reached</div>
                             <div style="font-size:0.82rem;color:var(--text-muted);margin-bottom:0.75rem;">
-                                Free tier is limited to 5 API keys total. This account has already generated 5 keys.
-                                Upgrade to unlock unlimited keys.
+                                ${escapeHtml(e.message)}
                             </div>
                             <div style="display:flex;gap:0.5rem;">
                                 <a href="/pricing" class="btn btn-primary btn-sm">Upgrade Plan →</a>

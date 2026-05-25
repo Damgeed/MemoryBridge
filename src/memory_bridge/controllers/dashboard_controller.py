@@ -49,28 +49,37 @@ async def create_api_key(
     """Create a new API key for the authenticated user/organization.
 
     Returns the full key — this is the only time the plaintext key is shown.
-    Free tier users are limited to 5 active API keys.
+    Each tier has a maximum number of API keys (defined in TIER_LIMITS).
     """
     org_id = _resolve_org(request)
 
-    # Check tier limit for free users — max 5 keys TOTAL (including revoked)
+    # Check tier limit for API keys
+    from ..services.metering_service import TIER_LIMITS
+
+    # Determine the user's tier
+    try:
+        from ..models import Subscription
+        subs = await storage.list_subscriptions()
+        sub = next((s for s in subs if s.organization_id == org_id), None)
+        tier = sub.tier if sub else "free"
+    except Exception:
+        tier = "free"
+
+    limits = TIER_LIMITS.get(tier, TIER_LIMITS["free"])
+    max_keys = limits.get("max_api_keys", 5)
+
+    # Count ALL keys ever created for this org (including revoked)
     all_keys = await storage.list_api_keys()
     org_keys_total = [k for k in all_keys if k.get("project_id") == org_id]
-    if len(org_keys_total) >= 5:
-        # Check the tier to give a correct error message
-        try:
-            from ..models import Subscription
-            subs = await storage.list_subscriptions()
-            sub = next((s for s in subs if s.organization_id == org_id), None)
-            tier = sub.tier if sub else "free"
-        except Exception:
-            tier = "free"
-
-        if tier == "free":
-            raise HTTPException(
-                status_code=429,
-                detail="Free tier: max 5 API keys total. This account has already generated 5 keys. Delete an unused key or upgrade to a paid plan for unlimited keys.",
-            )
+    if len(org_keys_total) >= max_keys:
+        if max_keys == 5:
+            detail = f"Free tier: max {max_keys} API keys total. This account has already generated {max_keys} keys. Upgrade to a paid plan for unlimited keys."
+        else:
+            detail = f"{tier.title()} tier: max {max_keys} API keys. You have reached the limit. Upgrade your plan for more keys."
+        raise HTTPException(
+            status_code=429,
+            detail=detail,
+        )
 
     result = await storage.create_api_key(label=label, project_id=org_id)
     # Tag the key metadata with the org for lookup
@@ -89,29 +98,56 @@ async def welcome_setup(
 ):
     """Create a welcome API key for a user who just completed Stripe checkout.
 
-    This endpoint is rate-limited (1 call per session_id) and validates the
-    Stripe session before creating a key. Returns the plaintext key once.
+    This endpoint is resilient — it works even if the Stripe API is temporarily
+    unavailable or the subscription hasn't propagated yet. The webhook will
+    finalize the subscription record asynchronously.
     """
     if not session_id:
         raise HTTPException(status_code=400, detail="Missing session_id parameter")
 
-    import stripe
-    try:
-        sess = stripe.checkout.Session.retrieve(session_id)
-    except Exception as e:
-        raise HTTPException(status_code=400, detail=f"Invalid Stripe session: {e}")
+    # Resolve org_id from session metadata or generate a new one
+    org_id = ""
+    tier = "free"
 
-    if sess.status != "complete":
-        raise HTTPException(status_code=400, detail="Stripe checkout not yet completed")
-
-    org_id = sess.get("client_reference_id") or sess.metadata.get("organization_id", "default")
-    tier = sess.metadata.get("tier", "free")
-
-    # Store subscription record immediately (don't wait for webhook)
-    sub_id = sess.get("subscription", "")
-    if sub_id:
+    if session_id:
         try:
             import stripe
+            sess = stripe.checkout.Session.retrieve(session_id)
+            if sess.status != "complete":
+                raise HTTPException(status_code=400, detail="Stripe checkout not yet completed")
+
+            # Get org_id from session (client_reference_id or metadata)
+            if hasattr(sess, "client_reference_id") and sess.client_reference_id:
+                org_id = sess.client_reference_id
+            elif sess.metadata and isinstance(sess.metadata, dict):
+                org_id = sess.metadata.get("organization_id", "")
+            elif hasattr(sess.metadata, "get"):
+                org_id = sess.metadata.get("organization_id", "")
+
+            tier = sess.metadata.get("tier", "free") if sess.metadata else "free"
+
+            logger.info("Welcome: session=%s, org_id=%s, tier=%s", session_id, org_id, tier)
+        except ImportError:
+            logger.warning("Stripe not installed — welcome endpoint limited")
+        except stripe.error.AuthenticationError:
+            logger.error("Stripe authentication failed — STRIPE_SECRET_KEY may be invalid")
+        except Exception as e:
+            logger.warning("Welcome endpoint: could not verify Stripe session: %s", e)
+            # Continue anyway — create a key for the user
+            if not org_id:
+                import uuid
+                org_id = str(uuid.uuid4())
+
+    if not org_id:
+        import uuid
+        org_id = str(uuid.uuid4())
+
+    # Attempt to store subscription record (best-effort, webhook will finalize)
+    try:
+        import stripe
+        sess = stripe.checkout.Session.retrieve(session_id)
+        sub_id = sess.get("subscription", "") if hasattr(sess, "get") else getattr(sess, "subscription", "")
+        if sub_id:
             sub_data = stripe.Subscription.retrieve(sub_id)
             items = sub_data.get("items", {}).get("data", [])
             price_id = items[0].get("price", {}).get("id", "") if items else ""
@@ -132,15 +168,15 @@ async def welcome_setup(
                 current_period_end=datetime.fromtimestamp(sub_data.get("current_period_end", 0), tz=timezone.utc) if sub_data.get("current_period_end") else None,
             )
             await storage.store_subscription(sub)
-        except Exception as e:
-            logger.warning("Could not pre-store subscription via welcome: %s", e)
+            logger.info("Welcome: stored subscription for org=%s tier=%s", org_id, tier)
+    except Exception as e:
+        logger.warning("Welcome: could not pre-store subscription: %s", e)
 
-    # Check if this org already has ACTIVE keys — if so, just list them
+    # Check if this org already has ACTIVE keys
     existing_keys = await storage.list_api_keys()
     user_keys = [k for k in existing_keys if k.get("project_id") == org_id or not k.get("project_id")]
     active_keys = [k for k in user_keys if k.get("is_active") is not False]
     if active_keys:
-        # Return the most recent key's last-6 (don't show full key again)
         return {
             "welcome": True,
             "has_keys": True,
@@ -148,21 +184,25 @@ async def welcome_setup(
             "organization_id": org_id,
             "key_count": len(active_keys),
             "latest_key_id": active_keys[-1]["id"],
-            "hint": "Paste your existing key in the login bar above, or revoke old keys and generate a new one."
+            "hint": "Sign in with your email to access your existing keys, or generate a new one from the dashboard."
         }
 
     # Create first API key for this org
-    result = await storage.create_api_key(label=f"welcome-{tier}", project_id=org_id)
-    return {
-        "welcome": True,
-        "has_keys": False,
-        "key": result["key"],
-        "id": result["id"],
-        "label": result["label"],
-        "tier": tier,
-        "organization_id": org_id,
-        "created_at": result["created_at"],
-    }
+    try:
+        result = await storage.create_api_key(label=f"welcome-{tier}", project_id=org_id)
+        return {
+            "welcome": True,
+            "has_keys": False,
+            "key": result["key"],
+            "id": result["id"],
+            "label": result["label"],
+            "tier": tier,
+            "organization_id": org_id,
+            "created_at": result["created_at"],
+        }
+    except Exception as e:
+        logger.error("Welcome: failed to create API key: %s", e)
+        raise HTTPException(status_code=500, detail=f"Could not create API key: {e}")
 
 
 @router.get("/keys")
