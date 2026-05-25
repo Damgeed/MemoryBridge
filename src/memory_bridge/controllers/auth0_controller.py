@@ -123,6 +123,13 @@ async def auth0_callback(
     email = claims.get("email", "") or claims.get("name", "")
     name = claims.get("name", "") or claims.get("nickname", "") or email.split("@")[0]
 
+    # Fallback for phone-only users (shouldn't happen in social login, but be safe)
+    if not email and auth0_sub:
+        import hashlib
+        sub_slug = hashlib.md5(auth0_sub.encode()).hexdigest()[:12]
+        email = f"auth0_{sub_slug}@social.auth0.local"
+        name = name or "Auth0 User"
+
     if not auth0_sub:
         raise HTTPException(status_code=400, detail="Auth0 response missing user identifier")
 
@@ -265,6 +272,15 @@ async def passwordless_verify(
     auth0_sub = claims.get("sub", "")
     email = claims.get("email", "") or req.email
     name = claims.get("name", "") or claims.get("nickname", "") or email.split("@")[0]
+
+    # For phone-only users (SMS login), Auth0 doesn't return an email.
+    # Use a placeholder so the database constraint doesn't fail.
+    if not email and auth0_sub:
+        # Generate a deterministic placeholder: sms_<sub_hash>@phone.auth0.local
+        import hashlib
+        sub_slug = hashlib.md5(auth0_sub.encode()).hexdigest()[:12]
+        email = f"sms_{sub_slug}@phone.auth0.local"
+        name = name or f"User {req.phone[-8:]}" if req.phone else "SMS User"
 
     if not auth0_sub:
         raise HTTPException(status_code=400, detail="Auth0 response missing user identifier")

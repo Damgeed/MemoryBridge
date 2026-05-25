@@ -62,8 +62,8 @@ class Auth0Service:
             "response_type": "code",
             "scope": "openid profile email",
         }
-        if self.audience:
-            params["audience"] = self.audience
+        # Only include audience if it's actually a registered Auth0 API
+        # (omitting for social/passwordless to avoid invalid_request errors)
         if state:
             params["state"] = state
         if connection:
