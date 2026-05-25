@@ -1067,6 +1067,32 @@ class PostgresMemoryRepository(MemoryRepository):
                 updated_at=row["updated_at"] if isinstance(row["updated_at"], datetime) else datetime.fromisoformat(row["updated_at"]),
             )
 
+    # ── User Management ───────────────────────────────────────────────────────
+
+    async def create_user(self, user) -> dict:
+        async with self.pool.acquire() as conn:
+            await conn.execute(
+                f"""
+                INSERT INTO {self.schema}.users
+                    (id, email, password_hash, name, organization_id, created_at, updated_at)
+                VALUES ($1, $2, $3, $4, $5, $6::timestamptz, $7::timestamptz)
+                ON CONFLICT (email) DO NOTHING
+                """,
+                user.id, user.email, user.password_hash, user.name,
+                user.organization_id, user.created_at, user.updated_at,
+            )
+        return {"id": user.id, "email": user.email, "name": user.name, "organization_id": user.organization_id}
+
+    async def get_user_by_email(self, email: str):
+        async with self.pool.acquire() as conn:
+            row = await conn.fetchrow(
+                f"SELECT id, email, password_hash, name, organization_id, created_at FROM {self.schema}.users WHERE email = $1",
+                email,
+            )
+            if row is None:
+                return None
+            return dict(row)
+
     # ── Additional utilities (beyond the ABC) ────────────────────────────────
 
     async def query_memories_lineage(

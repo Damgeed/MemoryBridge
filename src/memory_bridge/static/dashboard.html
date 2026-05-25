@@ -604,21 +604,37 @@
 
         <!-- Sign Up / Sign In Modal -->
         <div class="modal-overlay" id="signup-overlay"></div>
-        <div class="modal" id="signup-modal" style="text-align:center;max-width:400px;">
-            <div style="font-size:2rem;margin-bottom:0.5rem;">🚀</div>
-            <div class="modal-title" style="margin-bottom:0.25rem;">Get Your Free API Key</div>
-            <p style="font-size:0.85rem;color:var(--text-muted);margin-bottom:1.25rem;">
-                Full API access — 1,000 memories, 100 sessions, 5 keys, 7-day retention.
-            </p>
-            <div id="signup-form">
-                <input type="email" id="signup-email" placeholder="your@email.com"
-                       style="width:100%;padding:0.6rem 0.8rem;margin-bottom:0.75rem;border-radius:6px;border:1px solid var(--border-primary);background:var(--bg-tertiary);color:var(--text-primary);font-size:0.9rem;outline:none;box-sizing:border-box;">
-                <button class="btn btn-primary" onclick="signupFree()" id="signup-btn" style="width:100%;">Get Free Key</button>
+        <div class="modal" id="signup-modal" style="text-align:center;max-width:420px;">
+            <div style="font-size:1.8rem;margin-bottom:0.3rem;">🔑</div>
+            <div class="modal-title" style="margin-bottom:0;">Memory Bridge</div>
+            <!-- Tabs -->
+            <div style="display:flex;gap:0;margin:1rem auto 1.25rem;border-radius:8px;overflow:hidden;max-width:240px;border:1px solid var(--border-primary);">
+                <button id="tab-signup" class="btn btn-sm" style="flex:1;border-radius:0;background:var(--accent);color:#fff;font-weight:600;border:none;padding:0.4rem 0;" onclick="switchAuthTab('signup')">Sign Up</button>
+                <button id="tab-login" class="btn btn-sm" style="flex:1;border-radius:0;background:transparent;color:var(--text-muted);font-weight:500;border:none;padding:0.4rem 0;" onclick="switchAuthTab('login')">Log In</button>
             </div>
-            <div id="signup-result" style="margin-top:0.75rem;"></div>
-            <div style="margin-top:1rem;font-size:0.82rem;color:var(--text-muted);">
-                Already have a key?
-                <a href="javascript:void(0)" onclick="closeSignup()" style="color:var(--accent);font-weight:600;text-decoration:none;">Log in</a>
+            <!-- Sign Up Form -->
+            <div id="auth-signup">
+                <p style="font-size:0.82rem;color:var(--text-muted);margin-bottom:1rem;">Create an account. Full API access — 1,000 memories, 100 sessions, 5 keys.</p>
+                <input type="text" id="su-name" placeholder="Your name (optional)"
+                       style="width:100%;padding:0.55rem 0.8rem;margin-bottom:0.6rem;border-radius:6px;border:1px solid var(--border-primary);background:var(--bg-tertiary);color:var(--text-primary);font-size:0.88rem;outline:none;box-sizing:border-box;">
+                <input type="email" id="su-email" placeholder="Email"
+                       style="width:100%;padding:0.55rem 0.8rem;margin-bottom:0.6rem;border-radius:6px;border:1px solid var(--border-primary);background:var(--bg-tertiary);color:var(--text-primary);font-size:0.88rem;outline:none;box-sizing:border-box;">
+                <input type="password" id="su-password" placeholder="Password (min 8 chars)"
+                       style="width:100%;padding:0.55rem 0.8rem;margin-bottom:0.75rem;border-radius:6px;border:1px solid var(--border-primary);background:var(--bg-tertiary);color:var(--text-primary);font-size:0.88rem;outline:none;box-sizing:border-box;">
+                <button class="btn btn-primary" onclick="signupUser()" id="su-btn" style="width:100%;">Create Account & Get Key</button>
+            </div>
+            <!-- Login Form -->
+            <div id="auth-login" style="display:none;">
+                <p style="font-size:0.82rem;color:var(--text-muted);margin-bottom:1rem;">Sign in to access your API key and dashboard.</p>
+                <input type="email" id="li-email" placeholder="Email"
+                       style="width:100%;padding:0.55rem 0.8rem;margin-bottom:0.6rem;border-radius:6px;border:1px solid var(--border-primary);background:var(--bg-tertiary);color:var(--text-primary);font-size:0.88rem;outline:none;box-sizing:border-box;">
+                <input type="password" id="li-password" placeholder="Password"
+                       style="width:100%;padding:0.55rem 0.8rem;margin-bottom:0.75rem;border-radius:6px;border:1px solid var(--border-primary);background:var(--bg-tertiary);color:var(--text-primary);font-size:0.88rem;outline:none;box-sizing:border-box;">
+                <button class="btn btn-primary" onclick="loginUser()" id="li-btn" style="width:100%;">Sign In</button>
+            </div>
+            <div id="auth-result" style="margin-top:0.75rem;min-height:1.5rem;"></div>
+            <div style="margin-top:0.75rem;font-size:0.78rem;color:var(--text-muted);">
+                <a href="javascript:void(0)" onclick="closeSignup()" style="color:var(--accent);font-weight:500;text-decoration:none;">Continue without account →</a>
             </div>
         </div>
 
@@ -1042,51 +1058,147 @@
             }
         }
 
-        // ── Sign Up Modal ────────────────────────────────────────────
+        // ── Auth Modal ──────────────────────────────────────────────
+        function switchAuthTab(tab) {
+            document.getElementById('auth-signup').style.display = tab === 'signup' ? '' : 'none';
+            document.getElementById('auth-login').style.display = tab === 'login' ? '' : 'none';
+            document.getElementById('tab-signup').style.background = tab === 'signup' ? 'var(--accent)' : 'transparent';
+            document.getElementById('tab-signup').style.color = tab === 'signup' ? '#fff' : 'var(--text-muted)';
+            document.getElementById('tab-login').style.background = tab === 'login' ? 'var(--accent)' : 'transparent';
+            document.getElementById('tab-login').style.color = tab === 'login' ? '#fff' : 'var(--text-muted)';
+            document.getElementById('auth-result').innerHTML = '';
+        }
+
         function openSignup() {
             document.getElementById('signup-overlay').classList.add('open');
             document.getElementById('signup-modal').classList.add('open');
-            setTimeout(() => document.getElementById('signup-email')?.focus(), 100);
+            switchAuthTab('signup');
+            setTimeout(() => document.getElementById('su-email')?.focus(), 150);
         }
+
         function closeSignup() {
             document.getElementById('signup-overlay').classList.remove('open');
             document.getElementById('signup-modal').classList.remove('open');
-            // Focus the API key input for log in users
             const keyInput = document.getElementById('api-key-input');
             if (keyInput) setTimeout(() => keyInput.focus(), 200);
         }
 
-        async function signupFree() {
-            const email = document.getElementById('signup-email').value.trim();
-            const resultEl = document.getElementById('signup-result');
-            const btn = document.getElementById('signup-btn');
-            const form = document.getElementById('signup-form');
+        async function signupUser() {
+            const email = document.getElementById('su-email').value.trim();
+            const password = document.getElementById('su-password').value;
+            const name = document.getElementById('su-name').value.trim();
+            const resultEl = document.getElementById('auth-result');
+            const btn = document.getElementById('su-btn');
+
             if (!email || !email.includes('@')) {
-                resultEl.innerHTML = '<div class="status error" style="font-size:0.85rem;">⚠️ Please enter a valid email address.</div>';
+                resultEl.innerHTML = '<div class="status error" style="font-size:0.82rem;">⚠️ Enter a valid email</div>';
                 return;
             }
-            resultEl.innerHTML = '<div style="padding:0.5rem;"><span class="spinner-sm"></span> Generating your free key...</div>';
+            if (password.length < 8) {
+                resultEl.innerHTML = '<div class="status error" style="font-size:0.82rem;">⚠️ Password must be at least 8 characters</div>';
+                return;
+            }
+
+            resultEl.innerHTML = '<div style="padding:0.3rem;"><span class="spinner-sm"></span> Creating account...</div>';
             btn.disabled = true;
+
             try {
-                const res = await fetch('/dashboard/free-signup?email=' + encodeURIComponent(email), { method: 'POST' });
-                if (!res.ok) {
-                    const err = await res.json().catch(() => ({ detail: 'Request failed' }));
-                    resultEl.innerHTML = `<div class="status error" style="font-size:0.85rem;">❌ ${escapeHtml(err.detail || 'Could not create free key.')}</div>`;
+                // 1. Create user account (returns JWT + user info)
+                const regRes = await fetch('/auth/register', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({email, password, name}),
+                });
+                if (!regRes.ok) {
+                    const err = await regRes.json().catch(() => ({detail: 'Request failed'}));
+                    resultEl.innerHTML = `<div class="status error" style="font-size:0.82rem;">❌ ${escapeHtml(err.detail || 'Registration failed')}</div>`;
                     btn.disabled = false;
                     return;
                 }
-                const data = await res.json();
-                if (data.key) {
-                    localStorage.setItem('mb_api_key', data.key);
-                    document.getElementById('api-key-input').value = data.key;
-                    currentApiKey = data.key;
-                    updateKeyLoginStatus();
-                    closeSignup();
-                    reconnectDashboard();
-                    showToast('🎉 Free tier ready! Key saved.');
+                const regData = await regRes.json();
+
+                // 2. Get free API key (also creates user-backed org)
+                const keyRes = await fetch('/dashboard/free-signup?email=' + encodeURIComponent(email), { method: 'POST' });
+                if (!keyRes.ok) {
+                    const err = await keyRes.json().catch(() => ({detail: 'Could not get key'}));
+                    resultEl.innerHTML = `<div class="status error" style="font-size:0.82rem;">❌ ${escapeHtml(err.detail || 'Could not get API key')}</div>`;
+                    btn.disabled = false;
+                    return;
                 }
+                const keyData = await keyRes.json();
+
+                // 3. Save key + login
+                localStorage.setItem('mb_api_key', keyData.key);
+                localStorage.setItem('mb_jwt', regData.token);
+                document.getElementById('api-key-input').value = keyData.key;
+                currentApiKey = keyData.key;
+                updateKeyLoginStatus();
+                closeSignup();
+                reconnectDashboard();
+                showToast('🎉 Account created! Key saved.');
             } catch (e) {
-                resultEl.innerHTML = `<div class="status error" style="font-size:0.85rem;">❌ Network error: ${escapeHtml(e.message)}</div>`;
+                resultEl.innerHTML = `<div class="status error" style="font-size:0.82rem;">❌ ${escapeHtml(e.message)}</div>`;
+                btn.disabled = false;
+            }
+        }
+
+        async function loginUser() {
+            const email = document.getElementById('li-email').value.trim();
+            const password = document.getElementById('li-password').value;
+            const resultEl = document.getElementById('auth-result');
+            const btn = document.getElementById('li-btn');
+
+            if (!email || !password) {
+                resultEl.innerHTML = '<div class="status error" style="font-size:0.82rem;">⚠️ Enter your email and password</div>';
+                return;
+            }
+
+            resultEl.innerHTML = '<div style="padding:0.3rem;"><span class="spinner-sm"></span> Signing in...</div>';
+            btn.disabled = true;
+
+            try {
+                // Login and get JWT
+                const loginRes = await fetch('/auth/login', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({email, password}),
+                });
+                if (!loginRes.ok) {
+                    const err = await loginRes.json().catch(() => ({detail: 'Login failed'}));
+                    resultEl.innerHTML = `<div class="status error" style="font-size:0.82rem;">❌ ${escapeHtml(err.detail || 'Invalid email or password')}</div>`;
+                    btn.disabled = false;
+                    return;
+                }
+                const loginData = await loginRes.json();
+                localStorage.setItem('mb_jwt', loginData.token);
+
+                // Look for an existing API key in localStorage
+                let apiKey = localStorage.getItem('mb_api_key');
+
+                if (!apiKey) {
+                    // Try to recover via the user's org — create a new key if needed
+                    const keyRes = await fetch('/dashboard/free-signup?email=' + encodeURIComponent(email), { method: 'POST' });
+                    if (keyRes.ok) {
+                        const keyData = await keyRes.json();
+                        apiKey = keyData.key;
+                    }
+                }
+
+                if (!apiKey) {
+                    resultEl.innerHTML = '<div class="status error" style="font-size:0.82rem;">❌ No API key found. Use Sign Up tab to create one.</div>';
+                    btn.disabled = false;
+                    return;
+                }
+
+                localStorage.setItem('mb_api_key', apiKey);
+                document.getElementById('api-key-input').value = apiKey;
+                currentApiKey = apiKey;
+                updateKeyLoginStatus();
+                closeSignup();
+                reconnectDashboard();
+                showToast('✅ Welcome back!');
+            } catch (e) {
+                resultEl.innerHTML = `<div class="status error" style="font-size:0.82rem;">❌ ${escapeHtml(e.message)}</div>`;
                 btn.disabled = false;
             }
         }

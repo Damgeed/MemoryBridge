@@ -60,6 +60,20 @@ class HandoffPayload(BaseModel):
     timestamp: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
 
+class User(BaseModel):
+    """A registered user with email + password auth.
+
+    Each user is linked to an organization that holds API keys.
+    """
+    id: str = Field(default_factory=lambda: str(uuid4()))
+    email: str
+    password_hash: str
+    name: str = ""
+    organization_id: str
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+
 class MemoryCreate(BaseModel):
     """Request body to create a memory entry."""
     session_id: str

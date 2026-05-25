@@ -163,6 +163,18 @@ class MemoryRepository(ABC):
         Returns the updated Subscription or None if not found."""
         ...
 
+    # ── User Management ─────────────────────────────────────────────────
+
+    @abstractmethod
+    async def create_user(self, user) -> dict:
+        """Create a user record. Returns user dict."""
+        ...
+
+    @abstractmethod
+    async def get_user_by_email(self, email: str):
+        """Look up user by email. Returns user dict or None."""
+        ...
+
     # ── Audit Log ───────────────────────────────────────────────────────────
 
     @abstractmethod

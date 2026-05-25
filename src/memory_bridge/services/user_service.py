@@ -1,6 +1,7 @@
 """Business logic for user registration, authentication, and session management."""
 
 import logging
+import uuid
 from datetime import datetime, timedelta, timezone
 from typing import Optional
 
@@ -8,6 +9,7 @@ import bcrypt
 import jwt
 
 from ..config import get_settings
+from ..models import User
 
 logger = logging.getLogger(__name__)
 
@@ -44,31 +46,60 @@ class UserService:
         Returns:
             Dict with user info (excluding password_hash)
         """
+        # Check if email already taken
+        existing = await self.repo.get_user_by_email(email)
+        if existing:
+            raise ValueError("Email already registered")
+
         # Hash password
         password_hash = bcrypt.hashpw(password.encode(), bcrypt.gensalt()).decode()
 
-        # Store user (in production, this goes through the repository)
-        user = {
-            "id": None,  # Will be set by storage
-            "email": email,
-            "name": name,
-            "organization_id": organization_id,
+        if not organization_id:
+            organization_id = str(uuid.uuid4())
+
+        user = User(
+            email=email,
+            password_hash=password_hash,
+            name=name,
+            organization_id=organization_id,
+        )
+
+        result = await self.repo.create_user(user)
+        logger.info("Registered user: %s (org=%s)", email, organization_id)
+        return {
+            **result,
             "role": "member",
             "is_active": True,
-            "created_at": datetime.now(timezone.utc).isoformat(),
+            "created_at": user.created_at.isoformat(),
         }
-
-        logger.info("Registered user: %s", email)
-        return user
 
     async def authenticate(self, email: str, password: str) -> Optional[dict]:
         """Authenticate a user by email and password.
 
         Returns user dict (without password_hash) on success, None on failure.
         """
-        # In production, look up user by email from repository
-        # For now, return None (will be implemented with DB in Phase 4 full)
-        return None
+        user_data = await self.repo.get_user_by_email(email)
+        if user_data is None:
+            return None
+
+        stored_hash = user_data.get("password_hash") or user_data.get("password_hash", "")
+        if not stored_hash:
+            return None
+
+        try:
+            if not bcrypt.checkpw(password.encode(), stored_hash.encode()):
+                return None
+        except Exception:
+            return None
+
+        return {
+            "id": user_data["id"],
+            "email": user_data["email"],
+            "name": user_data.get("name", ""),
+            "organization_id": user_data.get("organization_id", ""),
+            "role": "member",
+            "is_active": True,
+        }
 
     def _get_jwt_secret(self) -> str:
         """Return the validated JWT secret or raise a clear error."""
@@ -90,7 +121,7 @@ class UserService:
             "email": user.get("email"),
             "name": user.get("name", ""),
             "role": user.get("role", "member"),
-            "project_id": user.get("project_id"),
+            "project_id": user.get("organization_id"),
             "iat": now,
             "exp": now + timedelta(minutes=settings.jwt_expire_minutes or 60),
         }
@@ -111,11 +142,10 @@ class UserService:
                 algorithms=[settings.jwt_algorithm or "HS256"],
                 options={"verify_exp": True},
             )
-            # Generate new token if not expired
             if payload.get("sub"):
                 return await self.generate_token(payload)
         except jwt.ExpiredSignatureError:
-            pass  # Can't refresh expired tokens
+            pass
         except jwt.InvalidTokenError:
             pass
         return None

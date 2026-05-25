@@ -4,7 +4,7 @@ import logging
 from datetime import datetime, timedelta, timezone
 from typing import Optional
 
-from fastapi import APIRouter, HTTPException, Depends
+from fastapi import APIRouter, HTTPException, Depends, Request
 from pydantic import BaseModel, EmailStr
 
 from ..services.user_service import UserService
@@ -40,15 +40,18 @@ async def register(
     req: RegisterRequest,
     service: UserService = Depends(get_user_service),
 ):
-    """Register a new user account."""
+    """Register a new user account and generate an API key."""
     if len(req.password) < 8:
         raise HTTPException(status_code=400, detail="Password must be at least 8 characters")
 
-    user = await service.register(
-        email=req.email,
-        password=req.password,
-        name=req.name,
-    )
+    try:
+        user = await service.register(
+            email=req.email,
+            password=req.password,
+            name=req.name,
+        )
+    except ValueError as e:
+        raise HTTPException(status_code=409, detail=str(e))
 
     token = await service.generate_token(user)
 
@@ -76,11 +79,27 @@ async def login(
     )
 
 
-@router.post("/refresh")
-async def refresh_token(token_data: dict):
-    """Refresh an authentication token."""
-    service = UserService()
-    new_token = await service.refresh_token(token_data.get("token", ""))
-    if new_token is None:
-        raise HTTPException(status_code=401, detail="Invalid or expired token")
-    return {"token": new_token}
+@router.get("/my-key")
+async def get_my_api_key(request: Request):
+    """Return the first active API key for the authenticated user's org.
+
+    Requires a valid JWT in the Authorization header.
+    The returned key is the same one used to authenticate Memory Bridge API calls.
+    """
+    from ..dependencies import get_storage
+    from ..repository import MemoryRepository
+
+    # Reuse existing JWT auth from auth.py middleware
+    auth = getattr(request.state, "auth", None)
+    if not auth or not auth.get("project_id"):
+        raise HTTPException(status_code=401, detail="Authentication required")
+
+    storage = await get_storage()
+    all_keys = await storage.list_api_keys()
+    org_id = auth["project_id"]
+    user_keys = [k for k in all_keys if k.get("project_id") == org_id and k.get("is_active") is not False]
+
+    if not user_keys:
+        raise HTTPException(status_code=404, detail="No API keys found for your account. Use the dashboard to generate one.")
+
+    return {"key_id": user_keys[0]["id"], "key_count": len(user_keys)}

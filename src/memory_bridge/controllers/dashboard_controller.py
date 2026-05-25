@@ -306,6 +306,22 @@ async def free_signup(
         logger.warning("Could not record abuse prevention metric: %s", e)
 
     logger.info("Free signup: org=%s, email=%s, ip=%s", org_id, email_clean, client_ip)
+    # Create a user account for this free signup
+    try:
+        import bcrypt
+        from ..models import User as UserModel
+        password = email_clean.split("@")[0] + str(uuid.uuid4())[:4]
+        password_hash = bcrypt.hashpw(password.encode(), bcrypt.gensalt()).decode()
+        user = UserModel(
+            email=email_clean,
+            password_hash=password_hash,
+            name=email_clean.split("@")[0],
+            organization_id=org_id,
+        )
+        await storage.create_user(user)
+    except Exception as e:
+        logger.warning("Could not create free user account: %s", e)
+
     return {
         "key": result["key"],
         "id": result["id"],

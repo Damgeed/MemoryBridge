@@ -997,6 +997,30 @@ class SQLiteMemoryRepository(MemoryRepository):
                 updated_at=datetime.fromisoformat(row["updated_at"]),
             )
 
+    # ── User Management ───────────────────────────────────────────────────────
+
+    async def create_user(self, user) -> dict:
+        await self.conn.execute(
+            """
+            INSERT OR IGNORE INTO users
+                (id, email, password_hash, name, organization_id, created_at, updated_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+            """,
+            (user.id, user.email, user.password_hash, user.name,
+             user.organization_id, user.created_at.isoformat(), user.updated_at.isoformat()),
+        )
+        return {"id": user.id, "email": user.email, "name": user.name, "organization_id": user.organization_id}
+
+    async def get_user_by_email(self, email: str):
+        cursor = await self.conn.execute(
+            "SELECT id, email, password_hash, name, organization_id, created_at FROM users WHERE email = ?",
+            (email,),
+        )
+        row = await cursor.fetchone()
+        if row is None:
+            return None
+        return dict(row)
+
     # ── Additional utilities (beyond the ABC) ────────────────────────────────
 
     async def query_memories_lineage(
