@@ -1081,6 +1081,24 @@
         color: var(--text-muted);
         font-size: 0.6rem;
       }
+      /* Mobile: compact country selector, bigger phone input */
+      @media (max-width: 520px) {
+        .auth-phone-input-row {
+          gap: 0.35rem;
+        }
+        .phone-country-select select {
+          min-width: 68px;
+          padding: 0.7rem 1.25rem 0.7rem 0.5rem;
+          font-size: 0.82rem;
+        }
+        .phone-country-select .phone-caret {
+          right: 0.3rem;
+        }
+        .auth-phone-input-row input {
+          font-size: 1rem;
+          padding: 0.7rem 0.65rem;
+        }
+      }
       .auth-phone-input-row input {
         flex: 1;
         min-width: 0;

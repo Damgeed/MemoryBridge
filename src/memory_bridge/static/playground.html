@@ -1120,6 +1120,28 @@
         color: var(--text-muted);
         font-size: 0.6rem;
       }
+      @media (max-width: 520px) {
+        .auth-phone-input-row {
+          flex-direction: column;
+          align-items: stretch;
+        }
+        .auth-phone-input-row input {
+          width: 100%;
+          padding: 0.6rem 0.75rem;
+          font-size: 0.85rem;
+        }
+        .auth-code-input-row input {
+          font-size: 1.2rem;
+          letter-spacing: 0.3em;
+          padding: 0.6rem 0.4rem;
+        }
+        .auth-code-email {
+          font-size: 0.92rem;
+        }
+        .auth-code-info {
+          padding: 0.75rem 0 0.5rem;
+        }
+      }
       .auth-phone-input-row input {
         flex: 1;
         min-width: 0;
