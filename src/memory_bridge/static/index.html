@@ -1081,22 +1081,30 @@
         color: var(--text-muted);
         font-size: 0.6rem;
       }
-      /* Mobile: compact country selector, bigger phone input */
+      /* Mobile: stack country on top, phone below, both full width */
       @media (max-width: 520px) {
         .auth-phone-input-row {
-          gap: 0.35rem;
+          flex-direction: column;
+          gap: 0.5rem;
+        }
+        .phone-country-select {
+          flex-shrink: 1;
+          width: 100%;
         }
         .phone-country-select select {
-          min-width: 68px;
-          padding: 0.7rem 1.25rem 0.7rem 0.5rem;
-          font-size: 0.82rem;
+          width: 100%;
+          min-width: auto;
+          padding: 0.7rem 2rem 0.7rem 0.75rem;
+          font-size: 0.88rem;
         }
         .phone-country-select .phone-caret {
-          right: 0.3rem;
+          right: 0.5rem;
         }
         .auth-phone-input-row input {
+          width: 100%;
+          flex: none;
           font-size: 1rem;
-          padding: 0.7rem 0.65rem;
+          padding: 0.7rem 0.75rem;
         }
       }
       .auth-phone-input-row input {
