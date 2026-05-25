@@ -579,24 +579,26 @@
 
         // ── Checkout ─────────────────────────────────────────────
         async function checkout(tier) {
+            const jwt = localStorage.getItem('mb_jwt');
+            const key = localStorage.getItem('mb_api_key');
+            if (!jwt && !key) {
+                // Must be logged in to subscribe
+                openAuth();
+                return;
+            }
             try {
                 const res = await fetch('/billing/checkout?tier=' + tier, {
                     method: 'POST',
                     headers: {
-                        'Authorization': 'Bearer ' + (localStorage.getItem('mb_api_key') || ''),
+                        'Authorization': 'Bearer ' + (jwt || key),
                         'Content-Type': 'application/json',
                     },
                 });
                 if (!res.ok) throw new Error('Stripe not configured');
                 const data = await res.json();
-                // Save org_id + tier before Stripe redirect so welcome endpoint can use them
-                if (data.organization_id) {
-                    localStorage.setItem('mb_pending_org_id', data.organization_id);
-                    localStorage.setItem('mb_pending_tier', tier);
-                }
                 if (data.checkout_url) { window.location.href = data.checkout_url; }
             } catch {
-                window.location.href = '/playground/';
+                alert('Subscription is unavailable right now. Please try again.');
             }
         }
 

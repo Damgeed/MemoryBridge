@@ -1310,55 +1310,37 @@
 
         async function handleStripeWelcome(sessionId) {
             const statusEl = document.getElementById('dash-status');
-            statusEl.textContent = '🎉 Welcome! Setting up your account...';
+            statusEl.textContent = '✅ Payment confirmed! Setting up your account...';
 
-            // Get pending org_id + tier saved before Stripe redirect
-            const pendingOrgId = localStorage.getItem('mb_pending_org_id') || '';
-            const pendingTier = localStorage.getItem('mb_pending_tier') || 'starter';
+            // Clear pending state saved by pricing page
+            localStorage.removeItem('mb_pending_org_id');
+            localStorage.removeItem('mb_pending_tier');
+            window.history.replaceState({}, '', '/dashboard/');
 
-            try {
-                let url = '/dashboard/welcome?session_id=' + encodeURIComponent(sessionId);
-                if (pendingOrgId) {
-                    url += '&organization_id=' + encodeURIComponent(pendingOrgId);
-                    url += '&tier=' + encodeURIComponent(pendingTier);
+            // Poll for subscription — Stripe webhook updates it asynchronously
+            let attempts = 0;
+            const poll = setInterval(async () => {
+                attempts++;
+                try {
+                    const data = await api('GET', '/dashboard/data');
+                    if (data.tier !== 'free') {
+                        clearInterval(poll);
+                        loadDashboard();
+                        statusEl.textContent = `🎉 Welcome to the ${data.tier.charAt(0).toUpperCase() + data.tier.slice(1)} plan!`;
+                        showToast(`🎉 Welcome to the ${data.tier.charAt(0).toUpperCase() + data.tier.slice(1)} plan!`);
+                    } else if (attempts > 30) {
+                        clearInterval(poll);
+                        statusEl.textContent = '⏳ Your plan is being activated. It may take a moment.';
+                        loadDashboard();
+                    }
+                } catch {
+                    if (attempts > 30) {
+                        clearInterval(poll);
+                        statusEl.textContent = '⏳ Loading your dashboard...';
+                        loadDashboard();
+                    }
                 }
-                // Clean up pending state
-                localStorage.removeItem('mb_pending_org_id');
-                localStorage.removeItem('mb_pending_tier');
-
-                const res = await fetch(url);
-                if (!res.ok) {
-                    const err = await res.json().catch(() => ({}));
-                    statusEl.textContent = '⚠️ Could not verify purchase: ' + (err.detail || 'try again later');
-                    return;
-                }
-                const data = await res.json();
-                if (data.has_keys) {
-                    statusEl.textContent = '✅ Welcome back! You have ' + data.key_count + ' existing key(s) on the ' + data.tier.charAt(0).toUpperCase() + data.tier.slice(1) + ' plan.';
-                    // Clean redirect — fresh state, no races
-                    setTimeout(() => { window.location.href = '/dashboard/'; }, 800);
-                } else if (data.key) {
-                    // Save the key, then show dashboard + redirect to clear stale state
-                    localStorage.setItem('mb_api_key', data.key);
-                    currentApiKey = data.key;
-                    updateAuthButton();
-                    statusEl.textContent = '🎉 Welcome to the ' + data.tier.charAt(0).toUpperCase() + data.tier.slice(1) + ' plan!';
-                    document.getElementById('key-reveal-area').innerHTML = `
-                        <div class="key-reveal">
-                            <div style="margin-bottom:0.5rem;font-weight:700;font-size:0.85rem;">🎉 Your New API Key</div>
-                            <div class="key-plaintext">${escapeHtml(data.key)}</div>
-                            <div class="key-warning">⚠️ Copy this key now. You won't see it again.</div>
-                            <div style="margin-top:0.75rem;display:flex;gap:0.5rem;">
-                                <button class="btn btn-primary btn-sm" onclick="navigator.clipboard.writeText('${data.key}')">📋 Copy Key</button>
-                                <button class="btn btn-secondary btn-sm" onclick="window.location.href='/dashboard/'">Continue →</button>
-                            </div>
-                        </div>`;
-                    // Populate dashboard immediately, then redirect cleans stale state
-                    loadDashboard();
-                }
-            } catch (e) {
-                statusEl.textContent = '⚠️ Could not verify purchase: ' + e.message;
-            }
+            }, 2000);
         }
     </script>
 </body>
