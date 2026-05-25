@@ -117,7 +117,7 @@ async def lifespan(app: FastAPI):
     # Initialize shared metrics (set-once, safe for multi-worker)
     await storage.initialize_metric("start_time", datetime.now(timezone.utc).isoformat())
     await storage.initialize_metric("request_count", 0)
-    await storage.initialize_metric("total_latency_ms", 0.0)
+    await storage.initialize_metric("total_latency_ms", 0)
 
     # Set up Prometheus uptime gauge (auto-updates on scrape)
     uptime_gauge.set_function(
