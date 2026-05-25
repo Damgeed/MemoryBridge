@@ -10,6 +10,7 @@ from datetime import datetime, timezone
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from fastapi.responses import RedirectResponse
+from pydantic import BaseModel
 from starlette.responses import JSONResponse
 
 from ..config import get_settings
@@ -28,8 +29,15 @@ def _get_user_service(storage: MemoryRepository = Depends(get_storage)) -> UserS
 
 
 @router.get("/login")
-async def auth0_login(request: Request):
-    """Redirect user to Auth0's Universal Login page."""
+async def auth0_login(
+    request: Request,
+    connection: str = Query("", description="Specific social connection (e.g. google-oauth2, apple, windowslive)"),
+):
+    """Redirect user to Auth0's Universal Login page.
+
+    If a connection is specified, Auth0 skips the login page and
+    goes directly to that provider's authentication flow.
+    """
     svc = get_auth0_service()
     if not svc.enabled:
         raise HTTPException(status_code=501, detail="Auth0 is not configured")
@@ -39,8 +47,8 @@ async def auth0_login(request: Request):
     redirect_uri = f"{base}/auth/auth0/callback"
     state = str(uuid.uuid4())[:8]  # Simple CSRF token
 
-    authorize_url = svc._authorize_url(redirect_uri, state=state)
-    logger.info("Auth0 login redirect: %s", authorize_url)
+    authorize_url = svc._authorize_url(redirect_uri, state=state, connection=connection)
+    logger.info("Auth0 login redirect: %s (connection=%s)", authorize_url, connection or "default")
     return RedirectResponse(url=authorize_url)
 
 
@@ -142,3 +150,153 @@ async def auth0_callback(
     # Redirect to dashboard with token as query param (frontend stores it)
     redirect_url = f"/dashboard?jwt={jwt_token}&org_id={org_id}"
     return RedirectResponse(url=redirect_url)
+
+
+# ── Passwordless (Email OTP) ──────────────────────────────────────
+
+
+class PasswordlessStartRequest(BaseModel):
+    email: str
+
+
+class PasswordlessVerifyRequest(BaseModel):
+    email: str
+    code: str
+
+
+@router.post("/passwordless/start")
+async def passwordless_start(req: PasswordlessStartRequest):
+    """Send a 6-digit verification code to the user's email via Auth0 Passwordless.
+
+    This is the first step of the passwordless flow (like ChatGPT's email login).
+    Auth0 sends an email with a 6-digit code.
+    """
+    svc = get_auth0_service()
+    if not svc.enabled:
+        raise HTTPException(status_code=501, detail="Auth0 is not configured")
+
+    if not req.email or "@" not in req.email:
+        raise HTTPException(status_code=400, detail="Invalid email address")
+
+    success = await svc.start_passwordless(req.email)
+    if not success:
+        raise HTTPException(status_code=400, detail="Failed to send verification code. Make sure Auth0 Passwordless (Email) is enabled in Auth0 Dashboard.")
+
+    return {"sent": True, "email": mask_email(req.email)}
+
+
+def mask_email(email: str) -> str:
+    """Show just the first character and domain: 'j***@example.com'"""
+    at_idx = email.find("@")
+    if at_idx < 1:
+        return email
+    return email[0] + "***" + email[at_idx:]
+
+
+@router.post("/passwordless/verify")
+async def passwordless_verify(
+    req: PasswordlessVerifyRequest,
+    storage: MemoryRepository = Depends(get_storage),
+    user_svc: UserService = Depends(_get_user_service),
+):
+    """Verify a 6-digit OTP code and return a session JWT.
+
+    Exchanges the code for Auth0 tokens, validates the ID token,
+    creates or finds the local user, and returns our JWT.
+    """
+    svc = get_auth0_service()
+    if not svc.enabled:
+        raise HTTPException(status_code=501, detail="Auth0 is not configured")
+
+    if not req.code or len(req.code) < 4:
+        raise HTTPException(status_code=400, detail="Invalid verification code")
+
+    # Exchange code for Auth0 tokens
+    tokens = await svc.verify_passwordless(req.email, req.code)
+    if not tokens:
+        raise HTTPException(status_code=401, detail="Invalid or expired verification code")
+
+    id_token = tokens.get("id_token", "")
+    if not id_token:
+        raise HTTPException(status_code=400, detail="No ID token received from Auth0")
+
+    # Validate the ID token
+    claims = await svc.validate_token(id_token)
+    if not claims:
+        raise HTTPException(status_code=401, detail="Failed to validate Auth0 token")
+
+    # Extract user info
+    auth0_sub = claims.get("sub", "")
+    email = claims.get("email", "") or req.email
+    name = claims.get("name", "") or claims.get("nickname", "") or email.split("@")[0]
+
+    if not auth0_sub:
+        raise HTTPException(status_code=400, detail="Auth0 response missing user identifier")
+
+    # Find or create user
+    existing_user = None
+    if email:
+        try:
+            existing_user = await storage.get_user_by_email(email)
+        except Exception:
+            pass
+
+    if existing_user:
+        user_id = existing_user.get("id")
+        org_id = existing_user.get("organization_id", "")
+        logger.info("Passwordless login: existing user %s (org=%s)", email, org_id)
+    else:
+        org_id = str(uuid.uuid4())
+        try:
+            user = User(
+                email=email,
+                password_hash="",  # Auth0 manages auth
+                name=name,
+                organization_id=org_id,
+                auth0_sub=auth0_sub,
+            )
+            result = await storage.create_user(user)
+            user_id = result.get("id", "")
+            logger.info("Passwordless signup: new user %s (org=%s)", email, org_id)
+        except Exception as e:
+            logger.error("Passwordless user creation failed: %s", e)
+            raise HTTPException(status_code=500, detail="Could not create user account")
+
+    # Generate our JWT
+    user_data = {
+        "id": user_id if existing_user else User,
+        "email": email,
+        "name": name,
+        "organization_id": org_id,
+        "role": "member",
+    }
+    if existing_user:
+        user_data["id"] = existing_user.get("id", "")
+    else:
+        user_data["id"] = result.get("id", "")
+
+    try:
+        jwt_token = await user_svc.generate_token(user_data)
+    except Exception as e:
+        logger.error("JWT generation failed: %s", e)
+        raise HTTPException(status_code=500, detail="Could not generate session token")
+
+    # Fetch API key for the user
+    api_key = ""
+    try:
+        keys = await storage.list_api_keys(org_id)
+        if keys:
+            api_key = keys[0].get("key", "")
+    except Exception:
+        pass
+
+    return {
+        "token": jwt_token,
+        "api_key": api_key,
+        "user": {
+            "id": user_data["id"],
+            "email": email,
+            "name": name,
+            "organization_id": org_id,
+        },
+    }

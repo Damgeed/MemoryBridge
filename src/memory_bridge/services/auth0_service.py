@@ -45,17 +45,27 @@ class Auth0Service:
     def _jwks_url(self) -> str:
         return f"https://{self.domain}/.well-known/jwks.json"
 
-    def _authorize_url(self, redirect_uri: str, state: str = "") -> str:
-        """Build the Auth0 Universal Login URL."""
+    def _authorize_url(self, redirect_uri: str, state: str = "", connection: str = "") -> str:
+        """Build the Auth0 Universal Login URL.
+
+        Args:
+            redirect_uri: Where Auth0 redirects after login
+            state: CSRF token
+            connection: Optional — if set, Auth0 goes directly to that social provider.
+                        Examples: 'google-oauth2', 'apple', 'windowslive'
+        """
+        scope = "openid profile email"
         params = (
             f"client_id={self.client_id}"
             f"&redirect_uri={redirect_uri}"
             f"&response_type=code"
-            f"&scope=openid profile email"
+            f"&scope={scope}"
             f"&audience={self.audience}"
         )
         if state:
             params += f"&state={state}"
+        if connection:
+            params += f"&connection={connection}"
         return f"https://{self.domain}/authorize?{params}"
 
     async def _fetch_jwks(self) -> dict:
@@ -125,6 +135,54 @@ class Auth0Service:
             resp = await client.post(url, json=data, timeout=15)
             if resp.status_code != 200:
                 logger.warning("Auth0 code exchange failed: %s", resp.text)
+                return None
+            return resp.json()
+
+    async def start_passwordless(self, email: str) -> bool:
+        """Send a 6-digit verification code to the user's email via Auth0 Passwordless.
+
+        Requires Auth0 Passwordless (Email) connection to be enabled in Auth0 Dashboard.
+        Returns True if the code was sent successfully.
+        """
+        if not self.enabled or not self.client_secret:
+            logger.warning("Auth0 passwordless: client_secret not configured")
+            return False
+        url = f"https://{self.domain}/passwordless/start"
+        payload = {
+            "client_id": self.client_id,
+            "client_secret": self.client_secret,
+            "connection": "email",
+            "email": email,
+            "send": "code",
+        }
+        async with httpx.AsyncClient() as client:
+            resp = await client.post(url, json=payload, timeout=15)
+            if resp.status_code != 200:
+                logger.warning("Auth0 passwordless start failed (%s): %s", resp.status_code, resp.text)
+                return False
+            return True
+
+    async def verify_passwordless(self, email: str, code: str) -> Optional[dict]:
+        """Verify a 6-digit OTP code and exchange it for Auth0 tokens.
+
+        Returns dict with 'access_token', 'id_token' on success, None on failure.
+        """
+        if not self.enabled or not self.client_secret:
+            logger.warning("Auth0 passwordless verify: client_secret not configured")
+            return None
+        url = f"https://{self.domain}/oauth/token"
+        payload = {
+            "grant_type": "http://auth0.com/oauth/grant-type/passwordless/otp",
+            "realm": "email",
+            "username": email,
+            "otp": code,
+            "client_id": self.client_id,
+            "client_secret": self.client_secret,
+        }
+        async with httpx.AsyncClient() as client:
+            resp = await client.post(url, json=payload, timeout=15)
+            if resp.status_code != 200:
+                logger.warning("Auth0 passwordless verify failed (%s): %s", resp.status_code, resp.text)
                 return None
             return resp.json()
 

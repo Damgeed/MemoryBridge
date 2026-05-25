@@ -702,60 +702,138 @@
         <div class="auth-icon">🔑</div>
         <div class="auth-title">Memory Bridge</div>
         <div class="auth-subtitle">Sign in to manage your API keys and account.</div>
-            <!-- Step 1: Options -->
-            <div id="auth-options" class="auth-options">
-              <button class="auth-social-btn" onclick="window.location.href='/auth/auth0/login'" style="background:var(--accent-glow);border-color:var(--accent);">
-                <span class="s-icon" style="background:transparent;border:none;font-size:1rem;">🔐</span>
-                <span style="font-weight:600;">Continue with Auth0</span>
-                <span class="s-arrow">→</span>
-              </button>
-              <div class="auth-divider">
-                <hr>
-                <span>or continue with email</span>
-                <hr>
-              </div>
-              <button class="auth-social-btn" onclick="showAuthForm('signup')">
-                <span class="s-icon email-icon">✉️</span>
-                <span>Continue with Email</span>
-                <span class="s-arrow">→</span>
-              </button>
-            </div>
 
-        <div id="auth-form-signup" class="auth-form">
-          <button class="back-link" onclick="showAuthOptions()">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
-            Back
+        <!-- Step 1: Options (social + email) -->
+        <div id="auth-options" class="auth-options">
+          <button class="auth-social-btn" onclick="socialLogin('google-oauth2')" style="background:transparent;">
+            <span class="s-icon" style="background:transparent;border:none;font-size:1.2rem;">
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 48 48">
+                <path fill="#FFC107" d="M43.611,20.083H42V20H24v8h11.303c-1.649,4.657-6.08,8-11.303,8c-6.627,0-12-5.373-12-12c0-6.627,5.373-12,12-12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C12.955,4,4,12.955,4,24c0,11.045,8.955,20,20,20c11.045,0,20-8.955,20-20C44,22.659,43.862,21.35,43.611,20.083z"/>
+                <path fill="#FF3D00" d="M6.306,14.691l6.571,4.819C14.655,15.108,18.961,12,24,12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C16.318,4,9.656,8.337,6.306,14.691z"/>
+                <path fill="#4CAF50" d="M24,44c5.166,0,9.86-1.977,13.409-5.192l-6.19-5.238C29.211,35.091,26.715,36,24,36c-5.202,0-9.619-3.317-11.283-7.946l-6.522,5.025C9.505,39.556,16.227,44,24,44z"/>
+                <path fill="#1976D2" d="M43.611,20.083H42V20H24v8h11.303c-0.792,2.237-2.231,4.166-4.087,5.571c0.001-0.001,0.002-0.001,0.003-0.002l6.19,5.238C36.971,39.205,44,34,44,24C44,22.659,43.862,21.35,43.611,20.083z"/>
+              </svg>
+            </span>
+            <span>Continue with Google</span>
           </button>
-          <label for="su-name">Name (optional)</label>
-          <input type="text" id="su-name" placeholder="Your name" autocomplete="name">
-          <label for="su-email">Email</label>
-          <input type="email" id="su-email" placeholder="you@example.com" autocomplete="email">
-          <label for="su-password">Password</label>
-          <input type="password" id="su-password" placeholder="Min 8 characters" autocomplete="new-password">
-          <button class="btn btn-primary" onclick="signupUser()" id="su-btn">Create account</button>
-          <div class="switch-text">Already have an account? <a onclick="showAuthForm('login')">Log in</a></div>
-          <div class="auth-error"></div>
+          <button class="auth-social-btn" onclick="socialLogin('apple')">
+            <span class="s-icon" style="font-size:1.3rem;">
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M17.05 20.28c-.98.95-2.05.8-3.08.35-1.09-.46-2.09-.48-3.24 0-1.44.62-2.2.44-3.06-.35C2.79 15.25 3.51 7.59 9.05 7.31c1.35.07 2.29.74 3.08.8 1.18-.24 2.31-.93 3.57-.84 1.51.12 2.65.72 3.4 1.8-3.12 1.87-2.38 5.98.48 7.13-.57 1.5-1.31 2.99-2.54 4.09zM12.03 7.25c-.15-2.23 1.66-4.07 3.74-4.25.29 2.58-2.34 4.5-3.74 4.25z"/>
+              </svg>
+            </span>
+            <span>Continue with Apple</span>
+          </button>
+          <button class="auth-social-btn" onclick="socialLogin('windowslive')">
+            <span class="s-icon" style="font-size:1.3rem;">
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="currentColor" style="color:#00a4ef;">
+                <path d="M0 0h11.4v11.4H0V0zm12.6 0H24v11.4H12.6V0zM0 12.6h11.4V24H0V12.6zm12.6 0H24V24H12.6V12.6z"/>
+              </svg>
+            </span>
+            <span>Continue with Microsoft</span>
+          </button>
+          <div class="auth-divider">
+            <hr>
+            <span>or continue with email</span>
+            <hr>
+          </div>
+          <div class="auth-email-row">
+            <input type="email" id="pl-email" placeholder="you@example.com" autocomplete="email" onkeydown="if(event.key==='Enter')continueWithEmail()">
+            <button class="btn btn-primary" onclick="continueWithEmail()" id="pl-email-btn">Continue →</button>
+          </div>
+          <div class="auth-error" id="auth-error-main"></div>
         </div>
 
-        <div id="auth-form-login" class="auth-form">
+        <!-- Step 2: Code verification -->
+        <div id="auth-code-step" class="auth-form">
           <button class="back-link" onclick="showAuthOptions()">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
-            Back
+            Change email
           </button>
-          <label for="li-email">Email</label>
-          <input type="email" id="li-email" placeholder="you@example.com" autocomplete="email">
-          <label for="li-password">Password</label>
-          <input type="password" id="li-password" placeholder="Enter your password" autocomplete="current-password">
-          <button class="btn btn-primary" onclick="loginUser()" id="li-btn">Sign in</button>
-          <div class="switch-text">Don't have an account? <a onclick="showAuthForm('signup')">Sign up</a></div>
-          <div class="auth-error"></div>
+          <div class="auth-code-info">
+            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="2" y="4" width="20" height="16" rx="2"/>
+              <path d="M22 7l-10 7L2 7"/>
+            </svg>
+            <div class="auth-code-msg">We sent a code to</div>
+            <div class="auth-code-email" id="code-email-display">j***@example.com</div>
+          </div>
+          <div class="auth-code-input-row">
+            <input type="text" id="pl-code" placeholder="Enter 6-digit code" maxlength="6" inputmode="numeric" autocomplete="one-time-code" onkeydown="if(event.key==='Enter')verifyCode()">
+          </div>
+          <button class="btn btn-primary" onclick="verifyCode()" id="pl-code-btn">Verify Code →</button>
+          <div class="auth-error" id="auth-error-code"></div>
+          <div class="auth-code-resend">
+            Didn't get it? <a onclick="resendCode()">Send new code</a>
+          </div>
         </div>
       </div>
     </div>
 
+    <style>
+      /* ── Auth Modal: Passwordless ────────────────────── */
+      .auth-email-row {
+        display: flex;
+        gap: 0.5rem;
+        margin-top: 0.25rem;
+      }
+      .auth-email-row input {
+        flex: 1;
+        min-width: 0;
+      }
+      .auth-email-row .btn {
+        white-space: nowrap;
+        padding: 0.65rem 1.2rem;
+        flex-shrink: 0;
+      }
+      .auth-code-info {
+        text-align: center;
+        padding: 1rem 0 0.75rem;
+      }
+      .auth-code-info svg {
+        margin-bottom: 0.75rem;
+      }
+      .auth-code-msg {
+        color: var(--text-secondary);
+        font-size: 0.9rem;
+      }
+      .auth-code-email {
+        font-weight: 700;
+        font-size: 1.05rem;
+        color: var(--text-primary);
+        margin-top: 0.2rem;
+      }
+      .auth-code-input-row {
+        margin: 1rem 0;
+      }
+      .auth-code-input-row input {
+        text-align: center;
+        font-size: 1.5rem;
+        font-family: var(--font-mono);
+        letter-spacing: 0.5em;
+        padding: 0.75rem 0.5rem;
+      }
+      .auth-code-resend {
+        text-align: center;
+        margin-top: 0.75rem;
+        font-size: 0.85rem;
+        color: var(--text-muted);
+      }
+      .auth-code-resend a {
+        color: var(--accent);
+        cursor: pointer;
+        text-decoration: underline;
+        text-underline-offset: 2px;
+      }
+      .auth-code-resend a:hover {
+        color: var(--accent-hover);
+      }
+    </style>
+
     <script>
         // ── Shared Auth ──────────────────────────────────────────────
         let currentApiKey = '';
+        let pendingEmail = '';
 
         function openAuth() {
             document.getElementById('auth-overlay').classList.add('open');
@@ -763,55 +841,139 @@
             showAuthOptions();
         }
 
-        async function oauthLogin(provider) {
-            document.getElementById('auth-error').textContent = '🔄 Connecting to ' + provider.charAt(0).toUpperCase() + provider.slice(1) + '...';
+        function socialLogin(connection) {
+            window.location.href = '/auth/auth0/login?connection=' + connection;
+        }
+
+        function closeAuth() {
+            document.getElementById('auth-overlay').classList.remove('open');
+            document.body.style.overflow = '';
+            pendingEmail = '';
+        }
+
+        function showAuthOptions() {
+            document.querySelectorAll('.auth-form').forEach(el => el.classList.remove('active'));
+            const opts = document.getElementById('auth-options');
+            opts.style.display = '';
+            // Reset code step
+            document.getElementById('pl-code').value = '';
+            document.getElementById('pl-email').value = '';
+            document.getElementById('pl-email').focus();
+            document.getElementById('auth-code-step').classList.remove('active');
+            // Clear all errors
+            document.querySelectorAll('.auth-error').forEach(el => el.textContent = '');
+            // Re-enable buttons
+            document.getElementById('pl-email-btn').disabled = false;
+            document.getElementById('pl-code-btn').disabled = false;
+        }
+
+        async function continueWithEmail() {
+            const email = document.getElementById('pl-email').value.trim();
+            const errorEl = document.getElementById('auth-error-main');
+            const btn = document.getElementById('pl-email-btn');
+            if (!email || !email.includes('@')) {
+                errorEl.innerHTML = '⚠️ Enter a valid email address';
+                return;
+            }
+            errorEl.innerHTML = '<span class="auth-spinner"></span>';
+            btn.disabled = true;
             try {
-                const res = await fetch('/auth/oauth', {
+                const res = await fetch('/auth/auth0/passwordless/start', {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({provider, token: 'placeholder', email: '', name: ''}),
+                    body: JSON.stringify({email}),
                 });
                 if (!res.ok) {
                     const err = await res.json().catch(() => ({}));
-                    document.getElementById('auth-error').textContent = '❌ ' + (err.detail || 'Sign in failed');
+                    errorEl.innerHTML = '❌ ' + (err.detail || 'Failed to send code');
+                    btn.disabled = false;
+                    return;
+                }
+                const data = await res.json();
+                pendingEmail = email;
+                document.getElementById('code-email-display').textContent = data.email || email[0] + '***' + email.substring(email.indexOf('@'));
+                // Show code verification step
+                document.getElementById('auth-options').style.display = 'none';
+                document.getElementById('auth-code-step').classList.add('active');
+                document.getElementById('pl-code').value = '';
+                document.getElementById('auth-error-code').textContent = '';
+                setTimeout(() => document.getElementById('pl-code').focus(), 150);
+                btn.disabled = false;
+            } catch (e) {
+                errorEl.innerHTML = '❌ ' + e.message;
+                btn.disabled = false;
+            }
+        }
+
+        async function verifyCode() {
+            const code = document.getElementById('pl-code').value.trim();
+            const errorEl = document.getElementById('auth-error-code');
+            const btn = document.getElementById('pl-code-btn');
+            if (!code || code.length < 4) {
+                errorEl.innerHTML = '⚠️ Enter your 6-digit verification code';
+                return;
+            }
+            errorEl.innerHTML = '<span class="auth-spinner"></span>';
+            btn.disabled = true;
+            try {
+                const res = await fetch('/auth/auth0/passwordless/verify', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({email: pendingEmail, code}),
+                });
+                if (!res.ok) {
+                    const err = await res.json().catch(() => ({}));
+                    errorEl.innerHTML = '❌ ' + (err.detail || 'Verification failed');
+                    btn.disabled = false;
                     return;
                 }
                 const data = await res.json();
                 localStorage.setItem('mb_jwt', data.token);
-                if (data.user) {
-                    // Try to get API key for this user
-                    const kvRes = await fetch('/auth/my-key-value', {
-                        headers: {'Authorization': 'Bearer ' + data.token, 'Content-Type': 'application/json'},
-                    });
-                    if (kvRes.ok) {
-                        const kvData = await kvRes.json();
-                        localStorage.setItem('mb_api_key', kvData.key);
-                        currentApiKey = kvData.key;
-                    }
+                if (data.api_key) {
+                    localStorage.setItem('mb_api_key', data.api_key);
+                    currentApiKey = data.api_key;
                 }
                 updateAuthUI();
                 closeAuth();
                 window.location.reload();
             } catch (e) {
-                document.getElementById('auth-error').textContent = '❌ ' + e.message;
+                errorEl.innerHTML = '❌ ' + e.message;
+                btn.disabled = false;
             }
         }
-        function closeAuth() {
-            document.getElementById('auth-overlay').classList.remove('open');
-            document.body.style.overflow = '';
+
+        async function resendCode() {
+            const errorEl = document.getElementById('auth-error-code');
+            const btn = document.getElementById('pl-code-btn');
+            if (!pendingEmail) return;
+            errorEl.innerHTML = '<span class="auth-spinner"></span>';
+            btn.disabled = true;
+            try {
+                const res = await fetch('/auth/auth0/passwordless/start', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({email: pendingEmail}),
+                });
+                if (!res.ok) {
+                    const err = await res.json().catch(() => ({}));
+                    errorEl.innerHTML = '❌ ' + (err.detail || 'Failed to resend code');
+                    btn.disabled = false;
+                    return;
+                }
+                errorEl.innerHTML = '✅ New code sent!';
+                document.getElementById('pl-code').value = '';
+                setTimeout(() => document.getElementById('pl-code').focus(), 150);
+                btn.disabled = false;
+            } catch (e) {
+                errorEl.innerHTML = '❌ ' + e.message;
+                btn.disabled = false;
+            }
         }
-        function showAuthOptions() {
-            document.querySelectorAll('.auth-form').forEach(el => el.classList.remove('active'));
-            document.getElementById('auth-options').style.display = '';
-            document.querySelectorAll('.auth-error').forEach(el => el.textContent = '');
-        }
-        function showAuthForm(mode) {
-            document.getElementById('auth-options').style.display = 'none';
-            document.querySelectorAll('.auth-form').forEach(el => el.classList.remove('active'));
-            document.getElementById('auth-form-' + mode).classList.add('active');
-            document.querySelectorAll('.auth-error').forEach(el => el.textContent = '');
-            const firstInput = document.querySelector('#auth-form-' + mode + ' input');
-            if (firstInput) setTimeout(() => firstInput.focus(), 100);
+
+        function escapeHtml(str) {
+            const div = document.createElement('div');
+            div.textContent = str;
+            return div.innerHTML;
         }
 
         function updateAuthUI() {
@@ -838,80 +1000,11 @@
             closeAuth();
         }
 
-        // ── Auth API ─────────────────────────────────────────────────
         function getAuthHeaders() {
             const headers = { 'Content-Type': 'application/json' };
             const key = currentApiKey || localStorage.getItem('mb_api_key') || '';
             if (key) headers['Authorization'] = 'Bearer ' + key;
             return headers;
-        }
-
-        async function signupUser() {
-            const email = document.getElementById('su-email').value.trim();
-            const password = document.getElementById('su-password').value;
-            const name = document.getElementById('su-name').value.trim();
-            const resultEl = document.querySelector('.auth-error');
-            const btn = document.getElementById('su-btn');
-            if (!email || !email.includes('@')) { resultEl.innerHTML = '⚠️ Enter a valid email'; return; }
-            if (password.length < 8) { resultEl.innerHTML = '⚠️ Password must be at least 8 characters'; return; }
-            resultEl.innerHTML = '<span class="auth-spinner"></span>';
-            btn.disabled = true;
-            try {
-                const regRes = await fetch('/auth/register', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({email, password, name}) });
-                if (!regRes.ok) { const err = await regRes.json().catch(() => ({detail: 'Failed'})); resultEl.innerHTML = '❌ ' + (err.detail || 'Registration failed'); btn.disabled = false; return; }
-                const regData = await regRes.json();
-                localStorage.setItem('mb_jwt', regData.token);
-                let keyData;
-                const kvRes = await fetch('/auth/my-key-value', { headers: {'Authorization': 'Bearer ' + regData.token, 'Content-Type': 'application/json'} });
-                if (!kvRes.ok) {
-                    const fsRes = await fetch('/dashboard/free-signup?email=' + encodeURIComponent(email), { method: 'POST' });
-                    if (!fsRes.ok) { const err = await fsRes.json().catch(() => ({})); resultEl.innerHTML = '❌ ' + (err.detail || 'Could not create API key'); btn.disabled = false; return; }
-                    keyData = await fsRes.json();
-                } else { keyData = await kvRes.json(); }
-                const apiKey = keyData.key;
-                localStorage.setItem('mb_api_key', apiKey);
-                currentApiKey = apiKey;
-                updateAuthUI();
-                closeAuth();
-                window.location.reload();
-            } catch (e) { resultEl.innerHTML = '❌ ' + e.message; btn.disabled = false; }
-        }
-
-        async function loginUser() {
-            const email = document.getElementById('li-email').value.trim();
-            const password = document.getElementById('li-password').value;
-            const resultEl = document.querySelector('.auth-error');
-            const btn = document.getElementById('li-btn');
-            if (!email || !password) { resultEl.innerHTML = '⚠️ Enter your email and password'; return; }
-            resultEl.innerHTML = '<span class="auth-spinner"></span>';
-            btn.disabled = true;
-            try {
-                const loginRes = await fetch('/auth/login', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({email, password}) });
-                if (!loginRes.ok) { const err = await loginRes.json().catch(() => ({})); resultEl.innerHTML = '❌ ' + (err.detail || 'Invalid email or password'); btn.disabled = false; return; }
-                const loginData = await loginRes.json();
-                localStorage.setItem('mb_jwt', loginData.token);
-                const kvRes = await fetch('/auth/my-key-value', { headers: {'Authorization': 'Bearer ' + loginData.token, 'Content-Type': 'application/json'} });
-                if (!kvRes.ok) {
-                    const fsRes = await fetch('/dashboard/free-signup?email=' + encodeURIComponent(email), { method: 'POST' });
-                    if (!fsRes.ok) { resultEl.innerHTML = '❌ No API key found. Use <strong>Sign Up</strong> to create one.'; btn.disabled = false; return; }
-                    const keyData = await fsRes.json();
-                    localStorage.setItem('mb_api_key', keyData.key);
-                    currentApiKey = keyData.key;
-                } else {
-                    const keyData = await kvRes.json();
-                    localStorage.setItem('mb_api_key', keyData.key);
-                    currentApiKey = keyData.key;
-                }
-                updateAuthUI();
-                closeAuth();
-                window.location.reload();
-            } catch (e) { resultEl.innerHTML = '❌ ' + e.message; btn.disabled = false; }
-        }
-
-        function escapeHtml(str) {
-            const div = document.createElement('div');
-            div.textContent = str;
-            return div.innerHTML;
         }
 
         // ── Init ──────────────────────────────────────────────────
