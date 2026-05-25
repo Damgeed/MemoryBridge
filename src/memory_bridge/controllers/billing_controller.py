@@ -82,21 +82,22 @@ async def create_checkout_auth(
     tier: str = "pro",
     billing: BillingService = Depends(_get_billing_service),
 ):
-    """Create a Stripe checkout session, resolving org_id from auth or generating one.
+    """Create a Stripe checkout session, resolving org_id from auth.
 
-    - Authenticated users: org_id = project_id from API key
-    - Unauthenticated users (first-time checkout): generates a UUID org_id,
-      stored in Stripe session metadata for the welcome endpoint to pick up
+    Requires authentication (JWT or API key). Returns the user's
+    organization_id in the response so the frontend can track it.
     """
-    import uuid
+    # Require authentication — users must be logged in to subscribe
     auth = getattr(request.state, "auth", None)
-    if auth and auth.get("project_id"):
-        org_id = auth["project_id"]
-    elif auth and auth.get("key_id"):
-        org_id = auth["key_id"]
-    else:
-        # First-time user — generate a unique org ID for the Stripe session
-        org_id = str(uuid.uuid4())
+    if not auth:
+        raise HTTPException(
+            status_code=401,
+            detail="You must be signed in to subscribe. Sign up or log in first.",
+        )
+
+    org_id = auth.get("project_id") or auth.get("key_id", "")
+    if not org_id:
+        raise HTTPException(status_code=401, detail="Could not resolve your account. Please sign in again.")
     url = await billing.create_checkout_session(
         organization_id=org_id,
         tier=tier,
