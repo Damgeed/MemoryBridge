@@ -106,6 +106,16 @@ _SCHEMA_MIGRATIONS: dict[int, str] = {
         "  updated_at TEXT NOT NULL"
         ")"
     ),
+    12: (
+        "CREATE TABLE IF NOT EXISTS oauth_accounts ("
+        "  id TEXT PRIMARY KEY, "
+        "  user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE, "
+        "  provider TEXT NOT NULL, "
+        "  provider_user_id TEXT NOT NULL, "
+        "  created_at TEXT NOT NULL, "
+        "  UNIQUE(provider, provider_user_id)"
+        ")"
+    ),
 }
 # ──────────────────────────────────────────────────────────────────────────────
 
@@ -1020,6 +1030,37 @@ class SQLiteMemoryRepository(MemoryRepository):
         if row is None:
             return None
         return dict(row)
+
+    async def get_user_by_oauth(self, provider: str, provider_user_id: str):
+        """Look up user by OAuth provider + user ID."""
+        async with aiosqlite.connect(self.db_path) as db:
+            db.row_factory = aiosqlite.Row
+            cursor = await db.execute(
+                """
+                SELECT u.id, u.email, u.name, u.organization_id, u.created_at
+                FROM oauth_accounts oa
+                JOIN users u ON u.id = oa.user_id
+                WHERE oa.provider = ? AND oa.provider_user_id = ?
+                """,
+                (provider, provider_user_id),
+            )
+            row = await cursor.fetchone()
+            if row:
+                return dict(row)
+            return None
+
+    async def link_oauth_account(self, user_id: str, provider: str, provider_user_id: str):
+        """Link an OAuth account to a user."""
+        from datetime import datetime, timezone
+        async with aiosqlite.connect(self.db_path) as db:
+            await db.execute(
+                """
+                INSERT OR IGNORE INTO oauth_accounts (user_id, provider, provider_user_id, created_at)
+                VALUES (?, ?, ?, ?)
+                """,
+                (user_id, provider, provider_user_id, datetime.now(timezone.utc).isoformat()),
+            )
+            await db.commit()
 
     # ── Additional utilities (beyond the ABC) ────────────────────────────────
 

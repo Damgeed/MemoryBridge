@@ -757,14 +757,29 @@
         <div class="auth-subtitle">Sign in to manage your API keys and account.</div>
 
         <div id="auth-options" class="auth-options">
-          <button class="auth-option" onclick="showAuthForm('signup')">
-            <span class="opt-icon">✉️</span>
-            <span>Continue with Email</span>
+          <button class="auth-option" onclick="oauthLogin('google')">
+            <span class="opt-icon" style="background:#fff;color:#333;font-size:0.95rem;font-weight:700;">G</span>
+            <span>Continue with Google</span>
             <span class="opt-arrow">→</span>
           </button>
-          <button class="auth-option" onclick="showAuthForm('login')">
-            <span class="opt-icon alt">🔐</span>
-            <span>Already have an account?</span>
+          <button class="auth-option" onclick="oauthLogin('apple')">
+            <span class="opt-icon" style="background:#000;color:#fff;font-size:1.05rem;">🍎</span>
+            <span>Continue with Apple</span>
+            <span class="opt-arrow">→</span>
+          </button>
+          <button class="auth-option" onclick="oauthLogin('microsoft')">
+            <span class="opt-icon" style="background:#0078d4;color:#fff;font-size:0.9rem;">M</span>
+            <span>Continue with Microsoft</span>
+            <span class="opt-arrow">→</span>
+          </button>
+          <div style="display:flex;align-items:center;gap:0.75rem;margin:0.25rem 0;">
+            <div style="flex:1;height:1px;background:var(--border-subtle);"></div>
+            <span style="font-size:0.78rem;color:var(--text-faint);font-weight:500;">or continue with email</span>
+            <div style="flex:1;height:1px;background:var(--border-subtle);"></div>
+          </div>
+          <button class="auth-option" onclick="showAuthForm('signup')">
+            <span class="opt-icon alt">✉️</span>
+            <span>Continue with Email</span>
             <span class="opt-arrow">→</span>
           </button>
         </div>
@@ -813,6 +828,38 @@
         function closeAuth() {
             document.getElementById('auth-overlay').classList.remove('open');
             document.body.style.overflow = '';
+        }
+        async function oauthLogin(provider) {
+            document.getElementById('auth-error').textContent = '🔄 Connecting to ' + provider.charAt(0).toUpperCase() + provider.slice(1) + '...';
+            try {
+                const res = await fetch('/auth/oauth', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({provider, token: 'placeholder', email: '', name: ''}),
+                });
+                if (!res.ok) {
+                    const err = await res.json().catch(() => ({}));
+                    document.getElementById('auth-error').textContent = '❌ ' + (err.detail || 'Sign in failed');
+                    return;
+                }
+                const data = await res.json();
+                localStorage.setItem('mb_jwt', data.token);
+                if (data.user) {
+                    const kvRes = await fetch('/auth/my-key-value', {
+                        headers: {'Authorization': 'Bearer ' + data.token, 'Content-Type': 'application/json'},
+                    });
+                    if (kvRes.ok) {
+                        const kvData = await kvRes.json();
+                        localStorage.setItem('mb_api_key', kvData.key);
+                        currentApiKey = kvData.key;
+                    }
+                }
+                updateAuthUI();
+                closeAuth();
+                window.location.reload();
+            } catch (e) {
+                document.getElementById('auth-error').textContent = '❌ ' + e.message;
+            }
         }
         function showAuthOptions() {
             document.querySelectorAll('.auth-form').forEach(el => el.classList.remove('active'));

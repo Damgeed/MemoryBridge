@@ -65,6 +65,11 @@ class Settings(BaseSettings):
     # CORS
     cors_origins: str = "https://memorybridge.io,http://localhost:8000"
 
+    # OAuth
+    google_client_id: str = ""
+    apple_client_id: str = ""
+    microsoft_client_id: str = ""
+
     model_config = {"env_prefix": "MEMORY_BRIDGE_"}
 
 

@@ -175,6 +175,16 @@ class MemoryRepository(ABC):
         """Look up user by email. Returns user dict or None."""
         ...
 
+    @abstractmethod
+    async def get_user_by_oauth(self, provider: str, provider_user_id: str):
+        """Look up user by OAuth provider + user ID. Returns user dict or None."""
+        ...
+
+    @abstractmethod
+    async def link_oauth_account(self, user_id: str, provider: str, provider_user_id: str):
+        """Link an OAuth account to an existing user."""
+        ...
+
     # ── Audit Log ───────────────────────────────────────────────────────────
 
     @abstractmethod

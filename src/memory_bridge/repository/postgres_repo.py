@@ -109,6 +109,16 @@ _SCHEMA_MIGRATIONS: dict[int, str] = {
         "  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()"
         ")"
     ),
+    13: (
+        "CREATE TABLE IF NOT EXISTS {schema}.oauth_accounts ("
+        "  id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text, "
+        "  user_id TEXT NOT NULL REFERENCES {schema}.users(id) ON DELETE CASCADE, "
+        "  provider TEXT NOT NULL, "
+        "  provider_user_id TEXT NOT NULL, "
+        "  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(), "
+        "  UNIQUE(provider, provider_user_id)"
+        ")"
+    ),
 }
 # ──────────────────────────────────────────────────────────────────────────────
 
@@ -1092,6 +1102,34 @@ class PostgresMemoryRepository(MemoryRepository):
             if row is None:
                 return None
             return dict(row)
+
+    async def get_user_by_oauth(self, provider: str, provider_user_id: str):
+        """Look up user by OAuth provider + user ID."""
+        async with self.pool.acquire() as conn:
+            row = await conn.fetchrow(
+                f"""
+                SELECT u.id, u.email, u.name, u.organization_id, u.created_at
+                FROM {self.schema}.oauth_accounts oa
+                JOIN {self.schema}.users u ON u.id = oa.user_id
+                WHERE oa.provider = $1 AND oa.provider_user_id = $2
+                """,
+                provider, provider_user_id,
+            )
+            if row:
+                return dict(row)
+            return None
+
+    async def link_oauth_account(self, user_id: str, provider: str, provider_user_id: str):
+        """Link an OAuth account to a user."""
+        async with self.pool.acquire() as conn:
+            await conn.execute(
+                f"""
+                INSERT INTO {self.schema}.oauth_accounts (user_id, provider, provider_user_id, created_at)
+                VALUES ($1, $2, $3, $4)
+                ON CONFLICT (provider, provider_user_id) DO NOTHING
+                """,
+                user_id, provider, provider_user_id, datetime.now(timezone.utc),
+            )
 
     # ── Additional utilities (beyond the ABC) ────────────────────────────────
 

@@ -9,6 +9,7 @@ from pydantic import BaseModel, EmailStr
 
 from ..services.user_service import UserService
 from ..dependencies import get_storage
+from ..repository import MemoryRepository
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/auth", tags=["auth"])
@@ -127,3 +128,55 @@ async def get_my_api_key_value(request: Request):
         raise HTTPException(status_code=404, detail="No API keys found for your account. Use the dashboard to generate one.")
 
     return {"key": user_keys[0]["key"], "key_id": user_keys[0]["id"], "key_count": len(user_keys)}
+
+
+@router.post("/oauth")
+async def oauth_login(
+    req: Request,
+    storage: MemoryRepository = Depends(get_storage),
+):
+    """Authenticate via OAuth provider token.
+
+    Accepts a JSON body with:
+    - provider: "google" | "apple" | "microsoft"
+    - token: The ID token from the OAuth provider
+    - email: (optional) email from client
+    - name: (optional) display name from client
+
+    Returns JWT + user info (same response as /auth/login).
+    """
+    from pydantic import BaseModel
+
+    class OAuthRequest(BaseModel):
+        provider: str
+        token: str
+        email: str = ""
+        name: str = ""
+
+    body = await req.json()
+    oauth_req = OAuthRequest(**body)
+
+    from ..services.oauth_service import OAuthService
+    from ..dependencies import get_storage
+
+    repo = await get_storage()
+    oauth_service = OAuthService(repo=repo)
+
+    try:
+        user = await oauth_service.authenticate(
+            provider=oauth_req.provider,
+            token=oauth_req.token,
+            email=oauth_req.email,
+            name=oauth_req.name,
+        )
+    except ValueError as e:
+        raise HTTPException(status_code=401, detail=str(e))
+
+    from ..services.user_service import UserService
+    user_service = UserService(repo=repo)
+    token = await user_service.generate_token(user)
+
+    return {
+        "token": token,
+        "user": {k: v for k, v in user.items() if k != "password_hash"},
+    }
