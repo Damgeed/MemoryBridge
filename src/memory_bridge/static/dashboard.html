@@ -847,9 +847,11 @@
                 const orgLabel = data.organization_id === 'demo' ? 'Your Account' : `Org: ${data.organization_id}`;
                 const tierLabel = data.tier === 'demo' ? 'Demo' : data.tier.charAt(0).toUpperCase() + data.tier.slice(1);
                 document.getElementById('dash-status').textContent = `${orgLabel} · ${tierLabel} plan`;
+                const dashStatus = document.getElementById('dash-status');
+                const origStatus = dashStatus.textContent;
                 // If showing Free but user likely paid, try to restore from Stripe
                 if (data.tier === 'free' && data.organization_id && data.organization_id !== 'demo' && data.organization_id !== 'default') {
-                    restoreSubscription();
+                    restoreSubscription(origStatus);
                 }
             } catch (e) {
                 document.getElementById('dash-status').textContent = '⚠️ Could not load dashboard data. Run the demo key in the playground to get started.';
@@ -858,18 +860,21 @@
             loadKeys();
         }
 
-        async function restoreSubscription() {
+        async function restoreSubscription(fallbackText) {
+            const statusEl = document.getElementById('dash-status');
+            const fallback = fallbackText || statusEl.textContent || 'Org: ... · Free plan';
+            statusEl.textContent = '🔄 Checking for existing subscription...';
             try {
-                const statusEl = document.getElementById('dash-status');
-                statusEl.textContent = '🔄 Checking for existing subscription...';
                 const data = await api('POST', '/dashboard/restore-subscription');
                 if (data.restored && data.tier !== 'free') {
-                    // Reload dashboard with correct tier
                     statusEl.textContent = '✅ Subscription restored! Reloading...';
                     setTimeout(() => loadDashboard(), 500);
+                } else {
+                    statusEl.textContent = fallback;
                 }
             } catch (e) {
-                // Silently fail — not critical
+                statusEl.textContent = '⚠️ Could not refresh subscription. ' + (e.message || '');
+                setTimeout(() => { statusEl.textContent = fallback; }, 3000);
             }
         }
 
