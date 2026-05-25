@@ -54,19 +54,21 @@ class Auth0Service:
             connection: Optional — if set, Auth0 goes directly to that social provider.
                         Examples: 'google-oauth2', 'apple', 'windowslive'
         """
-        scope = "openid profile email"
-        params = (
-            f"client_id={self.client_id}"
-            f"&redirect_uri={redirect_uri}"
-            f"&response_type=code"
-            f"&scope={scope}"
-            f"&audience={self.audience}"
-        )
+        from urllib.parse import urlencode
+
+        params = {
+            "client_id": self.client_id,
+            "redirect_uri": redirect_uri,
+            "response_type": "code",
+            "scope": "openid profile email",
+        }
+        if self.audience:
+            params["audience"] = self.audience
         if state:
-            params += f"&state={state}"
+            params["state"] = state
         if connection:
-            params += f"&connection={connection}"
-        return f"https://{self.domain}/authorize?{params}"
+            params["connection"] = connection
+        return f"https://{self.domain}/authorize?{urlencode(params)}"
 
     async def _fetch_jwks(self) -> dict:
         """Fetch Auth0's JWKS (cached after first call)."""
