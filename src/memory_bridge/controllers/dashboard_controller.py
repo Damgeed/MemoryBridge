@@ -278,14 +278,20 @@ async def restore_subscription(
     # Try to find Stripe checkout session by client_reference_id
     try:
         import stripe
+        import asyncio
         stripe.api_key = os.environ.get("STRIPE_SECRET_KEY", "")
         if not stripe.api_key:
             return {"restored": False, "tier": "free", "reason": "Stripe not configured"}
 
-        sessions = stripe.checkout.Session.list(
-            client_reference_id=org_id,
-            limit=5,
-            expand=["data.subscription"],
+        # Run Stripe call in thread pool with timeout (sync SDK in async handler)
+        sessions = await asyncio.wait_for(
+            asyncio.to_thread(
+                stripe.checkout.Session.list,
+                client_reference_id=org_id,
+                limit=5,
+                expand=["data.subscription"],
+            ),
+            timeout=10.0,
         )
         for sess in sessions.data:
             if sess.status == "complete" and sess.subscription:
@@ -324,6 +330,9 @@ async def restore_subscription(
         return {"restored": False, "tier": "free", "reason": "No matching Stripe session"}
     except ImportError:
         return {"restored": False, "tier": "free", "reason": "Stripe not installed"}
+    except asyncio.TimeoutError:
+        logger.warning("Restore subscription timed out for org=%s", org_id)
+        return {"restored": False, "tier": "free", "reason": "Stripe API timed out"}
     except Exception as e:
         logger.warning("Restore subscription failed for org=%s: %s", org_id, e)
         return {"restored": False, "tier": "free", "reason": str(e)}
