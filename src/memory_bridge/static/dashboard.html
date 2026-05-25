@@ -862,15 +862,11 @@
             try {
                 const statusEl = document.getElementById('dash-status');
                 statusEl.textContent = '🔄 Checking for existing subscription...';
-                const res = await api('POST', '/dashboard/restore-subscription');
-                if (!res.ok) return;
-                const data = await res.json();
+                const data = await api('POST', '/dashboard/restore-subscription');
                 if (data.restored && data.tier !== 'free') {
                     // Reload dashboard with correct tier
                     statusEl.textContent = '✅ Subscription restored! Reloading...';
                     setTimeout(() => loadDashboard(), 500);
-                } else if (data.restored === false && data.reason === 'Stripe not configured') {
-                    // Stripe not set up — nothing to restore, show free normally
                 }
             } catch (e) {
                 // Silently fail — not critical
