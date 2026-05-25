@@ -49,8 +49,29 @@ async def create_api_key(
     """Create a new API key for the authenticated user/organization.
 
     Returns the full key — this is the only time the plaintext key is shown.
+    Free tier users are limited to 5 active API keys.
     """
     org_id = _resolve_org(request)
+
+    # Check tier limit for free users — max 5 keys
+    all_keys = await storage.list_api_keys()
+    org_keys = [k for k in all_keys if k.get("project_id") == org_id and k.get("is_active") is not False]
+    if len(org_keys) >= 5:
+        # Check the tier to give a correct error message
+        try:
+            from ..models import Subscription
+            subs = await storage.list_subscriptions()
+            sub = next((s for s in subs if s.organization_id == org_id), None)
+            tier = sub.tier if sub else "free"
+        except Exception:
+            tier = "free"
+
+        if tier == "free":
+            raise HTTPException(
+                status_code=429,
+                detail="Free tier: max 5 API keys reached. Revoke an unused key or upgrade to a paid plan for unlimited keys.",
+            )
+
     result = await storage.create_api_key(label=label, project_id=org_id)
     # Tag the key metadata with the org for lookup
     return {

@@ -887,7 +887,21 @@
                     </div>`;
                 loadKeys();
             } catch (e) {
-                document.getElementById('key-reveal-area').innerHTML = `<div class="status error" style="margin-top:0.5rem;">❌ ${e.message}</div>`;
+                if (e.message && e.message.includes('max 5 API keys')) {
+                    document.getElementById('key-reveal-area').innerHTML = `
+                        <div class="key-reveal" style="border-color:var(--orange);">
+                            <div style="margin-bottom:0.5rem;font-weight:700;font-size:0.85rem;color:var(--orange);">⚠️ Key Limit Reached</div>
+                            <div style="font-size:0.82rem;color:var(--text-muted);margin-bottom:0.75rem;">
+                                Free tier is limited to 5 API keys. Revoke an unused key or upgrade to unlock unlimited keys.
+                            </div>
+                            <div style="display:flex;gap:0.5rem;">
+                                <a href="/pricing" class="btn btn-primary btn-sm">Upgrade Plan →</a>
+                                <button class="btn btn-secondary btn-sm" onclick="document.getElementById('key-reveal-area').innerHTML='';">Dismiss</button>
+                            </div>
+                        </div>`;
+                } else {
+                    document.getElementById('key-reveal-area').innerHTML = `<div class="status error" style="margin-top:0.5rem;">❌ ${escapeHtml(e.message)}</div>`;
+                }
             } finally {
                 btn.innerHTML = original;
                 btn.disabled = false;
@@ -895,15 +909,7 @@
         }
 
         async function revokeKey(keyId) {
-            // Count current ACTIVE keys to warn about deleting the last one
-            const keyItems = document.querySelectorAll('#keys-list .key-item');
-            const isLast = keyItems.length <= 1;
-            const icon = '🗑️';
-            const title = isLast ? 'Revoke last API key?' : 'Revoke API key?';
-            const text = isLast
-                ? 'This is your <strong>LAST active API key</strong>. If you revoke it, you will lose access to your account.<br><br>To recover, <strong>Sign In</strong> with your email above to get a new key.'
-                : 'This API key will stop working <strong>immediately</strong>. Any services using it will lose access.';
-            showConfirm(icon, title, text, 'Revoke Key', async () => {
+            showConfirm('🗑️', 'Revoke API key?', 'This API key will stop working <strong>immediately</strong>. Any services using it will lose access.', 'Revoke Key', async () => {
                 try {
                     const result = await api('DELETE', '/dashboard/keys/' + keyId);
                     showToast('🗑️ Key revoked');
