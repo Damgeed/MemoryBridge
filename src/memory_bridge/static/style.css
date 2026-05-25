@@ -431,14 +431,17 @@ a:hover { color: var(--accent-light); text-decoration: none; }
   background: #fff;
   border: 1px solid #dadce0;
 }
+.auth-social-btn .s-icon.phone {
+  background: var(--accent);
+  color: #fff;
+}
 .auth-social-btn .s-icon.email-icon {
   background: var(--bg-tertiary);
   color: var(--text-muted);
   font-size: 1rem;
 }
 /* Dark theme icon backgrounds */
-[data-theme="dark"] .auth-social-btn .s-icon.google,
-[data-theme="dark"] .auth-social-btn .s-icon.microsoft {
+[data-theme="dark"] .auth-social-btn .s-icon.google {
   background: #2a2a3a;
   border-color: #3a3a4a;
 }

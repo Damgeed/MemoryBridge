@@ -705,8 +705,8 @@
 
         <!-- Step 1: Options (social + email) -->
         <div id="auth-options" class="auth-options">
-          <button class="auth-social-btn" onclick="socialLogin('google-oauth2')" style="background:transparent;">
-            <span class="s-icon" style="background:transparent;border:none;font-size:1.2rem;">
+          <button class="auth-social-btn" onclick="socialLogin('google-oauth2')">
+            <span class="s-icon google">
               <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 48 48">
                 <path fill="#FFC107" d="M43.611,20.083H42V20H24v8h11.303c-1.649,4.657-6.08,8-11.303,8c-6.627,0-12-5.373-12-12c0-6.627,5.373-12,12-12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C12.955,4,4,12.955,4,24c0,11.045,8.955,20,20,20c11.045,0,20-8.955,20-20C44,22.659,43.862,21.35,43.611,20.083z"/>
                 <path fill="#FF3D00" d="M6.306,14.691l6.571,4.819C14.655,15.108,18.961,12,24,12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C16.318,4,9.656,8.337,6.306,14.691z"/>
@@ -717,20 +717,21 @@
             <span>Continue with Google</span>
           </button>
           <button class="auth-social-btn" onclick="socialLogin('apple')">
-            <span class="s-icon" style="font-size:1.3rem;">
+            <span class="s-icon apple">
               <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
                 <path d="M17.05 20.28c-.98.95-2.05.8-3.08.35-1.09-.46-2.09-.48-3.24 0-1.44.62-2.2.44-3.06-.35C2.79 15.25 3.51 7.59 9.05 7.31c1.35.07 2.29.74 3.08.8 1.18-.24 2.31-.93 3.57-.84 1.51.12 2.65.72 3.4 1.8-3.12 1.87-2.38 5.98.48 7.13-.57 1.5-1.31 2.99-2.54 4.09zM12.03 7.25c-.15-2.23 1.66-4.07 3.74-4.25.29 2.58-2.34 4.5-3.74 4.25z"/>
               </svg>
             </span>
             <span>Continue with Apple</span>
           </button>
-          <button class="auth-social-btn" onclick="socialLogin('windowslive')">
-            <span class="s-icon" style="font-size:1.3rem;">
-              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="currentColor" style="color:#00a4ef;">
-                <path d="M0 0h11.4v11.4H0V0zm12.6 0H24v11.4H12.6V0zM0 12.6h11.4V24H0V12.6zm12.6 0H24V24H12.6V12.6z"/>
+          <button class="auth-social-btn" onclick="phoneLogin()">
+            <span class="s-icon phone">
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="5" y="2" width="14" height="20" rx="2" ry="2"/>
+                <line x1="12" y1="18" x2="12.01" y2="18"/>
               </svg>
             </span>
-            <span>Continue with Microsoft</span>
+            <span>Continue with Phone</span>
           </button>
           <div class="auth-divider">
             <hr>
@@ -742,14 +743,35 @@
           <div class="auth-error" id="auth-error-main"></div>
         </div>
 
-        <!-- Step 2: Code verification -->
-        <div id="auth-code-step" class="auth-form">
+        <!-- Step 2: Phone input -->
+        <div id="auth-phone-step" class="auth-form">
           <button class="back-link" onclick="showAuthOptions()">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
-            Change email
+            Back
           </button>
           <div class="auth-code-info">
             <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="5" y="2" width="14" height="20" rx="2" ry="2"/>
+              <line x1="12" y1="18" x2="12.01" y2="18"/>
+            </svg>
+            <div class="auth-code-msg">Enter your phone number</div>
+            <div style="font-size:0.8rem;color:var(--text-muted);margin-top:0.25rem;">We'll send a 6-digit code via SMS</div>
+          </div>
+          <div class="auth-phone-input-row">
+            <input type="tel" id="pl-phone" placeholder="+1 555-123-4567" autocomplete="tel" onkeydown="if(event.key==='Enter')sendPhoneCode()">
+          </div>
+          <button class="auth-email-cta" onclick="sendPhoneCode()" id="pl-phone-btn">Send Code →</button>
+          <div class="auth-error" id="auth-error-phone"></div>
+        </div>
+
+        <!-- Step 3: Code verification -->
+        <div id="auth-code-step" class="auth-form">
+          <button class="back-link" onclick="showAuthOptions()">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+            <span id="code-back-label">Change email</span>
+          </button>
+          <div class="auth-code-info">
+            <svg id="code-step-icon" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
               <rect x="2" y="4" width="20" height="16" rx="2"/>
               <path d="M22 7l-10 7L2 7"/>
             </svg>
@@ -824,6 +846,30 @@
         cursor: not-allowed;
         transform: none;
       }
+      .auth-phone-input-row {
+        margin: 1rem 0;
+      }
+      .auth-phone-input-row input {
+        width: 100%;
+        padding: 0.7rem 1rem;
+        border-radius: var(--radius-sm);
+        border: 1px solid var(--border-primary);
+        background: var(--bg-glass);
+        color: var(--text-primary);
+        font-size: 0.95rem;
+        font-family: var(--font-sans);
+        text-align: center;
+        outline: none;
+        box-sizing: border-box;
+        transition: all var(--transition-fast);
+      }
+      .auth-phone-input-row input:focus {
+        border-color: var(--accent);
+        box-shadow: 0 0 0 2px var(--accent-glow);
+      }
+      .auth-phone-input-row input::placeholder {
+        color: var(--text-faint);
+      }
       .auth-code-info {
         text-align: center;
         padding: 1rem 0 0.75rem;
@@ -872,6 +918,8 @@
         // ── Shared Auth ──────────────────────────────────────────────
         let currentApiKey = '';
         let pendingEmail = '';
+        let pendingPhone = '';
+        let pendingMethod = 'email'; // 'email' or 'phone'
 
         function openAuth() {
             document.getElementById('auth-overlay').classList.add('open');
@@ -896,13 +944,69 @@
             // Reset code step
             document.getElementById('pl-code').value = '';
             document.getElementById('pl-email').value = '';
+            document.getElementById('pl-phone').value = '';
             document.getElementById('pl-email').focus();
             document.getElementById('auth-code-step').classList.remove('active');
+            document.getElementById('auth-phone-step').classList.remove('active');
             // Clear all errors
             document.querySelectorAll('.auth-error').forEach(el => el.textContent = '');
             // Re-enable buttons
             document.getElementById('pl-email-btn').disabled = false;
             document.getElementById('pl-code-btn').disabled = false;
+            document.getElementById('pl-phone-btn').disabled = false;
+            pendingMethod = 'email';
+            pendingPhone = '';
+        }
+
+        function phoneLogin() {
+            pendingMethod = 'phone';
+            document.getElementById('auth-options').style.display = 'none';
+            document.querySelectorAll('.auth-form').forEach(el => el.classList.remove('active'));
+            document.getElementById('auth-phone-step').classList.add('active');
+            document.getElementById('pl-phone').value = '';
+            document.getElementById('auth-error-phone').textContent = '';
+            document.getElementById('pl-phone-btn').disabled = false;
+            setTimeout(() => document.getElementById('pl-phone').focus(), 150);
+        }
+
+        async function sendPhoneCode() {
+            const phone = document.getElementById('pl-phone').value.trim();
+            const errorEl = document.getElementById('auth-error-phone');
+            const btn = document.getElementById('pl-phone-btn');
+            if (!phone) {
+                errorEl.innerHTML = '⚠️ Enter your phone number';
+                return;
+            }
+            errorEl.innerHTML = '<span class="auth-spinner"></span>';
+            btn.disabled = true;
+            try {
+                const res = await fetch('/auth/auth0/passwordless/start-sms', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({phone}),
+                });
+                if (!res.ok) {
+                    const err = await res.json().catch(() => ({}));
+                    errorEl.innerHTML = '❌ ' + (err.detail || 'Failed to send code');
+                    btn.disabled = false;
+                    return;
+                }
+                const data = await res.json();
+                pendingPhone = phone;
+                // Show code verification step with phone icon
+                document.getElementById('code-back-label').textContent = 'Change phone';
+                document.getElementById('code-step-icon').innerHTML = '<rect x="5" y="2" width="14" height="20" rx="2" ry="2"/><line x1="12" y1="18" x2="12.01" y2="18"/>';
+                document.getElementById('code-email-display').textContent = data.phone || '*******' + phone.slice(-4);
+                document.getElementById('auth-phone-step').classList.remove('active');
+                document.getElementById('auth-code-step').classList.add('active');
+                document.getElementById('pl-code').value = '';
+                document.getElementById('auth-error-code').textContent = '';
+                setTimeout(() => document.getElementById('pl-code').focus(), 150);
+                btn.disabled = false;
+            } catch (e) {
+                errorEl.innerHTML = '❌ ' + e.message;
+                btn.disabled = false;
+            }
         }
 
         async function continueWithEmail() {
@@ -929,6 +1033,9 @@
                 }
                 const data = await res.json();
                 pendingEmail = email;
+                pendingMethod = 'email';
+                document.getElementById('code-back-label').textContent = 'Change email';
+                document.getElementById('code-step-icon').innerHTML = '<rect x="2" y="4" width="20" height="16" rx="2"/><path d="M22 7l-10 7L2 7"/>';
                 document.getElementById('code-email-display').textContent = data.email || email[0] + '***' + email.substring(email.indexOf('@'));
                 // Show code verification step
                 document.getElementById('auth-options').style.display = 'none';
@@ -954,10 +1061,13 @@
             errorEl.innerHTML = '<span class="auth-spinner"></span>';
             btn.disabled = true;
             try {
+                const body = pendingMethod === 'phone'
+                    ? {phone: pendingPhone, code}
+                    : {email: pendingEmail, code};
                 const res = await fetch('/auth/auth0/passwordless/verify', {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({email: pendingEmail, code}),
+                    body: JSON.stringify(body),
                 });
                 if (!res.ok) {
                     const err = await res.json().catch(() => ({}));
@@ -983,14 +1093,20 @@
         async function resendCode() {
             const errorEl = document.getElementById('auth-error-code');
             const btn = document.getElementById('pl-code-btn');
-            if (!pendingEmail) return;
+            if (!pendingEmail && !pendingPhone) return;
             errorEl.innerHTML = '<span class="auth-spinner"></span>';
             btn.disabled = true;
             try {
-                const res = await fetch('/auth/auth0/passwordless/start', {
+                const url = pendingMethod === 'phone'
+                    ? '/auth/auth0/passwordless/start-sms'
+                    : '/auth/auth0/passwordless/start';
+                const body = pendingMethod === 'phone'
+                    ? JSON.stringify({phone: pendingPhone})
+                    : JSON.stringify({email: pendingEmail});
+                const res = await fetch(url, {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({email: pendingEmail}),
+                    body,
                 });
                 if (!res.ok) {
                     const err = await res.json().catch(() => ({}));

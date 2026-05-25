@@ -160,7 +160,8 @@ class PasswordlessStartRequest(BaseModel):
 
 
 class PasswordlessVerifyRequest(BaseModel):
-    email: str
+    email: str = ""
+    phone: str = ""  # for SMS OTP
     code: str
 
 
@@ -212,7 +213,10 @@ async def passwordless_verify(
         raise HTTPException(status_code=400, detail="Invalid verification code")
 
     # Exchange code for Auth0 tokens
-    tokens = await svc.verify_passwordless(req.email, req.code)
+    is_phone = bool(req.phone)
+    realm = "sms" if is_phone else "email"
+    username = req.phone if is_phone else req.email
+    tokens = await svc.verify_passwordless(username, req.code, realm)
     if not tokens:
         raise HTTPException(status_code=401, detail="Invalid or expired verification code")
 
@@ -300,3 +304,43 @@ async def passwordless_verify(
             "organization_id": org_id,
         },
     }
+
+
+# ── Phone (SMS OTP) ──────────────────────────────────────────────
+
+
+class PhoneStartRequest(BaseModel):
+    phone: str
+
+
+@router.post("/passwordless/start-sms")
+async def passwordless_start_sms(req: PhoneStartRequest):
+    """Send a 6-digit verification code to the user's phone via Auth0 Passwordless SMS.
+
+    Requires Auth0 Passwordless (SMS) connection with Twilio configured.
+    """
+    svc = get_auth0_service()
+    if not svc.enabled:
+        raise HTTPException(status_code=501, detail="Auth0 is not configured")
+
+    # Normalize phone number
+    phone = req.phone.strip()
+    if not phone:
+        raise HTTPException(status_code=400, detail="Phone number is required")
+
+    success = await svc.start_passwordless_sms(phone)
+    if not success:
+        raise HTTPException(
+            status_code=400,
+            detail="Failed to send SMS code. Make sure Auth0 Passwordless (SMS) is enabled and Twilio is configured in Auth0 Dashboard.",
+        )
+
+    return {"sent": True, "phone": mask_phone(phone)}
+
+
+def mask_phone(phone: str) -> str:
+    """Show last 4 digits only: '****-***-1234'"""
+    clean = phone.replace(" ", "").replace("-", "").replace("(", "").replace(")", "")
+    if len(clean) <= 4:
+        return phone
+    return "*******" + clean[-4:]

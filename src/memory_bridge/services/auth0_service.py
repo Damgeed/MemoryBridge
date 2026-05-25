@@ -162,10 +162,13 @@ class Auth0Service:
                 return False
             return True
 
-    async def verify_passwordless(self, email: str, code: str) -> Optional[dict]:
+    async def verify_passwordless(self, username: str, code: str, realm: str = "email") -> Optional[dict]:
         """Verify a 6-digit OTP code and exchange it for Auth0 tokens.
 
-        Returns dict with 'access_token', 'id_token' on success, None on failure.
+        Args:
+            username: email (for email OTP) or phone number (for SMS OTP)
+            code: 6-digit verification code
+            realm: 'email' or 'sms'
         """
         if not self.enabled or not self.client_secret:
             logger.warning("Auth0 passwordless verify: client_secret not configured")
@@ -173,8 +176,8 @@ class Auth0Service:
         url = f"https://{self.domain}/oauth/token"
         payload = {
             "grant_type": "http://auth0.com/oauth/grant-type/passwordless/otp",
-            "realm": "email",
-            "username": email,
+            "realm": realm,
+            "username": username,
             "otp": code,
             "client_id": self.client_id,
             "client_secret": self.client_secret,
@@ -185,6 +188,30 @@ class Auth0Service:
                 logger.warning("Auth0 passwordless verify failed (%s): %s", resp.status_code, resp.text)
                 return None
             return resp.json()
+
+    async def start_passwordless_sms(self, phone: str) -> bool:
+        """Send a 6-digit verification code to the user's phone via Auth0 Passwordless SMS.
+
+        Requires Auth0 Passwordless (SMS) connection with Twilio configured in Auth0 Dashboard.
+        Returns True if the code was sent successfully.
+        """
+        if not self.enabled or not self.client_secret:
+            logger.warning("Auth0 SMS passwordless: client_secret not configured")
+            return False
+        url = f"https://{self.domain}/passwordless/start"
+        payload = {
+            "client_id": self.client_id,
+            "client_secret": self.client_secret,
+            "connection": "sms",
+            "phone_number": phone,
+            "send": "code",
+        }
+        async with httpx.AsyncClient() as client:
+            resp = await client.post(url, json=payload, timeout=15)
+            if resp.status_code != 200:
+                logger.warning("Auth0 SMS passwordless start failed (%s): %s", resp.status_code, resp.text)
+                return False
+            return True
 
     async def get_userinfo(self, access_token: str) -> Optional[dict]:
         """Get user info from Auth0's /userinfo endpoint."""
