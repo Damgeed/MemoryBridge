@@ -1646,10 +1646,23 @@
         // ── Init ──────────────────────────────────────────────────
         document.addEventListener('DOMContentLoaded', () => {
             currentApiKey = localStorage.getItem('mb_api_key') || '';
-            const jwt = localStorage.getItem('mb_jwt');
+            let jwt = localStorage.getItem('mb_jwt');
+
+            // Check URL params for JWT from Auth0 callback redirect
+            const params = new URLSearchParams(window.location.search);
+            const paramJwt = params.get('jwt');
+            const paramOrg = params.get('org_id');
+            if (paramJwt) {
+                jwt = paramJwt;
+                localStorage.setItem('mb_jwt', paramJwt);
+                if (paramOrg) {
+                    localStorage.setItem('mb_org_id', paramOrg);
+                }
+                // Clean URL without params
+                window.history.replaceState({}, '', '/dashboard/');
+            }
 
             // Detect Stripe checkout redirect — call welcome endpoint
-            const params = new URLSearchParams(window.location.search);
             const sessionId = params.get('session_id');
             if (sessionId) {
                 handleStripeWelcome(sessionId);
