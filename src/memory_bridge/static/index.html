@@ -1046,16 +1046,18 @@
       }
       .auth-phone-input-row {
         display: flex;
+        flex-direction: column;
         gap: 0.5rem;
         margin: 1rem 0;
       }
       .phone-country-select {
         position: relative;
-        flex-shrink: 0;
+        width: 100%;
       }
       .phone-country-select select {
         appearance: none;
         -webkit-appearance: none;
+        width: 100%;
         padding: 0.7rem 2rem 0.7rem 0.75rem;
         border-radius: var(--radius-sm);
         border: 1px solid var(--border-primary);
@@ -1065,7 +1067,6 @@
         font-family: var(--font-sans);
         cursor: pointer;
         outline: none;
-        min-width: 105px;
         transition: all var(--transition-fast);
       }
       .phone-country-select select:focus {
@@ -1081,35 +1082,8 @@
         color: var(--text-muted);
         font-size: 0.6rem;
       }
-      /* Mobile: stack country on top, phone below, both full width */
-      @media (max-width: 520px) {
-        .auth-phone-input-row {
-          flex-direction: column;
-          gap: 0.5rem;
-        }
-        .phone-country-select {
-          flex-shrink: 1;
-          width: 100%;
-        }
-        .phone-country-select select {
-          width: 100%;
-          min-width: auto;
-          padding: 0.7rem 2rem 0.7rem 0.75rem;
-          font-size: 0.88rem;
-        }
-        .phone-country-select .phone-caret {
-          right: 0.5rem;
-        }
-        .auth-phone-input-row input {
-          width: 100%;
-          flex: none;
-          font-size: 1rem;
-          padding: 0.7rem 0.75rem;
-        }
-      }
       .auth-phone-input-row input {
-        flex: 1;
-        min-width: 0;
+        width: 100%;
         padding: 0.7rem 1rem;
         border-radius: var(--radius-sm);
         border: 1px solid var(--border-primary);

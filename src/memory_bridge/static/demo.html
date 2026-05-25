@@ -46,7 +46,7 @@
     flex-direction: column;
   }
   /* Main area */
-  .main { display: flex; flex: 1; overflow: hidden; }
+  .main { display: flex; flex-direction: column; flex: 1; overflow: hidden; }
 
   /* Left panel - terminal/logs */
   .left {
@@ -62,9 +62,11 @@
 
   /* Right panel - diagram */
   .right {
-    width: 45%;
-    min-width: 320px;
-    border-left: 1px solid var(--border);
+    width: 100%;
+    min-width: unset;
+    height: 45vh;
+    border-left: none;
+    border-top: 1px solid var(--border);
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -235,15 +237,6 @@
   }
   .mem-card.show { opacity: 1; }
 
-  @media (max-width: 768px) {
-    .main { flex-direction: column; }
-    .right { width: 100%; min-width: unset; height: 45vh; border-left: none; border-top: 1px solid var(--border); }
-    .left { height: 55vh; }
-    .agent-node { width: 60px; height: 60px; font-size: 0.6rem; }
-    .agent-node .emoji { font-size: 1.1rem; }
-    .db-node { width: 80px; height: 80px; font-size: 1.6rem; }
-  }
-
   /* ── Auth Modal: Passwordless ────────────────────── */
   .auth-email-field {
     width: 100%;
@@ -335,27 +328,6 @@
     pointer-events: none;
     color: var(--text-muted);
     font-size: 0.6rem;
-  }
-  @media (max-width: 520px) {
-    .phone-country-select .phone-caret {
-      right: 0.25rem;
-      font-size: 0.5rem;
-    }
-    .auth-phone-input-row {
-      flex-direction: column;
-      gap: 0.4rem;
-    }
-    .phone-country-select select {
-      width: 100%;
-      min-width: unset;
-    }
-    .auth-modal {
-      padding: 1.5rem 1rem;
-    }
-    .auth-email-field {
-      padding: 0.6rem 0.75rem 0.6rem 2.2rem;
-      font-size: 0.82rem;
-    }
   }
   .auth-phone-input-row input {
     flex: 1;
