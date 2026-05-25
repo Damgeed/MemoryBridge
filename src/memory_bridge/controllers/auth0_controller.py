@@ -21,6 +21,29 @@ from ..services.auth0_service import get_auth0_service
 from ..services.user_service import UserService
 
 logger = logging.getLogger(__name__)
+
+
+def _get_base_url(request: Request) -> str:
+    """Get the base URL of the application, respecting reverse proxy headers.
+
+    Order of precedence:
+    1. APP_URL environment variable (best for Railway/deploy)
+    2. X-Forwarded-Proto + Host headers (reverse proxy)
+    3. request.base_url (fallback, may be wrong behind proxy)
+    """
+    import os
+    env_url = os.environ.get("APP_URL", "").rstrip("/")
+    if env_url:
+        return env_url
+
+    forwarded_proto = request.headers.get("X-Forwarded-Proto", "")
+    host = request.headers.get("X-Forwarded-Host", "") or request.headers.get("Host", "")
+    if forwarded_proto and host:
+        return f"{forwarded_proto}://{host}"
+
+    return str(request.base_url).rstrip("/")
+
+
 router = APIRouter(prefix="/auth/auth0", tags=["auth0"])
 
 
@@ -43,7 +66,7 @@ async def auth0_login(
         raise HTTPException(status_code=501, detail="Auth0 is not configured")
 
     # Build the redirect URI — the URL Auth0 sends the user back to
-    base = str(request.base_url).rstrip("/")
+    base = _get_base_url(request)
     redirect_uri = f"{base}/auth/auth0/callback"
     state = str(uuid.uuid4())[:8]  # Simple CSRF token
 
@@ -79,7 +102,7 @@ async def auth0_callback(
     if not code:
         raise HTTPException(status_code=400, detail="Missing authorization code")
 
-    base = str(request.base_url).rstrip("/")
+    base = _get_base_url(request)
     redirect_uri = f"{base}/auth/auth0/callback"
 
     # Exchange code for tokens
