@@ -194,13 +194,20 @@ class Auth0Service:
             "otp": code,
             "client_id": self.client_id,
             "client_secret": self.client_secret,
+            "scope": "openid profile email",
         }
         async with httpx.AsyncClient() as client:
             resp = await client.post(url, json=payload, timeout=15)
             if resp.status_code != 200:
-                logger.warning("Auth0 passwordless verify failed (%s): audience=%s realm=%s — %s",
-                               resp.status_code, self.audience, realm, resp.text[:500])
-                return None
+                logger.warning("Auth0 passwordless verify failed (%s): realm=%s — %s",
+                               resp.status_code, realm, resp.text[:500])
+                # Return error detail so the controller can show it
+                try:
+                    err_detail = resp.json()
+                except Exception:
+                    err_detail = {"error_description": resp.text[:200]}
+                err_detail["_http_status"] = resp.status_code
+                return err_detail
             result = resp.json()
             logger.info("Auth0 passwordless verify OK: got id_token with sub=%s",
                         result.get("id_token", "")[:50])

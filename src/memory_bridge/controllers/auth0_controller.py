@@ -219,6 +219,15 @@ async def passwordless_verify(
     tokens = await svc.verify_passwordless(username, req.code, realm)
     if not tokens:
         raise HTTPException(status_code=401, detail="Invalid or expired verification code")
+    
+    # Check if Auth0 returned an error (non-standard dict with _http_status)
+    if tokens.get("_http_status"):
+        error_desc = tokens.get("error_description", str(tokens))
+        logger.warning("Auth0 OTP verify failed: %s", error_desc)
+        raise HTTPException(
+            status_code=401,
+            detail=f"Auth0 error: {error_desc[:300]}"
+        )
 
     id_token = tokens.get("id_token", "")
     if not id_token:
