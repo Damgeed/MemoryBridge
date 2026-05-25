@@ -1,0 +1,152 @@
+"""Auth0 integration service.
+
+Handles token validation via JWKS, authorization code exchange,
+and user creation on first Auth0 login.
+"""
+import json
+import logging
+from typing import Optional
+
+import httpx
+from jose import jwt as jose_jwt
+from jose.exceptions import JWTError
+
+logger = logging.getLogger(__name__)
+
+
+class Auth0Service:
+    """Service for Auth0 authentication integration.
+
+    Validates Auth0-issued JWTs (RS256), exchanges authorization codes
+    for tokens, and syncs Auth0 users to the local database.
+    """
+
+    def __init__(self):
+        self.domain = None
+        self.client_id = None
+        self.client_secret = None
+        self.audience = None
+        self._jwks = None
+
+    def configure(self, domain: str, client_id: str, client_secret: str, audience: str):
+        """Configure Auth0 credentials. Call once at startup from env vars."""
+        self.domain = domain
+        self.client_id = client_id
+        self.client_secret = client_secret
+        self.audience = audience
+        self._jwks = None
+        logger.info("Auth0 configured: domain=%s audience=%s", domain, audience)
+
+    @property
+    def enabled(self) -> bool:
+        """Whether Auth0 integration is configured."""
+        return bool(self.domain and self.client_id)
+
+    def _jwks_url(self) -> str:
+        return f"https://{self.domain}/.well-known/jwks.json"
+
+    def _authorize_url(self, redirect_uri: str, state: str = "") -> str:
+        """Build the Auth0 Universal Login URL."""
+        params = (
+            f"client_id={self.client_id}"
+            f"&redirect_uri={redirect_uri}"
+            f"&response_type=code"
+            f"&scope=openid profile email"
+            f"&audience={self.audience}"
+        )
+        if state:
+            params += f"&state={state}"
+        return f"https://{self.domain}/authorize?{params}"
+
+    async def _fetch_jwks(self) -> dict:
+        """Fetch Auth0's JWKS (cached after first call)."""
+        if self._jwks:
+            return self._jwks
+        url = self._jwks_url()
+        async with httpx.AsyncClient() as client:
+            resp = await client.get(url, timeout=10)
+            resp.raise_for_status()
+            self._jwks = resp.json()
+            logger.info("Fetched Auth0 JWKS from %s", url)
+            return self._jwks
+
+    async def validate_token(self, token: str) -> Optional[dict]:
+        """Validate an Auth0-issued JWT (RS256) and return its claims.
+
+        Returns the decoded payload dict on success, None on failure.
+        """
+        if not self.enabled:
+            return None
+        try:
+            jwks = await self._fetch_jwks()
+            # Find the signing key from the JWKS
+            header = jose_jwt.get_unverified_header(token)
+            key = None
+            for k in jwks.get("keys", []):
+                if k.get("kid") == header.get("kid"):
+                    key = k
+                    break
+            if not key:
+                logger.warning("No matching JWK found for kid=%s", header.get("kid"))
+                return None
+
+            payload = jose_jwt.decode(
+                token,
+                key,
+                algorithms=["RS256"],
+                audience=self.audience,
+                issuer=f"https://{self.domain}/",
+            )
+            return payload
+        except JWTError as e:
+            logger.warning("Auth0 token validation failed: %s", e)
+            return None
+        except Exception as e:
+            logger.warning("Auth0 JWKS fetch failed: %s", e)
+            return None
+
+    async def exchange_code(self, code: str, redirect_uri: str) -> Optional[dict]:
+        """Exchange an authorization code for tokens.
+
+        Returns dict with 'access_token', 'id_token', 'refresh_token' etc.
+        """
+        if not self.enabled or not self.client_secret:
+            logger.warning("Auth0 code exchange: client_secret not configured")
+            return None
+        url = f"https://{self.domain}/oauth/token"
+        data = {
+            "grant_type": "authorization_code",
+            "client_id": self.client_id,
+            "client_secret": self.client_secret,
+            "code": code,
+            "redirect_uri": redirect_uri,
+        }
+        async with httpx.AsyncClient() as client:
+            resp = await client.post(url, json=data, timeout=15)
+            if resp.status_code != 200:
+                logger.warning("Auth0 code exchange failed: %s", resp.text)
+                return None
+            return resp.json()
+
+    async def get_userinfo(self, access_token: str) -> Optional[dict]:
+        """Get user info from Auth0's /userinfo endpoint."""
+        url = f"https://{self.domain}/userinfo"
+        headers = {"Authorization": f"Bearer {access_token}"}
+        async with httpx.AsyncClient() as client:
+            resp = await client.get(url, headers=headers, timeout=10)
+            if resp.status_code != 200:
+                logger.warning("Auth0 userinfo failed: %s", resp.text)
+                return None
+            return resp.json()
+
+
+# Singleton
+_auth0_service: Optional[Auth0Service] = None
+
+
+def get_auth0_service() -> Auth0Service:
+    """Get the Auth0 service singleton."""
+    global _auth0_service
+    if _auth0_service is None:
+        _auth0_service = Auth0Service()
+    return _auth0_service

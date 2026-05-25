@@ -64,12 +64,14 @@ class User(BaseModel):
     """A registered user with email + password auth.
 
     Each user is linked to an organization that holds API keys.
+    Auth0 users have auth0_sub set; password_hash is empty.
     """
     id: str = Field(default_factory=lambda: str(uuid4()))
     email: str
-    password_hash: str
+    password_hash: str = ""
     name: str = ""
     organization_id: str
+    auth0_sub: str = ""
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 

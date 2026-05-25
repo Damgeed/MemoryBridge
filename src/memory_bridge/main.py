@@ -22,6 +22,7 @@ from .middleware.tenant import TenantResolverMiddleware
 from .controllers import (
     admin_controller,
     auth_controller,
+    auth0_controller,
     badge_controller,
     billing_controller,
     export_controller,
@@ -133,6 +134,19 @@ async def lifespan(app: FastAPI):
 
     # Initialize audit service and subscribe to EventBus events
     audit_svc = AuditService(repo=storage)
+
+    # Configure Auth0 from environment variables
+    from .services.auth0_service import get_auth0_service
+    auth0_svc = get_auth0_service()
+    auth0_domain = os.environ.get("AUTH0_DOMAIN", "memory-bridge.us.auth0.com")
+    auth0_client_id = os.environ.get("AUTH0_CLIENT_ID", "")
+    auth0_client_secret = os.environ.get("AUTH0_CLIENT_SECRET", "")
+    auth0_audience = os.environ.get("AUTH0_AUDIENCE", "https://memory-bridge.us.auth0.com/me/")
+    if auth0_client_id:
+        auth0_svc.configure(auth0_domain, auth0_client_id, auth0_client_secret, auth0_audience)
+        logger.info("Auth0 integration enabled: domain=%s", auth0_domain)
+    else:
+        logger.info("Auth0 not configured — set AUTH0_CLIENT_ID to enable")
 
     # Try to get EventBus from webhook service if available
     event_bus = getattr(webhook_svc, '_event_bus', None)
@@ -281,6 +295,7 @@ def create_app() -> FastAPI:
 
     app.include_router(health_controller.router)
     app.include_router(auth_controller.router)
+    app.include_router(auth0_controller.router)
     app.include_router(badge_controller.router)
     app.include_router(billing_controller.router)
     app.include_router(memory_controller.router)
