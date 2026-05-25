@@ -1334,28 +1334,26 @@
                 }
                 const data = await res.json();
                 if (data.has_keys) {
-                    statusEl.textContent = '✅ Welcome back! You have ' + data.key_count + ' existing key(s) on the ' + data.tier.charAt(0).toUpperCase() + data.tier.slice(1) + ' plan. Sign in below to access them.';
+                    statusEl.textContent = '✅ Welcome back! You have ' + data.key_count + ' existing key(s) on the ' + data.tier.charAt(0).toUpperCase() + data.tier.slice(1) + ' plan.';
+                    // Clean redirect — fresh state, no races
+                    setTimeout(() => { window.location.href = '/dashboard/'; }, 800);
                 } else if (data.key) {
-                    // First-time user — save key and show it
+                    // Save the key, then clean redirect to avoid stale-state races
                     localStorage.setItem('mb_api_key', data.key);
                     currentApiKey = data.key;
                     updateAuthButton();
-                    statusEl.textContent = '🎉 Welcome to the ' + data.tier.charAt(0).toUpperCase() + data.tier.slice(1) + ' plan! Your new API key has been saved.';
-                    // Clear session_id from URL without reload
-                    window.history.replaceState({}, '', '/dashboard/');
-
-                    // Show the key in a reveal card
+                    // Show welcome + key briefly, then redirect to fresh dashboard
+                    statusEl.textContent = '🎉 Welcome to the ' + data.tier.charAt(0).toUpperCase() + data.tier.slice(1) + ' plan!';
                     document.getElementById('key-reveal-area').innerHTML = `
                         <div class="key-reveal">
                             <div style="margin-bottom:0.5rem;font-weight:700;font-size:0.85rem;">🎉 Your New API Key</div>
                             <div class="key-plaintext">${escapeHtml(data.key)}</div>
-                            <div class="key-warning">⚠️ This is the only time you'll see the full key. It's saved in your browser.</div>
+                            <div class="key-warning">⚠️ Copy this key now. You won't see it again.</div>
                             <div style="margin-top:0.75rem;display:flex;gap:0.5rem;">
-                                <button class="btn btn-primary btn-sm" onclick="copyText(this, '${data.key}')">📋 Copy Key</button>
-                                <button class="btn btn-secondary btn-sm" onclick="document.getElementById('key-reveal-area').innerHTML='';">Dismiss</button>
+                                <button class="btn btn-primary btn-sm" onclick="navigator.clipboard.writeText('${data.key}')">📋 Copy Key</button>
+                                <button class="btn btn-secondary btn-sm" onclick="window.location.href='/dashboard/'">Continue →</button>
                             </div>
                         </div>`;
-                    loadDashboard();
                 }
             } catch (e) {
                 statusEl.textContent = '⚠️ Could not verify purchase: ' + e.message;
