@@ -602,6 +602,17 @@
         </div>
         </div>
 
+        <!-- Free Signup (visible when not authenticated) -->
+        <div id="free-signup-section" class="dash-card" style="margin-top:0.5rem;text-align:center;">
+            <div style="font-size:1.1rem;font-weight:700;margin-bottom:0.3rem;">🚀 Get Your Free API Key</div>
+            <p style="font-size:0.85rem;color:var(--text-muted);margin-bottom:0.75rem;">Full API access with 1,000 memories, 100 sessions, 5 keys. Enter your email to start.</p>
+            <div style="display:flex;gap:0.5rem;max-width:400px;margin:0 auto;flex-wrap:wrap;justify-content:center;">
+                <input type="email" id="free-email" placeholder="your@email.com" style="flex:1;min-width:200px;padding:0.5rem 0.7rem;border-radius:6px;border:1px solid var(--border-primary);background:var(--bg-tertiary);color:var(--text-primary);font-size:0.88rem;outline:none;">
+                <button class="btn btn-primary" onclick="claimFreeKey()" id="free-claim-btn">Get Free Key</button>
+            </div>
+            <div id="free-result" style="margin-top:0.75rem;"></div>
+        </div>
+
         <div class="dash-grid">
             <!-- Subscription Card -->
             <div class="dash-card" id="sub-card">
@@ -809,6 +820,9 @@
                 document.getElementById('key-login-status').textContent = '⚠️ Please paste your API key.';
                 return;
             }
+            // Hide free signup section once key is entered
+            const freeSection = document.getElementById('free-signup-section');
+            if (freeSection) freeSection.style.display = 'none';
             localStorage.setItem('mb_api_key', key);
             currentApiKey = key;
             updateKeyLoginStatus();
@@ -1017,6 +1031,48 @@
                 }
             } catch (e) {
                 resultEl.innerHTML = `<div class="status error">❌ Network error: ${escapeHtml(e.message)}</div>`;
+            }
+        }
+
+        // ── Free Signup ────────────────────────────────────────────
+        async function claimFreeKey() {
+            const email = document.getElementById('free-email').value.trim();
+            const resultEl = document.getElementById('free-result');
+            const btn = document.getElementById('free-claim-btn');
+            if (!email || !email.includes('@')) {
+                resultEl.innerHTML = '<div class="status error">⚠️ Please enter a valid email address.</div>';
+                return;
+            }
+            resultEl.innerHTML = '<div class="flex-center" style="gap:0.5rem;padding:0.5rem;"><span class="spinner-sm"></span> Generating your free key...</div>';
+            btn.disabled = true;
+            try {
+                const res = await fetch('/dashboard/free-signup?email=' + encodeURIComponent(email), { method: 'POST' });
+                if (!res.ok) {
+                    const err = await res.json().catch(() => ({ detail: 'Request failed' }));
+                    resultEl.innerHTML = `<div class="status error">❌ ${escapeHtml(err.detail || 'Could not create free key.')}</div>`;
+                    btn.disabled = false;
+                    return;
+                }
+                const data = await res.json();
+                if (data.key) {
+                    localStorage.setItem('mb_api_key', data.key);
+                    document.getElementById('api-key-input').value = data.key;
+                    resultEl.innerHTML = `
+                        <div class="key-reveal" style="margin-top:0;">
+                            <div style="margin-bottom:0.5rem;font-weight:700;font-size:0.85rem;">🎉 Free Tier Ready</div>
+                            <div class="key-plaintext">${escapeHtml(data.key)}</div>
+                            <div class="key-warning">⚠️ Copy this key now — you won't see it again.</div>
+                            <div style="margin-top:0.75rem;display:flex;gap:0.5rem;justify-content:center;">
+                                <button class="btn btn-primary btn-sm" onclick="copyText(this, '${data.key}')">📋 Copy Key</button>
+                                <button class="btn btn-secondary btn-sm" onclick="document.getElementById('free-result').innerHTML='';document.getElementById('free-signup-section').style.display='none';reconnectDashboard();">Done — Load Dashboard</button>
+                            </div>
+                        </div>`;
+                    document.getElementById('free-signup-section').querySelector('p').style.display = 'none';
+                    document.querySelector('#free-signup-section > div:first-of-type').style.display = 'none';
+                }
+            } catch (e) {
+                resultEl.innerHTML = `<div class="status error">❌ Network error: ${escapeHtml(e.message)}</div>`;
+                btn.disabled = false;
             }
         }
 

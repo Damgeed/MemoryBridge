@@ -231,6 +231,89 @@ def _resolve_org(request: Request) -> str:
     return "default"
 
 
+@router.post("/free-signup")
+async def free_signup(
+    email: str = Query("", description="Email address for abuse prevention"),
+    request: Request = None,
+    storage: MemoryRepository = Depends(get_storage),
+):
+    """Create a free-tier API key with abuse prevention.
+
+    Each email can only sign up once. Each IP has a 30-day cooldown.
+    Returns the plaintext API key for dashboard login.
+    """
+    import hashlib
+    import uuid
+    from datetime import datetime, timezone, timedelta
+
+    if not email or "@" not in email:
+        raise HTTPException(status_code=400, detail="Please provide a valid email address.")
+
+    email_clean = email.strip().lower()
+    email_hash = hashlib.sha256(email_clean.encode()).hexdigest()[:16]
+
+    # Get client IP
+    client_ip = request.client.host if request.client else "unknown"
+    ip_hash = hashlib.sha256(client_ip.encode()).hexdigest()[:16]
+
+    # Check email already used
+    existing = await storage.get_metric(f"free_signup:email:{email_hash}")
+    if existing is not None:
+        raise HTTPException(status_code=429, detail="This email has already claimed a free API key. Use the recovery form if you lost it.")
+
+    # Check IP cooldown (30 days)
+    existing_ip = await storage.get_metric(f"free_signup:ip:{ip_hash}")
+    if existing_ip is not None:
+        try:
+            cooldown = datetime.fromisoformat(existing_ip)
+            if datetime.now(timezone.utc) - cooldown < timedelta(days=30):
+                remaining = (cooldown + timedelta(days=30) - datetime.now(timezone.utc)).days
+                raise HTTPException(
+                    status_code=429,
+                    detail=f"Free tier already used from this network. Please try again in {remaining} day(s) or subscribe to a paid plan.",
+                )
+        except (ValueError, TypeError):
+            pass  # Stale data, allow through
+
+    # Create organization
+    org_id = str(uuid.uuid4())
+
+    # Store subscription record for free tier tracking
+    from ..models.subscription import Subscription
+    sub = Subscription(
+        id=f"free-{org_id[:8]}",
+        organization_id=org_id,
+        stripe_customer_id="",
+        tier="free",
+        status="active",
+        current_period_start=datetime.now(timezone.utc),
+        current_period_end=datetime.now(timezone.utc) + timedelta(days=365 * 100),  # effectively never expires
+    )
+    try:
+        await storage.store_subscription(sub)
+    except Exception as e:
+        logger.warning("Could not store free subscription: %s", e)
+
+    # Create API key
+    result = await storage.create_api_key(label="free-key", project_id=org_id)
+
+    # Record abuse prevention data
+    now = datetime.now(timezone.utc).isoformat()
+    try:
+        await storage.initialize_metric(f"free_signup:email:{email_hash}", now)
+        await storage.initialize_metric(f"free_signup:ip:{ip_hash}", now)
+    except Exception as e:
+        logger.warning("Could not record abuse prevention metric: %s", e)
+
+    logger.info("Free signup: org=%s, email=%s, ip=%s", org_id, email_clean, client_ip)
+    return {
+        "key": result["key"],
+        "id": result["id"],
+        "label": result["label"],
+        "tier": "free",
+        "organization_id": org_id,
+    }
+
 @router.post("/recover")
 async def recover_api_key(
     email: str = Query("", description="Email used during Stripe checkout"),
