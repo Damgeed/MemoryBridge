@@ -436,9 +436,9 @@
                     <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
                 </svg>
             </button>
-            <button class="nav-icon-btn auth-btn" id="auth-nav-btn" onclick="openSignup()" title="Sign in / Sign up">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-                <span id="auth-btn-label">Sign In</span>
+            <button class="auth-btn" id="auth-nav-btn" onclick="openAuth()" title="Sign in / Sign up">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                <span id="auth-btn-label">Sign in</span>
             </button>
             <a href="/playground/" class="nav-cta">
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
@@ -488,9 +488,9 @@
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
             Dashboard
         </a>
-        <a href="javascript:void(0)" class="auth-nav-link" id="auth-mobile-btn" onclick="closeMobileNav();document.getElementById('auth-nav-btn')?.click()" style="display:flex;align-items:center;gap:0.45rem;padding:0.7rem 1.25rem;border-radius:var(--radius-sm);font-size:0.88rem;font-weight:600;color:var(--accent);text-decoration:none;">
+        <a href="javascript:void(0)" id="auth-mobile-btn" onclick="closeMobileNav();openAuth()" style="display:flex;align-items:center;gap:0.45rem;padding:0.7rem 1.25rem;border-radius:var(--radius-sm);font-size:0.88rem;font-weight:600;color:var(--accent);text-decoration:none;">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-            <span id="auth-mobile-label">Sign In</span>
+            <span id="auth-mobile-label">Sign in</span>
         </a>
         <div class="nav-mobile-divider"></div>
         <a href="/playground/" class="nav-mobile-cta" onclick="closeMobileNav()">
@@ -507,40 +507,62 @@
         </div>
         <p class="dash-subtitle" id="dash-status" data-i18n="dash.loading">Loading your dashboard...</p>
 
-        <!-- Sign Up / Sign In Modal -->
-        <div class="modal-overlay" id="signup-overlay"></div>
-        <div class="modal" id="signup-modal" style="text-align:center;max-width:420px;">
-            <div style="font-size:1.8rem;margin-bottom:0.3rem;">🔑</div>
-            <div class="modal-title" style="margin-bottom:0;">Memory Bridge</div>
-            <!-- Tabs -->
-            <div style="display:flex;gap:0;margin:1rem auto 1.25rem;border-radius:8px;overflow:hidden;max-width:240px;border:1px solid var(--border-primary);">
-                <button id="tab-signup" class="btn btn-sm" style="flex:1;border-radius:0;background:var(--accent);color:#fff;font-weight:600;border:none;padding:0.4rem 0;" onclick="switchAuthTab('signup')">Sign Up</button>
-                <button id="tab-login" class="btn btn-sm" style="flex:1;border-radius:0;background:transparent;color:var(--text-muted);font-weight:500;border:none;padding:0.4rem 0;" onclick="switchAuthTab('login')">Log In</button>
+        <!-- Auth Modal -->
+        <div class="auth-overlay" id="auth-overlay">
+          <div class="auth-modal">
+            <button class="auth-close" onclick="closeAuth()" aria-label="Close">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
+            <div class="auth-icon">🔑</div>
+            <div class="auth-title">Memory Bridge</div>
+            <div class="auth-subtitle">Sign in to manage your API keys and account.</div>
+
+            <!-- Step 1: Options -->
+            <div id="auth-options" class="auth-options">
+              <button class="auth-option" onclick="showAuthForm('signup')">
+                <span class="opt-icon">✉️</span>
+                <span>Continue with Email</span>
+                <span class="opt-arrow">→</span>
+              </button>
+              <button class="auth-option" onclick="showAuthForm('login')">
+                <span class="opt-icon alt">🔐</span>
+                <span>Already have an account?</span>
+                <span class="opt-arrow">→</span>
+              </button>
             </div>
-            <!-- Sign Up Form -->
-            <div id="auth-signup">
-                <p style="font-size:0.82rem;color:var(--text-muted);margin-bottom:1rem;">Create an account. Full API access — 1,000 memories, 100 sessions, 5 keys.</p>
-                <input type="text" id="su-name" placeholder="Your name (optional)"
-                       style="width:100%;padding:0.55rem 0.8rem;margin-bottom:0.6rem;border-radius:6px;border:1px solid var(--border-primary);background:var(--bg-tertiary);color:var(--text-primary);font-size:0.88rem;outline:none;box-sizing:border-box;">
-                <input type="email" id="su-email" placeholder="Email"
-                       style="width:100%;padding:0.55rem 0.8rem;margin-bottom:0.6rem;border-radius:6px;border:1px solid var(--border-primary);background:var(--bg-tertiary);color:var(--text-primary);font-size:0.88rem;outline:none;box-sizing:border-box;">
-                <input type="password" id="su-password" placeholder="Password (min 8 chars)"
-                       style="width:100%;padding:0.55rem 0.8rem;margin-bottom:0.75rem;border-radius:6px;border:1px solid var(--border-primary);background:var(--bg-tertiary);color:var(--text-primary);font-size:0.88rem;outline:none;box-sizing:border-box;">
-                <button class="btn btn-primary" onclick="signupUser()" id="su-btn" style="width:100%;">Create Account & Get Key</button>
+
+            <!-- Step 2a: Sign Up Form -->
+            <div id="auth-form-signup" class="auth-form">
+              <button class="back-link" onclick="showAuthOptions()">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+                Back
+              </button>
+              <label for="su-name">Name (optional)</label>
+              <input type="text" id="su-name" placeholder="Your name" autocomplete="name">
+              <label for="su-email">Email</label>
+              <input type="email" id="su-email" placeholder="you@example.com" autocomplete="email">
+              <label for="su-password">Password</label>
+              <input type="password" id="su-password" placeholder="Min 8 characters" autocomplete="new-password">
+              <button class="btn btn-primary" onclick="signupUser()" id="su-btn">Create account</button>
+              <div class="switch-text">Already have an account? <a onclick="showAuthForm('login')">Log in</a></div>
+              <div class="auth-error" id="auth-error"></div>
             </div>
-            <!-- Login Form -->
-            <div id="auth-login" style="display:none;">
-                <p style="font-size:0.82rem;color:var(--text-muted);margin-bottom:1rem;">Sign in to access your API key and dashboard.</p>
-                <input type="email" id="li-email" placeholder="Email"
-                       style="width:100%;padding:0.55rem 0.8rem;margin-bottom:0.6rem;border-radius:6px;border:1px solid var(--border-primary);background:var(--bg-tertiary);color:var(--text-primary);font-size:0.88rem;outline:none;box-sizing:border-box;">
-                <input type="password" id="li-password" placeholder="Password"
-                       style="width:100%;padding:0.55rem 0.8rem;margin-bottom:0.75rem;border-radius:6px;border:1px solid var(--border-primary);background:var(--bg-tertiary);color:var(--text-primary);font-size:0.88rem;outline:none;box-sizing:border-box;">
-                <button class="btn btn-primary" onclick="loginUser()" id="li-btn" style="width:100%;">Sign In</button>
+
+            <!-- Step 2b: Login Form -->
+            <div id="auth-form-login" class="auth-form">
+              <button class="back-link" onclick="showAuthOptions()">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+                Back
+              </button>
+              <label for="li-email">Email</label>
+              <input type="email" id="li-email" placeholder="you@example.com" autocomplete="email">
+              <label for="li-password">Password</label>
+              <input type="password" id="li-password" placeholder="Enter your password" autocomplete="current-password">
+              <button class="btn btn-primary" onclick="loginUser()" id="li-btn">Sign in</button>
+              <div class="switch-text">Don't have an account? <a onclick="showAuthForm('signup')">Sign up</a></div>
+              <div class="auth-error" id="auth-error"></div>
             </div>
-            <div id="auth-result" style="margin-top:0.75rem;min-height:1.5rem;"></div>
-            <div style="margin-top:0.75rem;font-size:0.78rem;color:var(--text-muted);">
-                <a href="javascript:void(0)" onclick="closeSignup()" style="color:var(--text-faint);font-weight:500;text-decoration:none;">Close</a>
-            </div>
+          </div>
         </div>
 
         <div class="dash-grid">
@@ -738,20 +760,20 @@
             if (jwt && key) {
                 btn.onclick = logout;
                 btn.title = 'Sign out';
-                label.textContent = 'Sign Out';
-                if (mobileLabel) mobileLabel.textContent = 'Sign Out';
+                label.textContent = 'Sign out';
+                if (mobileLabel) mobileLabel.textContent = 'Sign out';
                 btn.style.display = 'inline-flex';
             } else if (key) {
-                btn.onclick = openSignup;
+                btn.onclick = openAuth;
                 btn.title = 'Sign in / Sign up';
-                label.textContent = 'Sign In';
-                if (mobileLabel) mobileLabel.textContent = 'Sign In';
+                label.textContent = 'Sign in';
+                if (mobileLabel) mobileLabel.textContent = 'Sign in';
                 btn.style.display = 'inline-flex';
             } else {
-                btn.onclick = openSignup;
+                btn.onclick = openAuth;
                 btn.title = 'Sign in / Sign up';
-                label.textContent = 'Sign In';
-                if (mobileLabel) mobileLabel.textContent = 'Sign In';
+                label.textContent = 'Sign in';
+                if (mobileLabel) mobileLabel.textContent = 'Sign in';
                 btn.style.display = 'inline-flex';
             }
         }
@@ -922,33 +944,37 @@
         }
 
         // ── Auth Modal ──────────────────────────────────────────────
-        function switchAuthTab(tab) {
-            document.getElementById('auth-signup').style.display = tab === 'signup' ? '' : 'none';
-            document.getElementById('auth-login').style.display = tab === 'login' ? '' : 'none';
-            document.getElementById('tab-signup').style.background = tab === 'signup' ? 'var(--accent)' : 'transparent';
-            document.getElementById('tab-signup').style.color = tab === 'signup' ? '#fff' : 'var(--text-muted)';
-            document.getElementById('tab-login').style.background = tab === 'login' ? 'var(--accent)' : 'transparent';
-            document.getElementById('tab-login').style.color = tab === 'login' ? '#fff' : 'var(--text-muted)';
-            document.getElementById('auth-result').innerHTML = '';
+        function openAuth() {
+            document.getElementById('auth-overlay').classList.add('open');
+            document.body.style.overflow = 'hidden';
+            showAuthOptions();
         }
 
-        function openSignup() {
-            document.getElementById('signup-overlay').classList.add('open');
-            document.getElementById('signup-modal').classList.add('open');
-            switchAuthTab('signup');
-            setTimeout(() => document.getElementById('su-email')?.focus(), 150);
+        function closeAuth() {
+            document.getElementById('auth-overlay').classList.remove('open');
+            document.body.style.overflow = '';
         }
 
-        function closeSignup() {
-            document.getElementById('signup-overlay').classList.remove('open');
-            document.getElementById('signup-modal').classList.remove('open');
+        function showAuthOptions() {
+            document.querySelectorAll('.auth-form').forEach(el => el.classList.remove('active'));
+            document.getElementById('auth-options').style.display = '';
+            document.getElementById('auth-error').textContent = '';
+        }
+
+        function showAuthForm(mode) {
+            document.getElementById('auth-options').style.display = 'none';
+            document.querySelectorAll('.auth-form').forEach(el => el.classList.remove('active'));
+            document.getElementById('auth-form-' + mode).classList.add('active');
+            document.getElementById('auth-error').textContent = '';
+            const firstInput = document.querySelector('#auth-form-' + mode + ' input');
+            if (firstInput) setTimeout(() => firstInput.focus(), 100);
         }
 
         async function signupUser() {
             const email = document.getElementById('su-email').value.trim();
             const password = document.getElementById('su-password').value;
             const name = document.getElementById('su-name').value.trim();
-            const resultEl = document.getElementById('auth-result');
+            const resultEl = document.getElementById('auth-error') || document.getElementById('auth-result');
             const btn = document.getElementById('su-btn');
 
             if (!email || !email.includes('@')) {
@@ -1005,7 +1031,7 @@
                 localStorage.setItem('mb_api_key', apiKey);
                 currentApiKey = apiKey;
                 updateAuthButton();
-                closeSignup();
+                closeAuth();
                 reloadDashboard();
                 showToast('🎉 Account created! Key saved.');
             } catch (e) {
@@ -1017,7 +1043,7 @@
         async function loginUser() {
             const email = document.getElementById('li-email').value.trim();
             const password = document.getElementById('li-password').value;
-            const resultEl = document.getElementById('auth-result');
+            const resultEl = document.getElementById('auth-error') || document.getElementById('auth-result');
             const btn = document.getElementById('li-btn');
 
             if (!email || !password) {
@@ -1066,7 +1092,7 @@
                 }
 
                 updateAuthButton();
-                closeSignup();
+                closeAuth();
                 reloadDashboard();
                 showToast('✅ Welcome back!');
             } catch (e) {
@@ -1187,7 +1213,7 @@
                     if (currentApiKey) {
                         reloadDashboard();
                     } else {
-                        openSignup();
+                        openAuth();
                     }
                 })();
             } else if (jwt && currentApiKey) {
@@ -1197,7 +1223,7 @@
                 updateAuthButton();
                 reloadDashboard();
             } else {
-                openSignup();
+                openAuth();
             }
         });
 

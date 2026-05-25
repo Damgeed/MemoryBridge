@@ -375,10 +375,10 @@
                     <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
                 </svg>
             </button>
-            <a href="/dashboard/" class="auth-nav-link">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-                <span>Sign In</span>
-            </a>
+            <button class="auth-btn" onclick="openAuth()">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                <span>Sign in</span>
+            </button>
             <a href="/playground/" class="nav-cta">
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                     <polygon points="5 3 19 12 5 21 5 3"/>
@@ -427,9 +427,9 @@
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
             Dashboard
         </a>
-        <a href="/dashboard/" class="auth-nav-link" onclick="closeMobileNav()" style="display:flex;align-items:center;gap:0.45rem;padding:0.7rem 1.25rem;border-radius:var(--radius-sm);font-size:0.88rem;font-weight:600;color:var(--accent);text-decoration:none;">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-            Sign In
+        <a href="javascript:void(0)" onclick="closeMobileNav();openAuth()" style="display:flex;align-items:center;gap:0.45rem;padding:0.7rem 1.25rem;border-radius:var(--radius-sm);font-size:0.88rem;font-weight:600;color:var(--accent);text-decoration:none;">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+            <span>Sign in</span>
         </a>
         <div class="nav-mobile-divider"></div>
         <a href="/playground/" class="nav-mobile-cta" onclick="closeMobileNav()">
@@ -691,6 +691,205 @@
 
         document.addEventListener('DOMContentLoaded', () => {
             document.querySelectorAll('.fade-up').forEach(el => observer.observe(el));
+        });
+    </script>
+    <!-- Auth Modal -->
+    <div class="auth-overlay" id="auth-overlay">
+      <div class="auth-modal">
+        <button class="auth-close" onclick="closeAuth()" aria-label="Close">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+        <div class="auth-icon">🔑</div>
+        <div class="auth-title">Memory Bridge</div>
+        <div class="auth-subtitle">Sign in to manage your API keys and account.</div>
+
+        <div id="auth-options" class="auth-options">
+          <button class="auth-option" onclick="showAuthForm('signup')">
+            <span class="opt-icon">✉️</span>
+            <span>Continue with Email</span>
+            <span class="opt-arrow">→</span>
+          </button>
+          <button class="auth-option" onclick="showAuthForm('login')">
+            <span class="opt-icon alt">🔐</span>
+            <span>Already have an account?</span>
+            <span class="opt-arrow">→</span>
+          </button>
+        </div>
+
+        <div id="auth-form-signup" class="auth-form">
+          <button class="back-link" onclick="showAuthOptions()">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+            Back
+          </button>
+          <label for="su-name">Name (optional)</label>
+          <input type="text" id="su-name" placeholder="Your name" autocomplete="name">
+          <label for="su-email">Email</label>
+          <input type="email" id="su-email" placeholder="you@example.com" autocomplete="email">
+          <label for="su-password">Password</label>
+          <input type="password" id="su-password" placeholder="Min 8 characters" autocomplete="new-password">
+          <button class="btn btn-primary" onclick="signupUser()" id="su-btn">Create account</button>
+          <div class="switch-text">Already have an account? <a onclick="showAuthForm('login')">Log in</a></div>
+          <div class="auth-error"></div>
+        </div>
+
+        <div id="auth-form-login" class="auth-form">
+          <button class="back-link" onclick="showAuthOptions()">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+            Back
+          </button>
+          <label for="li-email">Email</label>
+          <input type="email" id="li-email" placeholder="you@example.com" autocomplete="email">
+          <label for="li-password">Password</label>
+          <input type="password" id="li-password" placeholder="Enter your password" autocomplete="current-password">
+          <button class="btn btn-primary" onclick="loginUser()" id="li-btn">Sign in</button>
+          <div class="switch-text">Don't have an account? <a onclick="showAuthForm('signup')">Sign up</a></div>
+          <div class="auth-error"></div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+        // ── Shared Auth ──────────────────────────────────────────────
+        let currentApiKey = '';
+
+        function openAuth() {
+            document.getElementById('auth-overlay').classList.add('open');
+            document.body.style.overflow = 'hidden';
+            showAuthOptions();
+        }
+        function closeAuth() {
+            document.getElementById('auth-overlay').classList.remove('open');
+            document.body.style.overflow = '';
+        }
+        function showAuthOptions() {
+            document.querySelectorAll('.auth-form').forEach(el => el.classList.remove('active'));
+            document.getElementById('auth-options').style.display = '';
+            document.querySelectorAll('.auth-error').forEach(el => el.textContent = '');
+        }
+        function showAuthForm(mode) {
+            document.getElementById('auth-options').style.display = 'none';
+            document.querySelectorAll('.auth-form').forEach(el => el.classList.remove('active'));
+            document.getElementById('auth-form-' + mode).classList.add('active');
+            document.querySelectorAll('.auth-error').forEach(el => el.textContent = '');
+            const firstInput = document.querySelector('#auth-form-' + mode + ' input');
+            if (firstInput) setTimeout(() => firstInput.focus(), 100);
+        }
+
+        function updateAuthUI() {
+            const jwt = localStorage.getItem('mb_jwt');
+            const key = localStorage.getItem('mb_api_key');
+            const btn = document.querySelector('.auth-btn');
+            const label = btn ? btn.querySelector('span') : null;
+            if (jwt && key && label) {
+                label.textContent = 'Sign out';
+                btn.onclick = logout;
+                btn.title = 'Sign out';
+            } else if (label) {
+                label.textContent = 'Sign in';
+                btn.onclick = openAuth;
+                btn.title = 'Sign in / Sign up';
+            }
+        }
+
+        function logout() {
+            localStorage.removeItem('mb_jwt');
+            localStorage.removeItem('mb_api_key');
+            currentApiKey = '';
+            updateAuthUI();
+            closeAuth();
+        }
+
+        // ── Auth API ─────────────────────────────────────────────────
+        function getAuthHeaders() {
+            const headers = { 'Content-Type': 'application/json' };
+            const key = currentApiKey || localStorage.getItem('mb_api_key') || '';
+            if (key) headers['Authorization'] = 'Bearer ' + key;
+            return headers;
+        }
+
+        async function signupUser() {
+            const email = document.getElementById('su-email').value.trim();
+            const password = document.getElementById('su-password').value;
+            const name = document.getElementById('su-name').value.trim();
+            const resultEl = document.querySelector('.auth-error');
+            const btn = document.getElementById('su-btn');
+            if (!email || !email.includes('@')) { resultEl.innerHTML = '⚠️ Enter a valid email'; return; }
+            if (password.length < 8) { resultEl.innerHTML = '⚠️ Password must be at least 8 characters'; return; }
+            resultEl.innerHTML = '<span class="auth-spinner"></span>';
+            btn.disabled = true;
+            try {
+                const regRes = await fetch('/auth/register', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({email, password, name}) });
+                if (!regRes.ok) { const err = await regRes.json().catch(() => ({detail: 'Failed'})); resultEl.innerHTML = '❌ ' + (err.detail || 'Registration failed'); btn.disabled = false; return; }
+                const regData = await regRes.json();
+                localStorage.setItem('mb_jwt', regData.token);
+                let keyData;
+                const kvRes = await fetch('/auth/my-key-value', { headers: {'Authorization': 'Bearer ' + regData.token, 'Content-Type': 'application/json'} });
+                if (!kvRes.ok) {
+                    const fsRes = await fetch('/dashboard/free-signup?email=' + encodeURIComponent(email), { method: 'POST' });
+                    if (!fsRes.ok) { const err = await fsRes.json().catch(() => ({})); resultEl.innerHTML = '❌ ' + (err.detail || 'Could not create API key'); btn.disabled = false; return; }
+                    keyData = await fsRes.json();
+                } else { keyData = await kvRes.json(); }
+                const apiKey = keyData.key;
+                localStorage.setItem('mb_api_key', apiKey);
+                currentApiKey = apiKey;
+                updateAuthUI();
+                closeAuth();
+                window.location.reload();
+            } catch (e) { resultEl.innerHTML = '❌ ' + e.message; btn.disabled = false; }
+        }
+
+        async function loginUser() {
+            const email = document.getElementById('li-email').value.trim();
+            const password = document.getElementById('li-password').value;
+            const resultEl = document.querySelector('.auth-error');
+            const btn = document.getElementById('li-btn');
+            if (!email || !password) { resultEl.innerHTML = '⚠️ Enter your email and password'; return; }
+            resultEl.innerHTML = '<span class="auth-spinner"></span>';
+            btn.disabled = true;
+            try {
+                const loginRes = await fetch('/auth/login', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({email, password}) });
+                if (!loginRes.ok) { const err = await loginRes.json().catch(() => ({})); resultEl.innerHTML = '❌ ' + (err.detail || 'Invalid email or password'); btn.disabled = false; return; }
+                const loginData = await loginRes.json();
+                localStorage.setItem('mb_jwt', loginData.token);
+                const kvRes = await fetch('/auth/my-key-value', { headers: {'Authorization': 'Bearer ' + loginData.token, 'Content-Type': 'application/json'} });
+                if (!kvRes.ok) {
+                    const fsRes = await fetch('/dashboard/free-signup?email=' + encodeURIComponent(email), { method: 'POST' });
+                    if (!fsRes.ok) { resultEl.innerHTML = '❌ No API key found. Use <strong>Sign Up</strong> to create one.'; btn.disabled = false; return; }
+                    const keyData = await fsRes.json();
+                    localStorage.setItem('mb_api_key', keyData.key);
+                    currentApiKey = keyData.key;
+                } else {
+                    const keyData = await kvRes.json();
+                    localStorage.setItem('mb_api_key', keyData.key);
+                    currentApiKey = keyData.key;
+                }
+                updateAuthUI();
+                closeAuth();
+                window.location.reload();
+            } catch (e) { resultEl.innerHTML = '❌ ' + e.message; btn.disabled = false; }
+        }
+
+        function escapeHtml(str) {
+            const div = document.createElement('div');
+            div.textContent = str;
+            return div.innerHTML;
+        }
+
+        // ── Init ──────────────────────────────────────────────────
+        document.addEventListener('DOMContentLoaded', () => {
+            currentApiKey = localStorage.getItem('mb_api_key') || '';
+            const jwt = localStorage.getItem('mb_jwt');
+            if (jwt && !currentApiKey) {
+                (async () => {
+                    try {
+                        const kvRes = await fetch('/auth/my-key-value', { headers: {'Authorization': 'Bearer ' + jwt, 'Content-Type': 'application/json'} });
+                        if (kvRes.ok) { const data = await kvRes.json(); localStorage.setItem('mb_api_key', data.key); currentApiKey = data.key; }
+                    } catch (e) { localStorage.removeItem('mb_jwt'); }
+                    updateAuthUI();
+                })();
+            } else {
+                updateAuthUI();
+            }
         });
     </script>
 </body>
