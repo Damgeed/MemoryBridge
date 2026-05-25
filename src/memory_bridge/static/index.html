@@ -737,10 +737,8 @@
             <span>or continue with email</span>
             <hr>
           </div>
-          <div class="auth-email-row">
-            <input type="email" id="pl-email" placeholder="you@example.com" autocomplete="email" onkeydown="if(event.key==='Enter')continueWithEmail()">
-            <button class="btn btn-primary" onclick="continueWithEmail()" id="pl-email-btn">Continue →</button>
-          </div>
+          <input type="email" class="auth-social-btn" id="pl-email" placeholder="you@example.com" autocomplete="email" onkeydown="if(event.key==='Enter')continueWithEmail()">
+          <button class="auth-social-btn" onclick="continueWithEmail()" id="pl-email-btn" style="justify-content:center;font-weight:600;color:var(--accent);"><span>Continue</span><span class="s-arrow">→</span></button>
           <div class="auth-error" id="auth-error-main"></div>
         </div>
 
@@ -772,19 +770,10 @@
 
     <style>
       /* ── Auth Modal: Passwordless ────────────────────── */
-      .auth-email-row {
-        display: flex;
-        gap: 0.5rem;
-        margin-top: 0.25rem;
-      }
-      .auth-email-row input {
-        flex: 1;
-        min-width: 0;
-      }
-      .auth-email-row .btn {
-        white-space: nowrap;
-        padding: 0.65rem 1.2rem;
-        flex-shrink: 0;
+      input.auth-social-btn:focus {
+        border-color: var(--accent);
+        box-shadow: 0 0 0 2px var(--accent-glow);
+        outline: none;
       }
       .auth-code-info {
         text-align: center;
