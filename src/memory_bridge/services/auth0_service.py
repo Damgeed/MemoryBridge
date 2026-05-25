@@ -194,7 +194,6 @@ class Auth0Service:
             "otp": code,
             "client_id": self.client_id,
             "client_secret": self.client_secret,
-            "audience": self.audience,
         }
         async with httpx.AsyncClient() as client:
             resp = await client.post(url, json=payload, timeout=15)
