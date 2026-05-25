@@ -119,6 +119,18 @@ _SCHEMA_MIGRATIONS: dict[int, str] = {
         "  UNIQUE(provider, provider_user_id)"
         ")"
     ),
+    14: (
+        "CREATE TABLE IF NOT EXISTS {schema}.users ("
+        "  id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text, "
+        "  email TEXT NOT NULL UNIQUE, "
+        "  password_hash TEXT NOT NULL DEFAULT '', "
+        "  name TEXT NOT NULL DEFAULT '', "
+        "  organization_id TEXT NOT NULL DEFAULT '', "
+        "  auth0_sub TEXT DEFAULT '', "
+        "  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(), "
+        "  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()"
+        ")"
+    ),
 }
 # ──────────────────────────────────────────────────────────────────────────────
 
@@ -248,6 +260,17 @@ class PostgresMemoryRepository(MemoryRepository):
                         is_active BOOLEAN NOT NULL DEFAULT TRUE,
                         created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
                         last_used_at TIMESTAMPTZ
+                    );
+
+                    CREATE TABLE IF NOT EXISTS {self.schema}.users (
+                        id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
+                        email TEXT NOT NULL UNIQUE,
+                        password_hash TEXT NOT NULL DEFAULT '',
+                        name TEXT NOT NULL DEFAULT '',
+                        organization_id TEXT NOT NULL DEFAULT '',
+                        auth0_sub TEXT DEFAULT '',
+                        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+                        updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
                     );
                 """
                 await conn.execute(base_ddl)
@@ -1084,12 +1107,12 @@ class PostgresMemoryRepository(MemoryRepository):
             await conn.execute(
                 f"""
                 INSERT INTO {self.schema}.users
-                    (id, email, password_hash, name, organization_id, created_at, updated_at)
-                VALUES ($1, $2, $3, $4, $5, $6::timestamptz, $7::timestamptz)
+                    (id, email, password_hash, name, organization_id, auth0_sub, created_at, updated_at)
+                VALUES ($1, $2, $3, $4, $5, $6, $7::timestamptz, $8::timestamptz)
                 ON CONFLICT (email) DO NOTHING
                 """,
                 user.id, user.email, user.password_hash, user.name,
-                user.organization_id, user.created_at, user.updated_at,
+                user.organization_id, user.auth0_sub, user.created_at, user.updated_at,
             )
         return {"id": user.id, "email": user.email, "name": user.name, "organization_id": user.organization_id}
 
