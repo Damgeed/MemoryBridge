@@ -310,7 +310,7 @@ a:hover { color: var(--accent-light); text-decoration: none; }
   inset: 0;
   background: rgba(0,0,0,0.5);
   backdrop-filter: blur(6px);
-  z-index: 999;
+  z-index: 9999;
   display: none;
   align-items: center;
   justify-content: center;
@@ -323,8 +323,8 @@ a:hover { color: var(--accent-light); text-decoration: none; }
   border: 1px solid var(--border-primary);
   border-radius: var(--radius-lg);
   width: 100%;
-  max-width: 400px;
-  padding: 2rem 1.75rem;
+  max-width: 440px;
+  padding: 2.25rem 2rem;
   box-shadow: var(--shadow-xl);
   position: relative;
   animation: authFadeIn 0.25s ease;
@@ -371,16 +371,19 @@ a:hover { color: var(--accent-light); text-decoration: none; }
   line-height: 1.4;
 }
 
-/* Option cards */
-.auth-options { display: flex; flex-direction: column; gap: 0.6rem; }
-.auth-option {
+/* ── OAuth Buttons ──────────────────────────────── */
+.auth-options { display: flex; flex-direction: column; gap: 0.65rem; }
+
+/* Social sign-in buttons — brand-like, professional */
+.auth-social-btn {
   display: flex;
   align-items: center;
   gap: 0.75rem;
+  width: 100%;
   padding: 0.7rem 1rem;
   border-radius: var(--radius-sm);
   border: 1px solid var(--border-primary);
-  background: transparent;
+  background: var(--card-bg);
   color: var(--text-primary);
   font-size: 0.88rem;
   font-weight: 500;
@@ -388,32 +391,78 @@ a:hover { color: var(--accent-light); text-decoration: none; }
   cursor: pointer;
   transition: all var(--transition-fast);
   text-align: left;
-  width: 100%;
+  line-height: 1.3;
+  outline: none;
 }
-.auth-option:hover {
+.auth-social-btn:hover {
   background: var(--bg-glass);
   border-color: var(--border-strong);
+  box-shadow: var(--shadow-sm);
+  transform: translateY(-1px);
 }
-.auth-option .opt-icon {
+.auth-social-btn:active {
+  transform: translateY(0);
+}
+
+/* Brand icon circle */
+.auth-social-btn .s-icon {
   width: 36px;
   height: 36px;
-  border-radius: 10px;
-  background: var(--accent-glow);
-  color: var(--accent);
+  border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 1.1rem;
   flex-shrink: 0;
+  font-size: 1rem;
+  font-weight: 700;
 }
-.auth-option .opt-icon.alt {
+.auth-social-btn .s-icon.google {
+  background: #fff;
+  color: #333;
+  border: 1px solid #dadce0;
+  font-size: 1.1rem;
+}
+.auth-social-btn .s-icon.apple {
+  background: #000;
+  color: #fff;
+  font-size: 1.2rem;
+}
+.auth-social-btn .s-icon.microsoft {
+  background: #0078d4;
+  color: #fff;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+.auth-social-btn .s-icon.email-icon {
   background: var(--bg-tertiary);
   color: var(--text-muted);
+  font-size: 1rem;
 }
-.auth-option .opt-arrow {
+.auth-social-btn .s-arrow {
   margin-left: auto;
   color: var(--text-faint);
   flex-shrink: 0;
+  font-size: 0.9rem;
+}
+
+/* Divider */
+.auth-divider {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin: 0.15rem 0;
+}
+.auth-divider hr {
+  flex: 1;
+  border: none;
+  height: 1px;
+  background: var(--border-subtle);
+}
+.auth-divider span {
+  font-size: 0.78rem;
+  color: var(--text-faint);
+  font-weight: 500;
+  white-space: nowrap;
 }
 
 /* Auth forms */
@@ -501,11 +550,11 @@ a:hover { color: var(--accent-light); text-decoration: none; }
 @keyframes authSpin { to { transform: rotate(360deg); } }
 
 @media (max-width: 480px) {
-  .auth-modal { padding: 1.5rem 1.25rem; border-radius: var(--radius-md); }
+  .auth-modal { padding: 1.5rem 1.25rem; border-radius: var(--radius-md); max-width: 100%; }
   .auth-title { font-size: 1.05rem; }
   .auth-subtitle { font-size: 0.8rem; margin-bottom: 1.25rem; }
-  .auth-option { font-size: 0.82rem; padding: 0.6rem 0.85rem; }
-  .auth-option .opt-icon { width: 32px; height: 32px; font-size: 1rem; }
+  .auth-social-btn { font-size: 0.82rem; padding: 0.6rem 0.85rem; }
+  .auth-social-btn .s-icon { width: 32px; height: 32px; font-size: 0.9rem; }
 }
 
 /* Hamburger (mobile) */

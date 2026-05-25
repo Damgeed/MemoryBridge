@@ -592,33 +592,33 @@ document.addEventListener('DOMContentLoaded', runDemo);
         <div class="auth-title">Memory Bridge</div>
         <div class="auth-subtitle">Sign in to manage your API keys and account.</div>
 
-        <div id="auth-options" class="auth-options">
-              <button class="auth-option" onclick="oauthLogin('google')">
-                <span class="opt-icon" style="background:#fff;color:#333;font-size:0.95rem;font-weight:700;">G</span>
-                <span>Continue with Google</span>
-                <span class="opt-arrow">→</span>
-              </button>
-              <button class="auth-option" onclick="oauthLogin('apple')">
-                <span class="opt-icon" style="background:#000;color:#fff;font-size:1.05rem;">🍎</span>
-                <span>Continue with Apple</span>
-                <span class="opt-arrow">→</span>
-              </button>
-              <button class="auth-option" onclick="oauthLogin('microsoft')">
-                <span class="opt-icon" style="background:#0078d4;color:#fff;font-size:0.9rem;">M</span>
-                <span>Continue with Microsoft</span>
-                <span class="opt-arrow">→</span>
-              </button>
-              <div style="display:flex;align-items:center;gap:0.75rem;margin:0.25rem 0;">
-                <div style="flex:1;height:1px;background:var(--border-subtle);"></div>
-                <span style="font-size:0.78rem;color:var(--text-faint);font-weight:500;">or continue with email</span>
-                <div style="flex:1;height:1px;background:var(--border-subtle);"></div>
-              </div>
-              <button class="auth-option" onclick="showAuthForm('signup')">
-                <span class="opt-icon alt">✉️</span>
-                <span>Continue with Email</span>
-                <span class="opt-arrow">→</span>
-              </button>
+          <div id="auth-options" class="auth-options">
+            <button class="auth-social-btn" onclick="oauthLogin('google')">
+              <span class="s-icon google">G</span>
+              <span>Continue with Google</span>
+              <span class="s-arrow">→</span>
+            </button>
+            <button class="auth-social-btn" onclick="oauthLogin('apple')">
+              <span class="s-icon apple">🍎</span>
+              <span>Continue with Apple</span>
+              <span class="s-arrow">→</span>
+            </button>
+            <button class="auth-social-btn" onclick="oauthLogin('microsoft')">
+              <span class="s-icon microsoft">M</span>
+              <span>Continue with Microsoft</span>
+              <span class="s-arrow">→</span>
+            </button>
+            <div class="auth-divider">
+              <hr>
+              <span>or continue with email</span>
+              <hr>
             </div>
+            <button class="auth-social-btn" onclick="showAuthForm('signup')">
+              <span class="s-icon email-icon">✉️</span>
+              <span>Continue with Email</span>
+              <span class="s-arrow">→</span>
+            </button>
+          </div>
 
         <div id="auth-form-signup" class="auth-form">
           <button class="back-link" onclick="showAuthOptions()">
