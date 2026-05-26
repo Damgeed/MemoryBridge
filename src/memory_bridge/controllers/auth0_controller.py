@@ -310,6 +310,26 @@ async def passwordless_verify(
     if existing_user:
         user_id = existing_user.get("id")
         org_id = existing_user.get("organization_id", "")
+        # If user has no org_id (e.g., created before org_id field existed), generate and save one
+        if not org_id:
+            org_id = str(uuid.uuid4())
+            try:
+                import aiosqlite
+                db_path = getattr(storage, 'db_path', None)
+                if db_path:
+                    async with aiosqlite.connect(db_path) as db:
+                        await db.execute("UPDATE users SET organization_id = ? WHERE id = ?", (org_id, user_id))
+                        await db.commit()
+                    logger.info("Assigned new org_id=%s to existing user %s", org_id, email)
+                else:
+                    # PostgreSQL fallback: use raw connection
+                    conn = getattr(storage, 'pool', None)
+                    if conn:
+                        async with conn.acquire() as c:
+                            await c.execute("UPDATE users SET organization_id = $1 WHERE id = $2", org_id, str(user_id))
+                        logger.info("Assigned new org_id=%s to existing user %s (pg)", org_id, email)
+            except Exception as e:
+                logger.warning("Could not update user org_id: %s", e)
         logger.info("Passwordless login: existing user %s (org=%s)", email, org_id)
     else:
         org_id = str(uuid.uuid4())

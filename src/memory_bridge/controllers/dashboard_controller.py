@@ -334,6 +334,53 @@ async def get_dashboard_data(
         except Exception:
             pass
 
+    # If STILL no subscription found, try Stripe direct lookup by email on JWT
+    if not sub and user_email:
+        try:
+            import stripe as stripe_mod
+            stripe_mod.api_key = os.environ.get("STRIPE_SECRET_KEY", "")
+            if stripe_mod.api_key:
+                import asyncio
+                customers = await asyncio.wait_for(
+                    asyncio.to_thread(stripe_mod.Customer.list, email=user_email, limit=1),
+                    timeout=5.0,
+                )
+                if customers.data:
+                    stripe_customer = customers.data[0]
+                    # Check if customer has active subscriptions
+                    subs_data = stripe_customer.get("subscriptions", {}).get("data", [])
+                    if subs_data:
+                        active_sub = subs_data[0]
+                        price_id = active_sub.get("items", {}).get("data", [{}])[0].get("price", {}).get("id", "")
+                        from ..services.billing_service import PRICE_IDS
+                        resolved_tier = "starter"
+                        for t, pid in PRICE_IDS.items():
+                            if pid == price_id:
+                                resolved_tier = t
+                                break
+                        from ..models.subscription import Subscription
+                        from datetime import datetime, timezone
+                        sub = Subscription(
+                            id=active_sub.get("id", f"stripe-{org_id[:8]}"),
+                            organization_id=org_id,
+                            stripe_customer_id=stripe_customer.get("id", ""),
+                            tier=resolved_tier,
+                            status=active_sub.get("status", "active"),
+                            current_period_start=datetime.now(timezone.utc),
+                            current_period_end=datetime.fromtimestamp(
+                                active_sub.get("current_period_end", 0), tz=timezone.utc
+                            ) if active_sub.get("current_period_end") else None,
+                        )
+                        try:
+                            await storage.store_subscription(sub)
+                            logger.info("Stripe fallback: restored subscription for org=%s tier=%s", org_id, resolved_tier)
+                        except Exception as e:
+                            logger.warning("Stripe fallback: store failed %s", e)
+        except ImportError:
+            pass
+        except Exception as e:
+            logger.warning("Stripe fallback error: %s", e)
+
     # Get key count
     keys = await storage.list_api_keys()
     user_keys = [k for k in keys if k.get("project_id") == org_id or not k.get("project_id")]
