@@ -176,6 +176,12 @@
 
         /* Even-width buttons in playground */
         .playground-container .btn-group .btn { flex: 1; min-width: 0; text-align: center; }
+
+        /* On mobile: 4 Quick Start buttons → 2×2 grid */
+        @media (max-width: 600px) {
+            #quickstart-card .btn-group { flex-wrap: wrap; }
+            #quickstart-card .btn-group .btn { flex: 0 0 calc(50% - 0.25rem); }
+        }
     </style>
     <script src="/playground/i18n.js"></script>
 <script src="/playground/auth.js?v=1"></script>
