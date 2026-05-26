@@ -2,34 +2,26 @@
 <html lang="en" data-theme="dark">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Memory Bridge — Agent Memory Concept</title>
     <link rel="icon" href="/playground/logo.png" type="image/png">
     <link rel="stylesheet" href="/playground/style.css">
     <style>
         @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700;800&display=swap');
-
         body {
             background: #020617;
-            font-family: 'JetBrains Mono', monospace;
             overflow: hidden;
             height: 100vh;
-            height: 100dvh;
         }
-
-        .concept-container {
+        .concept-visual {
             position: relative;
             width: 100vw;
             height: calc(100vh - 56px);
-            height: calc(100dvh - 56px);
             background: radial-gradient(ellipse at 50% 50%, #0f172a 0%, #020617 70%);
             overflow: hidden;
         }
-
-        /* Floating grid background */
         .grid {
-            position: absolute;
-            inset: 0;
+            position: absolute; inset: 0;
             background-image:
                 linear-gradient(rgba(30, 41, 59, 0.25) 1px, transparent 1px),
                 linear-gradient(90deg, rgba(30, 41, 59, 0.25) 1px, transparent 1px);
@@ -37,112 +29,73 @@
             pointer-events: none;
             animation: gridPulse 8s ease-in-out infinite;
         }
-        @keyframes gridPulse {
-            0%, 100% { opacity: 0.6; }
-            50% { opacity: 1; }
-        }
-
-        /* Ambient floating particles */
+        @keyframes gridPulse { 0%,100% { opacity: 0.6; } 50% { opacity: 1; } }
         .particle-field {
-            position: absolute;
-            inset: 0;
-            pointer-events: none;
-            overflow: hidden;
+            position: absolute; inset: 0; pointer-events: none; overflow: hidden;
         }
         .particle-field span {
-            position: absolute;
-            border-radius: 50%;
-            opacity: 0;
+            position: absolute; border-radius: 50%; opacity: 0;
             animation: floatParticle linear infinite;
         }
-        .particle-field span:nth-child(1)  { left: 10%; top: 20%; width: 2px; height: 2px; animation-duration: 12s; animation-delay: 0s; background: #22d3ee; }
-        .particle-field span:nth-child(2)  { left: 25%; top: 60%; width: 3px; height: 3px; animation-duration: 15s; animation-delay: 1s; background: #34d399; }
-        .particle-field span:nth-child(3)  { left: 40%; top: 30%; width: 2px; height: 2px; animation-duration: 10s; animation-delay: 2s; background: #a78bfa; }
-        .particle-field span:nth-child(4)  { left: 55%; top: 70%; width: 3px; height: 3px; animation-duration: 14s; animation-delay: 0.5s; background: #22d3ee; }
-        .particle-field span:nth-child(5)  { left: 70%; top: 15%; width: 2px; height: 2px; animation-duration: 11s; animation-delay: 3s; background: #34d399; }
-        .particle-field span:nth-child(6)  { left: 85%; top: 50%; width: 3px; height: 3px; animation-duration: 13s; animation-delay: 1.5s; background: #fb923c; }
-        .particle-field span:nth-child(7)  { left: 15%; top: 80%; width: 2px; height: 2px; animation-duration: 16s; animation-delay: 0.2s; background: #a78bfa; }
-        .particle-field span:nth-child(8)  { left: 50%; top: 10%; width: 4px; height: 4px; animation-duration: 18s; animation-delay: 2.5s; background: #22d3ee; }
-        .particle-field span:nth-child(9)  { left: 90%; top: 75%; width: 2px; height: 2px; animation-duration: 9s; animation-delay: 1s; background: #34d399; }
-        .particle-field span:nth-child(10) { left: 35%; top: 85%; width: 3px; height: 3px; animation-duration: 17s; animation-delay: 0.8s; background: #fb923c; }
-        .particle-field span:nth-child(11) { left: 5%; top: 40%; width: 2px; height: 2px; animation-duration: 11s; animation-delay: 3.5s; background: #a78bfa; }
-        .particle-field span:nth-child(12) { left: 75%; top: 40%; width: 4px; height: 4px; animation-duration: 14s; animation-delay: 1.2s; background: #22d3ee; }
-
+        .particle-field span:nth-child(1)  { left:10%; top:20%; width:2px; height:2px; animation-duration:12s; animation-delay:0s; background:#22d3ee; }
+        .particle-field span:nth-child(2)  { left:25%; top:60%; width:3px; height:3px; animation-duration:15s; animation-delay:1s; background:#34d399; }
+        .particle-field span:nth-child(3)  { left:40%; top:30%; width:2px; height:2px; animation-duration:10s; animation-delay:2s; background:#a78bfa; }
+        .particle-field span:nth-child(4)  { left:55%; top:70%; width:3px; height:3px; animation-duration:14s; animation-delay:0.5s; background:#22d3ee; }
+        .particle-field span:nth-child(5)  { left:70%; top:15%; width:2px; height:2px; animation-duration:11s; animation-delay:3s; background:#34d399; }
+        .particle-field span:nth-child(6)  { left:85%; top:50%; width:3px; height:3px; animation-duration:13s; animation-delay:1.5s; background:#fb923c; }
+        .particle-field span:nth-child(7)  { left:15%; top:80%; width:2px; height:2px; animation-duration:16s; animation-delay:0.2s; background:#a78bfa; }
+        .particle-field span:nth-child(8)  { left:50%; top:10%; width:4px; height:4px; animation-duration:18s; animation-delay:2.5s; background:#22d3ee; }
+        .particle-field span:nth-child(9)  { left:90%; top:75%; width:2px; height:2px; animation-duration:9s; animation-delay:1s; background:#34d399; }
+        .particle-field span:nth-child(10) { left:35%; top:85%; width:3px; height:3px; animation-duration:17s; animation-delay:0.8s; background:#fb923c; }
+        .particle-field span:nth-child(11) { left:5%; top:40%; width:2px; height:2px; animation-duration:11s; animation-delay:3.5s; background:#a78bfa; }
+        .particle-field span:nth-child(12) { left:75%; top:40%; width:4px; height:4px; animation-duration:14s; animation-delay:1.2s; background:#22d3ee; }
         @keyframes floatParticle {
-            0%   { transform: translateY(0) scale(0); opacity: 0; }
-            10%  { opacity: 0.8; }
-            20%  { transform: translateY(-30px) scale(1); opacity: 0.6; }
-            80%  { opacity: 0.4; }
-            100% { transform: translateY(-120px) scale(0); opacity: 0; }
+            0% { transform:translateY(0) scale(0); opacity:0; }
+            10% { opacity:0.8; }
+            20% { transform:translateY(-30px) scale(1); opacity:0.6; }
+            80% { opacity:0.4; }
+            100% { transform:translateY(-120px) scale(0); opacity:0; }
         }
-
-        /* Title overlay */
         .concept-title {
-            position: absolute;
-            top: 3%;
-            left: 0; right: 0;
-            text-align: center;
-            color: #e2e8f0;
-            font-size: clamp(9px, 1.2vw, 13px);
-            font-weight: 600;
-            letter-spacing: 4px;
-            text-transform: uppercase;
-            opacity: 0.5;
-            z-index: 10;
-            pointer-events: none;
+            position: absolute; top:3%; left:0; right:0; text-align: center;
+            color: #e2e8f0; font-size: clamp(9px,1.2vw,13px);
+            font-weight: 600; letter-spacing: 4px; text-transform: uppercase;
+            opacity: 0.5; z-index: 10; pointer-events: none;
         }
         .concept-title span { color: #22d3ee; }
-
         svg.concept-svg {
-            position: absolute;
-            inset: 0;
-            width: 100%;
-            height: 100%;
-            display: block;
+            position: absolute; inset: 0; width: 100%; height: 100%; display: block;
         }
-
         .concept-legend {
-            position: absolute;
-            bottom: clamp(8px, 2vh, 24px);
-            left: 50%;
+            position: absolute; bottom: clamp(8px,2vh,24px); left: 50%;
             transform: translateX(-50%);
-            display: flex;
-            gap: clamp(10px, 2vw, 28px);
-            background: rgba(15, 23, 42, 0.85);
-            padding: clamp(6px, 1vh, 10px) clamp(12px, 2vw, 22px);
-            border-radius: 10px;
-            border: 1px solid #1e293b;
-            backdrop-filter: blur(8px);
-            z-index: 10;
-            flex-wrap: wrap;
-            justify-content: center;
+            display: flex; gap: clamp(10px,2vw,28px);
+            background: rgba(15,23,42,0.85);
+            padding: clamp(6px,1vh,10px) clamp(12px,2vw,22px);
+            border-radius: 10px; border: 1px solid #1e293b;
+            backdrop-filter: blur(8px); z-index: 10;
+            flex-wrap: wrap; justify-content: center;
         }
         .concept-legend-item {
-            display: flex;
-            align-items: center;
-            gap: clamp(4px, 0.8vw, 8px);
-            color: #94a3b8;
-            font-size: clamp(7px, 0.9vw, 10px);
-            font-weight: 500;
-            letter-spacing: 0.3px;
-            white-space: nowrap;
+            display: flex; align-items: center; gap: clamp(4px,0.8vw,8px);
+            color: #94a3b8; font-size: clamp(7px,0.9vw,10px);
+            font-weight: 500; letter-spacing: 0.3px; white-space: nowrap;
         }
         .concept-legend-item .dot {
-            width: clamp(6px, 0.9vw, 10px);
-            height: clamp(6px, 0.9vw, 10px);
-            border-radius: 50%;
-            flex-shrink: 0;
+            width: clamp(6px,0.9vw,10px); height: clamp(6px,0.9vw,10px);
+            border-radius: 50%; flex-shrink: 0;
         }
-        .concept-legend-item .dot.cyan { background: #22d3ee; box-shadow: 0 0 8px rgba(34,211,238,0.5); }
-        .concept-legend-item .dot.emerald { background: #34d399; box-shadow: 0 0 8px rgba(52,211,153,0.5); }
-        .concept-legend-item .dot.violet { background: #a78bfa; box-shadow: 0 0 8px rgba(167,139,250,0.5); }
-        .concept-legend-item .dot.orange { background: #fb923c; box-shadow: 0 0 8px rgba(251,146,60,0.5); }
-
-        /* Override navbar for dark concept background */
-        .navbar {
-            background: rgba(2, 6, 23, 0.95);
-            backdrop-filter: blur(16px) saturate(1.5);
-            border-bottom: 1px solid rgba(30, 41, 59, 0.6);
+        .concept-legend-item .dot.cyan { background:#22d3ee; box-shadow:0 0 8px rgba(34,211,238,0.5); }
+        .concept-legend-item .dot.emerald { background:#34d399; box-shadow:0 0 8px rgba(52,211,153,0.5); }
+        .concept-legend-item .dot.violet { background:#a78bfa; box-shadow:0 0 8px rgba(167,139,250,0.5); }
+        .concept-legend-item .dot.orange { background:#fb923c; box-shadow:0 0 8px rgba(251,146,60,0.5); }
+        @media (max-width: 640px) {
+            .auth-btn-container { display: inline-flex !important; }
+            .nav-cta { display: none !important; }
+        }
+        @media (max-width: 768px) {
+            .auth-btn-container { display: inline-flex !important; }
+            .nav-cta { display: none !important; }
         }
     </style>
     <script src="/playground/i18n.js"></script>
@@ -307,7 +260,7 @@
     </div>
 
     <!-- Concept Visualization -->
-    <div class="concept-container">
+    <div class="concept-visual">
         <div class="grid"></div>
         <div class="particle-field">
             <span></span><span></span><span></span><span></span><span></span>
@@ -318,60 +271,25 @@
 
         <svg class="concept-svg" viewBox="0 0 1100 700" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg">
             <defs>
-                <filter id="glow-cyan" x="-40%" y="-40%" width="180%" height="180%">
-                    <feGaussianBlur stdDeviation="6" result="blur"/>
-                    <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
-                </filter>
-                <filter id="glow-violet" x="-40%" y="-40%" width="180%" height="180%">
-                    <feGaussianBlur stdDeviation="10" result="blur"/>
-                    <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
-                </filter>
-                <filter id="glow-emerald" x="-40%" y="-40%" width="180%" height="180%">
-                    <feGaussianBlur stdDeviation="5" result="blur"/>
-                    <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
-                </filter>
-                <filter id="glow-orange" x="-40%" y="-40%" width="180%" height="180%">
-                    <feGaussianBlur stdDeviation="4" result="blur"/>
-                    <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
-                </filter>
-                <radialGradient id="brain-grad" cx="50%" cy="45%" r="50%">
-                    <stop offset="0%" stop-color="#a78bfa" stop-opacity="0.4"/>
-                    <stop offset="50%" stop-color="#7c3aed" stop-opacity="0.2"/>
-                    <stop offset="100%" stop-color="#4c1d95" stop-opacity="0"/>
-                </radialGradient>
-                <linearGradient id="agent1-grad" x1="0" y1="0" x2="1" y2="1">
-                    <stop offset="0%" stop-color="#22d3ee" stop-opacity="0.15"/>
-                    <stop offset="100%" stop-color="#0891b2" stop-opacity="0.05"/>
-                </linearGradient>
-                <linearGradient id="agent2-grad" x1="0" y1="0" x2="1" y2="1">
-                    <stop offset="0%" stop-color="#34d399" stop-opacity="0.15"/>
-                    <stop offset="100%" stop-color="#059669" stop-opacity="0.05"/>
-                </linearGradient>
-                <marker id="arrow-cyan" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto">
-                    <path d="M 0 0 L 10 5 L 0 10 z" fill="#22d3ee"/>
-                </marker>
-                <marker id="arrow-emerald" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto">
-                    <path d="M 0 0 L 10 5 L 0 10 z" fill="#34d399"/>
-                </marker>
-                <marker id="arrow-violet" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto">
-                    <path d="M 0 0 L 10 5 L 0 10 z" fill="#a78bfa"/>
-                </marker>
-                <marker id="arrow-orange" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto">
-                    <path d="M 0 0 L 10 5 L 0 10 z" fill="#fb923c"/>
-                </marker>
-                <filter id="brain-noise">
-                    <feTurbulence type="fractalNoise" baseFrequency="0.015" numOctaves="3" result="noise"/>
-                    <feDisplacementMap in="SourceGraphic" in2="noise" scale="3" xChannelSelector="R" yChannelSelector="G"/>
-                </filter>
+                <filter id="glow-cyan" x="-40%" y="-40%" width="180%" height="180%"><feGaussianBlur stdDeviation="6" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+                <filter id="glow-violet" x="-40%" y="-40%" width="180%" height="180%"><feGaussianBlur stdDeviation="10" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+                <filter id="glow-emerald" x="-40%" y="-40%" width="180%" height="180%"><feGaussianBlur stdDeviation="5" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+                <filter id="glow-orange" x="-40%" y="-40%" width="180%" height="180%"><feGaussianBlur stdDeviation="4" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+                <radialGradient id="brain-grad" cx="50%" cy="45%" r="50%"><stop offset="0%" stop-color="#a78bfa" stop-opacity="0.4"/><stop offset="50%" stop-color="#7c3aed" stop-opacity="0.2"/><stop offset="100%" stop-color="#4c1d95" stop-opacity="0"/></radialGradient>
+                <linearGradient id="agent1-grad" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#22d3ee" stop-opacity="0.15"/><stop offset="100%" stop-color="#0891b2" stop-opacity="0.05"/></linearGradient>
+                <linearGradient id="agent2-grad" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#34d399" stop-opacity="0.15"/><stop offset="100%" stop-color="#059669" stop-opacity="0.05"/></linearGradient>
+                <marker id="arrow-cyan" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M 0 0 L 10 5 L 0 10 z" fill="#22d3ee"/></marker>
+                <marker id="arrow-emerald" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M 0 0 L 10 5 L 0 10 z" fill="#34d399"/></marker>
+                <marker id="arrow-violet" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M 0 0 L 10 5 L 0 10 z" fill="#a78bfa"/></marker>
+                <marker id="arrow-orange" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M 0 0 L 10 5 L 0 10 z" fill="#fb923c"/></marker>
+                <filter id="brain-noise"><feTurbulence type="fractalNoise" baseFrequency="0.015" numOctaves="3" result="noise"/><feDisplacementMap in="SourceGraphic" in2="noise" scale="3" xChannelSelector="R" yChannelSelector="G"/></filter>
                 <filter id="particle-glow"><feGaussianBlur stdDeviation="2"/></filter>
             </defs>
 
-            <!-- ── AGENT 1: STORING AGENT (collecting, typing, sending) ── -->
             <g><animateTransform attributeName="transform" type="translate" values="0,0; 0,-12; 0,0; 0,8; 0,0" dur="6s" repeatCount="indefinite"/>
             <g transform="translate(130, 180)">
                 <ellipse cx="110" cy="140" rx="140" ry="130" fill="url(#agent1-grad)" filter="url(#glow-cyan)" opacity="0.3"/>
                 <rect x="40" y="100" width="140" height="120" rx="16" fill="#0f172a" stroke="#22d3ee" stroke-width="1.5" opacity="0.95"/>
-                <!-- Chest panel with scrolling data lines -->
                 <rect x="60" y="120" width="100" height="60" rx="8" fill="rgba(34,211,238,0.06)" stroke="rgba(34,211,238,0.2)" stroke-width="1"/>
                 <line x1="68" y1="133" x2="152" y2="133" stroke="#22d3ee" stroke-width="0.5" opacity="0.4"><animate attributeName="opacity" values="0.4;0;0.4" dur="2s" repeatCount="indefinite"/></line>
                 <line x1="68" y1="140" x2="152" y2="140" stroke="#22d3ee" stroke-width="0.5" opacity="0.4"><animate attributeName="opacity" values="0;0.4;0" dur="2s" repeatCount="indefinite" begin="0.5s"/></line>
@@ -382,32 +300,25 @@
                 <circle cx="120" cy="140" r="5" fill="#22d3ee" filter="url(#glow-cyan)"><animate attributeName="opacity" values="1;0.3;1" dur="1.5s" repeatCount="indefinite" begin="1s"/></circle>
                 <line x1="60" y1="195" x2="160" y2="195" stroke="rgba(34,211,238,0.2)" stroke-width="1"/>
                 <rect x="80" y="205" width="60" height="4" rx="2" fill="rgba(34,211,238,0.1)"/>
-                <!-- Head -->
                 <rect x="55" y="35" width="110" height="65" rx="14" fill="#0f172a" stroke="#22d3ee" stroke-width="1.5"/>
                 <ellipse cx="85" cy="60" rx="14" ry="12" fill="rgba(34,211,238,0.12)" stroke="rgba(34,211,238,0.4)" stroke-width="1"/>
                 <ellipse cx="135" cy="60" rx="14" ry="12" fill="rgba(34,211,238,0.12)" stroke="rgba(34,211,238,0.4)" stroke-width="1"/>
                 <circle cx="85" cy="60" r="6" fill="#22d3ee" filter="url(#glow-cyan)"><animate attributeName="rx" values="6;2;6" dur="4s" repeatCount="indefinite"/></circle>
                 <circle cx="135" cy="60" r="6" fill="#22d3ee" filter="url(#glow-cyan)"><animate attributeName="rx" values="6;2;6" dur="4s" repeatCount="indefinite" begin="2s"/></circle>
-                <!-- Antenna with signal waves -->
                 <line x1="110" y1="35" x2="110" y2="15" stroke="#22d3ee" stroke-width="1.5" opacity="0.6"/>
                 <circle cx="110" cy="13" r="4" fill="#22d3ee" filter="url(#glow-cyan)"><animate attributeName="r" values="4;5;4" dur="2s" repeatCount="indefinite"/></circle>
                 <circle cx="110" cy="13" r="8" fill="none" stroke="#22d3ee" stroke-width="0.5" opacity="0"><animate attributeName="r" values="4;14" dur="2s" repeatCount="indefinite"/><animate attributeName="opacity" values="0.6;0" dur="2s" repeatCount="indefinite"/></circle>
                 <circle cx="110" cy="13" r="8" fill="none" stroke="#22d3ee" stroke-width="0.5" opacity="0"><animate attributeName="r" values="4;14" dur="2s" repeatCount="indefinite" begin="1s"/><animate attributeName="opacity" values="0.6;0" dur="2s" repeatCount="indefinite" begin="1s"/></circle>
-                <!-- Left arm: collecting data from environment -->
-                <g>
-                    <animateTransform attributeName="transform" type="rotate" values="-15,30,120;15,30,120;-15,30,120" dur="3s" repeatCount="indefinite"/>
+                <g><animateTransform attributeName="transform" type="rotate" values="-15,30,120;15,30,120;-15,30,120" dur="3s" repeatCount="indefinite"/>
                     <rect x="15" y="110" width="25" height="12" rx="6" fill="#0f172a" stroke="#22d3ee" stroke-width="1" opacity="0.8"/>
                     <rect x="-5" y="105" width="22" height="22" rx="6" fill="#0f172a" stroke="#22d3ee" stroke-width="1"/>
                     <path d="M 0,110 L -8,100" stroke="#22d3ee" stroke-width="1.5" fill="none" opacity="0.8"><animate attributeName="d" values="M 0,110 L -8,100;M 0,110 L -8,108;M 0,110 L -8,100" dur="3s" repeatCount="indefinite"/></path>
                     <path d="M 15,110 L 23,100" stroke="#22d3ee" stroke-width="1.5" fill="none" opacity="0.8"><animate attributeName="d" values="M 15,110 L 23,100;M 15,110 L 23,108;M 15,110 L 23,100" dur="3s" repeatCount="indefinite"/></path>
-                    <!-- Data particles being collected into the gripper -->
                     <circle cx="-15" cy="90" r="1.5" fill="#67e8f9"><animateMotion dur="3s" repeatCount="indefinite" path="M -25,80 L -10,95"/><animate attributeName="opacity" values="1;0" dur="3s" repeatCount="indefinite"/></circle>
                     <circle cx="-20" cy="95" r="1" fill="#22d3ee"><animateMotion dur="2.5s" repeatCount="indefinite" begin="1s" path="M -30,85 L -8,100"/><animate attributeName="opacity" values="1;0" dur="2.5s" repeatCount="indefinite" begin="1s"/></circle>
                     <circle cx="-18" cy="85" r="1.5" fill="#67e8f9"><animateMotion dur="3.5s" repeatCount="indefinite" begin="0.5s" path="M -28,75 L -12,92"/><animate attributeName="opacity" values="1;0" dur="3.5s" repeatCount="indefinite" begin="0.5s"/></circle>
                 </g>
-                <!-- Right arm: sending data to brain -->
-                <g>
-                    <animateTransform attributeName="transform" type="rotate" values="15,180,130;-15,180,130;15,180,130" dur="2.5s" repeatCount="indefinite"/>
+                <g><animateTransform attributeName="transform" type="rotate" values="15,180,130;-15,180,130;15,180,130" dur="2.5s" repeatCount="indefinite"/>
                     <rect x="185" y="120" width="25" height="12" rx="6" fill="#0f172a" stroke="#22d3ee" stroke-width="1" opacity="0.8"/>
                     <circle cx="212" cy="126" r="8" fill="rgba(34,211,238,0.1)" stroke="#22d3ee" stroke-width="1"/>
                     <line x1="220" y1="126" x2="260" y2="140" stroke="#22d3ee" stroke-width="1.5" stroke-dasharray="4,4" opacity="0.6"><animate attributeName="opacity" values="0.6;0.2;0.6" dur="2s" repeatCount="indefinite"/></line>
@@ -420,52 +331,39 @@
                 <text x="110" y="298" text-anchor="middle" fill="#64748b" font-size="8" letter-spacing="0.5">STORING · WRITE</text>
             </g></g>
 
-            <!-- ── AGENT 2: RETRIEVING AGENT (receiving, scanning, processing) ── -->
             <g><animateTransform attributeName="transform" type="translate" values="0,0; 0,10; 0,0; 0,-8; 0,0" dur="7s" repeatCount="indefinite"/>
             <g transform="translate(700, 180)">
                 <ellipse cx="110" cy="140" rx="140" ry="130" fill="url(#agent2-grad)" filter="url(#glow-emerald)" opacity="0.3"/>
                 <rect x="40" y="100" width="140" height="120" rx="16" fill="#0f172a" stroke="#34d399" stroke-width="1.5" opacity="0.95"/>
-                <!-- Chest panel with data being displayed -->
                 <rect x="60" y="120" width="100" height="60" rx="8" fill="rgba(52,211,153,0.06)" stroke="rgba(52,211,153,0.2)" stroke-width="1"/>
-                <!-- Data bytes appearing on chest display -->
-                <text x="75" y="137" fill="#34d399" font-size="6" font-family="monospace" opacity="0"><animate attributeName="opacity" values="0;1;0" dur="3s" repeatCount="indefinite"/><animate attributeName="x" values="75;75;75" dur="3s" repeatCount="indefinite"/>0x7F</text>
-                <text x="110" y="137" fill="#6ee7b7" font-size="6" font-family="monospace" opacity="0"><animate attributeName="opacity" values="0;1;0" dur="3s" repeatCount="indefinite" begin="0.8s"/><animate attributeName="x" values="110;110;110" dur="3s" repeatCount="indefinite" begin="0.8s"/>0xA3</text>
-                <text x="75" y="150" fill="#34d399" font-size="6" font-family="monospace" opacity="0"><animate attributeName="opacity" values="0;1;0" dur="3s" repeatCount="indefinite" begin="1.5s"/><animate attributeName="x" values="75;75;75" dur="3s" repeatCount="indefinite" begin="1.5s"/>0xE8</text>
-                <text x="110" y="150" fill="#6ee7b7" font-size="6" font-family="monospace" opacity="0"><animate attributeName="opacity" values="0;1;0" dur="3s" repeatCount="indefinite" begin="2.2s"/><animate attributeName="x" values="110;110;110" dur="3s" repeatCount="indefinite" begin="2.2s"/>0x4C</text>
+                <text x="75" y="137" fill="#34d399" font-size="6" font-family="monospace" opacity="0"><animate attributeName="opacity" values="0;1;0" dur="3s" repeatCount="indefinite"/>0x7F</text>
+                <text x="110" y="137" fill="#6ee7b7" font-size="6" font-family="monospace" opacity="0"><animate attributeName="opacity" values="0;1;0" dur="3s" repeatCount="indefinite" begin="0.8s"/>0xA3</text>
+                <text x="75" y="150" fill="#34d399" font-size="6" font-family="monospace" opacity="0"><animate attributeName="opacity" values="0;1;0" dur="3s" repeatCount="indefinite" begin="1.5s"/>0xE8</text>
+                <text x="110" y="150" fill="#6ee7b7" font-size="6" font-family="monospace" opacity="0"><animate attributeName="opacity" values="0;1;0" dur="3s" repeatCount="indefinite" begin="2.2s"/>0x4C</text>
                 <circle cx="80" cy="140" r="5" fill="#34d399" filter="url(#glow-emerald)"><animate attributeName="opacity" values="1;0.3;1" dur="2s" repeatCount="indefinite" begin="0.3s"/></circle>
                 <circle cx="100" cy="140" r="5" fill="#34d399" filter="url(#glow-emerald)"><animate attributeName="opacity" values="0.3;1;0.3" dur="2s" repeatCount="indefinite" begin="0.8s"/></circle>
                 <circle cx="120" cy="140" r="5" fill="#34d399" filter="url(#glow-emerald)"><animate attributeName="opacity" values="1;0.3;1" dur="2s" repeatCount="indefinite" begin="1.3s"/></circle>
                 <line x1="60" y1="195" x2="160" y2="195" stroke="rgba(52,211,153,0.2)" stroke-width="1"/>
                 <rect x="80" y="205" width="60" height="4" rx="2" fill="rgba(52,211,153,0.1)"/>
-                <!-- Head with scanning visor -->
                 <path d="M 60,95 L 55,50 Q 55,35 70,35 L 150,35 Q 165,35 165,50 L 160,95 Z" fill="#0f172a" stroke="#34d399" stroke-width="1.5"/>
                 <rect x="70" y="52" width="80" height="22" rx="10" fill="rgba(52,211,153,0.08)" stroke="rgba(52,211,153,0.3)" stroke-width="1"/>
                 <line x1="110" y1="52" x2="110" y2="74" stroke="rgba(52,211,153,0.15)" stroke-width="1"/>
-                <!-- Fast scan line -->
                 <rect x="75" y="60" width="70" height="3" rx="2" fill="#34d399" filter="url(#glow-emerald)" opacity="0.6"><animate attributeName="y" values="55;72;55" dur="1.5s" repeatCount="indefinite"/></rect>
-                <!-- Scan blink -->
                 <rect x="75" y="56" width="70" height="14" rx="6" fill="#34d399" opacity="0"><animate attributeName="opacity" values="0;0.15;0" dur="3s" repeatCount="indefinite"/></rect>
-                <!-- Dual antenna -->
                 <line x1="90" y1="35" x2="85" y2="16" stroke="#34d399" stroke-width="1.5" opacity="0.5"/>
                 <line x1="130" y1="35" x2="135" y2="16" stroke="#34d399" stroke-width="1.5" opacity="0.5"/>
                 <circle cx="85" cy="14" r="3" fill="#34d399" filter="url(#glow-emerald)"><animate attributeName="r" values="3;4.5;3" dur="1.8s" repeatCount="indefinite"/></circle>
                 <circle cx="135" cy="14" r="3" fill="#34d399" filter="url(#glow-emerald)"><animate attributeName="r" values="3;4.5;3" dur="1.8s" repeatCount="indefinite" begin="0.9s"/></circle>
-                <!-- Left arm: receiving data from brain -->
-                <g>
-                    <animateTransform attributeName="transform" type="rotate" values="-15,30,120;15,30,120;-15,30,120" dur="2.5s" repeatCount="indefinite"/>
+                <g><animateTransform attributeName="transform" type="rotate" values="-15,30,120;15,30,120;-15,30,120" dur="2.5s" repeatCount="indefinite"/>
                     <rect x="15" y="120" width="25" height="12" rx="6" fill="#0f172a" stroke="#34d399" stroke-width="1" opacity="0.8"/>
                     <path d="M -5,115 Q -15,126 -5,137" stroke="#34d399" stroke-width="1.5" fill="none" opacity="0.7"/>
                     <circle cx="-5" cy="126" r="3" fill="#34d399" filter="url(#glow-emerald)" opacity="0.4"><animate attributeName="opacity" values="0.4;0.9;0.4" dur="1.5s" repeatCount="indefinite"/></circle>
-                    <!-- Incoming data spark into receiver -->
                     <circle cx="-12" cy="126" r="1.5" fill="#6ee7b7"><animateMotion dur="2s" repeatCount="indefinite" path="M -20,126 L -5,126"/><animate attributeName="opacity" values="1;0" dur="2s" repeatCount="indefinite"/></circle>
                     <circle cx="-12" cy="122" r="1" fill="#34d399"><animateMotion dur="2.5s" repeatCount="indefinite" begin="1s" path="M -22,122 L -5,126"/><animate attributeName="opacity" values="1;0" dur="2.5s" repeatCount="indefinite" begin="1s"/></circle>
                 </g>
-                <!-- Right arm: processing/closing -->
-                <g>
-                    <animateTransform attributeName="transform" type="rotate" values="15,180,140;-15,180,140;15,180,140" dur="3.5s" repeatCount="indefinite"/>
+                <g><animateTransform attributeName="transform" type="rotate" values="15,180,140;-15,180,140;15,180,140" dur="3.5s" repeatCount="indefinite"/>
                     <rect x="185" y="130" width="22" height="12" rx="6" fill="#0f172a" stroke="#34d399" stroke-width="1" opacity="0.8"/>
                     <circle cx="210" cy="136" r="7" fill="rgba(52,211,153,0.08)" stroke="#34d399" stroke-width="1"/>
-                    <!-- Processing blink -->
                     <circle cx="210" cy="136" r="3" fill="#34d399" opacity="0"><animate attributeName="opacity" values="0;0.6;0" dur="1.5s" repeatCount="indefinite"/></circle>
                 </g>
                 <rect x="65" y="220" width="20" height="40" rx="6" fill="#0f172a" stroke="rgba(52,211,153,0.3)" stroke-width="1"/>
@@ -476,18 +374,15 @@
                 <text x="110" y="298" text-anchor="middle" fill="#64748b" font-size="8" letter-spacing="0.5">RETRIEVING · READ</text>
             </g></g>
 
-            <!-- ── MEMORY CORE (rotating neural network, pulse rings) ── -->
             <g><animateTransform attributeName="transform" type="translate" values="0,0; 0,-6; 0,0; 0,6; 0,0" dur="5s" repeatCount="indefinite"/>
             <g transform="translate(550, 300)">
                 <ellipse cx="0" cy="0" rx="100" ry="90" fill="url(#brain-grad)" filter="url(#glow-violet)">
                     <animate attributeName="rx" values="100;115;100" dur="4s" repeatCount="indefinite"/>
                     <animate attributeName="ry" values="90;105;90" dur="4s" repeatCount="indefinite"/>
                 </ellipse>
-                <!-- Pulse rings expanding outward -->
                 <ellipse cx="0" cy="0" rx="55" ry="45" fill="none" stroke="#a78bfa" stroke-width="1" opacity="0"><animate attributeName="rx" values="75;120" dur="3s" repeatCount="indefinite"/><animate attributeName="ry" values="65;110" dur="3s" repeatCount="indefinite"/><animate attributeName="opacity" values="0.5;0" dur="3s" repeatCount="indefinite"/></ellipse>
                 <ellipse cx="0" cy="0" rx="55" ry="45" fill="none" stroke="#c4b5fd" stroke-width="0.8" opacity="0"><animate attributeName="rx" values="75;120" dur="3s" repeatCount="indefinite" begin="1.5s"/><animate attributeName="ry" values="65;110" dur="3s" repeatCount="indefinite" begin="1.5s"/><animate attributeName="opacity" values="0.3;0" dur="3s" repeatCount="indefinite" begin="1.5s"/></ellipse>
                 <ellipse cx="0" cy="0" rx="75" ry="65" fill="#0f172a" stroke="#a78bfa" stroke-width="1.5" filter="url(#brain-noise)"/>
-                <!-- Rotating neural network -->
                 <g opacity="0.4">
                     <animateTransform attributeName="transform" type="rotate" from="0" to="360" dur="20s" repeatCount="indefinite"/>
                     <line x1="-30" y1="-20" x2="20" y2="-30" stroke="#a78bfa" stroke-width="0.5"/>
@@ -500,7 +395,6 @@
                     <line x1="-15" y1="-15" x2="30" y2="15" stroke="#a78bfa" stroke-width="0.5"/>
                     <line x1="30" y1="15" x2="0" y2="35" stroke="#a78bfa" stroke-width="0.5"/>
                 </g>
-                <!-- Neural nodes pulsing -->
                 <circle cx="-30" cy="-20" r="5" fill="#a78bfa" filter="url(#glow-violet)"><animate attributeName="r" values="5;7;5" dur="3s" repeatCount="indefinite"/></circle>
                 <circle cx="20" cy="-30" r="4" fill="#c4b5fd"><animate attributeName="r" values="4;6;4" dur="2.5s" repeatCount="indefinite" begin="0.5s"/></circle>
                 <circle cx="40" cy="0" r="5" fill="#a78bfa" filter="url(#glow-violet)"><animate attributeName="r" values="5;7;5" dur="3.5s" repeatCount="indefinite" begin="1s"/></circle>
@@ -511,7 +405,6 @@
                 <text x="0" y="70" text-anchor="middle" fill="#7c3aed" font-size="7" letter-spacing="1">CROSS-SESSION · PERSISTENT</text>
             </g></g>
 
-            <!-- ── ANIMATED DATA PARTICLES ── -->
             <g><circle r="4" fill="#22d3ee" filter="url(#particle-glow)"><animateMotion dur="3s" repeatCount="indefinite" path="M 290,270 C 300,230 360,180 420,200 C 450,210 470,240 490,260 C 510,280 530,290 550,300"/></circle>
             <circle r="2.5" fill="#67e8f9" opacity="0.6"><animateMotion dur="3s" repeatCount="indefinite" begin="0.5s" path="M 290,300 C 300,330 360,380 420,360 C 450,350 470,320 490,300 C 510,280 530,290 550,300"/></circle>
             <circle r="3" fill="#22d3ee" filter="url(#particle-glow)"><animateMotion dur="3.5s" repeatCount="indefinite" begin="1s" path="M 290,240 C 310,190 380,160 430,190 C 460,210 480,250 500,270 C 520,290 540,295 550,300"/></circle></g>
@@ -521,12 +414,10 @@
             <g><circle r="3" fill="#a78bfa" filter="url(#particle-glow)"><animateMotion dur="4s" repeatCount="indefinite" begin="0s" path="M 810,250 C 780,220 730,200 680,220 C 640,235 600,260 570,280 C 555,290 555,300 550,300"/></circle>
             <circle r="2" fill="#c4b5fd" opacity="0.5"><animateMotion dur="4s" repeatCount="indefinite" begin="2s" path="M 810,230 C 770,200 710,180 660,210 C 620,230 590,260 570,280 C 560,290 555,295 550,300"/></circle></g>
 
-            <!-- ── CONNECTION ARROWS ── -->
             <path d="M 280,240 C 320,220 370,210 420,230 C 450,240 480,260 505,280" stroke="#22d3ee" stroke-width="2" fill="none" stroke-dasharray="6,4" marker-end="url(#arrow-cyan)" opacity="0.8"><animate attributeName="opacity" values="0.8;0.4;0.8" dur="2s" repeatCount="indefinite"/></path>
             <path d="M 610,340 C 640,360 670,350 700,330 C 730,310 760,300 790,295" stroke="#34d399" stroke-width="2" fill="none" stroke-dasharray="6,4" marker-end="url(#arrow-emerald)" opacity="0.8"><animate attributeName="opacity" values="0.8;0.4;0.8" dur="2s" repeatCount="indefinite" begin="1s"/></path>
             <path d="M 800,260 C 760,230 710,220 660,240 C 630,250 600,270 575,290" stroke="#a78bfa" stroke-width="1.5" fill="none" stroke-dasharray="4,4" marker-end="url(#arrow-violet)" opacity="0.5"><animate attributeName="opacity" values="0.5;0.2;0.5" dur="3s" repeatCount="indefinite" begin="0.5s"/></path>
 
-            <!-- Labels -->
             <rect x="335" y="195" width="60" height="22" rx="6" fill="rgba(15,23,42,0.85)" stroke="rgba(34,211,238,0.3)" stroke-width="1"/>
             <text x="365" y="210" text-anchor="middle" fill="#22d3ee" font-size="9" font-weight="700">STORE</text>
             <rect x="660" y="358" width="72" height="22" rx="6" fill="rgba(15,23,42,0.85)" stroke="rgba(52,211,153,0.3)" stroke-width="1"/>
@@ -534,7 +425,6 @@
             <rect x="676" y="206" width="82" height="22" rx="6" fill="rgba(15,23,42,0.85)" stroke="rgba(167,139,250,0.3)" stroke-width="1"/>
             <text x="717" y="221" text-anchor="middle" fill="#a78bfa" font-size="8" font-weight="600">SHARE</text>
 
-            <!-- ── ORCHESTRATOR ── -->
             <g><animateTransform attributeName="transform" type="translate" values="0,0; 0,-5; 0,0; 0,5; 0,0" dur="8s" repeatCount="indefinite"/>
             <g transform="translate(430, 510)" opacity="0.75">
                 <rect x="40" y="20" width="70" height="55" rx="10" fill="#0f172a" stroke="#fb923c" stroke-width="1.2"/>
@@ -545,7 +435,6 @@
                 <circle cx="85" cy="6" r="4" fill="#fb923c" filter="url(#glow-orange)"><animate attributeName="r" values="4;6;4" dur="1.5s" repeatCount="indefinite" begin="0.75s"/></circle>
                 <line x1="35" y1="35" x2="10" y2="10" stroke="#fb923c" stroke-width="1" opacity="0.5"/>
                 <line x1="115" y1="35" x2="140" y2="10" stroke="#fb923c" stroke-width="1" opacity="0.5"/>
-                <!-- Command pulse from orchestrator -->
                 <circle cx="10" cy="10" r="2" fill="#fb923c"><animate attributeName="r" values="2;6" dur="2s" repeatCount="indefinite"/><animate attributeName="opacity" values="0.8;0" dur="2s" repeatCount="indefinite"/></circle>
                 <circle cx="140" cy="10" r="2" fill="#fb923c"><animate attributeName="r" values="2;6" dur="2s" repeatCount="indefinite" begin="1s"/><animate attributeName="opacity" values="0.8;0" dur="2s" repeatCount="indefinite" begin="1s"/></circle>
                 <text x="75" y="104" text-anchor="middle" fill="#fb923c" font-size="8" font-weight="600" letter-spacing="0.5">ORCHESTRATOR</text>
@@ -651,10 +540,6 @@
         // ── Init ──────────────────────────────────────────────────
         document.addEventListener('DOMContentLoaded', async () => {
             await initAuth();
-            // Update active nav link
-            document.querySelectorAll('.nav-links a, .nav-mobile-panel a').forEach(a => {
-                if (a.getAttribute('href') === '/concept') a.classList.add('active');
-            });
         });
     </script>
 
