@@ -26,6 +26,7 @@ from .controllers import (
     auth0_controller,
     badge_controller,
     billing_controller,
+    concept_controller,
     export_controller,
     graph_controller,
     dashboard_controller,
@@ -307,6 +308,7 @@ def create_app() -> FastAPI:
     app.include_router(billing_controller.router)
     app.include_router(memory_controller.router)
     app.include_router(playground_controller.router)
+    app.include_router(concept_controller.router)
     app.include_router(pricing_controller.router)
     app.include_router(session_controller.router)
     app.include_router(graph_controller.router)
