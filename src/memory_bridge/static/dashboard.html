@@ -1619,14 +1619,19 @@
                     return false;
                 }
                 if (expMs - now < 300000) {
-                    const res = await fetch('/auth/refresh', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ token: jwt }),
-                    });
-                    if (res.ok) {
-                        const data = await res.json();
-                        if (data.token) localStorage.setItem('mb_jwt', data.token);
+                    try {
+                        const res = await fetch('/auth/refresh', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ token: jwt }),
+                        });
+                        if (res.ok) {
+                            const data = await res.json();
+                            if (data.token) localStorage.setItem('mb_jwt', data.token);
+                        }
+                    } catch (e) {
+                        // Network error during refresh — JWT is still valid, keep it
+                        console.warn('JWT refresh failed (transient), keeping current JWT:', e);
                     }
                 }
                 return true;
