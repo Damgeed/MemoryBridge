@@ -307,6 +307,33 @@ async def get_dashboard_data(
     except Exception:
         pass
 
+    # If no subscription found for the resolved org_id, try looking up by user email from JWT
+    if not sub:
+        try:
+            import jwt as pyjwt
+            from ..config import get_settings
+            settings = get_settings()
+            auth_header = request.headers.get("Authorization", "")
+            if auth_header.startswith("Bearer "):
+                token = auth_header[7:]
+                claims = pyjwt.decode(
+                    token,
+                    settings.jwt_secret,
+                    algorithms=[settings.jwt_algorithm or "HS256"],
+                    options={"verify_exp": False},
+                )
+                user_email = claims.get("email", "")
+                if user_email:
+                    user_record = await storage.get_user_by_email(user_email)
+                    if user_record and hasattr(user_record, 'organization_id') and user_record.organization_id:
+                        org_id = user_record.organization_id
+                        try:
+                            sub = await storage.get_subscription_by_org(org_id)
+                        except Exception:
+                            pass
+        except Exception:
+            pass
+
     # Get key count
     keys = await storage.list_api_keys()
     user_keys = [k for k in keys if k.get("project_id") == org_id or not k.get("project_id")]
