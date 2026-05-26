@@ -8,6 +8,7 @@
 <title>Memory Bridge — FAQ</title>
 <link rel="icon" href="/playground/logo.svg" type="image/svg+xml">
 <link rel="stylesheet" href="/playground/style.css">
+<script src="/playground/i18n.js"></script>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
   :root {
@@ -697,10 +698,8 @@ document.addEventListener('click', function(e) {
   }
 });
 function setLang(code) {
-  if (typeof applyLang === 'function') applyLang(code);
-  document.querySelectorAll('.lang-opt').forEach(el => el.classList.remove('active'));
-  document.querySelector(`.lang-opt[data-lang="${code}"]`)?.classList.add('active');
-  document.getElementById('lang-dropdown')?.classList.remove('open');
+  localStorage.setItem('mb-lang', code);
+  initLanguage();
 }
 
 // ── Auth ────────────────────────────────────────────────
@@ -778,6 +777,7 @@ function openAuth() {
 
 // ── Init ──────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
+    initLanguage();
     updateAuthUI();
 });
 </script>

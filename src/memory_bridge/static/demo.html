@@ -1020,6 +1020,11 @@ async function sleep(ms) {
 }
 
 document.addEventListener('DOMContentLoaded', runDemo);
+
+// ── Language init ────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', () => {
+    if (typeof initLanguage === 'function') initLanguage();
+});
 </script>
 
 <!-- Auth Modal -->
