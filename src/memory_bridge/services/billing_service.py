@@ -338,6 +338,22 @@ class BillingService:
                 existing.current_period_end = datetime.fromtimestamp(sub_data.get("current_period_end", 0), tz=timezone.utc) if sub_data.get("current_period_end") else None
                 existing.updated_at = datetime.now(timezone.utc)
                 await self.repo.store_subscription(existing)
+            else:
+                # No local record yet (webhook ordering) — create one
+                metadata = sub_data.get("metadata", {})
+                org_id = metadata.get("organization_id", "")
+                customer_id = sub_data.get("customer", "")
+                sub = Subscription(
+                    id=subscription_id,
+                    organization_id=org_id or f"stripe-{subscription_id[:8]}",
+                    stripe_customer_id=customer_id or "",
+                    tier=tier,
+                    status=status,
+                    current_period_start=datetime.fromtimestamp(sub_data.get("current_period_start", 0), tz=timezone.utc) if sub_data.get("current_period_start") else None,
+                    current_period_end=datetime.fromtimestamp(sub_data.get("current_period_end", 0), tz=timezone.utc) if sub_data.get("current_period_end") else None,
+                )
+                await self.repo.store_subscription(sub)
+                logger.info("Invoice paid: created new subscription record for sub=%s tier=%s", subscription_id, tier)
 
         logger.info(
             "Invoice paid: sub=%s, amount=%d, period updated",

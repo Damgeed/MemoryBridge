@@ -821,7 +821,7 @@ async def _check_stripe_fallback(user_email: str, org_id: str, storage):
             if pid == price_id:
                 resolved_tier = t
                 break
-        from ..models.subscription import Subscription
+        from ..models import Subscription
         from datetime import datetime, timezone
         sub_id = ""
         sub_status = "active"

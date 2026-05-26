@@ -38,6 +38,12 @@ async def stripe_webhook(
     result = await billing.handle_webhook(payload, signature)
 
     logger.info("Stripe webhook processed: %s", result)
+
+    # Return 4xx for rejected/error so Stripe knows not to retry
+    status = result.get("status", "")
+    if status in ("rejected", "error"):
+        raise HTTPException(status_code=400, detail=result.get("reason", status))
+
     return result
 
 
