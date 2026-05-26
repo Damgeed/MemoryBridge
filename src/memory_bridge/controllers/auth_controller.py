@@ -170,11 +170,17 @@ async def get_my_api_key_value(request: Request):
         logger.info("Auto-created API key for org=%s", org_id)
         return {"key": result["key"], "key_id": result["id"], "key_count": 1, "new": True}
 
-    # list_api_keys doesn't return plaintext, so create a fresh key to show once
-    # This is the only time the plaintext value is available
-    result = await storage.create_api_key(label="auto-key", project_id=org_id)
-    logger.info("Rotated API key for org=%s (was %d keys)", org_id, len(user_keys))
-    return {"key": result["key"], "key_id": result["id"], "key_count": len(user_keys) + 1, "new": True}
+    # Return the most recent active key — never create a duplicate
+    # list_api_keys returns hashes, not plaintext, which is by design.
+    # The user can see/manage full keys from the dashboard.
+    latest = user_keys[-1]
+    return {
+        "key": None,
+        "key_id": latest.get("id", ""),
+        "label": latest.get("label", ""),
+        "key_count": len(user_keys),
+        "hint": "View and manage your API keys in the dashboard.",
+    }
 
 
 @router.post("/oauth")

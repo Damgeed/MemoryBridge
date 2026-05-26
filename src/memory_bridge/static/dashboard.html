@@ -2310,8 +2310,14 @@
                             });
                             if (kvRes.ok) {
                                 const data = await kvRes.json();
-                                localStorage.setItem('mb_api_key', data.key);
-                                currentApiKey = data.key;
+                                if (data.key) {
+                                    localStorage.setItem('mb_api_key', data.key);
+                                    currentApiKey = data.key;
+                                } else {
+                                    // Key exists but plaintext isn't available — use key_id
+                                    localStorage.removeItem('mb_api_key');
+                                    currentApiKey = data.key_id || '';
+                                }
                             } else if (kvRes.status === 401) {
                                 // JWT genuinely expired — clear it
                                 localStorage.removeItem('mb_jwt');
@@ -2359,8 +2365,13 @@
                     });
                     if (kvRes.ok) {
                         const data = await kvRes.json();
-                        localStorage.setItem('mb_api_key', data.key);
-                        currentApiKey = data.key;
+                        if (data.key) {
+                            localStorage.setItem('mb_api_key', data.key);
+                            currentApiKey = data.key;
+                        } else {
+                            localStorage.removeItem('mb_api_key');
+                            currentApiKey = data.key_id || '';
+                        }
                     } else if (kvRes.status === 401) {
                         localStorage.removeItem('mb_jwt');
                     } else {

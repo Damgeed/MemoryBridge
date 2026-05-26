@@ -154,8 +154,26 @@ async def welcome_setup(
     except Exception as e:
         logger.error("Welcome: subscription storage failed for org=%s: %s", org_id, e)
 
-    # Create API key for this org
+    # Create API key for this org (only if they don't already have one)
     try:
+        existing_keys = await storage.list_api_keys()
+        org_keys = [k for k in existing_keys if k.get("project_id") == org_id and k.get("is_active") is not False]
+
+        if org_keys:
+            # Already has keys — don't create another, just return latest
+            latest = org_keys[-1]
+            return {
+                "welcome": True,
+                "has_keys": True,
+                "key": None,
+                "id": latest.get("id", ""),
+                "label": latest.get("label", ""),
+                "tier": actual_tier,
+                "organization_id": org_id,
+                "key_count": len(org_keys),
+                "hint": "You already have API keys. Manage them in the dashboard.",
+            }
+
         result = await storage.create_api_key(label=f"welcome-{actual_tier}", project_id=org_id)
         return {
             "welcome": True,
@@ -685,6 +703,26 @@ async def recover_api_key(
             status_code=404,
             detail="Found your account but no active subscription. Your plan may have expired.",
         )
+
+    # Check if org already has active keys before creating another
+    try:
+        existing_keys = await storage.list_api_keys()
+        org_active = [k for k in existing_keys if k.get("project_id") == org_id and k.get("is_active") is not False]
+        if org_active:
+            latest = org_active[-1]
+            logger.info("Recover: org=%s already has %d keys, returning latest", org_id, len(org_active))
+            return {
+                "recovered": True,
+                "key": None,
+                "id": latest.get("id", ""),
+                "label": latest.get("label", ""),
+                "tier": found_tier,
+                "organization_id": org_id,
+                "key_count": len(org_active),
+                "hint": "You already have active API keys. Manage them from the dashboard.",
+            }
+    except Exception:
+        pass
 
     # Create a new API key for this org
     result = await storage.create_api_key(label=f"recovered-{found_tier}", project_id=org_id)
