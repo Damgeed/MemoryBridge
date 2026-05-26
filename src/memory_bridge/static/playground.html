@@ -350,6 +350,7 @@
             <input id="api-key-input" type="password" placeholder="Paste your API key here…" data-i18n-placeholder="playground.api_key_pl" spellcheck="false">
             <div class="api-key-btns">
                 <button class="btn btn-secondary btn-sm" onclick="setApiKey()" data-i18n="playground.save">Save</button>
+                <button class="btn btn-secondary btn-sm" onclick="useDemoKey()" data-i18n="playground.demo_key_btn">Use Demo Key (5 req/min)</button>
             </div>
             <span class="key-status" id="api-key-status"></span>
         </div>
@@ -502,6 +503,7 @@
 
         // ── API Client ────────────────────────────────────────────
         const API_BASE = '';
+        const DEMO_API_KEY = 'mb_demo_public_test';
 
         function getApiKey() {
             const urlParams = new URLSearchParams(window.location.search);
@@ -511,7 +513,10 @@
                 document.getElementById('api-key-input').value = urlKey;
                 return urlKey;
             }
-            return localStorage.getItem('mb_api_key') || '';
+            const saved = localStorage.getItem('mb_api_key');
+            if (saved) return saved;
+            // Fall back to demo key (stored separately from real keys)
+            return localStorage.getItem('mb_demo_active') || '';
         }
 
         function setApiKey() {
@@ -526,6 +531,21 @@
                 document.getElementById('api-key-status').textContent = '🗑️ Cleared';
             }
         }
+
+        function useDemoKey() {
+            document.getElementById('api-key-input').value = DEMO_API_KEY;
+            localStorage.setItem('mb_demo_active', DEMO_API_KEY);
+            localStorage.removeItem('mb_api_key');
+            document.getElementById('api-key-status').textContent = '✅ Demo key loaded (5 req/min)';
+            document.getElementById('api-key-status').style.color = 'var(--green)';
+        }
+
+        // Auto-fill demo key for first-time visitors
+        (function initDemoKey() {
+            if (!localStorage.getItem('mb_api_key') && !localStorage.getItem('mb_demo_active')) {
+                useDemoKey();
+            }
+        })();
 
         async function api(method, path, body) {
             const opts = {
