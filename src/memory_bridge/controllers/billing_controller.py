@@ -98,6 +98,22 @@ async def create_checkout_auth(
     org_id = auth.get("project_id") or auth.get("key_id", "")
     if not org_id:
         raise HTTPException(status_code=401, detail="Could not resolve your account. Please sign in again.")
+
+    # Check if user already has this tier — no point buying the same thing
+    try:
+        from ..dependencies import get_storage
+        storage = await get_storage()
+        existing_sub = await storage.get_subscription_by_org(org_id)
+        if existing_sub and existing_sub.tier == tier and existing_sub.status == "active":
+            raise HTTPException(
+                status_code=409,
+                detail=f"You're already on the {tier.title()} plan. Visit your dashboard to manage your subscription.",
+            )
+    except HTTPException:
+        raise
+    except Exception:
+        pass
+
     url = await billing.create_checkout_session(
         organization_id=org_id,
         tier=tier,

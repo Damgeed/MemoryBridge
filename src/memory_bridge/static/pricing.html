@@ -434,7 +434,7 @@
     <!-- ═══ PRICING CARDS ═══ -->
     <div class="pricing-grid">
         <!-- Free Tier -->
-        <div class="pricing-card fade-up">
+        <div class="pricing-card fade-up" data-tier="free">
             <div class="tier-name" data-i18n="pricing.free_name">Free</div>
             <div class="price" data-i18n="pricing.free_price"><span class="currency">$</span>0<span class="period">/mo</span></div>
             <p class="price-note" data-i18n="pricing.free_note">Full API access — auto-cutoff at limit</p>
@@ -446,11 +446,11 @@
                 <li data-i18n="pricing.free_feat5"><span class="check">✓</span> 60 req/min rate limit</li>
                 <li data-i18n="pricing.free_feat6"><span class="check">✓</span> Community support</li>
             </ul>
-            <a href="/dashboard/" class="btn btn-secondary" data-i18n="pricing.free_btn">Get Started Free</a>
+            <a href="#" onclick="pricingCta('free')" class="btn btn-secondary pricing-cta" data-i18n="pricing.free_btn" data-tier="free">Get Started Free</a>
         </div>
 
         <!-- Starter Tier -->
-        <div class="pricing-card fade-up">
+        <div class="pricing-card fade-up" data-tier="starter">
             <div class="tier-name" data-i18n="pricing.starter_name">Starter</div>
             <div class="price" data-i18n="pricing.starter_price"><span class="currency">$</span>29<span class="period">/mo</span></div>
             <p class="price-note" data-i18n="pricing.starter_note">For small agent teams</p>
@@ -463,11 +463,11 @@
                 <li data-i18n="pricing.starter_feat6"><span class="check">✓</span> Email support</li>
                 <li data-i18n="pricing.starter_feat7"><span class="check">✓</span> Webhook access</li>
             </ul>
-            <a href="#" onclick="checkout('starter')" class="btn btn-primary" data-i18n="pricing.starter_btn">Subscribe</a>
+            <a href="#" onclick="pricingCta('starter')" class="btn btn-primary pricing-cta" data-i18n="pricing.starter_btn" data-tier="starter">Subscribe</a>
         </div>
 
         <!-- Pro Tier (Featured) -->
-        <div class="pricing-card featured fade-up">
+        <div class="pricing-card featured fade-up" data-tier="pro">
             <div class="popular-badge" data-i18n="pricing.pro_badge">Most Popular</div>
             <div class="tier-name" data-i18n="pricing.pro_name">Pro</div>
             <div class="price" data-i18n="pricing.pro_price"><span class="currency">$</span>99<span class="period">/mo</span></div>
@@ -482,7 +482,7 @@
                 <li data-i18n="pricing.pro_feat7"><span class="check">✓</span> Webhooks + HMAC signing</li>
                 <li data-i18n="pricing.pro_feat8"><span class="check">✓</span> Team management</li>
             </ul>
-            <a href="#" onclick="checkout('pro')" class="btn btn-primary" data-i18n="pricing.pro_btn">Subscribe</a>
+            <a href="#" onclick="pricingCta('pro')" class="btn btn-primary pricing-cta" data-i18n="pricing.pro_btn" data-tier="pro">Subscribe</a>
         </div>
     </div>
 
@@ -608,20 +608,67 @@
             document.body.style.overflow = '';
         }
 
-        // ── Checkout ─────────────────────────────────────────────
-        async function checkout(tier) {
+        // ── Pricing CTAs (auth-aware, tier-aware) ────────────────
+        let currentTier = null;  // 'free', 'starter', 'pro', or null if unknown
+
+        function getTierOrder(tier) {
+            const order = { 'free': 0, 'starter': 1, 'pro': 2, 'enterprise': 3 };
+            return order[tier] ?? -1;
+        }
+
+        async function fetchCurrentTier() {
             const jwt = localStorage.getItem('mb_jwt');
-            const key = localStorage.getItem('mb_api_key');
-            if (!jwt && !key) {
-                // Must be logged in to subscribe
+            if (!jwt) return null;
+            try {
+                const res = await fetch('/dashboard/data', {
+                    headers: { 'Authorization': 'Bearer ' + jwt, 'Content-Type': 'application/json' },
+                });
+                if (res.ok) {
+                    const data = await res.json();
+                    return data.tier || 'free';
+                }
+            } catch {}
+            return null;
+        }
+
+        async function pricingCta(tier) {
+            const jwt = localStorage.getItem('mb_jwt');
+            if (!jwt) {
+                // Not signed in — open auth modal with sign-up option
                 openAuth();
                 return;
             }
+
+            // Fetch current tier
+            const currentTier = await fetchCurrentTier();
+
+            if (currentTier === tier) {
+                // Already on this tier — show a helpful message
+                document.querySelector('.section-subtitle').textContent =
+                    `✅ You're already on the ${tier.charAt(0).toUpperCase() + tier.slice(1)} plan.`;
+                document.querySelector('.section-subtitle').style.color = 'var(--green)';
+                setTimeout(() => { document.querySelector('.section-subtitle').style.color = ''; }, 5000);
+                return;
+            }
+
+            if (currentTier && getTierOrder(tier) < getTierOrder(currentTier)) {
+                // Downgrade — confirm
+                if (!confirm(`Switch from ${currentTier.charAt(0).toUpperCase() + currentTier.slice(1)} to ${tier.charAt(0).toUpperCase() + tier.slice(1)}?`)) {
+                    return;
+                }
+            }
+
+            // Proceed with checkout
+            checkout(tier);
+        }
+
+        async function checkout(tier) {
+            const jwt = localStorage.getItem('mb_jwt');
             try {
                 const res = await fetch('/billing/checkout?tier=' + tier, {
                     method: 'POST',
                     headers: {
-                        'Authorization': 'Bearer ' + (jwt || key),
+                        'Authorization': 'Bearer ' + jwt,
                         'Content-Type': 'application/json',
                     },
                 });
@@ -642,6 +689,48 @@
                 }
             }
         }
+
+        // ── Init: update pricing cards based on auth/tier state ──
+        (async function initPricing() {
+            const jwt = localStorage.getItem('mb_jwt');
+            if (!jwt) {
+                // Not signed in — all CTAs open auth modal
+                document.querySelectorAll('.pricing-cta').forEach(btn => {
+                    btn.onclick = (e) => { e.preventDefault(); openAuth(); };
+                });
+                return;
+            }
+
+            // Signed in — fetch tier and update CTAs
+            const tier = await fetchCurrentTier();
+            if (!tier) return;
+
+            document.querySelectorAll('.pricing-card').forEach(card => {
+                const cardTier = card.dataset.tier;
+                const cta = card.querySelector('.pricing-cta');
+                if (!cta) return;
+
+                if (cardTier === tier) {
+                    // Current plan
+                    cta.textContent = '✓ Your Plan';
+                    cta.classList.remove('btn-primary');
+                    cta.classList.add('btn-secondary');
+                    cta.style.opacity = '0.7';
+                    cta.style.pointerEvents = 'none';
+                } else if (getTierOrder(cardTier) > getTierOrder(tier)) {
+                    // Higher tier — upgrade
+                    cta.textContent = 'Upgrade →';
+                    cta.classList.add('btn-primary');
+                    cta.onclick = () => pricingCta(cardTier);
+                } else {
+                    // Lower tier — downgrade
+                    cta.textContent = 'Downgrade';
+                    cta.classList.remove('btn-primary');
+                    cta.classList.add('btn-secondary');
+                    cta.onclick = () => pricingCta(cardTier);
+                }
+            });
+        })();
 
         // ── Language Selector (in i18n.js) ─────────────────────────
         (function initLang() {
@@ -670,7 +759,7 @@
         </button>
         <div class="auth-icon">🔑</div>
         <div class="auth-title">Memory Bridge</div>
-        <div class="auth-subtitle">Sign in to manage your API keys and account.</div>
+        <div class="auth-subtitle">Sign in or create an account to subscribe.</div>
 
         <!-- Step 1: Options (social + email) -->
         <div id="auth-options" class="auth-options">
