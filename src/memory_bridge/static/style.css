@@ -304,6 +304,21 @@ a:hover { color: var(--accent-light); text-decoration: none; }
 }
 .auth-btn svg { width: 15px; height: 15px; }
 
+/* ── User Identity Menu ───────────────────────────── */
+.user-menu {
+  display: inline-flex;
+  align-items: center;
+}
+.user-menu .auth-btn {
+  gap: 0.3rem;
+  padding: 0.3rem 0.55rem;
+  font-size: 0.82rem;
+}
+.user-menu .auth-btn:hover {
+  background: var(--btn-secondary-hover);
+  border-color: var(--border-strong);
+}
+
 /* ── Auth Modal ──────────────────────────────────── */
 .auth-overlay {
   position: fixed;

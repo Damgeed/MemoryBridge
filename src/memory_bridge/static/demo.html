@@ -787,26 +787,11 @@ document.addEventListener('DOMContentLoaded', runDemo);
     <div class="qa-card">
       <div class="q"><span class="q-icon">🗄️</span> Where does my data actually go?</div>
       <div class="a">
-        In production, to <strong>your PostgreSQL database</strong> on Railway (or your own server).<br><br>
+        In production, to your own <strong>PostgreSQL database</strong>.<br><br>
         Every memory is a row in a table you own. No vendor lock-in — self-host with SQLite, or scale up to PostgreSQL. Export, query, delete, audit: it's your data.
       </div>
     </div>
-    <div class="qa-card">
-      <div class="q"><span class="q-icon">🪪</span> How do I sign up? Do you store my password?</div>
-      <div class="a">
-        <strong>No passwords.</strong> Type your email → get a 6-digit code → enter it. That's it.<br><br>
-        Or sign in with <strong>Google</strong>, <strong>Apple</strong>, or <strong>Phone (SMS)</strong>. All authentication is handled by <strong>Auth0</strong> — we never see or store your password because there isn't one.<br><br>
-        Forgot your password? Doesn't exist. Every login sends a fresh code.
-      </div>
-    </div>
-    <div class="qa-card">
-      <div class="q"><span class="q-icon">🔐</span> Is my instance secure?</div>
-      <div class="a">
-        <strong>Yes.</strong> Authentication is delegated to <strong>Auth0</strong> (SOC 2 certified, used by Fortune 500 companies).<br><br>
-        API calls are authenticated via <strong>JWT</strong> or <strong>API keys</strong> with role-based access. Rate limiting per tier (Free: 60 req/min, Starter: 300, Pro: 600).<br><br>
-        Your database is <strong>yours alone</strong> — multi-tenancy via schema-per-tenant with Row-Level Security.
-      </div>
-    </div>
+
     <div class="qa-card">
       <div class="q"><span class="q-icon">🧩</span> How do I connect ChatGPT / Gemini / local models?</div>
       <div class="a">
@@ -1369,5 +1354,34 @@ document.addEventListener('DOMContentLoaded', runDemo);
             }
         });
     </script>
+
+    <!-- ═══ FAQ ═══ -->
+    <section class="section" id="faq" style="padding:1.5rem 1.2rem;max-width:900px;margin:0 auto;">
+        <h2 class="section-title fade-up" style="font-size:0.95rem;font-weight:600;letter-spacing:0.02em;text-transform:uppercase;color:var(--text-faint);margin-bottom:1.25rem;">Frequently asked questions</h2>
+        <div style="display:flex;flex-direction:column;gap:0.5rem;">
+            <details style="background:var(--card-bg);border:1px solid var(--border-primary);border-radius:var(--radius-md);padding:0.75rem 1rem;cursor:pointer;">
+                <summary style="font-size:0.9rem;font-weight:600;color:var(--text-primary);list-style:none;display:flex;align-items:center;gap:0.5rem;">
+                    <span style="font-size:1rem;">📋</span> How do I sign up? Do you store my password?
+                    <span style="margin-left:auto;font-size:0.75rem;color:var(--text-faint);">▸</span>
+                </summary>
+                <div style="margin-top:0.75rem;font-size:0.85rem;color:var(--text-muted);line-height:1.6;border-top:1px solid var(--border-subtle);padding-top:0.75rem;">
+                    <strong>No passwords.</strong> Type your email → get a 6-digit code → enter it. That's it.<br><br>
+                    Or sign in with <strong>Google</strong>, <strong>Apple</strong>, or <strong>Phone (SMS)</strong> — we never see or store your password because there isn't one.<br><br>
+                    Forgot your password? Doesn't exist. Every login sends a fresh code.
+                </div>
+            </details>
+            <details style="background:var(--card-bg);border:1px solid var(--border-primary);border-radius:var(--radius-md);padding:0.75rem 1rem;cursor:pointer;">
+                <summary style="font-size:0.9rem;font-weight:600;color:var(--text-primary);list-style:none;display:flex;align-items:center;gap:0.5rem;">
+                    <span style="font-size:1rem;">🔐</span> Is my instance secure?
+                    <span style="margin-left:auto;font-size:0.75rem;color:var(--text-faint);">▸</span>
+                </summary>
+                <div style="margin-top:0.75rem;font-size:0.85rem;color:var(--text-muted);line-height:1.6;border-top:1px solid var(--border-subtle);padding-top:0.75rem;">
+                    <strong>Yes.</strong> API calls are authenticated via <strong>JWT</strong> or <strong>API keys</strong> with role-based access. Rate limiting per tier protects against abuse.<br><br>
+                    Your database is <strong>yours alone</strong> — multi-tenancy via schema-per-tenant with Row-Level Security. No cross-tenant data leaks.
+                </div>
+            </details>
+        </div>
+    </section>
+
 </body>
 </html>

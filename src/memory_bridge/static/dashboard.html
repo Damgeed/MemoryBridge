@@ -443,10 +443,18 @@
                     <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
                 </svg>
             </button>
-            <button class="auth-btn" id="auth-nav-btn" onclick="openAuth()" title="Sign in / Sign up">
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-                <span id="auth-btn-label">Sign in</span>
-            </button>
+            <div class="auth-btn-container" id="auth-btn-container">
+                <button class="auth-btn" id="auth-nav-btn" onclick="openAuth()" title="Sign in / Sign up">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                    <span id="auth-btn-label">Sign in</span>
+                </button>
+                <div class="user-menu" id="user-menu" style="display:none;">
+                    <button class="auth-btn" id="user-btn" onclick="logout()" title="Sign out">
+                        <span id="user-email-display" style="font-size:0.8rem;font-weight:500;max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"></span>
+                        <span style="opacity:0.6;font-size:0.72rem;">· Sign out</span>
+                    </button>
+                </div>
+            </div>
             <a href="/playground/" class="nav-cta">
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                     <polygon points="5 3 19 12 5 21 5 3"/>
@@ -495,7 +503,7 @@
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
             Dashboard
         </a>
-        <a href="javascript:void(0)" id="auth-mobile-btn" onclick="closeMobileNav();openAuth()" style="display:flex;align-items:center;gap:0.45rem;padding:0.7rem 1.25rem;border-radius:var(--radius-sm);font-size:0.88rem;font-weight:600;color:var(--accent);text-decoration:none;">
+        <a href="javascript:void(0)" id="auth-mobile-btn" class="auth-mobile-btn" onclick="closeMobileNav();openAuth()" style="display:flex;align-items:center;gap:0.45rem;padding:0.7rem 1.25rem;border-radius:var(--radius-sm);font-size:0.88rem;font-weight:600;color:var(--accent);text-decoration:none;">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
             <span id="auth-mobile-label">Sign in</span>
         </a>
@@ -514,6 +522,20 @@
         </div>
         <p class="dash-subtitle" id="dash-status" data-i18n="dash.loading">Loading your dashboard...</p>
 
+        <!-- Signed Out Gate -->
+        <div id="dash-auth-gate" class="dash-card" style="display:none;text-align:center;padding:3rem 2rem;">
+            <div style="font-size:3rem;margin-bottom:1rem;">🔑</div>
+            <h2 style="font-size:1.2rem;font-weight:700;margin-bottom:0.5rem;">Sign in to manage your account</h2>
+            <p style="color:var(--text-muted);font-size:0.9rem;margin-bottom:1.5rem;max-width:380px;margin-left:auto;margin-right:auto;">
+                Sign in with your email, Google, or Apple to manage API keys, view your subscription, and configure Memory Bridge.
+            </p>
+            <button class="btn btn-primary" onclick="openAuth()" style="font-size:0.95rem;padding:0.6rem 1.5rem;">Sign In →</button>
+            <div style="margin-top:1rem;font-size:0.82rem;color:var(--text-faint);">
+                New here? <a href="javascript:void(0)" onclick="openAuth()" style="color:var(--accent);text-decoration:underline;">Create an account</a> — no password needed.
+            </div>
+        </div>
+
+        <!-- Authenticated Content -->
         <!-- Auth Modal -->
         <div class="auth-overlay" id="auth-overlay">
           <div class="auth-modal">
@@ -791,9 +813,10 @@
                 Didn't get it? <a onclick="resendCode()">Send new code</a>
               </div>
             </div>
-          </div>
-        </div>
+          </div>  <!-- /auth-modal -->
+        </div>  <!-- /auth-overlay -->
 
+        <div id="dash-authenticated-inner" style="display:none;">
         <div class="dash-grid">
             <!-- Subscription Card -->
             <div class="dash-card" id="sub-card">
@@ -855,8 +878,10 @@
                     <span class="term-line" style="padding-left:1.5rem;">-d '{"session_id":"my-session","agent_id":"henry","key":"hello","value":"Hello Memory Bridge!"}'</span>
                 </div>
             </div>
-        </div>
-    </div>
+        </div>  <!-- /setup-card -->
+        </div>  <!-- /dash-grid -->
+    </div>  <!-- /dash-authenticated-inner -->
+</div>  <!-- /dash-container -->
 
     <footer class="footer">© 2026 Memory Bridge — API for cross-agent memory</footer>
 
@@ -1149,22 +1174,43 @@
         let pendingPhone = '';
         let pendingMethod = 'email'; // 'email' or 'phone'
 
+        function decodeJWT(token) {
+            try {
+                const payload = token.split('.')[1];
+                return JSON.parse(atob(payload.replace(/-/g, '+').replace(/_/g, '/')));
+            } catch { return null; }
+        }
+
         function updateAuthUI() {
             const jwt = localStorage.getItem('mb_jwt');
             const key = localStorage.getItem('mb_api_key');
-            const btn = document.querySelector('.auth-btn');
-            const label = btn ? btn.querySelector('span') : document.getElementById('auth-btn-label');
+            const signInBtn = document.getElementById('auth-nav-btn');
+            const userMenu = document.getElementById('user-menu');
             const mobileLabel = document.getElementById('auth-mobile-label');
-            if (jwt && key && label) {
-                label.textContent = 'Sign out';
+            const userEmailSpan = document.getElementById('user-email-display');
+
+            if (jwt && userMenu && signInBtn) {
+                // Signed in — show user email/name and sign out
+                signInBtn.style.display = 'none';
+                userMenu.style.display = 'inline-flex';
+
+                const claims = decodeJWT(jwt);
+                const displayName = claims?.email || claims?.name || claims?.sub || '';
+                if (userEmailSpan) userEmailSpan.textContent = displayName;
+
                 if (mobileLabel) mobileLabel.textContent = 'Sign out';
-                btn.onclick = logout;
-                btn.title = 'Sign out';
-            } else if (label) {
-                label.textContent = 'Sign in';
+                if (mobileLabel) {
+                    const mobileBtn = document.getElementById('auth-mobile-btn');
+                    if (mobileBtn) mobileBtn.onclick = function() { closeMobileNav(); logout(); };
+                }
+            } else if (userMenu && signInBtn) {
+                signInBtn.style.display = 'inline-flex';
+                userMenu.style.display = 'none';
                 if (mobileLabel) mobileLabel.textContent = 'Sign in';
-                btn.onclick = openAuth;
-                btn.title = 'Sign in / Sign up';
+                if (mobileLabel) {
+                    const mobileBtn = document.getElementById('auth-mobile-btn');
+                    if (mobileBtn) mobileBtn.onclick = function() { closeMobileNav(); openAuth(); };
+                }
             }
         }
 
@@ -1173,10 +1219,8 @@
             localStorage.removeItem('mb_api_key');
             currentApiKey = '';
             updateAuthUI();
-            document.getElementById('dash-status').textContent = '👋 Signed out. Sign in again to continue.';
-            document.getElementById('sub-content').innerHTML = `<div style="color:var(--text-muted);font-size:0.85rem;">${__('dash.sub_none')}</div>`;
-            document.getElementById('keys-list').innerHTML =
-                '<div class="empty-keys"><div class="icon">🔑</div><div>' + __('dash.keys_no_permission') + '</div></div>';
+            showAuthenticatedContent(false);
+            document.getElementById('dash-status').textContent = '👋 Signed out.';
             showToast('👋 Signed out');
         }
 
@@ -1297,6 +1341,12 @@
         }
 
         async function generateKey() {
+            const jwt = localStorage.getItem('mb_jwt');
+            if (!jwt) {
+                openAuth();
+                return;
+            }
+
             const btn = document.querySelector('#keys-card .btn-primary');
             const original = btn.innerHTML;
             btn.innerHTML = '<span class="spinner-sm"></span> Generating...';
@@ -1643,12 +1693,21 @@
             return div.innerHTML;
         }
 
+        function showAuthenticatedContent(show) {
+            const gate = document.getElementById('dash-auth-gate');
+            const inner = document.getElementById('dash-authenticated-inner');
+            if (gate) gate.style.display = show ? 'none' : 'block';
+            if (inner) inner.style.display = show ? 'block' : 'none';
+            const status = document.getElementById('dash-status');
+            if (status) status.style.display = show ? 'block' : 'none';
+        }
+
         // ── Init ──────────────────────────────────────────────────
         document.addEventListener('DOMContentLoaded', () => {
             currentApiKey = localStorage.getItem('mb_api_key') || '';
             let jwt = localStorage.getItem('mb_jwt');
 
-            // Check URL params for JWT from Auth0 callback redirect
+            // Check URL params for JWT from OAuth callback redirect
             const params = new URLSearchParams(window.location.search);
             const paramJwt = params.get('jwt');
             const paramOrg = params.get('org_id');
@@ -1670,36 +1729,46 @@
             }
 
             // Check JWT first — auto-login and fetch API key
-            if (jwt && !currentApiKey) {
-                (async () => {
-                    try {
-                        const kvRes = await fetch('/auth/my-key-value', {
-                            headers: {'Authorization': 'Bearer ' + jwt, 'Content-Type': 'application/json'},
-                        });
-                        if (kvRes.ok) {
-                            const data = await kvRes.json();
-                            localStorage.setItem('mb_api_key', data.key);
-                            currentApiKey = data.key;
+            if (jwt) {
+                showAuthenticatedContent(true);
+                if (!currentApiKey) {
+                    (async () => {
+                        try {
+                            const kvRes = await fetch('/auth/my-key-value', {
+                                headers: {'Authorization': 'Bearer ' + jwt, 'Content-Type': 'application/json'},
+                            });
+                            if (kvRes.ok) {
+                                const data = await kvRes.json();
+                                localStorage.setItem('mb_api_key', data.key);
+                                currentApiKey = data.key;
+                            } else if (kvRes.status === 401) {
+                                // JWT genuinely expired — clear it
+                                localStorage.removeItem('mb_jwt');
+                            }
+                        } catch (e) {
+                            // Network error — keep JWT, don't nuke auth
+                            console.warn('Failed to fetch API key, keeping JWT:', e);
                         }
-                    } catch (e) {
-                        // JWT expired or invalid — ignore
-                        localStorage.removeItem('mb_jwt');
-                    }
+                        updateAuthUI();
+                        if (currentApiKey) {
+                            reloadDashboard();
+                        } else {
+                            // Signed in via JWT but no API key — show dashboard anyway
+                            document.getElementById('dash-status').textContent = '✅ Signed in';
+                            reloadDashboard();
+                        }
+                    })();
+                } else {
                     updateAuthUI();
-                    if (currentApiKey) {
-                        reloadDashboard();
-                    } else {
-                        openAuth();
-                    }
-                })();
-            } else if (jwt && currentApiKey) {
-                updateAuthUI();
-                reloadDashboard();
+                    reloadDashboard();
+                }
             } else if (currentApiKey) {
+                showAuthenticatedContent(true);
                 updateAuthUI();
                 reloadDashboard();
             } else {
-                openAuth();
+                showAuthenticatedContent(false);
+                updateAuthUI();
             }
         });
 
