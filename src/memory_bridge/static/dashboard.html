@@ -2270,6 +2270,28 @@
             const statusEl = document.getElementById('dash-status');
             statusEl.textContent = '✅ Payment confirmed! Setting up your account...';
 
+            // Bootstrap API key from JWT before polling — this is skipped by the early return in init
+            const jwt = localStorage.getItem('mb_jwt');
+            if (jwt && !currentApiKey) {
+                try {
+                    const kvRes = await fetch('/auth/my-key-value', {
+                        headers: {'Authorization': 'Bearer ' + jwt, 'Content-Type': 'application/json'},
+                    });
+                    if (kvRes.ok) {
+                        const data = await kvRes.json();
+                        localStorage.setItem('mb_api_key', data.key);
+                        currentApiKey = data.key;
+                    } else if (kvRes.status === 401) {
+                        localStorage.removeItem('mb_jwt');
+                    }
+                } catch (e) {
+                    console.warn('Failed to fetch API key during Stripe welcome:', e);
+                }
+            } else if (!jwt && !currentApiKey) {
+                statusEl.textContent = '🔑 Session expired. Please sign in again.';
+                return;
+            }
+
             // Show the authenticated content immediately so user sees the dashboard loading
             showAuthenticatedContent(true);
             updateAuthUI();
@@ -2290,12 +2312,27 @@
                         loadDashboard();
                         statusEl.textContent = `🎉 Welcome to the ${data.tier.charAt(0).toUpperCase() + data.tier.slice(1)} plan!`;
                         showToast(`🎉 Welcome to the ${data.tier.charAt(0).toUpperCase() + data.tier.slice(1)} plan!`);
+                    } else if (attempts === 15) {
+                        // After 30s, try to restore subscription as fallback
+                        statusEl.textContent = '⏳ Checking for existing subscription...';
+                        try {
+                            const restoreData = await api('POST', '/dashboard/restore-subscription');
+                            if (restoreData.restored && restoreData.tier !== 'free') {
+                                clearInterval(poll);
+                                loadDashboard();
+                                statusEl.textContent = `🎉 Welcome to the ${restoreData.tier.charAt(0).toUpperCase() + restoreData.tier.slice(1)} plan!`;
+                                showToast(`🎉 Subscription restored!`);
+                                return;
+                            }
+                        } catch { /* fall through, keep polling */ }
+                        statusEl.textContent = '✅ Payment confirmed! Setting up your account...';
                     } else if (attempts > 30) {
                         clearInterval(poll);
                         statusEl.textContent = '⏳ Your plan is being activated. It may take a moment.';
                         loadDashboard();
                     }
-                } catch {
+                } catch (e) {
+                    statusEl.textContent = '⚠️ ' + (e.message || 'Checking subscription...');
                     if (attempts > 30) {
                         clearInterval(poll);
                         statusEl.textContent = '⏳ Loading your dashboard...';
