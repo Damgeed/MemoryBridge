@@ -2284,8 +2284,9 @@
                 updateAuthUI();
                 reloadDashboard();
             } else {
-                // Not authenticated — redirect to pricing page where they can sign in
-                window.location.href = '/pricing';
+                // Not authenticated — show the sign-in gate on dashboard
+                showAuthenticatedContent(false);
+                openAuth();
             }
         });
 
