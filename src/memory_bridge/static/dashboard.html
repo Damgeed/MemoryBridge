@@ -2409,22 +2409,18 @@
             }
 
             // Priority: API key > JWT — API key never expires
-            if (currentApiKey) {
-                // Reject demo key — it should never authenticate the dashboard
-                if (currentApiKey === 'mb_demo_public_test') {
-                    showAuthenticatedContent(false);
-                    updateAuthUI();
-                    return;
-                }
+            if (currentApiKey && currentApiKey !== 'mb_demo_public_test') {
                 // Already have a durable key — skip JWT validation entirely
                 showAuthenticatedContent(true);
                 updateAuthUI();
                 reloadDashboard();
             } else if (jwt) {
-                // Validate and potentially refresh the JWT — initAuth handles this
-                // plus auto-fetching API key from the server
+                // Has JWT — either no API key, or the stored key is the demo key.
+                // The demo key shouldn't block access; getAuthHeaders() already
+                // strips it and falls back to JWT for API calls.
                 showAuthenticatedContent(true);
-                if (!currentApiKey) {
+                // If no real key yet (or only the demo key), try to fetch/generate one
+                if (!currentApiKey || currentApiKey === 'mb_demo_public_test') {
                     (async () => {
                         try {
                             const kvRes = await fetch('/auth/my-key-value', {

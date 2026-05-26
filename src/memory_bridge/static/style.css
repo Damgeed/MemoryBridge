@@ -1255,6 +1255,7 @@ select.input { cursor: pointer; }
   .container { padding: 0 0.75rem; }
   body { font-size: 0.95rem; }
   .auth-btn-container { display: inline-flex !important; }
+  .user-avatar-name { display: none !important; }
 }
 
 @media (max-width: 480px) {
