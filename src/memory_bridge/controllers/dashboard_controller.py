@@ -68,14 +68,14 @@ async def create_api_key(
     limits = TIER_LIMITS.get(tier, TIER_LIMITS["free"])
     max_keys = limits.get("max_api_keys", 5)
 
-    # Count ALL keys ever created for this org (including revoked)
+    # Count only ACTIVE keys (deleted/revoked keys don't count toward the limit)
     all_keys = await storage.list_api_keys()
-    org_keys_total = [k for k in all_keys if k.get("project_id") == org_id]
+    org_keys_total = [k for k in all_keys if k.get("project_id") == org_id and k.get("is_active") is not False]
     if len(org_keys_total) >= max_keys:
         if max_keys == 5:
-            detail = f"Free tier: max {max_keys} API keys total. This account has already generated {max_keys} keys. Upgrade to a paid plan for unlimited keys."
+            detail = f"Free tier: max {max_keys} active API keys. Delete an existing key first, or upgrade to a paid plan for unlimited keys."
         else:
-            detail = f"{tier.title()} tier: max {max_keys} API keys. You have reached the limit. Upgrade your plan for more keys."
+            detail = f"{tier.title()} tier: max {max_keys} active API keys. Delete an existing key first, or upgrade your plan for more keys."
         raise HTTPException(
             status_code=429,
             detail=detail,
