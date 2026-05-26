@@ -123,12 +123,44 @@ async def get_my_api_key_value(request: Request):
     if not auth:
         raise HTTPException(status_code=401, detail="Authentication required")
 
-    # Resolve org_id: prefer project_id, fall back to key_id
-    org_id = auth.get("project_id") or auth.get("key_id", "")
-    if not org_id or org_id in ("default", "demo", ""):
-        raise HTTPException(status_code=401, detail="Could not resolve your account. Please sign in again.")
-
     storage = await get_storage()
+
+    # Resolve org_id: prefer project_id from JWT/auth, fall back to looking up by email
+    org_id = auth.get("project_id", "")
+    if not org_id or org_id in ("default", "demo", ""):
+        # Try to get user's real org_id from the database using auth info
+        user_email = auth.get("user_email", "")
+        if not user_email:
+            # Try decoding the JWT from the Authorization header
+            try:
+                import jwt as pyjwt
+                from ..config import get_settings
+                settings = get_settings()
+                auth_header = request.headers.get("Authorization", "")
+                if auth_header.startswith("Bearer "):
+                    token = auth_header[7:]
+                    claims = pyjwt.decode(
+                        token, settings.jwt_secret,
+                        algorithms=[settings.jwt_algorithm or "HS256"],
+                        options={"verify_exp": False},
+                    )
+                    user_email = claims.get("email", "") or claims.get("sub", "")
+            except Exception:
+                pass
+        if user_email:
+            try:
+                user_record = await storage.get_user_by_email(user_email)
+                if user_record:
+                    org_id = user_record.get("organization_id", "") or org_id
+            except Exception:
+                pass
+
+    if not org_id or org_id in ("default", "demo", ""):
+        # Last resort: use key_id (may not match DB org_id, but better than nothing)
+        org_id = auth.get("key_id", "")
+        if not org_id or org_id in ("default", "demo", ""):
+            raise HTTPException(status_code=401, detail="Could not resolve your account. Please sign in again.")
+
     all_keys = await storage.list_api_keys()
     user_keys = [k for k in all_keys if k.get("project_id") == org_id and k.get("is_active") is not False]
 

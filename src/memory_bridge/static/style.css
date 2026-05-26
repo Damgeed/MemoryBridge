@@ -701,6 +701,94 @@ a:hover { color: var(--accent-light); text-decoration: none; }
   color: #fff;
   text-decoration: none;
 }
+/* Mobile User Card */
+.nav-mobile-panel #mobile-user-card {
+  padding: 0.5rem 0.75rem;
+  margin: 0 0.25rem;
+}
+.mobile-user-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.5rem 0;
+}
+.mobile-user-avatar {
+  position: relative;
+  width: 40px;
+  height: 40px;
+  flex-shrink: 0;
+}
+.mobile-user-circle {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--accent-gradient);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem;
+  font-weight: 700;
+  color: #fff;
+}
+.mobile-user-avatar .session-dot {
+  position: absolute;
+  bottom: -1px;
+  right: -1px;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  border: 2px solid var(--bg-primary);
+}
+.mobile-user-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  min-width: 0;
+}
+.mobile-user-email {
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.mobile-user-plan {
+  font-size: 0.78rem;
+  color: var(--text-faint);
+}
+.mobile-user-divider {
+  height: 1px;
+  background: var(--border-subtle);
+  margin: 0.4rem 0;
+}
+.mobile-user-action {
+  display: flex !important;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.65rem 0.5rem !important;
+  border-radius: var(--radius-sm);
+  font-size: 0.85rem !important;
+  color: var(--text-secondary) !important;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  text-decoration: none;
+}
+.mobile-user-action:hover {
+  background: var(--btn-secondary-hover);
+  color: var(--text-primary) !important;
+  text-decoration: none;
+}
+.mobile-user-action.sign-out {
+  color: var(--red) !important;
+  font-weight: 600;
+}
+.mobile-user-since {
+  display: block;
+  font-size: 0.72rem;
+  color: var(--text-faint);
+  padding: 0.25rem 0.5rem 0.5rem;
+}
 .nav-mobile-panel .nav-mobile-divider {
   height: 1px;
   background: var(--border-subtle);
