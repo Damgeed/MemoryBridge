@@ -2395,15 +2395,33 @@
                                                 </div>
                                             </div>`;
                                     }
+                                } else if (data.has_keys) {
+                                    // Keys exist but plaintext unavailable — generate a fresh key
+                                    // so the user always has a durable credential stored locally
+                                    try {
+                                        const genRes = await fetch('/dashboard/keys?label=auto', {
+                                            method: 'POST',
+                                            headers: {'Authorization': 'Bearer ' + jwt, 'Content-Type': 'application/json'},
+                                        });
+                                        if (genRes.ok) {
+                                            const genData = await genRes.json();
+                                            if (genData.key) {
+                                                localStorage.setItem('mb_api_key', genData.key);
+                                                currentApiKey = genData.key;
+                                            }
+                                        }
+                                    } catch (e) {
+                                        console.warn('Failed to generate fresh API key:', e);
+                                    }
+                                    // Fallback: keep existing stored key
+                                    if (!currentApiKey) {
+                                        currentApiKey = localStorage.getItem('mb_api_key') || '';
+                                    }
                                 } else {
-                                    // Keys exist but plaintext unavailable — keep existing key in localStorage
-                                    // The stored API key still works for auth even if we can't show it
                                     currentApiKey = localStorage.getItem('mb_api_key') || '';
                                 }
-                                // Store flag that user has keys (for cross-session persistence)
-                                if (data.has_keys) {
-                                    localStorage.setItem('mb_key_exists', '1');
-                                }
+                                // Store flag that user has keys
+                                localStorage.setItem('mb_key_exists', '1');
                             } else if (kvRes.status === 401) {
                                 // JWT genuinely expired — clear it
                                 localStorage.removeItem('mb_jwt');
@@ -2450,9 +2468,27 @@
                         if (data.key) {
                             localStorage.setItem('mb_api_key', data.key);
                             currentApiKey = data.key;
+                        } else if (data.has_keys) {
+                            // Keys exist but plaintext unavailable — generate a fresh key
+                            try {
+                                const genRes = await fetch('/dashboard/keys?label=auto', {
+                                    method: 'POST',
+                                    headers: {'Authorization': 'Bearer ' + jwt, 'Content-Type': 'application/json'},
+                                });
+                                if (genRes.ok) {
+                                    const genData = await genRes.json();
+                                    if (genData.key) {
+                                        localStorage.setItem('mb_api_key', genData.key);
+                                        currentApiKey = genData.key;
+                                    }
+                                }
+                            } catch (e) {
+                                console.warn('Failed to generate fresh API key during Stripe welcome:', e);
+                            }
+                            if (!currentApiKey) {
+                                currentApiKey = localStorage.getItem('mb_api_key') || '';
+                            }
                         } else {
-                            // Keys exist but plaintext unavailable — keep existing key in localStorage
-                            // The stored API key still works for auth even if we can't show it
                             currentApiKey = localStorage.getItem('mb_api_key') || '';
                         }
                     } else if (kvRes.status === 401) {

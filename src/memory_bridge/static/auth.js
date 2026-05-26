@@ -316,7 +316,27 @@
           }
           // Remember that the user has keys even if plaintext is hidden
           if (data.has_keys && !data.key) {
-            localStorage.setItem('mb_key_exists', '1');
+            // Generate a fresh key so the user always has a durable credential stored locally
+            try {
+              const genRes = await fetch('/dashboard/keys?label=auto', {
+                method: 'POST',
+                headers: { 'Authorization': 'Bearer ' + jwt, 'Content-Type': 'application/json' },
+              });
+              if (genRes.ok) {
+                const genData = await genRes.json();
+                if (genData.key) {
+                  setApiKey(genData.key);
+                  if (typeof window.currentApiKey !== 'undefined') window.currentApiKey = genData.key;
+                  key = genData.key;
+                }
+              }
+            } catch (e) {
+              console.warn('Failed to generate fresh API key:', e);
+            }
+            // Always set the flag as fallback
+            if (!key) {
+              localStorage.setItem('mb_key_exists', '1');
+            }
           }
         } else if (kvRes.status === 401) {
           clearJWT();
