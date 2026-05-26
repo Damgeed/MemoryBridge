@@ -1638,6 +1638,8 @@
                 let detail;
                 try { const err = await res.json(); detail = err.detail || err.message || res.statusText; }
                 catch { detail = res.statusText || `HTTP ${res.status}`; }
+                // Prefix with status code for debugging
+                const errMsg = `[${res.status}] ${detail}`;
                 // Translate server errors to human language
                 if (res.status === 401) {
                     // Check if we were using an API key — it might be stale/revoked
@@ -1653,7 +1655,7 @@
                             showAuthenticatedContent(false);
                         }
                         if (typeof updateAuthUI === 'function') updateAuthUI();
-                        throw new Error('Session expired. Sign in again to continue.');
+                        throw new Error(errMsg);
                     }
                     const dot = document.getElementById('session-dot');
                     const dotIsRed = dot && dot.classList.contains('red');
@@ -1692,14 +1694,14 @@
                         showAuthenticatedContent(false);
                     }
                     if (typeof updateAuthUI === 'function') updateAuthUI();
-                    throw new Error('Session expired. Sign in again to continue.');
+                    throw new Error(errMsg);
                 } else if (res.status === 429) {
                     // Backend returns a tier-aware message — use it directly if available
                     if (!detail || detail === 'Rate limit exceeded. Try again in 60 seconds.') {
                         detail = 'You have reached the Free limit of 5 API calls per minute. Upgrade for higher limits.';
                     }
                 }
-                throw new Error(detail);
+                throw new Error(errMsg);
             }
             return res.json();
             } catch (e) {

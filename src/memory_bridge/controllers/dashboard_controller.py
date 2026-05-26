@@ -292,7 +292,6 @@ async def restore_subscription(
         logger.warning("Restore subscription failed for org=%s: %s", org_id, e)
         return {"restored": False, "tier": "free", "reason": str(e)}
 
-
 @router.get("/data")
 async def get_dashboard_data(
     request: Request,
