@@ -2299,7 +2299,6 @@
                     localStorage.removeItem('mb_api_key');
                     currentApiKey = '';
                     showAuthenticatedContent(false);
-                    openAuth();
                     return;
                 }
                 showAuthenticatedContent(true);
@@ -2344,7 +2343,6 @@
             } else {
                 // Not authenticated — show the sign-in gate on dashboard
                 showAuthenticatedContent(false);
-                openAuth();
             }
         });
 
