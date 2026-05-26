@@ -1,14 +1,14 @@
-     1|<!DOCTYPE html>
-     2|<html lang="en" data-theme="dark">
-     3|<head>
-     4|    <meta charset="UTF-8">
-     5|    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-     6|    <meta name="theme-color" content="#0a0a0f" media="(prefers-color-scheme: dark)">
-     7|    <meta name="theme-color" content="#f8f9fc" media="(prefers-color-scheme: light)">
-     8|    <title>Memory Bridge — Agent Memory Concept</title>
-     9|    <link rel="icon" href="/playground/logo.png" type="image/png">
-    10|    <link rel="stylesheet" href="/playground/style.css">
-    11|    <style>
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#0a0a0f" media="(prefers-color-scheme: dark)">
+    <meta name="theme-color" content="#f8f9fc" media="(prefers-color-scheme: light)">
+    <title>Memory Bridge — Agent Memory Concept</title>
+    <link rel="icon" href="/playground/logo.png" type="image/png">
+    <link rel="stylesheet" href="/playground/style.css">
+    <style>
 @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700;800&display=swap');
 body { background: #020617; overflow: hidden; height: 100vh; }
 .concept-visual {
@@ -40,219 +40,219 @@ svg.concept-svg { position:absolute; inset:0; width:100%; height:100%; display:b
     100%{transform:translateY(-120px) scale(0);opacity:0}
 }
 
-    12|        /* ── Hero ───────────────────────────────────────────── */
-    13|        @media (max-width: 768px) {
-   290|            .hero-section { flex-direction: column; padding: 1.5rem 1rem 1.5rem; min-height: auto; gap: 1.5rem; }
-   291|            .hero-content { text-align: center; }
-   292|            .hero-section h1 { font-size: 1.8rem; }
-   293|            .hero-cta { flex-direction: row; flex-wrap: wrap; justify-content: center; }
-   294|            .hero-visual { width: 100%; }
-   295|            .hero-stats { gap: 1rem; justify-content: center; }
-   296|            .hero-stat .num { font-size: 1.3rem; }
-   297|            .steps-grid { grid-template-columns: 1fr; }
-   298|            .qa-grid { grid-template-columns: 1fr; }
-   299|            .section { padding: 1.5rem 1rem; }
-   300|            .section-title { font-size: 1.3rem; }
-   301|            .bubble { padding: 0.8rem 1rem; }
-   302|            .bubble .bubble-text { font-size: 0.82rem; }
-   303|            .auth-btn-container { display: inline-flex !important; }
-   304|            .nav-cta { display: none !important; }
-   305|        }
-   306|
-   307|        @media (max-width: 480px) {
-   308|            .hero-section { padding: 1rem 0.75rem; gap: 1.25rem; }
-   309|            .hero-content { text-align: center; }
-   310|            .hero-section h1 { font-size: 1.5rem; }
-   311|            .hero-tagline { font-size: 0.95rem; }
-   312|            .hero-cta { flex-direction: row; flex-wrap: wrap; justify-content: center; }
-   313|            .hero-cta .btn-primary { padding: 0.5rem 1rem; font-size: 0.82rem; }
-   314|            .hero-cta .btn-ghost-accent { padding: 0.5rem 1rem; font-size: 0.82rem; }
-   315|            .hero-stats { flex-wrap: wrap; gap: 0.75rem; justify-content: center; }
-   316|            .hero-stat .num { font-size: 1.1rem; }
-   317|            .hero-stat .label { font-size: 0.7rem; }
-   318|            .section-title { font-size: 1.15rem; }
-   319|            .section-subtitle { font-size: 0.85rem; }
-   320|            .step-card { padding: 1.25rem 1rem; }
-   321|            .qa-card { padding: 1.1rem; }
-   322|            .qa-card .q { font-size: 0.88rem; }
-   323|            .qa-card .a { font-size: 0.82rem; }
-   324|            .bubble:nth-child(2) { margin-left: 0.75rem !important; }
-   325|            .cta-row { flex-direction: column; align-items: stretch; }
-   326|            .cta-row .btn { width: 100%; justify-content: center; }
-   327|            .model-card { padding: 1rem; overflow-x: auto; }
-   328|            .model-table { font-size: 0.75rem; }
-   329|            .model-table th,
-   330|            .model-table td { padding: 0.4rem 0.5rem; }
-   331|        }
-   332|
-   333|        /* ── User Avatar + Dropdown ─────────────────────── */
-   334|        .user-avatar-btn {
-   335|            display: inline-flex;
-   336|            align-items: center;
-   337|            gap: 0.5rem;
-   338|            padding: 0.25rem 0.5rem 0.25rem 0.25rem;
-   339|            border-radius: var(--radius-full);
-   340|            border: 1px solid var(--border-primary);
-   341|            background: transparent;
-   342|            cursor: pointer;
-   343|            transition: all var(--transition-fast);
-   344|            font-family: var(--font-sans);
-   345|            color: var(--text-primary);
-   346|        }
-   347|        .user-avatar-btn:hover {
-   348|            border-color: var(--accent);
-   349|            background: var(--accent-glow);
-   350|        }
-   351|        .user-avatar-circle {
-   352|            width: 28px;
-   353|            height: 28px;
-   354|            border-radius: 50%;
-   355|            background: var(--accent-gradient);
-   356|            color: #fff;
-   357|            display: flex;
-   358|            align-items: center;
-   359|            justify-content: center;
-   360|            font-size: 0.75rem;
-   361|            font-weight: 700;
-   362|            flex-shrink: 0;
-   363|            overflow: hidden;
-   364|        }
-   365|        .user-avatar-name {
-   366|            font-size: 0.82rem;
-   367|            font-weight: 600;
-   368|            max-width: 110px;
-   369|            overflow: hidden;
-   370|            text-overflow: ellipsis;
-   371|            white-space: nowrap;
-   372|        }
-   373|        .user-chevron {
-   374|            color: var(--text-faint);
-   375|            transition: transform 0.2s;
-   376|        }
-   377|        .user-menu.open .user-chevron {
-   378|            transform: rotate(180deg);
-   379|        }
-   380|        .user-menu {
-   381|            position: relative;
-   382|            display: inline-flex;
-   383|        }
-   384|        .user-dropdown {
-   385|            display: none;
-   386|            position: absolute;
-   387|            top: calc(100% + 6px);
-   388|            right: 0;
-   389|            min-width: 220px;
-   390|            background: var(--card-bg);
-   391|            border: 1px solid var(--border-primary);
-   392|            border-radius: var(--radius-md);
-   393|            box-shadow: var(--shadow-xl);
-   394|            z-index: 100;
-   395|            overflow: hidden;
-   396|            backdrop-filter: blur(16px);
-   397|            animation: drop-in 0.15s ease;
-   398|        }
-   399|        @keyframes drop-in {
-   400|            from { opacity: 0; transform: translateY(-6px); }
-   401|            to { opacity: 1; transform: translateY(0); }
-   402|        }
-   403|        .user-menu.open .user-dropdown { display: block; }
-   404|        .user-dropdown-header {
-   405|            padding: 0.75rem 1rem;
-   406|            display: flex;
-   407|            flex-direction: column;
-   408|            gap: 0.2rem;
-   409|        }
-   410|        .user-dropdown-email {
-   411|            font-size: 0.85rem;
-   412|            font-weight: 600;
-   413|            color: var(--text-primary);
-   414|            word-break: break-all;
-   415|        }
-   416|        .user-dropdown-plan {
-   417|            font-size: 0.72rem;
-   418|            color: var(--text-muted);
-   419|            font-weight: 500;
-   420|        }
-   421|        .user-dropdown-divider {
-   422|            height: 1px;
-   423|            background: var(--border-subtle);
-   424|            margin: 0;
-   425|        }
-   426|        .user-dropdown-item {
-   427|            display: flex;
-   428|            align-items: center;
-   429|            gap: 0.5rem;
-   430|            padding: 0.65rem 1rem;
-   431|            font-size: 0.85rem;
-   432|            color: var(--text-secondary);
-   433|            text-decoration: none;
-   434|            transition: background var(--transition-fast);
-   435|        }
-   436|        .user-dropdown-item svg {
-   437|            flex-shrink: 0;
-   438|            color: var(--text-muted);
-   439|        }
-   440|        .user-dropdown-item:hover {
-   441|            background: var(--btn-secondary-hover);
-   442|            color: var(--text-primary);
-   443|        }
-   444|        .user-dropdown-item:last-child:hover {
-   445|            color: var(--red);
-   446|        }
-   447|        .user-dropdown-item:last-child:hover svg {
-   448|            color: var(--red);
-   449|        }
-   450|
-   451|        /* ── Logout Confirm Modal ────────────────────────── */
-   452|        .logout-modal-overlay {
-   453|            display: none;
-   454|            position: fixed;
-   455|            inset: 0;
-   456|            background: rgba(0,0,0,0.6);
-   457|            z-index: 1001;
-   458|            backdrop-filter: blur(6px);
-   459|        }
-   460|        .logout-modal-overlay.open { display: block; }
-   461|        .logout-modal {
-   462|            display: none;
-   463|            position: fixed;
-   464|            top: 50%;
-   465|            left: 50%;
-   466|            transform: translate(-50%, -50%) scale(0.96);
-   467|            z-index: 1002;
-   468|            background: var(--card-bg);
-   469|            border: 1px solid var(--border-primary);
-   470|            border-radius: var(--radius-lg);
-   471|            padding: 2rem;
-   472|            min-width: 360px;
-   473|            max-width: 90vw;
-   474|            box-shadow: var(--shadow-xl);
-   475|            text-align: center;
-   476|            opacity: 0;
-   477|            transition: all 0.2s ease;
-   478|        }
-   479|        .logout-modal.open {
-   480|            display: block;
-   481|            opacity: 1;
-   482|            transform: translate(-50%, -50%) scale(1);
-   483|        }
-   484|        .logout-modal .logout-icon {
-   485|            width: 56px;
-   486|            height: 56px;
-   487|            border-radius: 50%;
-   488|            background: var(--red-bg, rgba(239,68,68,0.12));
-   489|            display: flex;
-   490|            align-items: center;
-   491|            justify-content: center;
-   492|            margin: 0 auto 1rem;
-   493|            font-size: 1.6rem;
-   494|        }
-   495|        .logout-modal .logout-title {
-   496|            font-size: 1.15rem;
-   497|            font-weight: 700;
-   498|            margin-bottom: 0.5rem;
-   499|            color: var(--text-primary);
-   500|        }
+        /* ── Hero ───────────────────────────────────────────── */
+        @media (max-width: 768px) {
+            .hero-section { flex-direction: column; padding: 1.5rem 1rem 1.5rem; min-height: auto; gap: 1.5rem; }
+            .hero-content { text-align: center; }
+            .hero-section h1 { font-size: 1.8rem; }
+            .hero-cta { flex-direction: row; flex-wrap: wrap; justify-content: center; }
+            .hero-visual { width: 100%; }
+            .hero-stats { gap: 1rem; justify-content: center; }
+            .hero-stat .num { font-size: 1.3rem; }
+            .steps-grid { grid-template-columns: 1fr; }
+            .qa-grid { grid-template-columns: 1fr; }
+            .section { padding: 1.5rem 1rem; }
+            .section-title { font-size: 1.3rem; }
+            .bubble { padding: 0.8rem 1rem; }
+            .bubble .bubble-text { font-size: 0.82rem; }
+            .auth-btn-container { display: inline-flex !important; }
+            .nav-cta { display: none !important; }
+        }
+
+        @media (max-width: 480px) {
+            .hero-section { padding: 1rem 0.75rem; gap: 1.25rem; }
+            .hero-content { text-align: center; }
+            .hero-section h1 { font-size: 1.5rem; }
+            .hero-tagline { font-size: 0.95rem; }
+            .hero-cta { flex-direction: row; flex-wrap: wrap; justify-content: center; }
+            .hero-cta .btn-primary { padding: 0.5rem 1rem; font-size: 0.82rem; }
+            .hero-cta .btn-ghost-accent { padding: 0.5rem 1rem; font-size: 0.82rem; }
+            .hero-stats { flex-wrap: wrap; gap: 0.75rem; justify-content: center; }
+            .hero-stat .num { font-size: 1.1rem; }
+            .hero-stat .label { font-size: 0.7rem; }
+            .section-title { font-size: 1.15rem; }
+            .section-subtitle { font-size: 0.85rem; }
+            .step-card { padding: 1.25rem 1rem; }
+            .qa-card { padding: 1.1rem; }
+            .qa-card .q { font-size: 0.88rem; }
+            .qa-card .a { font-size: 0.82rem; }
+            .bubble:nth-child(2) { margin-left: 0.75rem !important; }
+            .cta-row { flex-direction: column; align-items: stretch; }
+            .cta-row .btn { width: 100%; justify-content: center; }
+            .model-card { padding: 1rem; overflow-x: auto; }
+            .model-table { font-size: 0.75rem; }
+            .model-table th,
+            .model-table td { padding: 0.4rem 0.5rem; }
+        }
+
+        /* ── User Avatar + Dropdown ─────────────────────── */
+        .user-avatar-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.25rem 0.5rem 0.25rem 0.25rem;
+            border-radius: var(--radius-full);
+            border: 1px solid var(--border-primary);
+            background: transparent;
+            cursor: pointer;
+            transition: all var(--transition-fast);
+            font-family: var(--font-sans);
+            color: var(--text-primary);
+        }
+        .user-avatar-btn:hover {
+            border-color: var(--accent);
+            background: var(--accent-glow);
+        }
+        .user-avatar-circle {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            background: var(--accent-gradient);
+            color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.75rem;
+            font-weight: 700;
+            flex-shrink: 0;
+            overflow: hidden;
+        }
+        .user-avatar-name {
+            font-size: 0.82rem;
+            font-weight: 600;
+            max-width: 110px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .user-chevron {
+            color: var(--text-faint);
+            transition: transform 0.2s;
+        }
+        .user-menu.open .user-chevron {
+            transform: rotate(180deg);
+        }
+        .user-menu {
+            position: relative;
+            display: inline-flex;
+        }
+        .user-dropdown {
+            display: none;
+            position: absolute;
+            top: calc(100% + 6px);
+            right: 0;
+            min-width: 220px;
+            background: var(--card-bg);
+            border: 1px solid var(--border-primary);
+            border-radius: var(--radius-md);
+            box-shadow: var(--shadow-xl);
+            z-index: 100;
+            overflow: hidden;
+            backdrop-filter: blur(16px);
+            animation: drop-in 0.15s ease;
+        }
+        @keyframes drop-in {
+            from { opacity: 0; transform: translateY(-6px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .user-menu.open .user-dropdown { display: block; }
+        .user-dropdown-header {
+            padding: 0.75rem 1rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.2rem;
+        }
+        .user-dropdown-email {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            word-break: break-all;
+        }
+        .user-dropdown-plan {
+            font-size: 0.72rem;
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+        .user-dropdown-divider {
+            height: 1px;
+            background: var(--border-subtle);
+            margin: 0;
+        }
+        .user-dropdown-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.65rem 1rem;
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            text-decoration: none;
+            transition: background var(--transition-fast);
+        }
+        .user-dropdown-item svg {
+            flex-shrink: 0;
+            color: var(--text-muted);
+        }
+        .user-dropdown-item:hover {
+            background: var(--btn-secondary-hover);
+            color: var(--text-primary);
+        }
+        .user-dropdown-item:last-child:hover {
+            color: var(--red);
+        }
+        .user-dropdown-item:last-child:hover svg {
+            color: var(--red);
+        }
+
+        /* ── Logout Confirm Modal ────────────────────────── */
+        .logout-modal-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.6);
+            z-index: 1001;
+            backdrop-filter: blur(6px);
+        }
+        .logout-modal-overlay.open { display: block; }
+        .logout-modal {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0.96);
+            z-index: 1002;
+            background: var(--card-bg);
+            border: 1px solid var(--border-primary);
+            border-radius: var(--radius-lg);
+            padding: 2rem;
+            min-width: 360px;
+            max-width: 90vw;
+            box-shadow: var(--shadow-xl);
+            text-align: center;
+            opacity: 0;
+            transition: all 0.2s ease;
+        }
+        .logout-modal.open {
+            display: block;
+            opacity: 1;
+            transform: translate(-50%, -50%) scale(1);
+        }
+        .logout-modal .logout-icon {
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            background: var(--red-bg, rgba(239,68,68,0.12));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 1rem;
+            font-size: 1.6rem;
+        }
+        .logout-modal .logout-title {
+            font-size: 1.15rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            color: var(--text-primary);
+        }
    501    <!-- Concept Visualization -->
     <div class="concept-visual">
         <div class="grid"></div>
@@ -379,4 +379,3 @@ svg.concept-svg { position:absolute; inset:0; width:100%; height:100%; display:b
             <div class="concept-legend-item"><span class="dot orange"></span> Orchestrator</div>
         </div>
     </div>
-|
