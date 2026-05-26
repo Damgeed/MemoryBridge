@@ -2464,7 +2464,10 @@
             updateAuthUI();
 
             // Poll for subscription — Stripe webhook updates it asynchronously
+            // stripe-welcome already stores the subscription locally, so this
+            // should resolve within 1-2 attempts
             let attempts = 0;
+            const maxAttempts = 15; // 30 seconds max
             const poll = setInterval(async () => {
                 attempts++;
                 try {
@@ -2474,9 +2477,9 @@
                         loadDashboard();
                         statusEl.textContent = `🎉 Welcome to the ${data.tier.charAt(0).toUpperCase() + data.tier.slice(1)} plan!`;
                         showToast(`🎉 Welcome to the ${data.tier.charAt(0).toUpperCase() + data.tier.slice(1)} plan!`);
-                    } else if (attempts === 15) {
-                        // After 30s, try to restore subscription as fallback
-                        statusEl.textContent = '⏳ Checking for existing subscription...';
+                    } else if (attempts === 8) {
+                        // After 16s, try to restore subscription as fallback
+                        statusEl.textContent = '⏳ Finalizing your subscription...';
                         try {
                             const restoreData = await api('POST', '/dashboard/restore-subscription');
                             if (restoreData.restored && restoreData.tier !== 'free') {
@@ -2486,9 +2489,9 @@
                                 showToast(`🎉 Subscription restored!`);
                                 return;
                             }
-                        } catch { /* fall through, keep polling */ }
-                        statusEl.textContent = '✅ Payment confirmed! Setting up your account...';
-                    } else if (attempts > 30) {
+                        } catch { /* fall through */ }
+                        statusEl.textContent = '✅ Payment confirmed! Finalizing your account...';
+                    } else if (attempts >= maxAttempts) {
                         clearInterval(poll);
                         statusEl.textContent = '⏳ Loading your dashboard...';
                         loadDashboard();
@@ -2502,11 +2505,10 @@
                     }
                 } catch (e) {
                     statusEl.textContent = '⚠️ ' + (e.message || 'Checking subscription...');
-                    if (attempts > 30) {
+                    if (attempts >= maxAttempts) {
                         clearInterval(poll);
                         statusEl.textContent = '⏳ Loading your dashboard...';
                         loadDashboard();
-                        // Async restore attempt
                         api('POST', '/dashboard/restore-subscription').then(restoreData => {
                             if (restoreData.restored && restoreData.tier !== 'free') {
                                 showToast(`🎉 Subscription restored!`);

@@ -720,6 +720,39 @@ async def stripe_welcome(
     # Log the Stripe customer ID if available
     stripe_customer_id = session.get("customer", "") or ""
 
+    # Store the subscription locally immediately — don't wait for webhook
+    try:
+        from ..models import Subscription as SubModel
+        from datetime import datetime, timezone
+        sub_data_obj = session.subscription
+        if sub_data_obj:
+            sub_id = sub_data_obj.id if hasattr(sub_data_obj, "id") else sub_data_obj.get("id", "")
+            sub_status = sub_data_obj.status if hasattr(sub_data_obj, "status") else sub_data_obj.get("status", "active")
+            period_end = None
+            period_start = None
+            if hasattr(sub_data_obj, "current_period_end") and sub_data_obj.current_period_end:
+                period_end = datetime.fromtimestamp(sub_data_obj.current_period_end, tz=timezone.utc)
+            elif isinstance(sub_data_obj, dict) and sub_data_obj.get("current_period_end"):
+                period_end = datetime.fromtimestamp(sub_data_obj["current_period_end"], tz=timezone.utc)
+            if hasattr(sub_data_obj, "current_period_start") and sub_data_obj.current_period_start:
+                period_start = datetime.fromtimestamp(sub_data_obj.current_period_start, tz=timezone.utc)
+            elif isinstance(sub_data_obj, dict) and sub_data_obj.get("current_period_start"):
+                period_start = datetime.fromtimestamp(sub_data_obj["current_period_start"], tz=timezone.utc)
+
+            sub = SubModel(
+                id=sub_id or f"stripe-{org_id[:8]}",
+                organization_id=org_id,
+                stripe_customer_id=stripe_customer_id,
+                tier=tier,
+                status=sub_status,
+                current_period_start=period_start,
+                current_period_end=period_end,
+            )
+            await storage.store_subscription(sub)
+            logger.info("Stripe welcome: stored subscription org=%s tier=%s sub=%s", org_id, tier, sub_id)
+    except Exception as e:
+        logger.warning("Stripe welcome: could not store subscription: %s", e)
+
     # Try to find the user for this org
     user_dict = None
     try:
