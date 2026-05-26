@@ -648,6 +648,123 @@ async def recover_api_key(
     }
 
 
+@router.post("/stripe-welcome")
+async def stripe_welcome(
+    request: Request,
+    session_id: str = Query("", description="Stripe checkout session ID"),
+    storage: MemoryRepository = Depends(get_storage),
+):
+    """Generate a fresh JWT from a Stripe checkout session.
+
+    Exempt from auth middleware — allows users who just completed
+    Stripe checkout to get a fresh JWT even if their previous one
+    expired during the Stripe payment flow.
+    """
+    if not session_id:
+        raise HTTPException(status_code=400, detail="session_id is required")
+
+    import stripe as stripe_mod
+    stripe_mod.api_key = os.environ.get("STRIPE_SECRET_KEY", "")
+    if not stripe_mod.api_key:
+        raise HTTPException(status_code=502, detail="Stripe not configured")
+
+    try:
+        session = await asyncio.wait_for(
+            asyncio.to_thread(
+                stripe_mod.checkout.Session.retrieve,
+                session_id,
+                expand=["subscription"],
+            ),
+            timeout=10.0,
+        )
+    except Exception as e:
+        raise HTTPException(status_code=502, detail=f"Could not verify payment: {e}")
+
+    if session.status != "complete":
+        raise HTTPException(status_code=400, detail="Payment not completed")
+
+    # Resolve org_id from session metadata
+    org_id = (session.metadata or {}).get("organization_id", "")
+    if not org_id:
+        raise HTTPException(status_code=400, detail="No organization linked to this session")
+
+    # Resolve tier from the subscription or metadata
+    tier = (session.metadata or {}).get("tier", "free")
+    try:
+        if session.subscription:
+            items = []
+            if hasattr(session.subscription, "items") and session.subscription.items:
+                items = session.subscription.items.get("data", [])
+            if items and items[0].get("price"):
+                from ..services.billing_service import PRICE_IDS
+                price_id = items[0]["price"].get("id", "")
+                for t, pid in PRICE_IDS.items():
+                    if pid == price_id:
+                        tier = t
+                        break
+    except Exception:
+        pass
+
+    # Log the Stripe customer ID if available
+    stripe_customer_id = session.get("customer", "") or ""
+
+    # Try to find the user for this org
+    user_dict = None
+    try:
+        # Look for user by org_id
+        user_dict = await storage.get_user_by_organization_id(org_id)
+    except Exception:
+        pass
+
+    # If no user found by org, check session metadata for email
+    if not user_dict and session.get("customer_details"):
+        email = (session.get("customer_details") or {}).get("email", "")
+        if email:
+            try:
+                user_dict = await storage.get_user_by_email(email)
+                if user_dict and not user_dict.get("organization_id"):
+                    # Link org to user
+                    pass  # Already handled by signup flow
+            except Exception:
+                pass
+
+    if not user_dict:
+        # Create a minimal user record for this org
+        customer_email = ""
+        if session.get("customer_details"):
+            customer_email = (session.get("customer_details") or {}).get("email", "")
+        try:
+            from datetime import datetime, timezone
+            user_data = {
+                "id": f"stripe-{org_id[:8]}",
+                "email": customer_email or f"user-{org_id[:8]}@memorybridge.io",
+                "name": customer_email.split("@")[0] if customer_email else "User",
+                "organization_id": org_id,
+                "role": "member",
+                "created_at": datetime.now(timezone.utc),
+            }
+            user_dict = await storage.create_user(user_data)
+        except Exception as e:
+            logger.warning("Could not create user for stripe welcome: %s", e)
+
+    # Generate a fresh JWT
+    from ..services.user_service import UserService
+    svc = UserService(repo=storage)
+    token = ""
+    if user_dict:
+        try:
+            token = await svc.generate_token(user_dict)
+        except Exception as e:
+            logger.warning("Could not generate JWT for stripe welcome: %s", e)
+
+    return {
+        "token": token,
+        "organization_id": org_id,
+        "tier": tier,
+        "stripe_customer_id": stripe_customer_id,
+    }
+
+
 async def _check_stripe_fallback(user_email: str, org_id: str, storage):
     """Background task: check Stripe for a subscription by email and store it locally."""
     try:

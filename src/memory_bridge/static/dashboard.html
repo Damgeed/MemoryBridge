@@ -2423,14 +2423,42 @@
             const statusEl = document.getElementById('dash-status');
             statusEl.textContent = '✅ Payment confirmed! Setting up your account...';
 
-            // Show the authenticated content immediately so user sees the dashboard loading
-            showAuthenticatedContent(true);
-            updateAuthUI();
-
             // Clear pending state saved by pricing page
             localStorage.removeItem('mb_pending_org_id');
             localStorage.removeItem('mb_pending_tier');
             window.history.replaceState({}, '', '/dashboard/');
+
+            // If no JWT and no API key, try to get a fresh one from the Stripe session
+            // (JWT may have expired during Stripe checkout)
+            let jwt = localStorage.getItem('mb_jwt');
+            let apiKey = localStorage.getItem('mb_api_key');
+            if (!jwt && !apiKey) {
+                try {
+                    statusEl.textContent = '🔄 Verifying payment...';
+                    const welcomeRes = await fetch('/dashboard/stripe-welcome?session_id=' + encodeURIComponent(sessionId), {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                    });
+                    if (welcomeRes.ok) {
+                        const welcomeData = await welcomeRes.json();
+                        if (welcomeData.token) {
+                            localStorage.setItem('mb_jwt', welcomeData.token);
+                            jwt = welcomeData.token;
+                            currentApiKey = '';
+                            showAuthenticatedContent(true);
+                            updateAuthUI();
+                            statusEl.textContent = '✅ Payment confirmed! Setting up your account...';
+                        }
+                    }
+                } catch (e) {
+                    // Stripe welcome failed — user may need to sign in manually
+                    console.warn('Stripe welcome refresh failed:', e);
+                }
+            }
+
+            // Show the authenticated content
+            showAuthenticatedContent(true);
+            updateAuthUI();
 
             // Poll for subscription — Stripe webhook updates it asynchronously
             let attempts = 0;
