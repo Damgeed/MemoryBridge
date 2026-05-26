@@ -31,9 +31,24 @@ class AuthResponse(BaseModel):
     user: dict
 
 
+class CheckEmailRequest(BaseModel):
+    email: str
+
+
 async def get_user_service():
     repo = await get_storage()
     return UserService(repo=repo)
+
+
+@router.post("/check-email")
+async def check_email(
+    req: CheckEmailRequest,
+    storage: MemoryRepository = Depends(get_storage),
+):
+    """Check if an email already has a user account."""
+    email_clean = req.email.strip().lower()
+    user = await storage.get_user_by_email(email_clean)
+    return {"exists": user is not None}
 
 
 @router.post("/register", response_model=AuthResponse)

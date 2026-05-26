@@ -2081,6 +2081,26 @@
             errorEl.innerHTML = '<span class="auth-spinner"></span>';
             btn.disabled = true;
             try {
+                // Check if email exists — enforce sign-in vs sign-up distinction
+                const checkRes = await fetch('/auth/check-email', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({email}),
+                });
+                let checkData = {exists: false};
+                if (checkRes.ok) checkData = await checkRes.json();
+
+                if (authMode === 'signin' && !checkData.exists) {
+                    errorEl.innerHTML = '⚠️ No account found with this email. <a href="#" onclick="selectAuthTab(\'signup\');return false;" style="color:var(--accent);text-decoration:underline;">Create an account</a>';
+                    btn.disabled = false;
+                    return;
+                }
+                if (authMode === 'signup' && checkData.exists) {
+                    errorEl.innerHTML = '✅ An account already exists with this email. <a href="#" onclick="selectAuthTab(\'signin\');return false;" style="color:var(--accent);text-decoration:underline;">Sign in</a>';
+                    btn.disabled = false;
+                    return;
+                }
+
                 const res = await fetch('/auth/auth0/passwordless/start', {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
