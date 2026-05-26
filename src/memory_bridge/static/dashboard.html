@@ -812,6 +812,7 @@
                         <span class="user-avatar-circle" id="user-avatar-circle">👤</span>
                         <span class="session-dot" id="session-dot"></span>
                         <span class="user-avatar-name" id="user-avatar-name"></span>
+                        <span class="user-plan-badge" id="user-plan-badge"></span>
                         <svg class="user-chevron" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
                     </button>
                     <div class="user-dropdown" id="user-dropdown">
@@ -1640,8 +1641,8 @@
                     const dot = document.getElementById('session-dot');
                     const dotIsRed = dot && dot.classList.contains('red');
                     if (!dotIsRed) {
-                        // Dot is green/amber — JWT looks valid client-side, backend rejection is transient.
-                        // Try to refresh the JWT silently and retry
+                        // Dot is green/amber — JWT or API key looks valid client-side.
+                        // Try to refresh the JWT silently and retry with it
                         const jwt = localStorage.getItem('mb_jwt');
                         if (jwt) {
                             try {
@@ -1654,8 +1655,12 @@
                                     const refreshData = await refresh.json();
                                     if (refreshData.token) {
                                         localStorage.setItem('mb_jwt', refreshData.token);
-                                        // Retry with fresh token
-                                        opts.headers = getAuthHeaders();
+                                        // Retry with JWT explicitly — don't use getAuthHeaders()
+                                        // because it might return a stale/revoked API key
+                                        opts.headers = {
+                                            'Content-Type': 'application/json',
+                                            'Authorization': 'Bearer ' + refreshData.token,
+                                        };
                                         const retry = await fetch(API_BASE + path, opts);
                                         if (retry.ok) return retry.json();
                                     }
