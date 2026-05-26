@@ -349,6 +349,15 @@ window.TRANSLATIONS = {
     "playground.show_all": "\ud83d\udccb Show All",
     "playground.clear_results": "Clear Results",
 
+    // ── New Q&A Cards ─────────────────────────────
+    "qa.card1_q": "🗄️ Where does my data actually go?",
+    "qa.card1_a": "In production, to your own <strong>PostgreSQL database</strong>.<br><br>Every memory is a row in a table you own. No vendor lock-in — self-host with SQLite, or scale up to PostgreSQL. Export, query, delete, audit: it's your data.",
+    "qa.card2_q": "🧩 How do I connect ChatGPT / Gemini / local models?",
+    "qa.card2_a": "Memory Bridge is an <strong>API</strong> — not a plugin. The pattern is always the same:<br><br><code>Query → Inject → Call LLM → Store</code><br><br>1. Before your LLM call, <code>GET /memories/query</code> for relevant context<br>2. Inject context into the system prompt<br>3. Call ChatGPT, Claude, Gemini, Ollama — anything with an API<br>4. After, <code>POST /memories</code> with what was learned<br><br><strong>Python SDK</strong> and <strong>framework adapters</strong> for LangGraph, AutoGen, and CrewAI automate the loop.",
+    "model.schema_title": "📊 Memory Table Schema",
+    "integrations.section_title": "🔌 Works with every LLM + framework",
+    "integrations.section_subtitle": "Memory Bridge sits between your code and any LLM. The integration pattern is the same for all of them.",
+
     },
   zh: {
     "nav.home": "首页",
@@ -438,7 +447,7 @@ window.TRANSLATIONS = {
     "pricing.subtitle": "免费开始。智能体团队壮大后再升级。",
     "pricing.free_name": "免费版",
     "pricing.free_price": "$0/月",
-    "pricing.free_note": "Full API access — auto-cutoff at limit",
+    "pricing.free_note": "完整 API 访问 — 超限自动停止",
     "pricing.free_feat1": "1,000 条记忆",
     "pricing.free_feat2": "100 个会话",
     "pricing.free_feat3": "5 个 API 密钥",
@@ -691,6 +700,15 @@ window.TRANSLATIONS = {
     "playground.limit_label": "限制",
     "playground.show_all": "📋 显示全部",
     "playground.clear_results": "清除结果",
+
+    // ── New Q&A Cards ─────────────────────────────
+    "qa.card1_q": "🗄️ 我的数据实际上去了哪里？",
+    "qa.card1_a": "在生产环境中，数据会存入你自己的 <strong>PostgreSQL 数据库</strong>。<br><br>每条记忆都是你所拥有的表中的一行。无需锁定供应商 — 可以使用 SQLite 自托管，或扩展至 PostgreSQL。导出、查询、删除、审计：数据属于你。",
+    "qa.card2_q": "🧩 如何连接 ChatGPT / Gemini / 本地模型？",
+    "qa.card2_a": "Memory Bridge 是一个 <strong>API</strong> — 不是插件。模式始终相同：<br><br><code>查询 → 注入 → 调用 LLM → 存储</code><br><br>1. 在调用 LLM 之前，<code>GET /memories/query</code> 获取相关上下文<br>2. 将上下文注入系统提示<br>3. 调用 ChatGPT、Claude、Gemini、Ollama — 任何有 API 的模型<br>4. 之后，<code>POST /memories</code> 存储学习到的内容<br><br><strong>Python SDK</strong> 和用于 LangGraph、AutoGen 和 CrewAI 的 <strong>框架适配器</strong> 可自动化此循环。",
+    "model.schema_title": "📊 记忆表结构",
+    "integrations.section_title": "🔌 兼容所有 LLM + 框架",
+    "integrations.section_subtitle": "Memory Bridge 位于你的代码和任何 LLM 之间。所有 LLM 的集成模式完全相同。",
 
     },
   ja: {
@@ -982,6 +1000,15 @@ window.TRANSLATIONS = {
     "playground.limit_label": "制限",
     "playground.show_all": "📋 すべて表示",
     "playground.clear_results": "結果をクリア",
+
+    // ── New Q&A Cards ─────────────────────────────
+    "qa.card1_q": "🗄️ 私のデータは実際にはどこに行くのですか？",
+    "qa.card1_a": "本番環境では、あなた自身の <strong>PostgreSQL データベース</strong> に保存されます。<br><br>すべてのメモリはあなたが所有するテーブルの行です。ベンダーロックインはありません — SQLite でセルフホストするか、PostgreSQL にスケールアップできます。エクスポート、クエリ、削除、監査：あなたのデータです。",
+    "qa.card2_q": "🧩 ChatGPT / Gemini / ローカルモデルを接続するには？",
+    "qa.card2_a": "Memory Bridge は <strong>API</strong> — プラグインではありません。パターンは常に同じです：<br><br><code>クエリ → 注入 → LLM呼び出し → 保存</code><br><br>1. LLM呼び出しの前に、<code>GET /memories/query</code> で関連コンテキストを取得<br>2. コンテキストをシステムプロンプトに注入<br>3. ChatGPT、Claude、Gemini、Ollama — APIがあるものなら何でも呼び出し<br>4. その後、<code>POST /memories</code> で学習内容を保存<br><br><strong>Python SDK</strong> と LangGraph、AutoGen、CrewAI 用の <strong>フレームワークアダプター</strong> がループを自動化します。",
+    "model.schema_title": "📊 メモリテーブルスキーマ",
+    "integrations.section_title": "🔌 あらゆるLLM + フレームワークと連携",
+    "integrations.section_subtitle": "Memory Bridge はあなたのコードと任意のLLMの間に位置します。統合パターンはすべてのLLMで同じです。",
 
     },
   ko: {
@@ -1283,6 +1310,15 @@ window.TRANSLATIONS = {
     "playground.show_all": "📋 모두 표시",
     "playground.clear_results": "결과 지우기",
 
+    // ── New Q&A Cards ─────────────────────────────
+    "qa.card1_q": "🗄️ 내 데이터는 실제로 어디로 가나요?",
+    "qa.card1_a": "프로덕션에서는 자신의 <strong>PostgreSQL 데이터베이스</strong>에 저장됩니다.<br><br>모든 메모리는 귀하가 소유한 테이블의 행입니다. 벤더 종속이 없습니다 — SQLite로 자체 호스팅하거나 PostgreSQL로 확장할 수 있습니다. 내보내기, 쿼리, 삭제, 감사: 귀하의 데이터입니다.",
+    "qa.card2_q": "🧩 ChatGPT / Gemini / 로컬 모델을 어떻게 연결하나요?",
+    "qa.card2_a": "Memory Bridge는 <strong>API</strong>입니다 — 플러그인이 아닙니다. 패턴은 항상 동일합니다:<br><br><code>쿼리 → 주입 → LLM 호출 → 저장</code><br><br>1. LLM 호출 전 <code>GET /memories/query</code>로 관련 컨텍스트 가져오기<br>2. 컨텍스트를 시스템 프롬프트에 주입<br>3. ChatGPT, Claude, Gemini, Ollama — API가 있는 모든 것을 호출<br>4. 이후 <code>POST /memories</code>로 학습 내용 저장<br><br><strong>Python SDK</strong>와 LangGraph, AutoGen, CrewAI용 <strong>프레임워크 어댑터</strong>가 루프를 자동화합니다.",
+    "model.schema_title": "📊 메모리 테이블 스키마",
+    "integrations.section_title": "🔌 모든 LLM + 프레임워크와 호환",
+    "integrations.section_subtitle": "Memory Bridge는 코드와 모든 LLM 사이에 위치합니다. 모든 LLM에 대해 통합 패턴이 동일합니다.",
+
     },
   es: {
     "nav.home": "Inicio",
@@ -1583,6 +1619,15 @@ window.TRANSLATIONS = {
     "playground.limit_label": "Límite",
     "playground.show_all": "📋 Mostrar todo",
     "playground.clear_results": "Limpiar resultados",
+
+    // ── New Q&A Cards ─────────────────────────────
+    "qa.card1_q": "🗄️ ¿A dónde van realmente mis datos?",
+    "qa.card1_a": "En producción, a tu propia <strong>base de datos PostgreSQL</strong>.<br><br>Cada recuerdo es una fila en una tabla que posees. Sin dependencia del proveedor — autoalójate con SQLite, o escala a PostgreSQL. Exporta, consulta, elimina, audita: son tus datos.",
+    "qa.card2_q": "🧩 ¿Cómo conecto ChatGPT / Gemini / modelos locales?",
+    "qa.card2_a": "Memory Bridge es una <strong>API</strong> — no un plugin. El patrón es siempre el mismo:<br><br><code>Consultar → Inyectar → Llamar LLM → Almacenar</code><br><br>1. Antes de tu llamada LLM, <code>GET /memories/query</code> para contexto relevante<br>2. Inyecta contexto en el prompt del sistema<br>3. Llama a ChatGPT, Claude, Gemini, Ollama — cualquier cosa con una API<br>4. Después, <code>POST /memories</code> con lo aprendido<br><br>El <strong>SDK de Python</strong> y los <strong>adaptadores de framework</strong> para LangGraph, AutoGen y CrewAI automatizan el ciclo.",
+    "model.schema_title": "📊 Esquema de la tabla de memoria",
+    "integrations.section_title": "🔌 Funciona con cada LLM + framework",
+    "integrations.section_subtitle": "Memory Bridge se sitúa entre tu código y cualquier LLM. El patrón de integración es el mismo para todos ellos.",
 
     },
   fr: {
@@ -1917,6 +1962,15 @@ window.TRANSLATIONS = {
     "playground.limit_label": "Limite",
     "playground.show_all": "📋 Tout afficher",
     "playground.clear_results": "Effacer les résultats",
+
+    // ── New Q&A Cards ─────────────────────────────
+    "qa.card1_q": "🗄️ Où vont réellement mes données ?",
+    "qa.card1_a": "En production, dans votre propre <strong>base de données PostgreSQL</strong>.<br><br>Chaque souvenir est une ligne dans une table que vous possédez. Pas de dépendance fournisseur — auto-hébergez avec SQLite, ou passez à PostgreSQL. Exportez, interrogez, supprimez, auditez : ce sont vos données.",
+    "qa.card2_q": "🧩 Comment connecter ChatGPT / Gemini / les modèles locaux ?",
+    "qa.card2_a": "Memory Bridge est une <strong>API</strong> — pas un plugin. Le modèle est toujours le même :<br><br><code>Interroger → Injecter → Appeler LLM → Stocker</code><br><br>1. Avant votre appel LLM, <code>GET /memories/query</code> pour le contexte pertinent<br>2. Injectez le contexte dans l'invite système<br>3. Appelez ChatGPT, Claude, Gemini, Ollama — tout ce qui a une API<br>4. Ensuite, <code>POST /memories</code> avec ce qui a été appris<br><br>Le <strong>SDK Python</strong> et les <strong>adaptateurs de framework</strong> pour LangGraph, AutoGen et CrewAI automatisent la boucle.",
+    "model.schema_title": "📊 Schéma de la table mémoire",
+    "integrations.section_title": "🔌 Fonctionne avec chaque LLM + framework",
+    "integrations.section_subtitle": "Memory Bridge se situe entre votre code et n'importe quel LLM. Le modèle d'intégration est le même pour tous.",
 
     },
   de: {
@@ -2257,6 +2311,15 @@ window.TRANSLATIONS = {
     "playground.limit_label": "Limit",
     "playground.show_all": "📋 Alle anzeigen",
     "playground.clear_results": "Ergebnisse löschen",
+
+    // ── New Q&A Cards ─────────────────────────────
+    "qa.card1_q": "🗄️ Wohin gehen meine Daten eigentlich?",
+    "qa.card1_a": "In der Produktion in Ihre eigene <strong>PostgreSQL-Datenbank</strong>.<br><br>Jede Erinnerung ist eine Zeile in einer Tabelle, die Ihnen gehört. Keine Herstellerbindung — Selbsthosting mit SQLite oder Hochskalieren auf PostgreSQL. Exportieren, abfragen, löschen, prüfen: Es sind Ihre Daten.",
+    "qa.card2_q": "🧩 Wie verbinde ich ChatGPT / Gemini / lokale Modelle?",
+    "qa.card2_a": "Memory Bridge ist eine <strong>API</strong> — kein Plugin. Das Muster ist immer dasselbe:<br><br><code>Abfragen → Einfügen → LLM aufrufen → Speichern</code><br><br>1. Vor Ihrem LLM-Aufruf <code>GET /memories/query</code> für relevanten Kontext<br>2. Kontext in den System-Prompt einfügen<br>3. ChatGPT, Claude, Gemini, Ollama aufrufen — alles mit einer API<br>4. Danach <code>POST /memories</code> mit dem Gelernten<br><br>Das <strong>Python SDK</strong> und die <strong>Framework-Adapter</strong> für LangGraph, AutoGen und CrewAI automatisieren den Kreislauf.",
+    "model.schema_title": "📊 Speichertabellenschema",
+    "integrations.section_title": "🔌 Funktioniert mit jedem LLM + Framework",
+    "integrations.section_subtitle": "Memory Bridge sitzt zwischen Ihrem Code und jedem LLM. Das Integrationsmuster ist für alle gleich.",
 
     },
 };
