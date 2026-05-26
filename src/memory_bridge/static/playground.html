@@ -334,6 +334,20 @@
             <div id="store-result"></div>
         </div>
 
+        <!-- Quick Start -->
+        <div class="card" id="quickstart-card">
+            <h2 class="section-header">⚡ Quick Start Examples</h2>
+            <p style="margin-bottom:0.75rem; color:var(--text-muted); font-size:0.9rem;">
+                Click an example to pre-fill the form, then press <strong style="color:var(--accent);">Store Memory</strong>.
+            </p>
+            <div class="btn-group">
+                <button class="btn btn-secondary btn-sm" onclick="loadExample('user-prefs')">🎨 User Preferences</button>
+                <button class="btn btn-secondary btn-sm" onclick="loadExample('conversation')">💬 Agent Conversation</button>
+                <button class="btn btn-secondary btn-sm" onclick="loadExample('config')">⚙️ Deployment Config</button>
+                <button class="btn btn-secondary btn-sm" onclick="loadExample('task')">📋 Active Task</button>
+            </div>
+        </div>
+
         <!-- Search & Browse -->
         <div class="card search-card" id="search-card">
             <h2>🔍 Search &amp; Browse</h2>
@@ -368,20 +382,6 @@
                 <button class="btn btn-secondary btn-sm" onclick="clearSearchResults()">Clear Results</button>
             </div>
             <div id="search-results" class="results" style="margin-top:0.75rem;"></div>
-        </div>
-
-        <!-- Quick Start -->
-        <div class="card" id="quickstart-card">
-            <h2 class="section-header">⚡ Quick Start Examples</h2>
-            <p style="margin-bottom:0.75rem; color:var(--text-muted); font-size:0.9rem;">
-                Click an example to pre-fill the form, then press <strong style="color:var(--accent);">Store Memory</strong>.
-            </p>
-            <div class="btn-group">
-                <button class="btn btn-secondary btn-sm" onclick="loadExample('user-prefs')">🎨 User Preferences</button>
-                <button class="btn btn-secondary btn-sm" onclick="loadExample('conversation')">💬 Agent Conversation</button>
-                <button class="btn btn-secondary btn-sm" onclick="loadExample('config')">⚙️ Deployment Config</button>
-                <button class="btn btn-secondary btn-sm" onclick="loadExample('task')">📋 Active Task</button>
-            </div>
         </div>
     </div>
 
