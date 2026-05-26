@@ -1621,12 +1621,12 @@
                 if (expMs - now < 300000) {
                     const res = await fetch('/auth/refresh', {
                         method: 'POST',
-                        headers: { 'Authorization': 'Bearer ' + jwt, 'Content-Type': 'application/json' },
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ token: jwt }),
                     });
                     if (res.ok) {
                         const data = await res.json();
-                        if (data.jwt) localStorage.setItem('mb_jwt', data.jwt);
-                        if (data.api_key) localStorage.setItem('mb_api_key', data.api_key);
+                        if (data.token) localStorage.setItem('mb_jwt', data.token);
                     }
                 }
                 return true;
@@ -1815,11 +1815,6 @@
                 if (msg.includes('401') || msg.includes('Unauthorized') || msg.includes('Invalid API key')) {
                     document.getElementById('dash-status').textContent = '🔑 Session expired. Please sign in again.';
                     document.getElementById('sub-content').innerHTML = `<div style="color:var(--text-muted);font-size:0.85rem;">Sign in to view your subscription details.</div>`;
-                } else if (retries > 0) {
-                    // Transient failure — retry with backoff
-                    document.getElementById('dash-status').textContent = '⏳ Loading...';
-                    await new Promise(r => setTimeout(r, 1000));
-                    return loadDashboard(retries - 1);
                 } else if (msg.includes('Too many requests')) {
                     document.getElementById('dash-status').textContent = '';
                     document.getElementById('sub-content').innerHTML = `
@@ -1828,6 +1823,11 @@
                             <div style="font-size:0.82rem;color:var(--text-muted);">Free plan: 60 requests/min. Wait a moment and try again, or upgrade for higher limits.</div>
                             <div style="margin-top:0.75rem;"><a href="/pricing" class="btn btn-primary btn-sm">Upgrade Plan →</a></div>
                         </div>`;
+                } else if (retries > 0) {
+                    // Transient failure — retry with backoff
+                    document.getElementById('dash-status').textContent = '⏳ Loading...';
+                    await new Promise(r => setTimeout(r, 1000));
+                    return loadDashboard(retries - 1);
                 } else {
                     document.getElementById('dash-status').textContent = '⚠️ ' + (msg || 'Could not load dashboard data.');
                     document.getElementById('sub-content').innerHTML = `<div style="color:var(--text-muted);font-size:0.85rem;">Sign in to view your subscription details.</div>`;

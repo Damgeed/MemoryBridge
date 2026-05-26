@@ -1599,11 +1599,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (expMs - now < 300000) {
                     const res = await fetch('/auth/refresh', {
                         method: 'POST',
-                        headers: { 'Authorization': 'Bearer ' + jwt, 'Content-Type': 'application/json' },
+                        headers: { .Content-Type.: .application/json. },
+                        body: JSON.stringify({ token: jwt }),
                     });
                     if (res.ok) {
                         const data = await res.json();
-                        if (data.jwt) localStorage.setItem('mb_jwt', data.jwt);
+                        if (data.token) localStorage.setItem('mb_jwt', data.token);
                         if (data.api_key) localStorage.setItem('mb_api_key', data.api_key);
                     }
                 }
