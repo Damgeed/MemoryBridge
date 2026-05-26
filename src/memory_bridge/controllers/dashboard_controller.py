@@ -322,6 +322,7 @@ async def get_dashboard_data(
     # Get user info for display — decode from JWT
     user_name = ""
     user_email = ""
+    user_created_at = None
     try:
         import jwt as pyjwt
         from ..config import get_settings
@@ -340,6 +341,15 @@ async def get_dashboard_data(
                 user_name = claims.get("name", "")
             elif claims.get("sub"):
                 user_email = claims.get("sub", "")
+
+        # Look up user record for created_at
+        if user_email:
+            try:
+                user_record = await storage.get_user_by_email(user_email)
+                if user_record and hasattr(user_record, 'created_at'):
+                    user_created_at = user_record.created_at.isoformat() if hasattr(user_record.created_at, 'isoformat') else str(user_record.created_at)
+            except Exception:
+                pass
     except Exception:
         pass
 
@@ -350,6 +360,7 @@ async def get_dashboard_data(
         "active_keys": len(active_keys),
         "total_keys": len(user_keys),
         "current_period_end": sub.current_period_end.isoformat() if sub and sub.current_period_end else None,
+        "created_at": user_created_at,
         "user_name": user_name,
         "user_email": user_email,
     }
