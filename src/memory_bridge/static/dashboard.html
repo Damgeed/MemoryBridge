@@ -1573,7 +1573,9 @@
             const headers = { 'Content-Type': 'application/json' };
             // Use API key if available (more reliable — never expires)
             // Fall back to JWT for users who only signed up via email/password
-            const key = currentApiKey || localStorage.getItem('mb_api_key') || '';
+            const rawKey = currentApiKey || localStorage.getItem('mb_api_key') || '';
+            // Reject the public demo key — it's only for the playground
+            const key = rawKey === 'mb_demo_public_test' ? '' : rawKey;
             const jwt = localStorage.getItem('mb_jwt');
             if (key) {
                 headers['Authorization'] = 'Bearer ' + key;

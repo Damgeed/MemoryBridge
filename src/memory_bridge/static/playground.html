@@ -513,7 +513,10 @@
                 document.getElementById('api-key-input').value = urlKey;
                 return urlKey;
             }
-            return localStorage.getItem('mb_api_key') || '';
+            const saved = localStorage.getItem('mb_api_key');
+            if (saved) return saved;
+            // Fall back to demo key stored separately
+            return localStorage.getItem('mb_demo_active') || '';
         }
 
         function setApiKey() {
@@ -530,14 +533,15 @@
 
         function useDemoKey() {
             document.getElementById('api-key-input').value = DEMO_API_KEY;
-            localStorage.setItem('mb_api_key', DEMO_API_KEY);
+            localStorage.setItem('mb_demo_active', DEMO_API_KEY);
+            localStorage.removeItem('mb_api_key');
             document.getElementById('api-key-status').textContent = '✅ Demo key loaded (5 req/min)';
             document.getElementById('api-key-status').style.color = 'var(--green)';
         }
 
         // Auto-fill demo key if no key saved
         (function initDemoKey() {
-            if (!localStorage.getItem('mb_api_key')) {
+            if (!localStorage.getItem('mb_api_key') && !localStorage.getItem('mb_demo_active')) {
                 useDemoKey();
             }
         })();
