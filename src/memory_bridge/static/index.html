@@ -584,6 +584,7 @@
                 <div class="user-menu" id="user-menu" style="display:none;">
                     <button class="user-avatar-btn" id="user-btn" onclick="toggleUserDropdown()" title="Account menu">
                         <span class="user-avatar-circle" id="user-avatar-circle">👤</span>
+                        <span class="session-dot" id="session-dot"></span>
                         <span class="user-avatar-name" id="user-avatar-name"></span>
                         <svg class="user-chevron" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
                     </button>
@@ -591,13 +592,14 @@
                         <div class="user-dropdown-header">
                             <span class="user-dropdown-email" id="user-dropdown-email"></span>
                             <span class="user-dropdown-plan" id="user-dropdown-plan" data-i18n="dash.free_plan">Free Plan</span>
+                            <span class="user-dropdown-since" id="user-dropdown-since"></span>
                         </div>
                         <div class="user-dropdown-divider"></div>
                         <a href="/pricing" class="user-dropdown-item">
                             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
                             <span data-i18n="dash.manage_billing">Manage Billing</span>
                         </a>
-                        <div class="user-dropdown-item" onclick="showLogoutConfirm()" style="cursor:pointer;">
+                        <div class="user-dropdown-item sign-out" onclick="showLogoutConfirm()" style="cursor:pointer;">
                             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
                             <span data-i18n="nav.sign_out">Sign Out</span>
                         </div>
@@ -1602,17 +1604,45 @@
             const avatarCircle = document.getElementById('user-avatar-circle');
             const dropdownEmail = document.getElementById('user-dropdown-email');
 
-            if (jwt && userMenu && signInBtn) {
+            if ((jwt || key) && userMenu && signInBtn) {
                 signInBtn.style.display = 'none';
                 userMenu.style.display = 'inline-flex';
 
-                const claims = decodeJWT(jwt);
-                const displayName = claims?.email || claims?.name || claims?.sub || '';
+                const claims = jwt ? decodeJWT(jwt) : null;
+                const displayName = claims?.email || claims?.name || claims?.sub || key?.slice(0, 8) + '…' || '';
                 const initial = (displayName && displayName.length > 0) ? displayName[0].toUpperCase() : '?';
 
                 if (avatarName) avatarName.textContent = displayName.length > 16 ? displayName.slice(0, 14) + '…' : displayName;
                 if (avatarCircle) avatarCircle.textContent = initial;
                 if (dropdownEmail) dropdownEmail.textContent = displayName;
+
+                // Session dot + signed-in-since
+                const sessionDot = document.getElementById('session-dot');
+                const sinceEl = document.getElementById('user-dropdown-since');
+                if (sessionDot) {
+                    if (claims && claims.exp) {
+                        const now = Math.floor(Date.now() / 1000);
+                        const exp = claims.exp;
+                        const iat = claims.iat;
+                        const remaining = exp - now;
+                        if (remaining <= 0) {
+                            sessionDot.className = 'session-dot red';
+                        } else if (remaining < 300) {
+                            sessionDot.className = 'session-dot amber';
+                        } else {
+                            sessionDot.className = 'session-dot green';
+                        }
+                        if (sinceEl && iat) {
+                            const d = new Date(iat * 1000);
+                            const dateStr = d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+                            const timeStr = d.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
+                            sinceEl.textContent = 'Signed in since ' + dateStr + ' ' + timeStr;
+                        }
+                    } else if (key) {
+                        sessionDot.className = 'session-dot green';
+                        if (sinceEl) sinceEl.textContent = 'Using API key';
+                    }
+                }
 
                 if (mobileLabel) mobileLabel.textContent = 'Sign out';
                 const mobileBtn = document.getElementById('auth-mobile-btn');
