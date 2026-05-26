@@ -180,7 +180,7 @@ window.TRANSLATIONS = {
     "dash.keys_loading": '<span class=\"spinner-sm\"></span> Loading keys...',
     "dash.keys_empty": "No API keys yet.",
     "dash.keys_empty_hint": 'Click \"Generate New Key\" to create one.',
-    "dash.keys_no_permission": "Use the Playground first or set an API key.",
+    "dash.keys_no_permission": "Sign in to view your API keys.",
     "dash.setup_card": "🚀 Setup Guide",
     "dash.setup_desc": 'Get started in 2 steps. Your API key goes in the <code>Authorization</code> header.',
     "dash.step1_title": "Run with Docker",

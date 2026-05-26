@@ -38,29 +38,7 @@
             font-size: 0.92rem;
         }
 
-        .tier-badge {
-            display: inline-flex;
-            align-items: center;
-            gap: 0.35rem;
-            padding: 0.25rem 0.75rem;
-            border-radius: var(--radius-full);
-            font-size: 0.75rem;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-            white-space: nowrap;
-        }
-        .tier-badge.free { background: var(--bg-tertiary); color: var(--text-muted); border: 1px solid var(--border-primary); }
-        .tier-badge.starter { background: var(--accent-glow); color: var(--accent); border: 1px solid var(--accent); }
-        .tier-badge.pro { background: var(--accent-glow); color: var(--accent); border: 1px solid var(--accent); }
-        .tier-badge.enterprise { background: var(--green-bg); color: var(--green); border: 1px solid var(--green); }
-        .refresh-sub-btn {
-            background: none; border: 1px solid var(--border-primary); border-radius: 50%;
-            width: 28px; height: 28px; display: inline-flex; align-items: center; justify-content: center;
-            cursor: pointer; color: var(--text-muted); font-size: 1rem; padding: 0; transition: all 0.2s;
-        }
-        .refresh-sub-btn:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-glow); }
-        .refresh-sub-btn:active { transform: rotate(180deg); }
+        /* (tier-badge and refresh-sub-btn replaced by sub-hero premium design above) */
 
         .dash-grid {
             display: grid;
@@ -326,6 +304,383 @@
             .modal .modal-text { font-size: 0.82rem; }
         }
 
+        /* ── User Avatar + Dropdown ─────────────────────── */
+        .user-avatar-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.25rem 0.5rem 0.25rem 0.25rem;
+            border-radius: var(--radius-full);
+            border: 1px solid var(--border-primary);
+            background: transparent;
+            cursor: pointer;
+            transition: all var(--transition-fast);
+            font-family: var(--font-sans);
+            color: var(--text-primary);
+        }
+        .user-avatar-btn:hover {
+            border-color: var(--accent);
+            background: var(--accent-glow);
+        }
+        .user-avatar-circle {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            background: var(--accent-gradient);
+            color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.75rem;
+            font-weight: 700;
+            flex-shrink: 0;
+            overflow: hidden;
+        }
+        .user-avatar-name {
+            font-size: 0.82rem;
+            font-weight: 600;
+            max-width: 110px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .user-chevron {
+            color: var(--text-faint);
+            transition: transform 0.2s;
+        }
+        .user-menu.open .user-chevron {
+            transform: rotate(180deg);
+        }
+        .user-menu {
+            position: relative;
+            display: inline-flex;
+        }
+        .user-dropdown {
+            display: none;
+            position: absolute;
+            top: calc(100% + 6px);
+            right: 0;
+            min-width: 220px;
+            background: var(--card-bg);
+            border: 1px solid var(--border-primary);
+            border-radius: var(--radius-md);
+            box-shadow: var(--shadow-xl);
+            z-index: 100;
+            overflow: hidden;
+            backdrop-filter: blur(16px);
+            animation: drop-in 0.15s ease;
+        }
+        @keyframes drop-in {
+            from { opacity: 0; transform: translateY(-6px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .user-menu.open .user-dropdown { display: block; }
+        .user-dropdown-header {
+            padding: 0.75rem 1rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.2rem;
+        }
+        .user-dropdown-email {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            word-break: break-all;
+        }
+        .user-dropdown-plan {
+            font-size: 0.72rem;
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+        .user-dropdown-divider {
+            height: 1px;
+            background: var(--border-subtle);
+            margin: 0;
+        }
+        .user-dropdown-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.65rem 1rem;
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            text-decoration: none;
+            transition: background var(--transition-fast);
+        }
+        .user-dropdown-item svg {
+            flex-shrink: 0;
+            color: var(--text-muted);
+        }
+        .user-dropdown-item:hover {
+            background: var(--btn-secondary-hover);
+            color: var(--text-primary);
+        }
+        .user-dropdown-item:last-child:hover {
+            color: var(--red);
+        }
+        .user-dropdown-item:last-child:hover svg {
+            color: var(--red);
+        }
+
+        /* ── Logout Confirm Modal ────────────────────────── */
+        .logout-modal-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.6);
+            z-index: 1001;
+            backdrop-filter: blur(6px);
+        }
+        .logout-modal-overlay.open { display: block; }
+        .logout-modal {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0.96);
+            z-index: 1002;
+            background: var(--card-bg);
+            border: 1px solid var(--border-primary);
+            border-radius: var(--radius-lg);
+            padding: 2rem;
+            min-width: 360px;
+            max-width: 90vw;
+            box-shadow: var(--shadow-xl);
+            text-align: center;
+            opacity: 0;
+            transition: all 0.2s ease;
+        }
+        .logout-modal.open {
+            display: block;
+            opacity: 1;
+            transform: translate(-50%, -50%) scale(1);
+        }
+        .logout-modal .logout-icon {
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            background: var(--red-bg, rgba(239,68,68,0.12));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 1rem;
+            font-size: 1.6rem;
+        }
+        .logout-modal .logout-title {
+            font-size: 1.15rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            color: var(--text-primary);
+        }
+        .logout-modal .logout-text {
+            font-size: 0.88rem;
+            color: var(--text-muted);
+            line-height: 1.55;
+            margin-bottom: 1.5rem;
+            max-width: 320px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        .logout-modal .logout-btns {
+            display: flex;
+            gap: 0.65rem;
+            justify-content: center;
+        }
+        .logout-modal .logout-btns .btn {
+            min-width: 120px;
+            padding: 0.6rem 1.2rem;
+            font-size: 0.9rem;
+        }
+        @media (max-width: 520px) {
+            .logout-modal {
+                min-width: unset;
+                width: 88vw;
+                padding: 1.5rem;
+            }
+            .logout-modal .logout-title { font-size: 1rem; }
+            .logout-modal .logout-text { font-size: 0.82rem; }
+            .logout-modal .logout-btns { flex-direction: column; align-items: stretch; }
+            .logout-modal .logout-btns .btn { width: 100%; }
+            .user-dropdown { right: -40px; }
+        }
+
+        /* ── Profile Card ────────────────────────────────── */
+        .profile-card-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+        .profile-avatar-large {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            background: var(--accent-gradient);
+            color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            font-weight: 700;
+            flex-shrink: 0;
+        }
+        .profile-info {
+            flex: 1;
+            min-width: 0;
+        }
+        .profile-info .profile-name {
+            font-size: 1rem;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+        .profile-info .profile-email {
+            font-size: 0.82rem;
+            color: var(--text-muted);
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .profile-meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem 1.5rem;
+        }
+        .profile-meta-item {
+            font-size: 0.82rem;
+            color: var(--text-muted);
+            display: flex;
+            align-items: center;
+            gap: 0.35rem;
+        }
+        .profile-meta-item strong {
+            color: var(--text-secondary);
+            font-weight: 600;
+        }
+
+        /* ── Subscription Card — Premium ──────────────────── */
+        .sub-hero {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 1rem;
+            margin-bottom: 1.25rem;
+            flex-wrap: wrap;
+        }
+        .sub-hero-left {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+        .sub-plan-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: var(--radius-md);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.3rem;
+            flex-shrink: 0;
+        }
+        .sub-plan-icon.free { background: var(--bg-tertiary); border: 1px solid var(--border-primary); }
+        .sub-plan-icon.starter { background: var(--accent-glow); border: 1px solid var(--accent); }
+        .sub-plan-icon.pro { background: var(--accent-glow); border: 1px solid var(--accent); }
+        .sub-plan-icon.enterprise { background: var(--green-bg); border: 1px solid var(--green); }
+        .sub-plan-name {
+            font-size: 1.2rem;
+            font-weight: 800;
+            letter-spacing: -0.01em;
+        }
+        .sub-plan-status {
+            font-size: 0.78rem;
+            color: var(--text-muted);
+        }
+        .sub-cta-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            padding: 0.5rem 1.1rem;
+            border-radius: var(--radius-sm);
+            font-size: 0.82rem;
+            font-weight: 700;
+            font-family: var(--font-sans);
+            cursor: pointer;
+            text-decoration: none;
+            transition: all var(--transition-fast);
+            border: none;
+        }
+        .sub-cta-btn.upgrade {
+            background: var(--accent-gradient);
+            color: #fff;
+        }
+        .sub-cta-btn.upgrade:hover {
+            opacity: 0.9;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px var(--accent-glow);
+        }
+        .sub-cta-btn.manage {
+            background: transparent;
+            border: 1px solid var(--border-primary);
+            color: var(--text-primary);
+        }
+        .sub-cta-btn.manage:hover {
+            border-color: var(--accent);
+            color: var(--accent);
+        }
+        .sub-cta-btn svg { flex-shrink: 0; }
+        .sub-usage-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 0.75rem;
+        }
+        .sub-usage-item {
+            background: var(--bg-tertiary);
+            border-radius: var(--radius-sm);
+            padding: 0.75rem;
+            text-align: center;
+        }
+        .sub-usage-item .sub-usage-value {
+            font-size: 1.15rem;
+            font-weight: 800;
+            color: var(--text-primary);
+        }
+        .sub-usage-item .sub-usage-label {
+            font-size: 0.72rem;
+            color: var(--text-muted);
+            margin-top: 0.15rem;
+        }
+        .sub-usage-item .sub-usage-bar {
+            margin-top: 0.4rem;
+            height: 4px;
+            background: var(--border-primary);
+            border-radius: 2px;
+            overflow: hidden;
+        }
+        .sub-usage-item .sub-usage-bar .sub-usage-fill {
+            height: 100%;
+            border-radius: 2px;
+            background: var(--accent-gradient);
+            transition: width 0.6s ease;
+        }
+        .sub-period {
+            font-size: 0.78rem;
+            color: var(--text-faint);
+            margin-top: 1rem;
+            text-align: center;
+        }
+        .sub-period strong { color: var(--text-muted); }
+
+        @media (max-width: 600px) {
+            .sub-hero { flex-direction: column; align-items: stretch; }
+            .sub-hero-left { justify-content: center; }
+            .sub-cta-btn { justify-content: center; }
+            .sub-usage-grid { grid-template-columns: 1fr 1fr; }
+            .profile-card-header { flex-direction: column; text-align: center; }
+            .profile-meta { justify-content: center; }
+        }
+        @media (max-width: 400px) {
+            .sub-usage-grid { grid-template-columns: 1fr; }
+        }
+
         @media (max-width: 768px) {
             .dash-container { padding: 1rem 0.75rem; }
             .dash-header h1 { font-size: 1.25rem; }
@@ -449,10 +804,26 @@
                     <span id="auth-btn-label">Sign in</span>
                 </button>
                 <div class="user-menu" id="user-menu" style="display:none;">
-                    <button class="auth-btn" id="user-btn" onclick="logout()" title="Sign out">
-                        <span id="user-email-display" style="font-size:0.8rem;font-weight:500;max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"></span>
-                        <span style="opacity:0.6;font-size:0.72rem;">· Sign out</span>
+                    <button class="user-avatar-btn" id="user-btn" onclick="toggleUserDropdown()" title="Account menu">
+                        <span class="user-avatar-circle" id="user-avatar-circle">👤</span>
+                        <span class="user-avatar-name" id="user-avatar-name"></span>
+                        <svg class="user-chevron" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
                     </button>
+                    <div class="user-dropdown" id="user-dropdown">
+                        <div class="user-dropdown-header">
+                            <span class="user-dropdown-email" id="user-dropdown-email"></span>
+                            <span class="user-dropdown-plan" id="user-dropdown-plan">Free Plan</span>
+                        </div>
+                        <div class="user-dropdown-divider"></div>
+                        <a href="/pricing" class="user-dropdown-item">
+                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+                            Manage Billing
+                        </a>
+                        <div class="user-dropdown-item" onclick="showLogoutConfirm()" style="cursor:pointer;">
+                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+                            Sign Out
+                        </div>
+                    </div>
                 </div>
             </div>
             <a href="/playground/" class="nav-cta">
@@ -818,11 +1189,25 @@
 
         <div id="dash-authenticated-inner" style="display:none;">
         <div class="dash-grid">
+            <!-- Profile Card -->
+            <div class="dash-card" id="profile-card" style="display:none;">
+                <div class="profile-card-header">
+                    <div class="profile-avatar-large" id="profile-avatar-large">👤</div>
+                    <div class="profile-info">
+                        <div class="profile-name" id="profile-name">User</div>
+                        <div class="profile-email" id="profile-email"></div>
+                    </div>
+                </div>
+                <div class="profile-meta">
+                    <span class="profile-meta-item">🆔 <strong id="profile-org"></strong></span>
+                    <span class="profile-meta-item">📅 Joined <strong id="profile-joined">—</strong></span>
+                </div>
+            </div>
+
             <!-- Subscription Card -->
             <div class="dash-card" id="sub-card">
-                <div class="card-title" data-i18n="dash.sub_card">💳 Subscription</div>
                 <div id="sub-content">
-                    <div class="flex-center" style="gap:0.5rem;" data-i18n="dash.sub_loading"><span class="spinner-sm"></span> Loading...</div>
+                    <div class="flex-center" style="gap:0.5rem;padding:1rem 0;" data-i18n="dash.sub_loading"><span class="spinner-sm"></span> Loading...</div>
                 </div>
             </div>
 
@@ -1046,7 +1431,7 @@
     <!-- Toast -->
     <div class="toast" id="toast"></div>
 
-    <!-- Confirm Modal -->
+    <!-- Confirm Modal (existing) -->
     <div class="modal-overlay" id="confirm-overlay" onclick="closeConfirm()"></div>
     <div class="modal" id="confirm-modal">
         <div class="modal-icon" id="confirm-icon">⚠️</div>
@@ -1055,6 +1440,20 @@
         <div class="modal-btns">
             <button class="btn btn-secondary btn-sm" onclick="closeConfirm()">Cancel</button>
             <button class="btn btn-danger btn-sm" id="confirm-ok-btn" onclick="confirmAction()">Delete</button>
+        </div>
+    </div>
+
+    <!-- Logout Confirm Modal -->
+    <div class="logout-modal-overlay" id="logout-overlay" onclick="closeLogoutConfirm()"></div>
+    <div class="logout-modal" id="logout-modal">
+        <div class="logout-icon">🚪</div>
+        <div class="logout-title">Sign out of Memory Bridge?</div>
+        <div class="logout-text">
+            You'll need to sign in again to manage API keys, view subscription details, or access your dashboard.
+        </div>
+        <div class="logout-btns">
+            <button class="btn btn-secondary" onclick="closeLogoutConfirm()">Cancel</button>
+            <button class="btn btn-danger" id="logout-confirm-btn" onclick="logout()">Sign Out</button>
         </div>
     </div>
 
@@ -1187,34 +1586,58 @@
             const signInBtn = document.getElementById('auth-nav-btn');
             const userMenu = document.getElementById('user-menu');
             const mobileLabel = document.getElementById('auth-mobile-label');
-            const userEmailSpan = document.getElementById('user-email-display');
+            const avatarName = document.getElementById('user-avatar-name');
+            const avatarCircle = document.getElementById('user-avatar-circle');
+            const dropdownEmail = document.getElementById('user-dropdown-email');
 
             if (jwt && userMenu && signInBtn) {
-                // Signed in — show user email/name and sign out
                 signInBtn.style.display = 'none';
                 userMenu.style.display = 'inline-flex';
 
                 const claims = decodeJWT(jwt);
                 const displayName = claims?.email || claims?.name || claims?.sub || '';
-                if (userEmailSpan) userEmailSpan.textContent = displayName;
+                const initial = (displayName && displayName.length > 0) ? displayName[0].toUpperCase() : '?';
+
+                if (avatarName) avatarName.textContent = displayName.length > 16 ? displayName.slice(0, 14) + '…' : displayName;
+                if (avatarCircle) avatarCircle.textContent = initial;
+                if (dropdownEmail) dropdownEmail.textContent = displayName;
 
                 if (mobileLabel) mobileLabel.textContent = 'Sign out';
-                if (mobileLabel) {
-                    const mobileBtn = document.getElementById('auth-mobile-btn');
-                    if (mobileBtn) mobileBtn.onclick = function() { closeMobileNav(); logout(); };
-                }
+                const mobileBtn = document.getElementById('auth-mobile-btn');
+                if (mobileBtn) mobileBtn.onclick = function() { closeMobileNav(); showLogoutConfirm(); };
             } else if (userMenu && signInBtn) {
                 signInBtn.style.display = 'inline-flex';
                 userMenu.style.display = 'none';
                 if (mobileLabel) mobileLabel.textContent = 'Sign in';
-                if (mobileLabel) {
-                    const mobileBtn = document.getElementById('auth-mobile-btn');
-                    if (mobileBtn) mobileBtn.onclick = function() { closeMobileNav(); openAuth(); };
-                }
+                const mobileBtn = document.getElementById('auth-mobile-btn');
+                if (mobileBtn) mobileBtn.onclick = function() { closeMobileNav(); openAuth(); };
             }
         }
 
+        function toggleUserDropdown() {
+            const menu = document.getElementById('user-menu');
+            menu.classList.toggle('open');
+        }
+        // Close user dropdown on outside click
+        document.addEventListener('click', (e) => {
+            const menu = document.getElementById('user-menu');
+            if (menu && menu.classList.contains('open') && !e.target.closest('#user-menu')) {
+                menu.classList.remove('open');
+            }
+        });
+
+        function showLogoutConfirm() {
+            document.getElementById('user-menu')?.classList.remove('open');
+            document.getElementById('logout-overlay').classList.add('open');
+            document.getElementById('logout-modal').classList.add('open');
+        }
+        function closeLogoutConfirm() {
+            document.getElementById('logout-overlay').classList.remove('open');
+            document.getElementById('logout-modal').classList.remove('open');
+        }
+
         function logout() {
+            closeLogoutConfirm();
             localStorage.removeItem('mb_jwt');
             localStorage.removeItem('mb_api_key');
             currentApiKey = '';
@@ -1249,19 +1672,46 @@
             try {
                 const data = await api('GET', '/dashboard/data');
                 renderSubscription(data);
-                const orgLabel = data.organization_id === 'demo' ? 'Your Account' : `Org: ${data.organization_id}`;
-                const tierLabel = data.tier === 'demo' ? 'Demo' : data.tier.charAt(0).toUpperCase() + data.tier.slice(1);
-                document.getElementById('dash-status').textContent = `${orgLabel} · ${tierLabel} plan`;
+                renderProfile(data);
+                const tierIcon = data.tier === 'free' ? '🔷' : data.tier === 'starter' ? '💎' : data.tier === 'pro' ? '⚡' : '🏢';
+                const tierLabel = data.tier === 'demo' ? 'Demo' : data.tier.charAt(0).toUpperCase() + data.tier.slice(1) + ' Plan';
+                document.getElementById('dash-status').textContent = `${tierIcon} ${tierLabel}`;
+                document.getElementById('user-dropdown-plan').textContent = tierLabel;
             } catch (e) {
-                document.getElementById('dash-status').textContent = '⚠️ Could not load dashboard data. Run the demo key in the playground to get started.';
-                document.getElementById('sub-content').innerHTML = `<div style="color:var(--text-muted);font-size:0.85rem;">${__('dash.no_sub_tip')}</div>`;
+                const msg = e.message || '';
+                if (msg.includes('401') || msg.includes('Unauthorized') || msg.includes('Invalid API key')) {
+                    document.getElementById('dash-status').textContent = '🔑 Session expired. Please sign in again.';
+                } else {
+                    document.getElementById('dash-status').textContent = '⚠️ ' + (msg || 'Could not load dashboard data.');
+                }
+                document.getElementById('sub-content').innerHTML = `<div style="color:var(--text-muted);font-size:0.85rem;">Sign in to view your subscription details.</div>`;
             }
             loadKeys();
         }
 
+        function renderProfile(data) {
+            const card = document.getElementById('profile-card');
+            if (!card) return;
+            card.style.display = 'block';
+            const jwt = localStorage.getItem('mb_jwt');
+            let displayName = 'User';
+            if (jwt) {
+                const claims = decodeJWT(jwt);
+                displayName = claims?.name || claims?.email || claims?.sub || 'User';
+            }
+            const initial = displayName[0]?.toUpperCase() || 'U';
+            document.getElementById('profile-avatar-large').textContent = initial;
+            document.getElementById('profile-name').textContent = displayName;
+            const email = data.email || (jwt ? decodeJWT(jwt)?.email : '') || '';
+            document.getElementById('profile-email').textContent = email;
+            document.getElementById('profile-org').textContent = 'Memory Bridge';
+            const joined = data.created_at ? new Date(data.created_at).toLocaleDateString() : data.organization_id === 'demo' ? '—' : new Date().toLocaleDateString();
+            document.getElementById('profile-joined').textContent = joined;
+        }
+
         function restoreSubscription() {
             const statusEl = document.getElementById('dash-status');
-            const fallback = statusEl.textContent || 'Org: ... · Free plan';
+            const fallback = statusEl.textContent || '🔷 Free Plan';
             statusEl.textContent = '🔄 Checking for existing subscription...';
             api('POST', '/dashboard/restore-subscription').then(data => {
                 if (data.restored && data.tier !== 'free') {
@@ -1278,20 +1728,64 @@
 
         function renderSubscription(data) {
             const el = document.getElementById('sub-content');
-            const tierClass = data.tier || 'free';
-            const tierLabel = data.tier ? data.tier.charAt(0).toUpperCase() + data.tier.slice(1) : 'Free';
+            const tier = data.tier || 'free';
+            const tierLabel = tier.charAt(0).toUpperCase() + tier.slice(1);
+            const isFree = tier === 'free' || tier === 'demo';
             const periodEnd = data.current_period_end
                 ? new Date(data.current_period_end).toLocaleDateString()
-                : '—';
+                : null;
+            const statusText = data.status === 'active' && !isFree ? __('dash.status_active') : data.status === 'canceled' ? __('dash.status_canceled') : '';
+            const tierEmoji = tier === 'free' ? '🔷' : tier === 'starter' ? '💎' : tier === 'pro' ? '⚡' : '🏢';
+            const keyLimit = {free: 5, starter: 25, pro: 100}[tier] || '∞';
+            const memLimit = {free: '1K', starter: '100K', pro: '1M'}[tier] || '∞';
+            const memValue = tier === 'demo' ? '—' : data.memories || 0;
+            const keyCount = data.active_keys || 0;
+            const memPct = !isFree || tier === 'demo' ? 0 : Math.min(100, Math.round((memValue / 1000) * 100));
 
             el.innerHTML = `
-                <div style="display:flex;align-items:center;gap:1rem;flex-wrap:wrap;">
-                    <span class="tier-badge ${tierClass}">${tierLabel}</span>
-                    <span style="font-size:0.85rem;color:var(--text-muted);">${__( data.status === 'active' ? 'dash.status_active' : 'dash.status_canceled')}</span>
-                    <span style="font-size:0.85rem;color:var(--text-muted);">${__('dash.keys_count', {count: data.active_keys})}</span>
-                    ${periodEnd !== '—' ? `<span style="font-size:0.82rem;color:var(--text-faint);">${__('dash.period_ends', {date: periodEnd})}</span>` : ''}
-                    ${data.tier === 'free' ? `<button class="refresh-sub-btn" onclick="restoreSubscription()" title="Refresh subscription status">↻</button>` : ''}
+                <div class="sub-hero">
+                    <div class="sub-hero-left">
+                        <div class="sub-plan-icon ${tier}">${tierEmoji}</div>
+                        <div>
+                            <div class="sub-plan-name">${tierLabel} Plan</div>
+                            <div class="sub-plan-status">${statusText || (isFree ? 'Full API access · Auto-cutoff at limit' : '')}</div>
+                        </div>
+                    </div>
+                    <div style="display:flex;gap:0.5rem;flex-wrap:wrap;">
+                        ${isFree ? `<a href="/pricing" class="sub-cta-btn upgrade">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                            Upgrade Plan
+                        </a>` : `<a href="/pricing" class="sub-cta-btn manage">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+                            Manage Billing
+                        </a>`}
+                        ${isFree ? `<button class="sub-cta-btn manage" onclick="restoreSubscription()" title="Refresh subscription status">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+                            Refresh
+                        </button>` : ''}
+                    </div>
                 </div>
+                <div class="sub-usage-grid">
+                    <div class="sub-usage-item">
+                        <div class="sub-usage-value">${typeof memValue === 'number' ? memValue.toLocaleString() : memValue}<span style="font-size:0.7rem;color:var(--text-faint);">/${memLimit}</span></div>
+                        <div class="sub-usage-label">Memories</div>
+                        ${!isFree || tier === 'demo' ? '' : `<div class="sub-usage-bar"><div class="sub-usage-fill" style="width:${memPct}%"></div></div>`}
+                    </div>
+                    <div class="sub-usage-item">
+                        <div class="sub-usage-value">${keyCount}<span style="font-size:0.7rem;color:var(--text-faint);">/${keyLimit}</span></div>
+                        <div class="sub-usage-label">API Keys</div>
+                        ${isFree ? `<div class="sub-usage-bar"><div class="sub-usage-fill" style="width:${Math.min(100, (keyCount / keyLimit) * 100)}%"></div></div>` : ''}
+                    </div>
+                    <div class="sub-usage-item">
+                        <div class="sub-usage-value">${data.sessions || '—'}</div>
+                        <div class="sub-usage-label">Sessions</div>
+                    </div>
+                    <div class="sub-usage-item">
+                        <div class="sub-usage-value">${data.rate_limit || '60'}<span style="font-size:0.7rem;color:var(--text-faint);">/min</span></div>
+                        <div class="sub-usage-label">Rate Limit</div>
+                    </div>
+                </div>
+                ${periodEnd ? `<div class="sub-period">Current period ends <strong>${periodEnd}</strong></div>` : ''}
             `;
         }
 

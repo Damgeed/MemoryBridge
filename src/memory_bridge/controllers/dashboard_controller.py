@@ -59,8 +59,7 @@ async def create_api_key(
     # Determine the user's tier
     try:
         from ..models import Subscription
-        subs = await storage.list_subscriptions()
-        sub = next((s for s in subs if s.organization_id == org_id), None)
+        sub = await storage.get_subscription_by_org(org_id)
         tier = sub.tier if sub else "free"
     except Exception:
         tier = "free"
@@ -315,16 +314,34 @@ async def get_dashboard_data(
 
     # Get memory count
     mem_count = 0
-    try:
-        memories = await storage.query_memories(limit=1, offset=0)
-        # Try to get total count - may not be available in all backends
-        mem_count = len(memories)
-    except Exception:
-        pass
 
     tier = sub.tier if sub else "free"
     if sub and sub.status == "canceled":
         tier = "free"
+
+    # Get user info for display — decode from JWT
+    user_name = ""
+    user_email = ""
+    try:
+        import jwt as pyjwt
+        from ..config import get_settings
+        settings = get_settings()
+        auth_header = request.headers.get("Authorization", "")
+        if auth_header.startswith("Bearer "):
+            token = auth_header[7:]
+            claims = pyjwt.decode(
+                token,
+                settings.jwt_secret,
+                algorithms=[settings.jwt_algorithm or "HS256"],
+                options={"verify_exp": False},
+            )
+            if claims.get("email"):
+                user_email = claims.get("email", "")
+                user_name = claims.get("name", "")
+            elif claims.get("sub"):
+                user_email = claims.get("sub", "")
+    except Exception:
+        pass
 
     return {
         "organization_id": org_id,
@@ -333,6 +350,8 @@ async def get_dashboard_data(
         "active_keys": len(active_keys),
         "total_keys": len(user_keys),
         "current_period_end": sub.current_period_end.isoformat() if sub and sub.current_period_end else None,
+        "user_name": user_name,
+        "user_email": user_email,
     }
 
 
