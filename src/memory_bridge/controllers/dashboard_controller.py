@@ -300,6 +300,31 @@ async def get_dashboard_data(
     """Get dashboard data: subscription info, key count, memory count."""
     org_id = _resolve_org(request)
 
+    # Decode user email from JWT early for fallback lookups
+    user_email = ""
+    user_name = ""
+    user_created_at = None
+    try:
+        import jwt as pyjwt
+        from ..config import get_settings
+        settings = get_settings()
+        auth_header = request.headers.get("Authorization", "")
+        if auth_header.startswith("Bearer "):
+            token = auth_header[7:]
+            claims = pyjwt.decode(
+                token,
+                settings.jwt_secret,
+                algorithms=[settings.jwt_algorithm or "HS256"],
+                options={"verify_exp": False},
+            )
+            if claims.get("email"):
+                user_email = claims.get("email", "")
+                user_name = claims.get("name", "")
+            elif claims.get("sub"):
+                user_email = claims.get("sub", "")
+    except Exception:
+        pass
+
     # Get subscription
     sub = None
     try:
@@ -423,39 +448,14 @@ async def get_dashboard_data(
     if sub and sub.status == "canceled":
         tier = "free"
 
-    # Get user info for display — decode from JWT
-    user_name = ""
-    user_email = ""
-    user_created_at = None
-    try:
-        import jwt as pyjwt
-        from ..config import get_settings
-        settings = get_settings()
-        auth_header = request.headers.get("Authorization", "")
-        if auth_header.startswith("Bearer "):
-            token = auth_header[7:]
-            claims = pyjwt.decode(
-                token,
-                settings.jwt_secret,
-                algorithms=[settings.jwt_algorithm or "HS256"],
-                options={"verify_exp": False},
-            )
-            if claims.get("email"):
-                user_email = claims.get("email", "")
-                user_name = claims.get("name", "")
-            elif claims.get("sub"):
-                user_email = claims.get("sub", "")
-
-        # Look up user record for created_at
-        if user_email:
-            try:
-                user_record = await storage.get_user_by_email(user_email)
-                if user_record and hasattr(user_record, 'created_at'):
-                    user_created_at = user_record.created_at.isoformat() if hasattr(user_record.created_at, 'isoformat') else str(user_record.created_at)
-            except Exception:
-                pass
-    except Exception:
-        pass
+    # Look up user record for created_at (email already decoded at top)
+    if user_email:
+        try:
+            user_record = await storage.get_user_by_email(user_email)
+            if user_record and hasattr(user_record, 'created_at'):
+                user_created_at = user_record.created_at.isoformat() if hasattr(user_record.created_at, 'isoformat') else str(user_record.created_at)
+        except Exception:
+            pass
 
     return {
         "organization_id": org_id,
