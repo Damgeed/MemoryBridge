@@ -1826,7 +1826,7 @@
                         detail = 'Session expired. Sign in again to continue.';
                     }
                 } else if (res.status === 429) {
-                    detail = 'Too many requests. Wait a moment and try again.';
+                    detail = 'Rate limit exceeded. Upgrade your plan for higher limits.';
                 }
                 throw new Error(detail);
             }
@@ -1853,12 +1853,12 @@
                 if (msg.includes('401') || msg.includes('Unauthorized') || msg.includes('Invalid API key')) {
                     document.getElementById('dash-status').textContent = '🔑 Session expired. Please sign in again.';
                     document.getElementById('sub-content').innerHTML = `<div style="color:var(--text-muted);font-size:0.85rem;">Sign in to view your subscription details.</div>`;
-                } else if (msg.includes('Too many requests')) {
+                } else if (msg.includes('Too many requests') || msg.includes('Rate limit exceeded')) {
                     document.getElementById('dash-status').textContent = '';
                     document.getElementById('sub-content').innerHTML = `
                         <div style="border:1px solid var(--orange);border-radius:var(--radius-md);padding:1rem;background:var(--bg-secondary);text-align:left;">
                             <div style="font-weight:700;font-size:0.9rem;color:var(--orange);margin-bottom:0.4rem;">⚠️ Rate Limit Reached</div>
-                            <div style="font-size:0.82rem;color:var(--text-muted);">Free plan: 300 requests/min. Wait a moment and try again, or upgrade for higher limits.</div>
+                            <div style="font-size:0.82rem;color:var(--text-muted);">Free plan: 300 requests/min. Upgrade for higher limits to continue using the API.</div>
                             <div style="margin-top:0.75rem;"><a href="/pricing" class="btn btn-primary btn-sm">Upgrade Plan →</a></div>
                         </div>`;
                 } else if (retries > 0) {
@@ -2061,11 +2061,11 @@
                                 <button class="btn btn-secondary btn-sm" onclick="document.getElementById('key-reveal-area').innerHTML='';">Dismiss</button>
                             </div>
                         </div>`;
-                } else if (msg.includes('Too many requests')) {
+                } else if (msg.includes('Too many requests') || msg.includes('Rate limit exceeded')) {
                     document.getElementById('key-reveal-area').innerHTML = `
                         <div style="border:1px solid var(--orange);border-radius:var(--radius-md);padding:0.85rem;background:var(--bg-secondary);">
                             <div style="font-weight:700;font-size:0.85rem;color:var(--orange);margin-bottom:0.4rem;">⚠️ Rate Limit Reached</div>
-                            <div style="font-size:0.82rem;color:var(--text-muted);">Free plan: 300 requests/min. Wait a moment and try again, or upgrade for higher limits.</div>
+                            <div style="font-size:0.82rem;color:var(--text-muted);">Free plan: 300 requests/min. Upgrade for higher limits to continue using the API.</div>
                             <div style="margin-top:0.6rem;"><a href="/pricing" class="btn btn-primary btn-sm" style="font-size:0.75rem;padding:0.25rem 0.7rem;">Upgrade Plan →</a></div>
                         </div>`;
                 } else {
@@ -2086,8 +2086,8 @@
                     loadDashboard();  // Refresh subscription card key count
                 } catch (e) {
                     const msg = e.message || '';
-                    if (msg.includes('Too many requests')) {
-                        showToast('⚠️ Rate limit reached. Wait a moment and try again.');
+                    if (msg.includes('Too many requests') || msg.includes('Rate limit exceeded')) {
+                        showToast('⚠️ Upgrade your plan for higher rate limits.');
                     } else {
                         showToast('⚠️ ' + msg);
                     }
