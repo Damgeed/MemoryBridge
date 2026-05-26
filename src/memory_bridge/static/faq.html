@@ -577,13 +577,13 @@
 <div class="logout-modal-overlay" id="logout-overlay" onclick="closeLogoutConfirm()"></div>
 <div class="logout-modal" id="logout-modal">
     <div class="logout-icon">🚪</div>
-    <div class="logout-title">Sign out of Memory Bridge?</div>
-    <div class="logout-text">
+    <div class="logout-title" data-i18n="logout.title">Sign out of Memory Bridge?</div>
+    <div class="logout-text" data-i18n="logout.text">
         You'll need to sign in again to manage API keys, view subscription details, or access your dashboard.
     </div>
     <div class="logout-btns">
-        <button class="btn btn-secondary" onclick="closeLogoutConfirm()">Cancel</button>
-        <button class="btn btn-danger" id="logout-confirm-btn" onclick="logout()">Sign Out</button>
+        <button class="btn btn-secondary" data-i18n="logout.cancel" onclick="closeLogoutConfirm()">Cancel</button>
+        <button class="btn btn-danger" id="logout-confirm-btn" data-i18n="logout.sign_out" onclick="logout()">Sign Out</button>
     </div>
 </div>
 
