@@ -1791,7 +1791,36 @@
                 catch { detail = res.statusText || `HTTP ${res.status}`; }
                 // Translate server errors to human language
                 if (res.status === 401) {
-                    detail = 'Session expired. Sign in again to continue.';
+                    const dot = document.getElementById('session-dot');
+                    const dotIsRed = dot && dot.classList.contains('red');
+                    if (!dotIsRed) {
+                        // Dot is green/amber — JWT looks valid client-side, backend rejection is transient.
+                        // Try to refresh the JWT silently and retry
+                        const jwt = localStorage.getItem('mb_jwt');
+                        if (jwt) {
+                            try {
+                                const refresh = await fetch('/auth/refresh', {
+                                    method: 'POST',
+                                    headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify({ token: jwt }),
+                                });
+                                if (refresh.ok) {
+                                    const refreshData = await refresh.json();
+                                    if (refreshData.token) {
+                                        localStorage.setItem('mb_jwt', refreshData.token);
+                                        // Retry with fresh token
+                                        opts.headers = getAuthHeaders();
+                                        const retry = await fetch(API_BASE + path, opts);
+                                        if (retry.ok) return retry.json();
+                                    }
+                                }
+                            } catch {}
+                        }
+                        // Refresh failed — don't slam auth gate, let setInterval handle it
+                        detail = 'Connection issue. Retrying...';
+                    } else {
+                        detail = 'Session expired. Sign in again to continue.';
+                    }
                 } else if (res.status === 429) {
                     detail = 'Too many requests. Wait a moment and try again.';
                 }
