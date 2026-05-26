@@ -2314,9 +2314,9 @@
                                     localStorage.setItem('mb_api_key', data.key);
                                     currentApiKey = data.key;
                                 } else {
-                                    // Key exists but plaintext isn't available — use key_id
+                                    // Keys exist but plaintext unavailable — use JWT instead
                                     localStorage.removeItem('mb_api_key');
-                                    currentApiKey = data.key_id || '';
+                                    currentApiKey = '';
                                 }
                             } else if (kvRes.status === 401) {
                                 // JWT genuinely expired — clear it
@@ -2369,8 +2369,9 @@
                             localStorage.setItem('mb_api_key', data.key);
                             currentApiKey = data.key;
                         } else {
+                            // Keys exist but plaintext unavailable — use JWT instead
                             localStorage.removeItem('mb_api_key');
-                            currentApiKey = data.key_id || '';
+                            currentApiKey = '';
                         }
                     } else if (kvRes.status === 401) {
                         localStorage.removeItem('mb_jwt');
