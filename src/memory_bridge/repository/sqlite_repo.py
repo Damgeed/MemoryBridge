@@ -226,6 +226,18 @@ class SQLiteMemoryRepository(MemoryRepository):
                     value TEXT NOT NULL,
                     updated_at TEXT NOT NULL
                 );
+                CREATE TABLE IF NOT EXISTS users (
+                    id TEXT PRIMARY KEY DEFAULT (lower(hex(randomblob(16)))),
+                    email TEXT NOT NULL UNIQUE,
+                    password_hash TEXT NOT NULL DEFAULT '',
+                    name TEXT NOT NULL DEFAULT '',
+                    organization_id TEXT,
+                    role TEXT NOT NULL DEFAULT 'member',
+                    is_active INTEGER NOT NULL DEFAULT 1,
+                    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+                    updated_at TEXT NOT NULL DEFAULT (datetime('now')),
+                    stripe_customer_id TEXT NOT NULL DEFAULT ''
+                );
                 CREATE TABLE IF NOT EXISTS api_keys (
                     id TEXT PRIMARY KEY,
                     key_hash TEXT NOT NULL UNIQUE,
