@@ -1652,7 +1652,8 @@
                             localStorage.removeItem('mb_jwt');
                             localStorage.removeItem('mb_api_key');
                             if (typeof updateAuthUI === 'function') updateAuthUI();
-                            if (typeof showAuthGate === 'function') showAuthGate();
+                            showAuthenticatedContent(false);
+                            openAuth();
                         }
                     }
                 } catch (e) {}
