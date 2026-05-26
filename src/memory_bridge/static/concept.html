@@ -300,6 +300,8 @@
                 <circle cx="120" cy="140" r="5" fill="#22d3ee" filter="url(#glow-cyan)"><animate attributeName="opacity" values="1;0.3;1" dur="1.5s" repeatCount="indefinite" begin="1s"/></circle>
                 <line x1="60" y1="195" x2="160" y2="195" stroke="rgba(34,211,238,0.2)" stroke-width="1"/>
                 <rect x="80" y="205" width="60" height="4" rx="2" fill="rgba(34,211,238,0.1)"/>
+                <!-- Head with tilt -->
+                <g><animateTransform attributeName="transform" type="rotate" values="-5,110,100;5,110,100;-5,110,100" dur="4s" repeatCount="indefinite"/>
                 <rect x="55" y="35" width="110" height="65" rx="14" fill="#0f172a" stroke="#22d3ee" stroke-width="1.5"/>
                 <ellipse cx="85" cy="60" rx="14" ry="12" fill="rgba(34,211,238,0.12)" stroke="rgba(34,211,238,0.4)" stroke-width="1"/>
                 <ellipse cx="135" cy="60" rx="14" ry="12" fill="rgba(34,211,238,0.12)" stroke="rgba(34,211,238,0.4)" stroke-width="1"/>
@@ -308,7 +310,7 @@
                 <line x1="110" y1="35" x2="110" y2="15" stroke="#22d3ee" stroke-width="1.5" opacity="0.6"/>
                 <circle cx="110" cy="13" r="4" fill="#22d3ee" filter="url(#glow-cyan)"><animate attributeName="r" values="4;5;4" dur="2s" repeatCount="indefinite"/></circle>
                 <circle cx="110" cy="13" r="8" fill="none" stroke="#22d3ee" stroke-width="0.5" opacity="0"><animate attributeName="r" values="4;14" dur="2s" repeatCount="indefinite"/><animate attributeName="opacity" values="0.6;0" dur="2s" repeatCount="indefinite"/></circle>
-                <circle cx="110" cy="13" r="8" fill="none" stroke="#22d3ee" stroke-width="0.5" opacity="0"><animate attributeName="r" values="4;14" dur="2s" repeatCount="indefinite" begin="1s"/><animate attributeName="opacity" values="0.6;0" dur="2s" repeatCount="indefinite" begin="1s"/></circle>
+                <circle cx="110" cy="13" r="8" fill="none" stroke="#22d3ee" stroke-width="0.5" opacity="0"><animate attributeName="r" values="4;14" dur="2s" repeatCount="indefinite" begin="1s"/><animate attributeName="opacity" values="0.6;0" dur="2s" repeatCount="indefinite" begin="1s"/></circle></g>
                 <g><animateTransform attributeName="transform" type="rotate" values="-15,30,120;15,30,120;-15,30,120" dur="3s" repeatCount="indefinite"/>
                     <rect x="15" y="110" width="25" height="12" rx="6" fill="#0f172a" stroke="#22d3ee" stroke-width="1" opacity="0.8"/>
                     <rect x="-5" y="105" width="22" height="22" rx="6" fill="#0f172a" stroke="#22d3ee" stroke-width="1"/>
@@ -323,10 +325,13 @@
                     <circle cx="212" cy="126" r="8" fill="rgba(34,211,238,0.1)" stroke="#22d3ee" stroke-width="1"/>
                     <line x1="220" y1="126" x2="260" y2="140" stroke="#22d3ee" stroke-width="1.5" stroke-dasharray="4,4" opacity="0.6"><animate attributeName="opacity" values="0.6;0.2;0.6" dur="2s" repeatCount="indefinite"/></line>
                 </g>
+                <!-- Animated legs (walking) -->
+                <g><animateTransform attributeName="transform" type="rotate" values="10,75,220;-10,75,220;10,75,220" dur="1.2s" repeatCount="indefinite"/>
                 <rect x="65" y="220" width="20" height="40" rx="6" fill="#0f172a" stroke="rgba(34,211,238,0.3)" stroke-width="1"/>
+                <rect x="55" y="255" width="40" height="10" rx="4" fill="#0f172a" stroke="rgba(34,211,238,0.3)" stroke-width="1"/></g>
+                <g><animateTransform attributeName="transform" type="rotate" values="-10,145,220;10,145,220;-10,145,220" dur="1.2s" repeatCount="indefinite"/>
                 <rect x="135" y="220" width="20" height="40" rx="6" fill="#0f172a" stroke="rgba(34,211,238,0.3)" stroke-width="1"/>
-                <rect x="55" y="255" width="40" height="10" rx="4" fill="#0f172a" stroke="rgba(34,211,238,0.3)" stroke-width="1"/>
-                <rect x="125" y="255" width="40" height="10" rx="4" fill="#0f172a" stroke="rgba(34,211,238,0.3)" stroke-width="1"/>
+                <rect x="125" y="255" width="40" height="10" rx="4" fill="#0f172a" stroke="rgba(34,211,238,0.3)" stroke-width="1"/></g>
                 <text x="110" y="285" text-anchor="middle" fill="#22d3ee" font-size="11" font-weight="700" letter-spacing="1" opacity="0.9">AGENT</text>
                 <text x="110" y="298" text-anchor="middle" fill="#64748b" font-size="8" letter-spacing="0.5">STORING · WRITE</text>
             </g></g>
@@ -345,6 +350,8 @@
                 <circle cx="120" cy="140" r="5" fill="#34d399" filter="url(#glow-emerald)"><animate attributeName="opacity" values="1;0.3;1" dur="2s" repeatCount="indefinite" begin="1.3s"/></circle>
                 <line x1="60" y1="195" x2="160" y2="195" stroke="rgba(52,211,153,0.2)" stroke-width="1"/>
                 <rect x="80" y="205" width="60" height="4" rx="2" fill="rgba(52,211,153,0.1)"/>
+                <!-- Head with tilt -->
+                <g><animateTransform attributeName="transform" type="rotate" values="5,110,95;-5,110,95;5,110,95" dur="3.5s" repeatCount="indefinite"/>
                 <path d="M 60,95 L 55,50 Q 55,35 70,35 L 150,35 Q 165,35 165,50 L 160,95 Z" fill="#0f172a" stroke="#34d399" stroke-width="1.5"/>
                 <rect x="70" y="52" width="80" height="22" rx="10" fill="rgba(52,211,153,0.08)" stroke="rgba(52,211,153,0.3)" stroke-width="1"/>
                 <line x1="110" y1="52" x2="110" y2="74" stroke="rgba(52,211,153,0.15)" stroke-width="1"/>
@@ -353,7 +360,7 @@
                 <line x1="90" y1="35" x2="85" y2="16" stroke="#34d399" stroke-width="1.5" opacity="0.5"/>
                 <line x1="130" y1="35" x2="135" y2="16" stroke="#34d399" stroke-width="1.5" opacity="0.5"/>
                 <circle cx="85" cy="14" r="3" fill="#34d399" filter="url(#glow-emerald)"><animate attributeName="r" values="3;4.5;3" dur="1.8s" repeatCount="indefinite"/></circle>
-                <circle cx="135" cy="14" r="3" fill="#34d399" filter="url(#glow-emerald)"><animate attributeName="r" values="3;4.5;3" dur="1.8s" repeatCount="indefinite" begin="0.9s"/></circle>
+                <circle cx="135" cy="14" r="3" fill="#34d399" filter="url(#glow-emerald)"><animate attributeName="r" values="3;4.5;3" dur="1.8s" repeatCount="indefinite" begin="0.9s"/></circle></g>
                 <g><animateTransform attributeName="transform" type="rotate" values="-15,30,120;15,30,120;-15,30,120" dur="2.5s" repeatCount="indefinite"/>
                     <rect x="15" y="120" width="25" height="12" rx="6" fill="#0f172a" stroke="#34d399" stroke-width="1" opacity="0.8"/>
                     <path d="M -5,115 Q -15,126 -5,137" stroke="#34d399" stroke-width="1.5" fill="none" opacity="0.7"/>
@@ -366,10 +373,13 @@
                     <circle cx="210" cy="136" r="7" fill="rgba(52,211,153,0.08)" stroke="#34d399" stroke-width="1"/>
                     <circle cx="210" cy="136" r="3" fill="#34d399" opacity="0"><animate attributeName="opacity" values="0;0.6;0" dur="1.5s" repeatCount="indefinite"/></circle>
                 </g>
+                <!-- Animated legs (walking) -->
+                <g><animateTransform attributeName="transform" type="rotate" values="10,75,220;-10,75,220;10,75,220" dur="1.2s" repeatCount="indefinite"/>
                 <rect x="65" y="220" width="20" height="40" rx="6" fill="#0f172a" stroke="rgba(52,211,153,0.3)" stroke-width="1"/>
+                <rect x="55" y="255" width="40" height="10" rx="4" fill="#0f172a" stroke="rgba(52,211,153,0.3)" stroke-width="1"/></g>
+                <g><animateTransform attributeName="transform" type="rotate" values="-10,145,220;10,145,220;-10,145,220" dur="1.2s" repeatCount="indefinite"/>
                 <rect x="135" y="220" width="20" height="40" rx="6" fill="#0f172a" stroke="rgba(52,211,153,0.3)" stroke-width="1"/>
-                <rect x="55" y="255" width="40" height="10" rx="4" fill="#0f172a" stroke="rgba(52,211,153,0.3)" stroke-width="1"/>
-                <rect x="125" y="255" width="40" height="10" rx="4" fill="#0f172a" stroke="rgba(52,211,153,0.3)" stroke-width="1"/>
+                <rect x="125" y="255" width="40" height="10" rx="4" fill="#0f172a" stroke="rgba(52,211,153,0.3)" stroke-width="1"/></g>
                 <text x="110" y="285" text-anchor="middle" fill="#34d399" font-size="11" font-weight="700" letter-spacing="1" opacity="0.9">AGENT</text>
                 <text x="110" y="298" text-anchor="middle" fill="#64748b" font-size="8" letter-spacing="0.5">RETRIEVING · READ</text>
             </g></g>
