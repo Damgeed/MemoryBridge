@@ -1254,7 +1254,7 @@ select.input { cursor: pointer; }
   .nav-icon-btn svg { width: 16px; height: 16px; }
   .container { padding: 0 0.75rem; }
   body { font-size: 0.95rem; }
-  .auth-btn-container { display: inline-flex !important; }
+  #auth-btn-container { display: inline-flex !important; }
   .user-avatar-name { display: none !important; }
   .user-plan-badge { display: none !important; }
 }
