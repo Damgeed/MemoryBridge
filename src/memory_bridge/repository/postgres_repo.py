@@ -1194,3 +1194,28 @@ class PostgresMemoryRepository(MemoryRepository):
         # Sort by created_at DESC and limit
         merged.sort(key=lambda e: e.created_at, reverse=True)
         return merged[:limit]
+
+    async def reset_all_data(self) -> dict:
+        """Delete all data from all tables in the current schema."""
+        counts = {}
+        async with self.pool.acquire() as conn:
+            # Get all user tables in this schema
+            rows = await conn.fetch(
+                "SELECT tablename FROM pg_tables "
+                "WHERE schemaname = $1 AND tablename NOT LIKE 'pg_%'",
+                self.schema,
+            )
+            tables = [r["tablename"] for r in rows]
+            for table in tables:
+                try:
+                    row = await conn.fetchrow(
+                        f"SELECT COUNT(*) AS cnt FROM {self.schema}.{table}"
+                    )
+                    before = row["cnt"] if row else 0
+                    await conn.execute(
+                        f"TRUNCATE TABLE {self.schema}.{table} CASCADE"
+                    )
+                    counts[table] = before
+                except Exception:
+                    counts[table] = 0
+        return {"tables": counts, "total": sum(counts.values())}
