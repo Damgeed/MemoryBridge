@@ -53,33 +53,6 @@ async def get_subscription(
     return sub
 
 
-@router.post("/pre-checkout")
-async def create_pre_checkout(
-    tier: str = "pro",
-    billing: BillingService = Depends(_get_billing_service),
-):
-    """Create a Stripe checkout session for unauthenticated users.
-
-    Generates a temporary pending org_id that can be linked to the
-    user's real account after they sign up. Returns a pending_org_id
-    that the frontend should store and pass to /auth/link-subscription
-    after registration.
-    """
-    import uuid
-    pending_org_id = f"pending-{uuid.uuid4().hex[:12]}"
-    url = await billing.create_checkout_session(
-        organization_id=pending_org_id,
-        tier=tier,
-        success_url=f"{billing.app_url}/dashboard?pending_org_id={pending_org_id}",
-    )
-    if url is None:
-        raise HTTPException(
-            status_code=400,
-            detail="Could not create checkout session. Is Stripe configured?",
-        )
-    return {"checkout_url": url, "pending_org_id": pending_org_id}
-
-
 @router.post("/checkout")
 async def create_checkout_auth(
     request: Request,

@@ -176,8 +176,24 @@ async def get_my_api_key_value(request: Request):
     user_keys = [k for k in all_keys if k.get("project_id") == org_id and k.get("is_active") is not False]
 
     if not user_keys:
-        # No keys yet — user needs to generate one from the dashboard
-        return {"key": None, "key_id": "", "key_count": 0, "new": False, "hint": "Generate your first API key from the dashboard."}
+        # No keys yet — auto-create one for the user
+        try:
+            new_key = await storage.create_api_key(
+                label="auto",
+                project_id=org_id,
+            )
+            logger.info("Auto-created API key for org=%s", org_id)
+            return {
+                "key": new_key.get("key", ""),
+                "key_id": new_key.get("id", ""),
+                "label": new_key.get("label", "auto"),
+                "key_count": 1,
+                "new": True,
+                "hint": "This is your new API key. Keep it safe!",
+            }
+        except Exception as e:
+            logger.warning("Auto-create API key failed for org=%s: %s", org_id, e)
+            return {"key": None, "key_id": "", "key_count": 0, "new": False, "hint": "Could not create API key. Try again from the dashboard."}
 
     # Return the most recent active key — never create a duplicate
     # list_api_keys returns hashes, not plaintext, which is by design.
@@ -281,58 +297,4 @@ async def get_me(request: Request):
         "name": auth.get("user_name", ""),
         "organization_id": auth.get("project_id", ""),
         "role": auth.get("role", "member"),
-    }
-
-
-class LinkSubscriptionRequest(BaseModel):
-    pending_org_id: str
-
-
-@router.post("/link-subscription")
-async def link_subscription(
-    req: LinkSubscriptionRequest,
-    request: Request,
-    storage: MemoryRepository = Depends(get_storage),
-):
-    """Link a pending (pre-registration) subscription to the user's account.
-
-    When a user subscribes before registering, the Stripe webhook stores
-    the subscription under a temporary 'pending-*' org_id. After the user
-    registers, this endpoint transfers that subscription to their real
-    org_id so they don't lose paid access.
-    """
-    auth = getattr(request.state, "auth", None)
-    if not auth:
-        raise HTTPException(status_code=401, detail="Authentication required")
-
-    real_org_id = auth.get("project_id", "")
-    if not real_org_id or real_org_id in ("default", "demo", ""):
-        raise HTTPException(status_code=401, detail="Could not resolve your account. Please sign in again.")
-
-    pending_org_id = req.pending_org_id
-    if not pending_org_id.startswith("pending-"):
-        raise HTTPException(status_code=400, detail="Invalid pending subscription token")
-
-    # Look up the subscription stored under the pending org_id
-    pending_sub = await storage.get_subscription_by_org(pending_org_id)
-    if not pending_sub:
-        return {"status": "not_found", "message": "No pending subscription found. Payment may still be processing."}
-
-    # Transfer the subscription to the user's real org
-    pending_sub.organization_id = real_org_id
-    from datetime import timezone
-    pending_sub.updated_at = datetime.now(timezone.utc)
-    await storage.store_subscription(pending_sub)
-
-    # Clean up the old record still referencing pending org_id
-    # (store_subscription upserts by id, so the org_id is now updated)
-
-    logger.info(
-        "Transferred pending subscription %s from %s to %s",
-        pending_sub.id, pending_org_id, real_org_id,
-    )
-    return {
-        "status": "linked",
-        "tier": pending_sub.tier,
-        "subscription_id": pending_sub.id,
     }

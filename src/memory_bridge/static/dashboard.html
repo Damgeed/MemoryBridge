@@ -2467,6 +2467,18 @@
                                 if (data.key) {
                                     localStorage.setItem('mb_api_key', data.key);
                                     currentApiKey = data.key;
+                                    if (data.new) {
+                                        document.getElementById('key-reveal-area').innerHTML = `
+                                            <div class="key-reveal" style="border-color:var(--green);">
+                                                <div style="margin-bottom:0.5rem;font-weight:700;font-size:0.85rem;color:var(--green);">🎉 Welcome! Your API Key</div>
+                                                <div class="key-plaintext">${escapeHtml(data.key)}</div>
+                                                <div class="key-warning">⚠️ This is the only time you'll see this key. Copy it now.</div>
+                                                <div style="margin-top:0.75rem;display:flex;gap:0.5rem;">
+                                                    <button class="btn btn-primary btn-sm" onclick="copyText(this, '${data.key}')">📋 Copy Key</button>
+                                                    <button class="btn btn-secondary btn-sm" onclick="document.getElementById('key-reveal-area').innerHTML='';">Dismiss</button>
+                                                </div>
+                                            </div>`;
+                                    }
                                 } else {
                                     // Keys exist but plaintext unavailable — use JWT instead
                                     localStorage.removeItem('mb_api_key');
