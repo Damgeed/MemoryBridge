@@ -1101,24 +1101,3 @@ class SQLiteMemoryRepository(MemoryRepository):
         # Sort by created_at DESC and limit
         merged.sort(key=lambda e: e.created_at, reverse=True)
         return merged[:limit]
-
-    async def reset_all_data(self) -> dict:
-        """Delete all data from all tables."""
-        counts = {}
-        tables = [
-            "api_keys", "users", "subscriptions", "sessions", "memories",
-            "audit_log", "oauth_accounts", "metrics", "projects",
-            "webhook_subscriptions", "webhook_events", "stripe_checkouts",
-        ]
-        async with aiosqlite.connect(self.db_path) as db:
-            for table in tables:
-                try:
-                    cursor = await db.execute(f"SELECT COUNT(*) FROM {table}")
-                    row = await cursor.fetchone()
-                    before = row[0] if row else 0
-                    await db.execute(f"DELETE FROM {table}")
-                    counts[table] = before
-                except Exception:
-                    counts[table] = 0
-            await db.commit()
-        return {"tables": counts, "total": sum(counts.values())}

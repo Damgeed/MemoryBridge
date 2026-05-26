@@ -212,8 +212,3 @@ class MemoryRepository(ABC):
     @abstractmethod
     async def get_all_audit_entries(self) -> list[dict]:
         ...
-
-    @abstractmethod
-    async def reset_all_data(self) -> dict:
-        """Delete all data from all tables. Returns count of deleted records per table."""
-        ...

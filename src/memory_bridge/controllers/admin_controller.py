@@ -106,20 +106,3 @@ async def system_health(
 ):
     """Get system health status."""
     return await service.get_system_health()
-
-
-# ── Temporary: Reset Database (will be removed after wipe) ──────────────
-
-
-@router.post("/reset-database")
-async def reset_database(
-    token: str = Query(...),
-    storage: MemoryRepository = Depends(get_storage),
-):
-    """Truncate all tables for a fresh start. Requires reset_token= to proceed."""
-    expected = "reset-memory-bridge-2026"
-    if not expected or token != expected:
-        raise HTTPException(status_code=403, detail="Invalid reset token")
-
-    deleted = await storage.reset_all_data()
-    return {"reset": True, "deleted": deleted}
