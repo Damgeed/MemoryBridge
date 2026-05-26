@@ -56,10 +56,34 @@
                     <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
                 </svg>
             </button>
-            <button class="auth-btn" onclick="openAuth()">
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-                <span>Sign in</span>
-            </button>
+            <div class="auth-btn-container" id="auth-btn-container">
+                <button class="auth-btn" id="auth-nav-btn" onclick="openAuth()" title="Sign in / Sign up">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                    <span id="auth-btn-label">Sign in</span>
+                </button>
+                <div class="user-menu" id="user-menu" style="display:none;">
+                    <button class="user-avatar-btn" id="user-btn" onclick="toggleUserDropdown()" title="Account menu">
+                        <span class="user-avatar-circle" id="user-avatar-circle">👤</span>
+                        <span class="user-avatar-name" id="user-avatar-name"></span>
+                        <svg class="user-chevron" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+                    </button>
+                    <div class="user-dropdown" id="user-dropdown">
+                        <div class="user-dropdown-header">
+                            <span class="user-dropdown-email" id="user-dropdown-email"></span>
+                            <span class="user-dropdown-plan" id="user-dropdown-plan">Free Plan</span>
+                        </div>
+                        <div class="user-dropdown-divider"></div>
+                        <a href="/pricing" class="user-dropdown-item">
+                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+                            Manage Billing
+                        </a>
+                        <div class="user-dropdown-item" onclick="showLogoutConfirm()" style="cursor:pointer;">
+                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+                            Sign Out
+                        </div>
+                    </div>
+                </div>
+            </div>
             <a href="/playground/" class="nav-cta">
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
                 <span>Launch</span>
@@ -87,9 +111,9 @@
         <a href="/playground/" onclick="closeMobileNav()"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg> Playground</a>
         <a href="/playground/graph.html" onclick="closeMobileNav()"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="5" cy="5" r="3"/><circle cx="19" cy="5" r="3"/><circle cx="12" cy="19" r="3"/><line x1="5" y1="5" x2="19" y2="5"/><line x1="5" y1="5" x2="12" y2="19"/><line x1="19" y1="5" x2="12" y2="19"/></svg> Graph</a>
         <a href="/dashboard/" onclick="closeMobileNav()"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg> Dashboard</a>
-        <a href="javascript:void(0)" onclick="closeMobileNav();openAuth()" style="display:flex;align-items:center;gap:0.45rem;padding:0.7rem 1.25rem;border-radius:var(--radius-sm);font-size:0.88rem;font-weight:600;color:var(--accent);text-decoration:none;">
+        <a href="javascript:void(0)" id="auth-mobile-btn" onclick="closeMobileNav();openAuth()" style="display:flex;align-items:center;gap:0.45rem;padding:0.7rem 1.25rem;border-radius:var(--radius-sm);font-size:0.88rem;font-weight:600;color:var(--accent);text-decoration:none;">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-            <span>Sign in</span>
+            <span id="auth-mobile-label">Sign in</span>
         </a>
         <a href="/pricing" onclick="closeMobileNav()"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg> Pricing</a>
         <a href="/api-docs" class="active" onclick="closeMobileNav()"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg> API Docs</a>
@@ -502,6 +526,206 @@
         cursor: not-allowed;
         transform: none;
       }
+
+      /* ── User Avatar + Dropdown ─────────────────────── */
+      .user-avatar-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.25rem 0.5rem 0.25rem 0.25rem;
+        border-radius: var(--radius-full);
+        border: 1px solid var(--border-primary);
+        background: transparent;
+        cursor: pointer;
+        transition: all var(--transition-fast);
+        font-family: var(--font-sans);
+        color: var(--text-primary);
+      }
+      .user-avatar-btn:hover {
+        border-color: var(--accent);
+        background: var(--accent-glow);
+      }
+      .user-avatar-circle {
+        width: 28px;
+        height: 28px;
+        border-radius: 50%;
+        background: var(--accent-gradient);
+        color: #fff;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.75rem;
+        font-weight: 700;
+        flex-shrink: 0;
+        overflow: hidden;
+      }
+      .user-avatar-name {
+        font-size: 0.82rem;
+        font-weight: 600;
+        max-width: 110px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+      .user-chevron {
+        color: var(--text-faint);
+        transition: transform 0.2s;
+      }
+      .user-menu.open .user-chevron {
+        transform: rotate(180deg);
+      }
+      .user-menu {
+        position: relative;
+        display: inline-flex;
+      }
+      .user-dropdown {
+        display: none;
+        position: absolute;
+        top: calc(100% + 6px);
+        right: 0;
+        min-width: 220px;
+        background: var(--card-bg);
+        border: 1px solid var(--border-primary);
+        border-radius: var(--radius-md);
+        box-shadow: var(--shadow-xl);
+        z-index: 100;
+        overflow: hidden;
+        backdrop-filter: blur(16px);
+        animation: drop-in 0.15s ease;
+      }
+      @keyframes drop-in {
+        from { opacity: 0; transform: translateY(-6px); }
+        to { opacity: 1; transform: translateY(0); }
+      }
+      .user-menu.open .user-dropdown { display: block; }
+      .user-dropdown-header {
+        padding: 0.75rem 1rem;
+        display: flex;
+        flex-direction: column;
+        gap: 0.2rem;
+      }
+      .user-dropdown-email {
+        font-size: 0.85rem;
+        font-weight: 600;
+        color: var(--text-primary);
+        word-break: break-all;
+      }
+      .user-dropdown-plan {
+        font-size: 0.72rem;
+        color: var(--text-muted);
+        font-weight: 500;
+      }
+      .user-dropdown-divider {
+        height: 1px;
+        background: var(--border-subtle);
+        margin: 0;
+      }
+      .user-dropdown-item {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.65rem 1rem;
+        font-size: 0.85rem;
+        color: var(--text-secondary);
+        text-decoration: none;
+        transition: background var(--transition-fast);
+      }
+      .user-dropdown-item svg {
+        flex-shrink: 0;
+        color: var(--text-muted);
+      }
+      .user-dropdown-item:hover {
+        background: var(--btn-secondary-hover);
+        color: var(--text-primary);
+      }
+      .user-dropdown-item:last-child:hover {
+        color: var(--red);
+      }
+      .user-dropdown-item:last-child:hover svg {
+        color: var(--red);
+      }
+
+      /* ── Logout Confirm Modal ────────────────────────── */
+      .logout-modal-overlay {
+        display: none;
+        position: fixed;
+        inset: 0;
+        background: rgba(0,0,0,0.6);
+        z-index: 1001;
+        backdrop-filter: blur(6px);
+      }
+      .logout-modal-overlay.open { display: block; }
+      .logout-modal {
+        display: none;
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%) scale(0.96);
+        z-index: 1002;
+        background: var(--card-bg);
+        border: 1px solid var(--border-primary);
+        border-radius: var(--radius-lg);
+        padding: 2rem;
+        min-width: 360px;
+        max-width: 90vw;
+        box-shadow: var(--shadow-xl);
+        text-align: center;
+        opacity: 0;
+        transition: all 0.2s ease;
+      }
+      .logout-modal.open {
+        display: block;
+        opacity: 1;
+        transform: translate(-50%, -50%) scale(1);
+      }
+      .logout-modal .logout-icon {
+        width: 56px;
+        height: 56px;
+        border-radius: 50%;
+        background: var(--red-bg, rgba(239,68,68,0.12));
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 1rem;
+        font-size: 1.6rem;
+      }
+      .logout-modal .logout-title {
+        font-size: 1.15rem;
+        font-weight: 700;
+        margin-bottom: 0.5rem;
+        color: var(--text-primary);
+      }
+      .logout-modal .logout-text {
+        font-size: 0.88rem;
+        color: var(--text-muted);
+        line-height: 1.55;
+        margin-bottom: 1.5rem;
+        max-width: 320px;
+        margin-left: auto;
+        margin-right: auto;
+      }
+      .logout-modal .logout-btns {
+        display: flex;
+        gap: 0.65rem;
+        justify-content: center;
+      }
+      .logout-modal .logout-btns .btn {
+        min-width: 120px;
+        padding: 0.6rem 1.2rem;
+        font-size: 0.9rem;
+      }
+      @media (max-width: 520px) {
+        .logout-modal {
+          min-width: unset;
+          width: 88vw;
+          padding: 1.5rem;
+        }
+        .logout-modal .logout-title { font-size: 1rem; }
+        .logout-modal .logout-text { font-size: 0.82rem; }
+        .logout-modal .logout-btns { flex-direction: column; align-items: stretch; }
+        .logout-modal .logout-btns .btn { width: 100%; }
+        .user-dropdown { right: -40px; }
+      }
       .auth-phone-input-row {
         display: flex;
         gap: 0.5rem;
@@ -629,6 +853,20 @@
         color: var(--accent-hover);
       }
     </style>
+
+    <!-- Logout Confirm Modal -->
+    <div class="logout-modal-overlay" id="logout-overlay" onclick="closeLogoutConfirm()"></div>
+    <div class="logout-modal" id="logout-modal">
+        <div class="logout-icon">🚪</div>
+        <div class="logout-title">Sign out of Memory Bridge?</div>
+        <div class="logout-text">
+            You'll need to sign in again to manage API keys, view subscription details, or access your dashboard.
+        </div>
+        <div class="logout-btns">
+            <button class="btn btn-secondary" onclick="closeLogoutConfirm()">Cancel</button>
+            <button class="btn btn-danger" id="logout-confirm-btn" onclick="logout()">Sign Out</button>
+        </div>
+    </div>
 
     <script>
         // ── Shared Auth ──────────────────────────────────────────────
@@ -853,28 +1091,75 @@
             return div.innerHTML;
         }
 
+        function decodeJWT(token) {
+            try {
+                const payload = token.split('.')[1];
+                return JSON.parse(atob(payload.replace(/-/g, '+').replace(/_/g, '/')));
+            } catch { return null; }
+        }
+
         function updateAuthUI() {
             const jwt = localStorage.getItem('mb_jwt');
             const key = localStorage.getItem('mb_api_key');
-            const btn = document.querySelector('.auth-btn');
-            const label = btn ? btn.querySelector('span') : null;
-            if (jwt && key && label) {
-                label.textContent = 'Sign out';
-                btn.onclick = logout;
-                btn.title = 'Sign out';
-            } else if (label) {
-                label.textContent = 'Sign in';
-                btn.onclick = openAuth;
-                btn.title = 'Sign in / Sign up';
+            const signInBtn = document.getElementById('auth-nav-btn');
+            const userMenu = document.getElementById('user-menu');
+            const mobileLabel = document.getElementById('auth-mobile-label');
+            const avatarName = document.getElementById('user-avatar-name');
+            const avatarCircle = document.getElementById('user-avatar-circle');
+            const dropdownEmail = document.getElementById('user-dropdown-email');
+
+            if (jwt && userMenu && signInBtn) {
+                signInBtn.style.display = 'none';
+                userMenu.style.display = 'inline-flex';
+
+                const claims = decodeJWT(jwt);
+                const displayName = claims?.email || claims?.name || claims?.sub || '';
+                const initial = (displayName && displayName.length > 0) ? displayName[0].toUpperCase() : '?';
+
+                if (avatarName) avatarName.textContent = displayName.length > 16 ? displayName.slice(0, 14) + '…' : displayName;
+                if (avatarCircle) avatarCircle.textContent = initial;
+                if (dropdownEmail) dropdownEmail.textContent = displayName;
+
+                if (mobileLabel) mobileLabel.textContent = 'Sign out';
+                const mobileBtn = document.getElementById('auth-mobile-btn');
+                if (mobileBtn) mobileBtn.onclick = function() { closeMobileNav(); showLogoutConfirm(); };
+            } else if (userMenu && signInBtn) {
+                signInBtn.style.display = 'inline-flex';
+                userMenu.style.display = 'none';
+                if (mobileLabel) mobileLabel.textContent = 'Sign in';
+                const mobileBtn = document.getElementById('auth-mobile-btn');
+                if (mobileBtn) mobileBtn.onclick = function() { closeMobileNav(); openAuth(); };
             }
         }
 
+        function toggleUserDropdown() {
+            const menu = document.getElementById('user-menu');
+            menu.classList.toggle('open');
+        }
+        // Close user dropdown on outside click
+        document.addEventListener('click', (e) => {
+            const menu = document.getElementById('user-menu');
+            if (menu && menu.classList.contains('open') && !e.target.closest('#user-menu')) {
+                menu.classList.remove('open');
+            }
+        });
+
+        function showLogoutConfirm() {
+            document.getElementById('user-menu')?.classList.remove('open');
+            document.getElementById('logout-overlay').classList.add('open');
+            document.getElementById('logout-modal').classList.add('open');
+        }
+        function closeLogoutConfirm() {
+            document.getElementById('logout-overlay').classList.remove('open');
+            document.getElementById('logout-modal').classList.remove('open');
+        }
+
         function logout() {
+            closeLogoutConfirm();
             localStorage.removeItem('mb_jwt');
             localStorage.removeItem('mb_api_key');
             currentApiKey = '';
             updateAuthUI();
-            closeAuth();
         }
 
         function getAuthHeaders() {
