@@ -1,0 +1,538 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Memory Bridge — Agent Memory Concept</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700;800&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: #020617;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    font-family: 'JetBrains Mono', monospace;
+    overflow: hidden;
+  }
+
+  .container {
+    position: relative;
+    width: 1100px;
+    height: 750px;
+    background: radial-gradient(ellipse at 50% 50%, #0f172a 0%, #020617 70%);
+    border: 1px solid #1e293b;
+    border-radius: 24px;
+    overflow: hidden;
+  }
+
+  /* Grid background */
+  .grid {
+    position: absolute;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(30, 41, 59, 0.3) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(30, 41, 59, 0.3) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+  }
+
+  /* Title */
+  .title {
+    position: absolute;
+    top: 28px;
+    left: 0;
+    right: 0;
+    text-align: center;
+    color: #e2e8f0;
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    opacity: 0.6;
+  }
+  .title span { color: #22d3ee; }
+
+  /* ── SVG layer ── */
+  svg.main-svg {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+  }
+
+  /* ── Legend ── */
+  .legend {
+    position: absolute;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 28px;
+    background: rgba(15, 23, 42, 0.85);
+    padding: 10px 22px;
+    border-radius: 10px;
+    border: 1px solid #1e293b;
+    backdrop-filter: blur(8px);
+  }
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #94a3b8;
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 0.5px;
+  }
+  .legend-item .dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+  .legend-item .dot.cyan { background: #22d3ee; box-shadow: 0 0 8px rgba(34, 211, 238, 0.5); }
+  .legend-item .dot.emerald { background: #34d399; box-shadow: 0 0 8px rgba(52, 211, 153, 0.5); }
+  .legend-item .dot.violet { background: #a78bfa; box-shadow: 0 0 8px rgba(167, 139, 250, 0.5); }
+  .legend-item .dot.orange { background: #fb923c; box-shadow: 0 0 8px rgba(251, 146, 60, 0.5); }
+  .legend-item .line {
+    width: 24px;
+    height: 2px;
+    border-radius: 2px;
+  }
+  .legend-item .line.cyan { background: #22d3ee; }
+  .legend-item .line.dashed-cyan {
+    background: transparent;
+    border-top: 2px dashed #22d3ee;
+    height: 0;
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="grid"></div>
+  <div class="title">Memory Bridge · <span>Agent Memory Architecture</span></div>
+
+  <svg class="main-svg" viewBox="0 0 1100 750" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <!-- Glow filters -->
+      <filter id="glow-cyan" x="-30%" y="-30%" width="160%" height="160%">
+        <feGaussianBlur stdDeviation="6" result="blur"/>
+        <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+      </filter>
+      <filter id="glow-violet" x="-30%" y="-30%" width="160%" height="160%">
+        <feGaussianBlur stdDeviation="8" result="blur"/>
+        <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+      </filter>
+      <filter id="glow-emerald" x="-30%" y="-30%" width="160%" height="160%">
+        <feGaussianBlur stdDeviation="5" result="blur"/>
+        <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+      </filter>
+      <filter id="glow-orange" x="-30%" y="-30%" width="160%" height="160%">
+        <feGaussianBlur stdDeviation="4" result="blur"/>
+        <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+      </filter>
+
+      <!-- Brain gradient -->
+      <radialGradient id="brain-grad" cx="50%" cy="45%" r="50%">
+        <stop offset="0%" stop-color="#a78bfa" stop-opacity="0.4"/>
+        <stop offset="50%" stop-color="#7c3aed" stop-opacity="0.2"/>
+        <stop offset="100%" stop-color="#4c1d95" stop-opacity="0"/>
+      </radialGradient>
+
+      <!-- Agent 1 gradient -->
+      <linearGradient id="agent1-grad" x1="0" y1="0" x2="1" y2="1">
+        <stop offset="0%" stop-color="#22d3ee" stop-opacity="0.15"/>
+        <stop offset="100%" stop-color="#0891b2" stop-opacity="0.05"/>
+      </linearGradient>
+
+      <!-- Agent 2 gradient -->
+      <linearGradient id="agent2-grad" x1="0" y1="0" x2="1" y2="1">
+        <stop offset="0%" stop-color="#34d399" stop-opacity="0.15"/>
+        <stop offset="100%" stop-color="#059669" stop-opacity="0.05"/>
+      </linearGradient>
+
+      <!-- Arrow marker -->
+      <marker id="arrow-cyan" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto">
+        <path d="M 0 0 L 10 5 L 0 10 z" fill="#22d3ee"/>
+      </marker>
+      <marker id="arrow-emerald" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto">
+        <path d="M 0 0 L 10 5 L 0 10 z" fill="#34d399"/>
+      </marker>
+      <marker id="arrow-violet" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto">
+        <path d="M 0 0 L 10 5 L 0 10 z" fill="#a78bfa"/>
+      </marker>
+      <marker id="arrow-orange" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto">
+        <path d="M 0 0 L 10 5 L 0 10 z" fill="#fb923c"/>
+      </marker>
+
+      <!-- Noise pattern for brain -->
+      <filter id="brain-noise">
+        <feTurbulence type="fractalNoise" baseFrequency="0.015" numOctaves="3" result="noise"/>
+        <feDisplacementMap in="SourceGraphic" in2="noise" scale="3" xChannelSelector="R" yChannelSelector="G"/>
+      </filter>
+
+      <!-- Data particle glow -->
+      <filter id="particle-glow">
+        <feGaussianBlur stdDeviation="2"/>
+      </filter>
+    </defs>
+
+    <!-- ── ANIMATED DATA STREAM: AGENT 1 → BRAIN (Store) ── -->
+    <g>
+      <!-- Dot path 1 -->
+      <circle r="4" fill="#22d3ee" filter="url(#particle-glow)">
+        <animateMotion dur="3s" repeatCount="indefinite"
+          path="M 290,290 C 300,250 360,200 420,220 C 450,230 470,260 490,280 C 510,300 530,310 550,320"
+        />
+      </circle>
+      <circle r="2.5" fill="#67e8f9" opacity="0.6">
+        <animateMotion dur="3s" repeatCount="indefinite" begin="0.5s"
+          path="M 290,320 C 300,350 360,400 420,380 C 450,370 470,340 490,320 C 510,300 530,310 550,320"
+        />
+      </circle>
+      <circle r="3" fill="#22d3ee" filter="url(#particle-glow)">
+        <animateMotion dur="3.5s" repeatCount="indefinite" begin="1s"
+          path="M 290,260 C 310,210 380,180 430,210 C 460,230 480,270 500,290 C 520,310 540,315 550,320"
+        />
+      </circle>
+    </g>
+
+    <!-- ── ANIMATED DATA STREAM: BRAIN → AGENT 2 (Retrieve) ── -->
+    <g>
+      <circle r="4" fill="#34d399" filter="url(#particle-glow)">
+        <animateMotion dur="3s" repeatCount="indefinite"
+          path="M 550,370 C 570,380 600,400 630,380 C 660,360 690,340 720,330 C 750,320 780,310 810,310"
+        />
+      </circle>
+      <circle r="2.5" fill="#6ee7b7" opacity="0.6">
+        <animateMotion dur="3s" repeatCount="indefinite" begin="0.5s"
+          path="M 550,400 C 570,420 610,440 650,420 C 680,405 710,380 740,360 C 770,340 800,330 810,330"
+        />
+      </circle>
+      <circle r="3" fill="#34d399" filter="url(#particle-glow)">
+        <animateMotion dur="3.5s" repeatCount="indefinite" begin="1.5s"
+          path="M 550,340 C 580,320 620,300 660,310 C 690,320 720,340 750,330 C 780,320 800,320 810,320"
+        />
+      </circle>
+    </g>
+
+    <!-- ── CROSS-MEMORY STREAM (Agent 2 storing to Brain) ── -->
+    <g>
+      <circle r="3" fill="#a78bfa" filter="url(#particle-glow)">
+        <animateMotion dur="4s" repeatCount="indefinite" begin="0s"
+          path="M 810,270 C 780,240 730,220 680,240 C 640,255 600,280 570,300 C 555,310 555,320 550,320"
+        />
+      </circle>
+      <circle r="2" fill="#c4b5fd" opacity="0.5">
+        <animateMotion dur="4s" repeatCount="indefinite" begin="2s"
+          path="M 810,250 C 770,220 710,200 660,230 C 620,250 590,280 570,300 C 560,310 555,315 550,320"
+        />
+      </circle>
+    </g>
+
+    <!-- ── AGENT 1: The Storing Agent (Left) ── -->
+    <g transform="translate(130, 200)">
+      <!-- Outer glow -->
+      <ellipse cx="110" cy="140" rx="140" ry="130" fill="url(#agent1-grad)" filter="url(#glow-cyan)" opacity="0.3"/>
+
+      <!-- Robot body -->
+      <rect x="40" y="100" width="140" height="120" rx="16" fill="#0f172a" stroke="#22d3ee" stroke-width="1.5" opacity="0.95"/>
+      <!-- Chest panel -->
+      <rect x="60" y="120" width="100" height="60" rx="8" fill="rgba(34,211,238,0.06)" stroke="rgba(34,211,238,0.2)" stroke-width="1"/>
+      <!-- Chest indicator lights -->
+      <circle cx="80" cy="140" r="5" fill="#22d3ee" filter="url(#glow-cyan)">
+        <animate attributeName="opacity" values="1;0.3;1" dur="1.5s" repeatCount="indefinite"/>
+      </circle>
+      <circle cx="100" cy="140" r="5" fill="#22d3ee" filter="url(#glow-cyan)">
+        <animate attributeName="opacity" values="0.3;1;0.3" dur="1.5s" repeatCount="indefinite" begin="0.5s"/>
+      </circle>
+      <circle cx="120" cy="140" r="5" fill="#22d3ee" filter="url(#glow-cyan)">
+        <animate attributeName="opacity" values="1;0.3;1" dur="1.5s" repeatCount="indefinite" begin="1s"/>
+      </circle>
+      <!-- Waist line -->
+      <line x1="60" y1="195" x2="160" y2="195" stroke="rgba(34,211,238,0.2)" stroke-width="1"/>
+      <!-- Lower vent -->
+      <rect x="80" y="205" width="60" height="4" rx="2" fill="rgba(34,211,238,0.1)"/>
+
+      <!-- Robot head -->
+      <rect x="55" y="35" width="110" height="65" rx="14" fill="#0f172a" stroke="#22d3ee" stroke-width="1.5"/>
+      <!-- Eyes -->
+      <ellipse cx="85" cy="60" rx="14" ry="12" fill="rgba(34,211,238,0.12)" stroke="rgba(34,211,238,0.4)" stroke-width="1"/>
+      <ellipse cx="135" cy="60" rx="14" ry="12" fill="rgba(34,211,238,0.12)" stroke="rgba(34,211,238,0.4)" stroke-width="1"/>
+      <circle cx="85" cy="60" r="6" fill="#22d3ee" filter="url(#glow-cyan)">
+        <animate attributeName="rx" values="6;2;6" dur="4s" repeatCount="indefinite"/>
+      </circle>
+      <circle cx="135" cy="60" r="6" fill="#22d3ee" filter="url(#glow-cyan)">
+        <animate attributeName="rx" values="6;2;6" dur="4s" repeatCount="indefinite" begin="2s"/>
+      </circle>
+      <!-- Antenna -->
+      <line x1="110" y1="35" x2="110" y2="15" stroke="#22d3ee" stroke-width="1.5" opacity="0.6"/>
+      <circle cx="110" cy="13" r="4" fill="#22d3ee" filter="url(#glow-cyan)">
+        <animate attributeName="r" values="4;5;4" dur="2s" repeatCount="indefinite"/>
+      </circle>
+
+      <!-- Arms -->
+      <!-- Left arm (data collecting) -->
+      <g>
+        <animateTransform attributeName="transform" type="rotate" values="-10,30,120;10,30,120;-10,30,120" dur="3s" repeatCount="indefinite"/>
+        <rect x="15" y="110" width="25" height="12" rx="6" fill="#0f172a" stroke="#22d3ee" stroke-width="1" opacity="0.8"/>
+        <rect x="-5" y="105" width="22" height="22" rx="6" fill="#0f172a" stroke="#22d3ee" stroke-width="1"/>
+        <!-- Gripper -->
+        <path d="M 0,110 L -8,100" stroke="#22d3ee" stroke-width="1.5" fill="none" opacity="0.8">
+          <animate attributeName="d" values="M 0,110 L -8,100;M 0,110 L -8,108;M 0,110 L -8,100" dur="3s" repeatCount="indefinite"/>
+        </path>
+        <path d="M 15,110 L 23,100" stroke="#22d3ee" stroke-width="1.5" fill="none" opacity="0.8">
+          <animate attributeName="d" values="M 15,110 L 23,100;M 15,110 L 23,108;M 15,110 L 23,100" dur="3s" repeatCount="indefinite"/>
+        </path>
+      </g>
+
+      <!-- Right arm (sending data) -->
+      <g>
+        <animateTransform attributeName="transform" type="rotate" values="10,180,130;-10,180,130;10,180,130" dur="2.5s" repeatCount="indefinite"/>
+        <rect x="185" y="120" width="25" height="12" rx="6" fill="#0f172a" stroke="#22d3ee" stroke-width="1" opacity="0.8"/>
+        <circle cx="212" cy="126" r="8" fill="rgba(34,211,238,0.1)" stroke="#22d3ee" stroke-width="1"/>
+        <!-- Data beam -->
+        <line x1="220" y1="126" x2="260" y2="140" stroke="#22d3ee" stroke-width="1.5" stroke-dasharray="4,4" opacity="0.6">
+          <animate attributeName="opacity" values="0.6;0.2;0.6" dur="2s" repeatCount="indefinite"/>
+        </line>
+      </g>
+
+      <!-- Legs -->
+      <rect x="65" y="220" width="20" height="40" rx="6" fill="#0f172a" stroke="rgba(34,211,238,0.3)" stroke-width="1"/>
+      <rect x="135" y="220" width="20" height="40" rx="6" fill="#0f172a" stroke="rgba(34,211,238,0.3)" stroke-width="1"/>
+      <!-- Feet -->
+      <rect x="55" y="255" width="40" height="10" rx="4" fill="#0f172a" stroke="rgba(34,211,238,0.3)" stroke-width="1"/>
+      <rect x="125" y="255" width="40" height="10" rx="4" fill="#0f172a" stroke="rgba(34,211,238,0.3)" stroke-width="1"/>
+
+      <!-- Agent label -->
+      <text x="110" y="285" text-anchor="middle" fill="#22d3ee" font-size="11" font-weight="700" letter-spacing="1" opacity="0.9">AGENT</text>
+      <text x="110" y="298" text-anchor="middle" fill="#64748b" font-size="8" letter-spacing="0.5">STORING · WRITE</text>
+    </g>
+
+    <!-- ── AGENT 2: The Retrieving Agent (Right) ── -->
+    <g transform="translate(700, 200)">
+      <!-- Outer glow -->
+      <ellipse cx="110" cy="140" rx="140" ry="130" fill="url(#agent2-grad)" filter="url(#glow-emerald)" opacity="0.3"/>
+
+      <!-- Robot body -->
+      <rect x="40" y="100" width="140" height="120" rx="16" fill="#0f172a" stroke="#34d399" stroke-width="1.5" opacity="0.95"/>
+      <!-- Chest panel -->
+      <rect x="60" y="120" width="100" height="60" rx="8" fill="rgba(52,211,153,0.06)" stroke="rgba(52,211,153,0.2)" stroke-width="1"/>
+      <!-- Chest indicator lights -->
+      <circle cx="80" cy="140" r="5" fill="#34d399" filter="url(#glow-emerald)">
+        <animate attributeName="opacity" values="1;0.3;1" dur="2s" repeatCount="indefinite" begin="0.3s"/>
+      </circle>
+      <circle cx="100" cy="140" r="5" fill="#34d399" filter="url(#glow-emerald)">
+        <animate attributeName="opacity" values="0.3;1;0.3" dur="2s" repeatCount="indefinite" begin="0.8s"/>
+      </circle>
+      <circle cx="120" cy="140" r="5" fill="#34d399" filter="url(#glow-emerald)">
+        <animate attributeName="opacity" values="1;0.3;1" dur="2s" repeatCount="indefinite" begin="1.3s"/>
+      </circle>
+      <line x1="60" y1="195" x2="160" y2="195" stroke="rgba(52,211,153,0.2)" stroke-width="1"/>
+      <rect x="80" y="205" width="60" height="4" rx="2" fill="rgba(52,211,153,0.1)"/>
+
+      <!-- Robot head (angular/different design) -->
+      <path d="M 60,95 L 55,50 Q 55,35 70,35 L 150,35 Q 165,35 165,50 L 160,95 Z" fill="#0f172a" stroke="#34d399" stroke-width="1.5"/>
+      <!-- Visor -->
+      <rect x="70" y="52" width="80" height="22" rx="10" fill="rgba(52,211,153,0.08)" stroke="rgba(52,211,153,0.3)" stroke-width="1"/>
+      <line x1="110" y1="52" x2="110" y2="74" stroke="rgba(52,211,153,0.15)" stroke-width="1"/>
+      <!-- Scan line animation -->
+      <rect x="75" y="60" width="70" height="3" rx="2" fill="#34d399" filter="url(#glow-emerald)" opacity="0.6">
+        <animate attributeName="y" values="55;72;55" dur="3s" repeatCount="indefinite"/>
+      </rect>
+      <!-- Antenna (dual) -->
+      <line x1="90" y1="35" x2="85" y2="16" stroke="#34d399" stroke-width="1.5" opacity="0.5"/>
+      <line x1="130" y1="35" x2="135" y2="16" stroke="#34d399" stroke-width="1.5" opacity="0.5"/>
+      <circle cx="85" cy="14" r="3" fill="#34d399" filter="url(#glow-emerald)">
+        <animate attributeName="r" values="3;4.5;3" dur="1.8s" repeatCount="indefinite"/>
+      </circle>
+      <circle cx="135" cy="14" r="3" fill="#34d399" filter="url(#glow-emerald)">
+        <animate attributeName="r" values="3;4.5;3" dur="1.8s" repeatCount="indefinite" begin="0.9s"/>
+      </circle>
+
+      <!-- Left arm (receiving data from brain) -->
+      <g>
+        <animateTransform attributeName="transform" type="rotate" values="-10,30,120;10,30,120;-10,30,120" dur="2.5s" repeatCount="indefinite"/>
+        <rect x="15" y="120" width="25" height="12" rx="6" fill="#0f172a" stroke="#34d399" stroke-width="1" opacity="0.8"/>
+        <!-- Receiving dish -->
+        <path d="M -5,115 Q -15,126 -5,137" stroke="#34d399" stroke-width="1.5" fill="none" opacity="0.7"/>
+        <circle cx="-5" cy="126" r="3" fill="#34d399" filter="url(#glow-emerald)" opacity="0.4">
+          <animate attributeName="opacity" values="0.4;0.8;0.4" dur="2s" repeatCount="indefinite"/>
+        </circle>
+      </g>
+
+      <!-- Right arm (processing/closing) -->
+      <g>
+        <animateTransform attributeName="transform" type="rotate" values="10,180,140;-10,180,140;10,180,140" dur="3.5s" repeatCount="indefinite"/>
+        <rect x="185" y="130" width="22" height="12" rx="6" fill="#0f172a" stroke="#34d399" stroke-width="1" opacity="0.8"/>
+        <circle cx="210" cy="136" r="7" fill="rgba(52,211,153,0.08)" stroke="#34d399" stroke-width="1"/>
+      </g>
+
+      <!-- Legs -->
+      <rect x="65" y="220" width="20" height="40" rx="6" fill="#0f172a" stroke="rgba(52,211,153,0.3)" stroke-width="1"/>
+      <rect x="135" y="220" width="20" height="40" rx="6" fill="#0f172a" stroke="rgba(52,211,153,0.3)" stroke-width="1"/>
+      <rect x="55" y="255" width="40" height="10" rx="4" fill="#0f172a" stroke="rgba(52,211,153,0.3)" stroke-width="1"/>
+      <rect x="125" y="255" width="40" height="10" rx="4" fill="#0f172a" stroke="rgba(52,211,153,0.3)" stroke-width="1"/>
+
+      <!-- Label -->
+      <text x="110" y="285" text-anchor="middle" fill="#34d399" font-size="11" font-weight="700" letter-spacing="1" opacity="0.9">AGENT</text>
+      <text x="110" y="298" text-anchor="middle" fill="#64748b" font-size="8" letter-spacing="0.5">RETRIEVING · READ</text>
+    </g>
+
+    <!-- ── CENTRAL BRAIN / MEMORY CORE ── -->
+    <g transform="translate(550, 320)">
+      <!-- Glow aura -->
+      <ellipse cx="0" cy="0" rx="100" ry="90" fill="url(#brain-grad)" filter="url(#glow-violet)">
+        <animate attributeName="rx" values="100;115;100" dur="4s" repeatCount="indefinite"/>
+        <animate attributeName="ry" values="90;105;90" dur="4s" repeatCount="indefinite"/>
+      </ellipse>
+
+      <!-- Brain outer shell -->
+      <ellipse cx="0" cy="0" rx="75" ry="65" fill="#0f172a" stroke="#a78bfa" stroke-width="1.5" filter="url(#brain-noise)"/>
+
+      <!-- Neural network lines inside brain -->
+      <g opacity="0.4">
+        <line x1="-30" y1="-20" x2="20" y2="-30" stroke="#a78bfa" stroke-width="0.5"/>
+        <line x1="20" y1="-30" x2="40" y2="0" stroke="#a78bfa" stroke-width="0.5"/>
+        <line x1="40" y1="0" x2="25" y2="25" stroke="#a78bfa" stroke-width="0.5"/>
+        <line x1="-40" y1="-25" x2="0" y2="-40" stroke="#c4b5fd" stroke-width="0.5"/>
+        <line x1="0" y1="-40" x2="35" y2="-10" stroke="#c4b5fd" stroke-width="0.5"/>
+        <line x1="35" y1="-10" x2="10" y2="30" stroke="#c4b5fd" stroke-width="0.5"/>
+        <line x1="-45" y1="10" x2="-15" y2="-15" stroke="#a78bfa" stroke-width="0.5"/>
+        <line x1="-15" y1="-15" x2="30" y2="15" stroke="#a78bfa" stroke-width="0.5"/>
+        <line x1="30" y1="15" x2="0" y2="35" stroke="#a78bfa" stroke-width="0.5"/>
+      </g>
+
+      <!-- Neural nodes -->
+      <circle cx="-30" cy="-20" r="5" fill="#a78bfa" filter="url(#glow-violet)">
+        <animate attributeName="r" values="5;7;5" dur="3s" repeatCount="indefinite"/>
+      </circle>
+      <circle cx="20" cy="-30" r="4" fill="#c4b5fd">
+        <animate attributeName="r" values="4;6;4" dur="2.5s" repeatCount="indefinite" begin="0.5s"/>
+      </circle>
+      <circle cx="40" cy="0" r="5" fill="#a78bfa" filter="url(#glow-violet)">
+        <animate attributeName="r" values="5;7;5" dur="3.5s" repeatCount="indefinite" begin="1s"/>
+      </circle>
+      <circle cx="25" cy="25" r="3.5" fill="#c4b5fd">
+        <animate attributeName="r" values="3.5;5.5;3.5" dur="2s" repeatCount="indefinite" begin="1.5s"/>
+      </circle>
+      <circle cx="-40" cy="-25" r="4" fill="#a78bfa" filter="url(#glow-violet)">
+        <animate attributeName="r" values="4;6;4" dur="2.8s" repeatCount="indefinite" begin="0.3s"/>
+      </circle>
+      <circle cx="0" cy="-40" r="3" fill="#c4b5fd">
+        <animate attributeName="r" values="3;5;3" dur="3.2s" repeatCount="indefinite" begin="0.8s"/>
+      </circle>
+      <circle cx="-15" cy="-15" r="4" fill="#a78bfa" filter="url(#glow-violet)">
+        <animate attributeName="r" values="4;6;4" dur="2.2s" repeatCount="indefinite" begin="1.2s"/>
+      </circle>
+      <circle cx="30" cy="15" r="3.5" fill="#c4b5fd">
+        <animate attributeName="r" values="3.5;5.5;3.5" dur="2.7s" repeatCount="indefinite" begin="0.6s"/>
+      </circle>
+      <circle cx="0" cy="35" r="4" fill="#a78bfa" filter="url(#glow-violet)">
+        <animate attributeName="r" values="4;6;4" dur="3.1s" repeatCount="indefinite" begin="1.8s"/>
+      </circle>
+
+      <!-- Text label -->
+      <text x="0" y="58" text-anchor="middle" fill="#a78bfa" font-size="10" font-weight="700" letter-spacing="2">MEMORY CORE</text>
+      <text x="0" y="70" text-anchor="middle" fill="#7c3aed" font-size="7" letter-spacing="1">CROSS-SESSION · PERSISTENT</text>
+    </g>
+
+    <!-- ── ARROWS BETWEEN COMPONENTS ── -->
+
+    <!-- Agent 1 → Brain (Store) -->
+    <path d="M 280,260 C 320,240 370,230 420,250 C 450,260 480,280 505,300" stroke="#22d3ee" stroke-width="2" fill="none" stroke-dasharray="6,4" marker-end="url(#arrow-cyan)" opacity="0.8">
+      <animate attributeName="opacity" values="0.8;0.4;0.8" dur="2s" repeatCount="indefinite"/>
+    </path>
+
+    <!-- Brain → Agent 2 (Retrieve) -->
+    <path d="M 610,360 C 640,380 670,370 700,350 C 730,330 760,320 790,315" stroke="#34d399" stroke-width="2" fill="none" stroke-dasharray="6,4" marker-end="url(#arrow-emerald)" opacity="0.8">
+      <animate attributeName="opacity" values="0.8;0.4;0.8" dur="2s" repeatCount="indefinite" begin="1s"/>
+    </path>
+
+    <!-- Agent 2 → Brain (Cross-store) -->
+    <path d="M 800,280 C 760,250 710,240 660,260 C 630,270 600,290 575,310" stroke="#a78bfa" stroke-width="1.5" fill="none" stroke-dasharray="4,4" marker-end="url(#arrow-violet)" opacity="0.5">
+      <animate attributeName="opacity" values="0.5;0.2;0.5" dur="3s" repeatCount="indefinite" begin="0.5s"/>
+    </path>
+
+    <!-- ── LABELS on arrows ── -->
+    <!-- Store label -->
+    <rect x="335" y="215" width="60" height="22" rx="6" fill="rgba(15,23,42,0.85)" stroke="rgba(34,211,238,0.3)" stroke-width="1"/>
+    <text x="365" y="230" text-anchor="middle" fill="#22d3ee" font-size="9" font-weight="700">STORE</text>
+
+    <!-- Retrieve label -->
+    <rect x="660" y="378" width="72" height="22" rx="6" fill="rgba(15,23,42,0.85)" stroke="rgba(52,211,153,0.3)" stroke-width="1"/>
+    <text x="696" y="393" text-anchor="middle" fill="#34d399" font-size="9" font-weight="700">RETRIEVE</text>
+
+    <!-- Cross-store label -->
+    <rect x="676" y="226" width="82" height="22" rx="6" fill="rgba(15,23,42,0.85)" stroke="rgba(167,139,250,0.3)" stroke-width="1"/>
+    <text x="717" y="241" text-anchor="middle" fill="#a78bfa" font-size="8" font-weight="600">SHARE</text>
+
+    <!-- ── AGENT 3: The Sharing Agent (Bottom-center, small) ── -->
+    <g transform="translate(430, 535)" opacity="0.75">
+      <!-- Mini robot -->
+      <rect x="40" y="20" width="70" height="55" rx="10" fill="#0f172a" stroke="#fb923c" stroke-width="1.2"/>
+      <rect x="52" y="32" width="46" height="24" rx="5" fill="rgba(251,146,60,0.06)" stroke="rgba(251,146,60,0.2)" stroke-width="0.8"/>
+      <rect x="50" y="65" width="50" height="24" rx="6" fill="#0f172a" stroke="rgba(251,146,60,0.2)" stroke-width="1"/>
+      <!-- Head -->
+      <path d="M 55,20 L 50,0 Q 55,-5 75,-5 L 95,-5 Q 100,0 95,20 Z" fill="#0f172a" stroke="#fb923c" stroke-width="1.2"/>
+      <circle cx="70" cy="6" r="4" fill="#fb923c" filter="url(#glow-orange)">
+        <animate attributeName="r" values="4;6;4" dur="1.5s" repeatCount="indefinite"/>
+      </circle>
+      <circle cx="85" cy="6" r="4" fill="#fb923c" filter="url(#glow-orange)">
+        <animate attributeName="r" values="4;6;4" dur="1.5s" repeatCount="indefinite" begin="0.75s"/>
+      </circle>
+      <!-- Arms reaching up -->
+      <line x1="35" y1="35" x2="10" y2="10" stroke="#fb923c" stroke-width="1" opacity="0.5"/>
+      <line x1="115" y1="35" x2="140" y2="10" stroke="#fb923c" stroke-width="1" opacity="0.5"/>
+
+      <text x="75" y="104" text-anchor="middle" fill="#fb923c" font-size="8" font-weight="600" letter-spacing="0.5">ORCHESTRATOR</text>
+    </g>
+
+    <!-- Arrows from orchestrator to both agents and brain -->
+    <path d="M 490,550 C 490,500 480,460 460,430" stroke="#fb923c" stroke-width="1" fill="none" stroke-dasharray="3,3" marker-end="url(#arrow-orange)" opacity="0.4">
+      <animate attributeName="opacity" values="0.4;0.1;0.4" dur="4s" repeatCount="indefinite"/>
+    </path>
+    <path d="M 560,550 C 570,500 580,460 580,430" stroke="#fb923c" stroke-width="1" fill="none" stroke-dasharray="3,3" marker-end="url(#arrow-orange)" opacity="0.4">
+      <animate attributeName="opacity" values="0.4;0.1;0.4" dur="4s" repeatCount="indefinite" begin="2s"/>
+    </path>
+
+    <!-- ── Bottom: Memory Storage visualization ── -->
+    <g transform="translate(0, 0)">
+      <!-- Storage rack lines -->
+      <g opacity="0.15">
+        <line x1="80" y1="650" x2="1020" y2="650" stroke="#475569" stroke-width="0.5"/>
+        <line x1="80" y1="665" x2="1020" y2="665" stroke="#475569" stroke-width="0.5"/>
+        <line x1="80" y1="680" x2="1020" y2="680" stroke="#475569" stroke-width="0.5"/>
+      </g>
+    </g>
+  </svg>
+
+  <!-- Legend -->
+  <div class="legend">
+    <div class="legend-item">
+      <span class="dot cyan"></span>
+      <span>Store Memory</span>
+    </div>
+    <div class="legend-item">
+      <span class="dot emerald"></span>
+      <span>Retrieve Memory</span>
+    </div>
+    <div class="legend-item">
+      <span class="dot violet"></span>
+      <span>Shared Memory</span>
+    </div>
+    <div class="legend-item">
+      <span class="dot orange"></span>
+      <span>Orchestrator</span>
+    </div>
+    <div class="legend-item">
+      <span class="line cyan"></span>
+      <span>Data Stream</span>
+    </div>
+  </div>
+</div>
+</body>
+</html>
