@@ -400,6 +400,15 @@
     .auth-btn-container { display: none !important; }
     .nav-cta { display: none !important; }
   }
+
+  /* Mobile landscape: hide decorative panel, full-width FAQ */
+  @media (max-height: 600px) and (orientation: landscape) {
+    .right { display: none; }
+    .main { flex-direction: column; overflow: auto; }
+    .left { width: 100%; padding: 0.75rem; overflow: visible; }
+    body { overflow: auto; height: auto; }
+    .faq-item summary { padding: 0.6rem 0.8rem; font-size: 0.8rem; }
+  }
 </style>
 </head>
 <body>
