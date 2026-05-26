@@ -179,7 +179,7 @@
     <!-- Navbar -->
     <nav class="navbar">
         <a href="/" class="logo">
-            <img src="/playground/logo.png" alt="Memory Bridge">
+            <img src="/playground/logo.png" alt="Memory Bridge" data-i18n="nav.logo_alt">
             Memory <span class="logo-accent">Bridge</span>
         </a>
         <div class="nav-links">
@@ -190,7 +190,7 @@
         </div>
         <div class="nav-right">
             <div style="position:relative;display:inline-flex;">
-                <button class="nav-icon-btn lang-toggle" onclick="toggleLang()" title="Switch language" aria-label="Switch language">
+                <button class="nav-icon-btn lang-toggle" onclick="toggleLang()" title="Switch language" aria-label="Switch language" data-i18n="nav.lang_title">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <circle cx="12" cy="12" r="10"/>
                         <line x1="2" y1="12" x2="22" y2="12"/>
@@ -207,7 +207,7 @@
                     <a href="javascript:void(0)" data-lang="de" class="lang-opt" onclick="setLang('de')">🇩🇪 Deutsch</a>
                 </div>
             </div>
-            <button class="nav-icon-btn theme-toggle-btn" onclick="toggleTheme()" title="Toggle theme" aria-label="Toggle theme">
+            <button class="nav-icon-btn theme-toggle-btn" onclick="toggleTheme()" title="Toggle theme" aria-label="Toggle theme" data-i18n="nav.theme_title">
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="theme-sun">
                     <circle cx="12" cy="12" r="5"/>
                     <line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/>
@@ -220,12 +220,12 @@
                 </svg>
             </button>
             <div class="auth-btn-container" id="auth-btn-container">
-                <button class="auth-btn" id="auth-nav-btn" onclick="openAuth()" title="Sign in / Sign up">
+                <button class="auth-btn" id="auth-nav-btn" onclick="openAuth()" title="Sign in / Sign up" data-i18n-title="nav.sign_in_title">
                     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-                    <span id="auth-btn-label">Sign in</span>
+                    <span id="auth-btn-label" data-i18n="auth.sign_in">Sign in</span>
                 </button>
                 <div class="user-menu" id="user-menu" style="display:none;">
-                    <button class="user-avatar-btn" id="user-btn" onclick="toggleUserDropdown()" title="Account menu">
+                    <button class="user-avatar-btn" id="user-btn" onclick="toggleUserDropdown()" title="Account menu" data-i18n="nav.account_menu">
                         <span class="user-avatar-circle" id="user-avatar-circle">👤</span>
                         <span class="session-dot" id="session-dot"></span>
                         <span class="user-avatar-name" id="user-avatar-name"></span>
@@ -255,7 +255,7 @@
                 </svg>
                 <span data-i18n="nav.launch_playground">Launch Playground</span>
             </a>
-            <button class="nav-hamburger" onclick="toggleMobileNav()" aria-label="Open menu">
+            <button class="nav-hamburger" onclick="toggleMobileNav()" aria-label="Open menu" data-i18n="nav.hamburger_aria">
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <line x1="4" y1="6" x2="20" y2="6"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="18" x2="20" y2="18"/>
                 </svg>
@@ -268,10 +268,10 @@
     <div class="nav-mobile-panel" id="nav-mobile">
         <div class="nav-mobile-header">
             <div class="logo">
-                <img src="/playground/logo.png" alt="Memory Bridge">
+                <img src="/playground/logo.png" alt="Memory Bridge" data-i18n="nav.logo_alt">
                 Memory <span class="logo-accent">Bridge</span>
             </div>
-            <button class="nav-mobile-close" onclick="closeMobileNav()" aria-label="Close menu">
+            <button class="nav-mobile-close" onclick="closeMobileNav()" aria-label="Close menu" data-i18n="nav.close_menu">
                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
                 </svg>
@@ -306,23 +306,23 @@
                 </div>
                 <div class="mobile-user-info">
                     <span class="mobile-user-email" id="mobile-user-email"></span>
-                    <span class="mobile-user-plan" id="mobile-user-plan">Free Plan</span>
+                    <span class="mobile-user-plan" id="mobile-user-plan" data-i18n="dash.free_plan">Free Plan</span>
                 </div>
             </div>
             <div class="mobile-user-divider"></div>
             <a href="/dashboard/" class="mobile-user-action" onclick="closeMobileNav()">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
-                <span>Dashboard</span>
+                <span data-i18n="nav.dashboard">Dashboard</span>
             </a>
             <a href="/pricing" class="mobile-user-action" onclick="closeMobileNav()">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
-                <span>Manage Billing</span>
+                <span data-i18n="dash.manage_billing">Manage Billing</span>
             </a>
             <div class="mobile-user-divider"></div>
             <span class="mobile-user-since" id="mobile-user-since"></span>
             <a href="javascript:void(0)" class="mobile-user-action sign-out" id="mobile-sign-out-btn" onclick="closeMobileNav();showLogoutConfirm()">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
-                <span>Sign Out</span>
+                <span data-i18n="nav.sign_out">Sign Out</span>
             </a>
         </div>
         <div class="nav-mobile-divider"></div>
