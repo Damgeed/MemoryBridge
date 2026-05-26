@@ -604,8 +604,8 @@
             const value = document.getElementById('mem-value').value.trim();
             const tagsStr = document.getElementById('mem-tags').value.trim();
 
-            if (!key) { showStatus('store-result', '⚠️ Please provide a key', 'error'); return; }
-            if (!value) { showStatus('store-result', '⚠️ Please provide a value', 'error'); return; }
+            if (!key) { showStatus('store-result', '⚠️ Please fill in the Memory Key field', 'error'); return; }
+            if (!value) { showStatus('store-result', '⚠️ Please fill in the Memory Value field', 'error'); return; }
 
             let parsedValue;
             try { parsedValue = JSON.parse(value); } catch { parsedValue = value; }
