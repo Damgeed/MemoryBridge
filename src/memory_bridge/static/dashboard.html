@@ -1682,7 +1682,16 @@
                                 }
                             } catch {}
                         }
-                        // Refresh failed — don't slam auth gate, let setInterval handle it
+                        // JWT refresh failed — check if we have any auth left
+                        const hasKey = currentApiKey || localStorage.getItem('mb_api_key');
+                        if (!jwt && !hasKey) {
+                            // No JWT and no API key — gate the user
+                            if (typeof showAuthenticatedContent === 'function') {
+                                showAuthenticatedContent(false);
+                            }
+                            if (typeof updateAuthUI === 'function') updateAuthUI();
+                            throw new Error('Session expired. Sign in again to continue.');
+                        }
                         detail = 'Connection issue. Retrying...';
                     } else {
                         detail = 'Session expired. Sign in again to continue.';
@@ -1846,8 +1855,12 @@
                 const data = await api('GET', '/dashboard/keys');
                 renderKeys(data.keys || []);
             } catch (e) {
+                const isAuthed = !!(localStorage.getItem('mb_jwt') || 
+                    (localStorage.getItem('mb_api_key') && localStorage.getItem('mb_api_key') !== 'mb_demo_public_test'));
                 document.getElementById('keys-list').innerHTML =
-                    `<div class="empty-keys"><div class="icon">🔑</div><div>${__('dash.keys_no_permission')}</div></div>`;
+                    isAuthed
+                        ? `<div class="empty-keys"><div class="icon">🔑</div><div>Could not load keys. Try refreshing the page.</div></div>`
+                        : `<div class="empty-keys"><div class="icon">🔑</div><div>${__('dash.keys_no_permission')}</div></div>`;
             }
         }
 
