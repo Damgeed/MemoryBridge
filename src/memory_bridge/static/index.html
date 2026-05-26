@@ -300,6 +300,8 @@
             .section-title { font-size: 1.3rem; }
             .bubble { padding: 0.8rem 1rem; }
             .bubble .bubble-text { font-size: 0.82rem; }
+            .auth-btn-container { display: none !important; }
+            .nav-cta { display: none !important; }
         }
 
         @media (max-width: 480px) {
@@ -589,16 +591,16 @@
                     <div class="user-dropdown" id="user-dropdown">
                         <div class="user-dropdown-header">
                             <span class="user-dropdown-email" id="user-dropdown-email"></span>
-                            <span class="user-dropdown-plan" id="user-dropdown-plan">Free Plan</span>
+                            <span class="user-dropdown-plan" id="user-dropdown-plan" data-i18n="dash.free_plan">Free Plan</span>
                         </div>
                         <div class="user-dropdown-divider"></div>
                         <a href="/pricing" class="user-dropdown-item">
                             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
-                            Manage Billing
+                            <span data-i18n="dash.manage_billing">Manage Billing</span>
                         </a>
                         <div class="user-dropdown-item" onclick="showLogoutConfirm()" style="cursor:pointer;">
                             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
-                            Sign Out
+                            <span data-i18n="nav.sign_out">Sign Out</span>
                         </div>
                     </div>
                 </div>
@@ -607,7 +609,7 @@
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                     <polygon points="5 3 19 12 5 21 5 3"/>
                 </svg>
-                <span>Launch</span>
+                <span data-i18n="nav.launch">Launch</span>
             </a>
             <button class="nav-hamburger" onclick="toggleMobileNav()" aria-label="Open menu">
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -658,7 +660,7 @@
         <div class="nav-mobile-divider"></div>
         <a href="/playground/" class="nav-mobile-cta" onclick="closeMobileNav()">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
-            Launch Playground
+            <span data-i18n="nav.launch_playground">Launch Playground</span>
         </a>
     </div>
 
@@ -937,7 +939,7 @@
         </button>
         <div class="auth-icon">🔑</div>
         <div class="auth-title">Memory Bridge</div>
-        <div class="auth-subtitle">Sign in to manage your API keys and account.</div>
+        <div class="auth-subtitle" data-i18n="auth.subtitle">Sign in to manage your API keys and account.</div>
 
         <!-- Step 1: Options (social + email) -->
         <div id="auth-options" class="auth-options">

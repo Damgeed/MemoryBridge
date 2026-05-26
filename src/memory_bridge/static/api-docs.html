@@ -70,10 +70,10 @@
                     <div class="user-dropdown" id="user-dropdown">
                         <div class="user-dropdown-header">
                             <span class="user-dropdown-email" id="user-dropdown-email"></span>
-                            <span class="user-dropdown-plan" id="user-dropdown-plan" data-i18n="nav.free_plan">Free Plan</span>
+                            <span class="user-dropdown-plan" id="user-dropdown-plan" data-i18n="dash.free_plan">Free Plan</span>
                         </div>
                         <div class="user-dropdown-divider"></div>
-                        <a href="/pricing" class="user-dropdown-item" data-i18n="nav.manage_billing">
+                        <a href="/pricing" class="user-dropdown-item" data-i18n="dash.manage_billing">
                             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
                             Manage Billing
                         </a>
@@ -86,7 +86,7 @@
             </div>
             <a href="/playground/" class="nav-cta" data-i18n="nav.launch">
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
-                <span>Launch</span>
+                <span data-i18n="nav.launch">Launch</span>
             </a>
             <button class="nav-hamburger" onclick="toggleMobileNav()" aria-label="Open menu" data-i18n="nav.hamburger_aria">
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -848,6 +848,10 @@
       }
       .auth-code-resend a:hover {
         color: var(--accent-hover);
+      }
+      @media (max-width: 768px) {
+        .auth-btn-container { display: none !important; }
+        .nav-cta { display: none !important; }
       }
     </style>
 

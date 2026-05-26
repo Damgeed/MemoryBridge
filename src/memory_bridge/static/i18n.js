@@ -274,7 +274,9 @@ window.TRANSLATIONS = {
     "demo.step_ready": "Ready",
     "demo.restart_btn": "⟳ Restart",
     "demo.pause_btn": "⏸ Pause",
-  },
+  
+    "dash.gate_title": "Sign in to manage your account",
+    "dash.gate_desc": "Sign in with your email, Google, or Apple to manage API keys, view your subscription, and configure Memory Bridge.",},
 
   zh: {
     "nav.home": "首页",
@@ -543,7 +545,9 @@ window.TRANSLATIONS = {
     "playground.store_key": "键",
     "playground.store_value": "值",
 
-  },
+  
+    "dash.gate_title": "登录管理您的账户",
+    "dash.gate_desc": "使用您的邮箱、Google 或 Apple 登录，管理 API 密钥、查看订阅和配置 Memory Bridge。",},
 
   ja: {
     "nav.home": "ホーム",
@@ -760,7 +764,9 @@ window.TRANSLATIONS = {
     "dash.keys_empty_hint": "「新しいキーを生成」をクリックして作成してください。",
     "dash.keys_no_permission": "サインインしてAPIキーを表示してください。",
     "dash.keys_count": "キー: <strong>{count}</strong> アクティブ",
-  },
+  
+    "dash.gate_title": "アカウント管理のためにサインイン",
+    "dash.gate_desc": "メール、Google、Appleでサインインして、APIキーの管理、サブスクリプションの確認、Memory Bridgeの設定を行います。",},
 
   ko: {
     "nav.home": "홈",
@@ -986,7 +992,9 @@ window.TRANSLATIONS = {
     "pricing.enterprise_feat4": "✓ 맞춤 보존 정책",
     "pricing.enterprise_feat5": "✓ SLA 보장",
     "pricing.enterprise_feat6": "✓ 전담 지원 엔지니어",
-  },
+  
+    "dash.gate_title": "계정 관리를 위해 로그인",
+    "dash.gate_desc": "이메일, Google 또는 Apple로 로그인하여 API 키 관리, 구독 보기, Memory Bridge 구성을 수행하세요.",},
 
   es: {
     "nav.home": "Inicio",
@@ -1213,7 +1221,9 @@ window.TRANSLATIONS = {
     "pricing.enterprise_feat4": "✓ Políticas de retención personalizadas",
     "pricing.enterprise_feat5": "✓ Garantías SLA",
     "pricing.enterprise_feat6": "✓ Ingeniero de soporte dedicado",
-  },
+  
+    "dash.gate_title": "Inicia sesión para gestionar tu cuenta",
+    "dash.gate_desc": "Inicia sesión con tu correo electrónico, Google o Apple para gestionar claves API, ver tu suscripción y configurar Memory Bridge.",},
 
   fr: {
     "nav.home": "Accueil",
@@ -1473,7 +1483,9 @@ window.TRANSLATIONS = {
     "pricing.enterprise_feat4": "✓ Politiques de rétention personnalisées",
     "pricing.enterprise_feat5": "✓ Garanties SLA",
     "pricing.enterprise_feat6": "✓ Ingénieur de support dédié",
-  },
+  
+    "dash.gate_title": "Connectez-vous pour gérer votre compte",
+    "dash.gate_desc": "Connectez-vous avec votre email, Google ou Apple pour gérer les clés API, voir votre abonnement et configurer Memory Bridge.",},
 
   de: {
     "nav.home": "Start",
@@ -1739,7 +1751,9 @@ window.TRANSLATIONS = {
     "demo.step_ready": "Bereit",
     "demo.restart_btn": "⟳ Neustart",
     "demo.pause_btn": "⏸ Pause",
-  },
+  
+    "dash.gate_title": "Melden Sie sich an, um Ihr Konto zu verwalten",
+    "dash.gate_desc": "Melden Sie sich mit Ihrer E-Mail, Google oder Apple an, um API-Schlüssel zu verwalten, Ihr Abonnement einzusehen und Memory Bridge zu konfigurieren.",},
 };
 
 /**
