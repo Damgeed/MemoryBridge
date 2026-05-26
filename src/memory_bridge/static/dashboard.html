@@ -2120,13 +2120,29 @@
                 if (checkRes.ok) checkData = await checkRes.json();
 
                 if (authMode === 'signin' && !checkData.exists) {
-                    errorEl.innerHTML = '⚠️ No account found with this email. <a href="#" onclick="selectAuthTab(\'signup\');return false;" style="color:var(--accent);text-decoration:underline;">Create an account</a>';
-                    btn.disabled = false;
+                    // No account — auto-switch to Create Account tab
+                    errorEl.innerHTML = '⚠️ No account found with this email. Redirecting to Create Account...';
+                    btn.disabled = true;
+                    document.getElementById('pl-email').disabled = true;
+                    setTimeout(() => {
+                        selectAuthTab('signup');
+                        document.getElementById('pl-email').disabled = false;
+                        document.getElementById('pl-email-btn').disabled = false;
+                        document.getElementById('auth-error-main').innerHTML = '';
+                    }, 1200);
                     return;
                 }
                 if (authMode === 'signup' && checkData.exists) {
-                    errorEl.innerHTML = '✅ An account already exists with this email. <a href="#" onclick="selectAuthTab(\'signin\');return false;" style="color:var(--accent);text-decoration:underline;">Sign in</a>';
-                    btn.disabled = false;
+                    // Account exists — auto-switch to Sign In tab
+                    errorEl.innerHTML = '✅ An account already exists with this email. Redirecting to Sign In...';
+                    btn.disabled = true;
+                    document.getElementById('pl-email').disabled = true;
+                    setTimeout(() => {
+                        selectAuthTab('signin');
+                        document.getElementById('pl-email').disabled = false;
+                        document.getElementById('pl-email-btn').disabled = false;
+                        document.getElementById('auth-error-main').innerHTML = '';
+                    }, 1200);
                     return;
                 }
 
