@@ -27,8 +27,8 @@ class RedisRateLimiter:
         # the MEMORY_BRIDGE_RATE_LIMIT env var is respected.
         self.tier_limits = {
             "free": self.rate,
-            "starter": 300,
-            "pro": 600,
+            "starter": 600,
+            "pro": 1200,
             "enterprise": 6000,
         }
 

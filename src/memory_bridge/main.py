@@ -52,8 +52,8 @@ logger = logging.getLogger(__name__)
 
 # How often the background cleanup runs (seconds). Default: 5 minutes.
 _CLEANUP_INTERVAL = int(os.environ.get("MEMORY_BRIDGE_CLEANUP_INTERVAL", "300"))
-# Rate limit (requests per minute per IP). Default: 60.
-_RATE_LIMIT = int(os.environ.get("MEMORY_BRIDGE_RATE_LIMIT", "60"))
+# Rate limit (requests per minute per IP). Default: 300.
+_RATE_LIMIT = int(os.environ.get("MEMORY_BRIDGE_RATE_LIMIT", "300"))
 # CORS origins (comma-separated). Default: allow all.
 _CORS_ORIGINS = os.environ.get("MEMORY_BRIDGE_CORS_ORIGINS", "https://memorybridge.io,http://localhost:8000").split(",")
 

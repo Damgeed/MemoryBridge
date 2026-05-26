@@ -429,7 +429,7 @@ async def get_dashboard_data(
         tier = "free"
 
     # Per-tier rate limits
-    rate_limits = {"free": 30, "starter": 60, "pro": 120, "enterprise": 300}
+    rate_limits = {"free": 300, "starter": 600, "pro": 1200, "enterprise": 6000}
 
     # Look up user record for created_at
     if user_email:
