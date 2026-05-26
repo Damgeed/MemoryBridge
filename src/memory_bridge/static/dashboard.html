@@ -1651,47 +1651,42 @@
                     }
                     const dot = document.getElementById('session-dot');
                     const dotIsRed = dot && dot.classList.contains('red');
-                    if (!dotIsRed) {
-                        // Dot is green/amber — JWT or API key looks valid client-side.
-                        // Try to refresh the JWT silently and retry with it
-                        const jwt = localStorage.getItem('mb_jwt');
-                        if (jwt) {
-                            try {
-                                const refresh = await fetch('/auth/refresh', {
-                                    method: 'POST',
-                                    headers: { 'Content-Type': 'application/json' },
-                                    body: JSON.stringify({ token: jwt }),
-                                });
-                                if (refresh.ok) {
-                                    const refreshData = await refresh.json();
-                                    if (refreshData.token) {
-                                        localStorage.setItem('mb_jwt', refreshData.token);
-                                        // Retry with JWT explicitly — don't use getAuthHeaders()
-                                        // because it might return a stale/revoked API key
-                                        opts.headers = {
-                                            'Content-Type': 'application/json',
-                                            'Authorization': 'Bearer ' + refreshData.token,
-                                        };
-                                        const retry = await fetch(API_BASE + path, opts);
-                                        if (retry.ok) return retry.json();
-                                    }
+                    // If the session dot is red or refresh failed — JWT is truly expired
+                    const jwt = localStorage.getItem('mb_jwt');
+                    if (jwt) {
+                        try {
+                            const refresh = await fetch('/auth/refresh', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ token: jwt }),
+                            });
+                            if (refresh.ok) {
+                                const refreshData = await refresh.json();
+                                if (refreshData.token) {
+                                    localStorage.setItem('mb_jwt', refreshData.token);
+                                    opts.headers = {
+                                        'Content-Type': 'application/json',
+                                        'Authorization': 'Bearer ' + refreshData.token,
+                                    };
+                                    const retry = await fetch(API_BASE + path, opts);
+                                    if (retry.ok) return retry.json();
                                 }
-                            } catch {}
-                        }
-                        // JWT refresh failed — check if we have any auth left
-                        const hasKey = currentApiKey || localStorage.getItem('mb_api_key');
-                        if (!jwt && !hasKey) {
-                            // No JWT and no API key — gate the user
-                            if (typeof showAuthenticatedContent === 'function') {
-                                showAuthenticatedContent(false);
                             }
-                            if (typeof updateAuthUI === 'function') updateAuthUI();
-                            throw new Error('Session expired. Sign in again to continue.');
-                        }
-                        detail = 'Connection issue. Retrying...';
-                    } else {
-                        detail = 'Session expired. Sign in again to continue.';
+                        } catch {}
                     }
+                    // Refresh failed or no JWT — session is truly expired
+                    const hasKey = currentApiKey || localStorage.getItem('mb_api_key');
+                    if (hasKey && !jwt) {
+                        // API key failed with no JWT — clear stale key and gate
+                        localStorage.removeItem('mb_api_key');
+                        localStorage.removeItem('mb_key_exists');
+                        currentApiKey = '';
+                    }
+                    if (typeof showAuthenticatedContent === 'function') {
+                        showAuthenticatedContent(false);
+                    }
+                    if (typeof updateAuthUI === 'function') updateAuthUI();
+                    throw new Error('Session expired. Sign in again to continue.');
                 } else if (res.status === 429) {
                     // Backend returns a tier-aware message — use it directly if available
                     if (!detail || detail === 'Rate limit exceeded. Try again in 60 seconds.') {
