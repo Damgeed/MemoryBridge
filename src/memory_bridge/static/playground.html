@@ -599,6 +599,9 @@
 
         // ── Store Memory ──────────────────────────────────────────
         async function storeMemory() {
+            const apiKey = getApiKey();
+            if (!apiKey) { showStatus('store-result', '⚠️ Please insert an api key and click save', 'error'); return; }
+
             const sessionId = document.getElementById('session-id').value.trim() || 'demo-session';
             const agentId = document.getElementById('agent-id').value.trim() || 'agent-alice';
             const key = document.getElementById('mem-key').value.trim();

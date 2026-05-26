@@ -277,7 +277,9 @@ window.TRANSLATIONS = {
   
     "dash.gate_title": "Sign in to manage your account",
     "dash.gate_desc": "Sign in with your email, Google, or Apple to manage API keys, view your subscription, and configure Memory Bridge.",
-    "dash.gate_new": "New here? Create an account — no password needed.",
+    "dash.gate_new_before": "New here?",
+    "dash.gate_new_link": "Create an account",
+    "dash.gate_new_after": "— no password needed.",
 
     // ── New Auth Keys ────────────────────────────────
     "auth.continue_google": "Continue with Google",
@@ -630,7 +632,9 @@ window.TRANSLATIONS = {
   
     "dash.gate_title": "登录管理您的账户",
     "dash.gate_desc": "使用您的邮箱、Google 或 Apple 登录，管理 API 密钥、查看订阅和配置 Memory Bridge。",
-    "dash.gate_new": "新用户？创建账户 — 无需密码。",
+    "dash.gate_new_before": "新用户？",
+    "dash.gate_new_link": "创建账户",
+    "dash.gate_new_after": "— 无需密码。",
 
     // ── New Auth Keys ────────────────────────────────
     "auth.continue_google": "使用 Google 继续",
@@ -931,7 +935,9 @@ window.TRANSLATIONS = {
   
     "dash.gate_title": "アカウント管理のためにサインイン",
     "dash.gate_desc": "メール、Google、Appleでサインインして、APIキーの管理、サブスクリプションの確認、Memory Bridgeの設定を行います。",
-    "dash.gate_new": "はじめまして？アカウント作成 — パスワード不要。",
+    "dash.gate_new_before": "はじめまして？",
+    "dash.gate_new_link": "アカウント作成",
+    "dash.gate_new_after": "— パスワード不要。",
 
     // ── New Auth Keys ────────────────────────────────
     "auth.continue_google": "Googleで続ける",
@@ -1261,7 +1267,9 @@ window.TRANSLATIONS = {
   
     "dash.gate_title": "계정 관리를 위해 로그인",
     "dash.gate_desc": "이메일, Google 또는 Apple로 로그인하여 API 키 관리, 구독 보기, Memory Bridge 구성을 수행하세요.",
-    "dash.gate_new": "처음이신가요? 계정 만들기 — 비밀번호 불필요。",
+    "dash.gate_new_before": "처음이신가요?",
+    "dash.gate_new_link": "계정 만들기",
+    "dash.gate_new_after": "— 비밀번호 불필요。",
 
     // ── New Auth Keys ────────────────────────────────
     "auth.continue_google": "Google로 계속",
@@ -1592,7 +1600,9 @@ window.TRANSLATIONS = {
   
     "dash.gate_title": "Inicia sesión para gestionar tu cuenta",
     "dash.gate_desc": "Inicia sesión con tu correo electrónico, Google o Apple para gestionar claves API, ver tu suscripción y configurar Memory Bridge.",
-    "dash.gate_new": "¿Nuevo? Crea una cuenta — sin contraseña.",
+    "dash.gate_new_before": "¿Nuevo?",
+    "dash.gate_new_link": "Crea una cuenta",
+    "dash.gate_new_after": "— sin contraseña.",
 
     // ── New Auth Keys ────────────────────────────────
     "auth.continue_google": "Continuar con Google",
@@ -1956,7 +1966,9 @@ window.TRANSLATIONS = {
   
     "dash.gate_title": "Connectez-vous pour gérer votre compte",
     "dash.gate_desc": "Connectez-vous avec votre email, Google ou Apple pour gérer les clés API, voir votre abonnement et configurer Memory Bridge.",
-    "dash.gate_new": "Nouveau ? Créez un compte — aucun mot de passe requis.",
+    "dash.gate_new_before": "Nouveau ?",
+    "dash.gate_new_link": "Créez un compte",
+    "dash.gate_new_after": "— aucun mot de passe requis.",
 
     // ── New Auth Keys ────────────────────────────────
     "auth.continue_google": "Continuer avec Google",
@@ -2306,7 +2318,9 @@ window.TRANSLATIONS = {
   
     "dash.gate_title": "Melden Sie sich an, um Ihr Konto zu verwalten",
     "dash.gate_desc": "Melden Sie sich mit Ihrer E-Mail, Google oder Apple an, um API-Schlüssel zu verwalten, Ihr Abonnement einzusehen und Memory Bridge zu konfigurieren.",
-    "dash.gate_new": "Neu hier? Konto erstellen — kein Passwort nötig.",
+    "dash.gate_new_before": "Neu hier?",
+    "dash.gate_new_link": "Konto erstellen",
+    "dash.gate_new_after": "— kein Passwort nötig.",
 
     // ── New Auth Keys ────────────────────────────────
     "auth.continue_google": "Mit Google fortfahren",
