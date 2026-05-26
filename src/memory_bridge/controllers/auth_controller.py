@@ -125,9 +125,16 @@ async def get_my_api_key_value(request: Request):
     user_keys = [k for k in all_keys if k.get("project_id") == org_id and k.get("is_active") is not False]
 
     if not user_keys:
-        raise HTTPException(status_code=404, detail="No API keys found for your account. Use the dashboard to generate one.")
+        # Auto-generate a key so the user never gets stuck without one
+        result = await storage.create_api_key(label="auto-key", project_id=org_id)
+        logger.info("Auto-created API key for org=%s", org_id)
+        return {"key": result["key"], "key_id": result["id"], "key_count": 1, "new": True}
 
-    return {"key": user_keys[0]["key"], "key_id": user_keys[0]["id"], "key_count": len(user_keys)}
+    # list_api_keys doesn't return plaintext, so create a fresh key to show once
+    # This is the only time the plaintext value is available
+    result = await storage.create_api_key(label="auto-key", project_id=org_id)
+    logger.info("Rotated API key for org=%s (was %d keys)", org_id, len(user_keys))
+    return {"key": result["key"], "key_id": result["id"], "key_count": len(user_keys) + 1, "new": True}
 
 
 @router.post("/oauth")

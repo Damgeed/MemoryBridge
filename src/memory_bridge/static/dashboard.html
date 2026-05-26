@@ -914,7 +914,7 @@
             </button>
             <div class="auth-icon">🔑</div>
             <div class="auth-title">Memory Bridge</div>
-            <div class="auth-subtitle" data-i18n="auth.subtitle">Sign in to manage your API keys and account.</div>
+            <div class="auth-subtitle" data-i18n="auth.subtitle">Welcome to Memory Bridge. Sign in or create an account.</div>
 
             <!-- Step 1: Options (social + email) -->
             <div id="auth-options" class="auth-options">
@@ -1914,7 +1914,6 @@
             document.getElementById('pl-code').value = '';
             document.getElementById('pl-email').value = '';
             document.getElementById('pl-phone').value = '';
-            document.getElementById('pl-email').focus();
             document.getElementById('auth-code-step').classList.remove('active');
             document.getElementById('auth-phone-step').classList.remove('active');
             // Clear all errors
@@ -2229,6 +2228,9 @@
                             } else if (kvRes.status === 401) {
                                 // JWT genuinely expired — clear it
                                 localStorage.removeItem('mb_jwt');
+                            } else {
+                                // Non-401 error (500, 404, etc.) — log and continue
+                                console.warn('/auth/my-key-value returned', kvRes.status);
                             }
                         } catch (e) {
                             // Network error — keep JWT, don't nuke auth
@@ -2274,6 +2276,8 @@
                         currentApiKey = data.key;
                     } else if (kvRes.status === 401) {
                         localStorage.removeItem('mb_jwt');
+                    } else {
+                        console.warn('/auth/my-key-value returned', kvRes.status);
                     }
                 } catch (e) {
                     console.warn('Failed to fetch API key during Stripe welcome:', e);
@@ -2319,8 +2323,15 @@
                         statusEl.textContent = '✅ Payment confirmed! Setting up your account...';
                     } else if (attempts > 30) {
                         clearInterval(poll);
-                        statusEl.textContent = '⏳ Your plan is being activated. It may take a moment.';
+                        statusEl.textContent = '⏳ Loading your dashboard...';
                         loadDashboard();
+                        // Async restore attempt — don't block the UI
+                        api('POST', '/dashboard/restore-subscription').then(restoreData => {
+                            if (restoreData.restored && restoreData.tier !== 'free') {
+                                showToast(`🎉 Subscription restored!`);
+                                reloadDashboard();
+                            }
+                        }).catch(() => {});
                     }
                 } catch (e) {
                     statusEl.textContent = '⚠️ ' + (e.message || 'Checking subscription...');
@@ -2328,6 +2339,13 @@
                         clearInterval(poll);
                         statusEl.textContent = '⏳ Loading your dashboard...';
                         loadDashboard();
+                        // Async restore attempt
+                        api('POST', '/dashboard/restore-subscription').then(restoreData => {
+                            if (restoreData.restored && restoreData.tier !== 'free') {
+                                showToast(`🎉 Subscription restored!`);
+                                reloadDashboard();
+                            }
+                        }).catch(() => {});
                     }
                 }
             }, 2000);

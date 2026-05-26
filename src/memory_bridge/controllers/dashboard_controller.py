@@ -437,16 +437,23 @@ async def get_dashboard_data(
             logger.warning("Stripe fallback error: %s", e)
 
     # Get key count
-    keys = await storage.list_api_keys()
+    try:
+        keys = await storage.list_api_keys()
+    except Exception:
+        logger.warning("Failed to list API keys for org=%s", org_id, exc_info=True)
+        keys = []
     user_keys = [k for k in keys if k.get("project_id") == org_id or not k.get("project_id")]
     active_keys = [k for k in user_keys if k.get("is_active", True)]
 
-    # Get memory count
+    # Get memory count (placeholder until real counter is implemented)
     mem_count = 0
 
     tier = sub.tier if sub else "free"
     if sub and sub.status == "canceled":
         tier = "free"
+
+    # Per-tier rate limits
+    rate_limits = {"free": 30, "starter": 60, "pro": 120, "enterprise": 300}
 
     # Look up user record for created_at (email already decoded at top)
     if user_email:
@@ -469,6 +476,10 @@ async def get_dashboard_data(
         "created_at": user_created_at,
         "user_name": user_name,
         "user_email": user_email,
+        "email": user_email,
+        "memories": mem_count,
+        "sessions": 0,
+        "rate_limit": rate_limits.get(tier, 60),
     }
 
 
