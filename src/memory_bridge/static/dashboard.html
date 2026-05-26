@@ -1792,7 +1792,7 @@
                 if (res.status === 401) {
                     detail = 'Session expired. Sign in again to continue.';
                 } else if (res.status === 429) {
-                    detail = 'Too many requests. Wait a moment and try again.';
+                    detail = '❌ Too many requests. Wait a moment and try again.';
                 }
                 throw new Error(detail);
             }
@@ -2005,9 +2005,10 @@
                         <div class="key-reveal" style="border-color:var(--orange);">
                             <div style="margin-bottom:0.5rem;font-weight:700;font-size:0.85rem;color:var(--orange);">⚠️ Key Limit Reached</div>
                             <div style="font-size:0.82rem;color:var(--text-muted);margin-bottom:0.75rem;">
-                                ${escapeHtml(e.message)}
+                                You've generated all 5 API keys allowed on the Free plan.
+                                Delete an existing key below to create a new one, or upgrade for unlimited keys.
                             </div>
-                            <div style="display:flex;gap:0.5rem;">
+                            <div style="display:flex;gap:0.5rem;flex-wrap:wrap;">
                                 <a href="/pricing" class="btn btn-primary btn-sm">Upgrade Plan →</a>
                                 <button class="btn btn-secondary btn-sm" onclick="document.getElementById('key-reveal-area').innerHTML='';">Dismiss</button>
                             </div>
