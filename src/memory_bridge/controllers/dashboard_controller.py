@@ -342,16 +342,34 @@ async def get_dashboard_data(
             if stripe_mod.api_key:
                 import asyncio
                 customers = await asyncio.wait_for(
-                    asyncio.to_thread(stripe_mod.Customer.list, email=user_email, limit=1),
+                    asyncio.to_thread(
+                        stripe_mod.Customer.list,
+                        email=user_email,
+                        limit=1,
+                        expand=["data.subscriptions"],
+                    ),
                     timeout=5.0,
                 )
-                if customers.data:
+                if customers and customers.data:
                     stripe_customer = customers.data[0]
-                    # Check if customer has active subscriptions
-                    subs_data = stripe_customer.get("subscriptions", {}).get("data", [])
-                    if subs_data:
-                        active_sub = subs_data[0]
-                        price_id = active_sub.get("items", {}).get("data", [{}])[0].get("price", {}).get("id", "")
+                    # Subscriptions may or may not be expanded
+                    subs_list = None
+                    if hasattr(stripe_customer, "subscriptions") and stripe_customer.subscriptions:
+                        subs_list = stripe_customer.subscriptions.get("data", [])
+                    if not subs_list:
+                        subs_list = stripe_customer.get("subscriptions", {}) or {}
+                        subs_list = subs_list.get("data", []) if isinstance(subs_list, dict) else []
+                    if subs_list:
+                        active_sub = subs_list[0]
+                        price_id = ""
+                        items_list = []
+                        if hasattr(active_sub, "items") and active_sub.items:
+                            items_list = active_sub.items.get("data", [])
+                        if not items_list:
+                            items_list = active_sub.get("items", {}).get("data", []) if isinstance(active_sub.get("items"), dict) else []
+                        if items_list:
+                            price_obj = items_list[0].get("price", {})
+                            price_id = price_obj.get("id", "") if isinstance(price_obj, dict) else getattr(price_obj, "id", "")
                         from ..services.billing_service import PRICE_IDS
                         resolved_tier = "starter"
                         for t, pid in PRICE_IDS.items():
@@ -360,16 +378,28 @@ async def get_dashboard_data(
                                 break
                         from ..models.subscription import Subscription
                         from datetime import datetime, timezone
+                        sub_id = ""
+                        sub_status = "active"
+                        period_end = None
+                        if hasattr(active_sub, "id"):
+                            sub_id = active_sub.id
+                            sub_status = active_sub.status or "active"
+                            if hasattr(active_sub, "current_period_end") and active_sub.current_period_end:
+                                period_end = datetime.fromtimestamp(active_sub.current_period_end, tz=timezone.utc)
+                        else:
+                            sub_id = active_sub.get("id", f"stripe-{org_id[:8]}")
+                            sub_status = active_sub.get("status", "active")
+                            if active_sub.get("current_period_end"):
+                                period_end = datetime.fromtimestamp(active_sub["current_period_end"], tz=timezone.utc)
+                        stripe_customer_id = stripe_customer.id if hasattr(stripe_customer, "id") else stripe_customer.get("id", "")
                         sub = Subscription(
-                            id=active_sub.get("id", f"stripe-{org_id[:8]}"),
+                            id=sub_id or f"stripe-{org_id[:8]}",
                             organization_id=org_id,
-                            stripe_customer_id=stripe_customer.get("id", ""),
+                            stripe_customer_id=stripe_customer_id,
                             tier=resolved_tier,
-                            status=active_sub.get("status", "active"),
+                            status=sub_status,
                             current_period_start=datetime.now(timezone.utc),
-                            current_period_end=datetime.fromtimestamp(
-                                active_sub.get("current_period_end", 0), tz=timezone.utc
-                            ) if active_sub.get("current_period_end") else None,
+                            current_period_end=period_end,
                         )
                         try:
                             await storage.store_subscription(sub)
