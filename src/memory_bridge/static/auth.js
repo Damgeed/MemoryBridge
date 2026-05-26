@@ -231,6 +231,14 @@
       if (mobilePlan) mobilePlan.textContent = planLabel;
       if (mobileSessionDot && sessionDot) mobileSessionDot.className = sessionDot.className;
       if (mobileSince && sinceEl) mobileSince.textContent = sinceEl.textContent;
+
+      // Sign-out button + signed-in chip (visible on all pages)
+      const signOutBtn = document.getElementById('navbar-signout-btn');
+      const signedInChip = document.getElementById('signed-in-chip');
+      const signedInEmail = document.getElementById('signed-in-email');
+      if (signOutBtn) signOutBtn.style.display = 'inline-flex';
+      if (signedInChip) signedInChip.style.display = 'inline-flex';
+      if (signedInEmail) signedInEmail.textContent = displayName;
     } else if (userMenu && signInBtn) {
       signInBtn.style.display = 'inline-flex';
       userMenu.style.display = 'none';
@@ -243,6 +251,12 @@
       }
       const mobileLabel = document.getElementById('auth-mobile-label');
       if (mobileLabel) mobileLabel.textContent = 'Sign in';
+
+      // Hide sign-out button + signed-in chip when logged out
+      const signOutBtn = document.getElementById('navbar-signout-btn');
+      const signedInChip = document.getElementById('signed-in-chip');
+      if (signOutBtn) signOutBtn.style.display = 'none';
+      if (signedInChip) signedInChip.style.display = 'none';
     }
   }
 
@@ -288,7 +302,12 @@
   function getAuthHeaders() {
     const headers = { 'Content-Type': 'application/json' };
     const key = window.currentApiKey || getApiKey() || '';
-    if (key) headers['Authorization'] = 'Bearer ' + key;
+    if (key) {
+      headers['Authorization'] = 'Bearer ' + key;
+    } else {
+      const jwt = getJWT();
+      if (jwt) headers['Authorization'] = 'Bearer ' + jwt;
+    }
     return headers;
   }
 

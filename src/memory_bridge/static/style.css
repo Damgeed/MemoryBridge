@@ -1367,3 +1367,64 @@ select.input { cursor: pointer; }
 .session-expiry-toast .expiry-btn:hover {
     opacity: 0.85;
 }
+
+/* ── Signed-in State Chip ────────────────────────────────── */
+.signed-in-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    color: #10b981;
+    padding: 2px 10px;
+    border-radius: 20px;
+    background: rgba(16, 185, 129, 0.08);
+    white-space: nowrap;
+    margin-right: 4px;
+}
+.signed-in-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: #10b981;
+    flex-shrink: 0;
+}
+
+/* Navbar sign-out button */
+.navbar-signout-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: none;
+    border: 1px solid rgba(255,255,255,0.12);
+    color: #ef4444;
+    padding: 4px 10px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 13px;
+    transition: all 0.15s;
+    white-space: nowrap;
+}
+.navbar-signout-btn:hover {
+    background: rgba(239, 68, 68, 0.1);
+    border-color: rgba(239, 68, 68, 0.3);
+}
+.navbar-signout-btn svg {
+    flex-shrink: 0;
+}
+
+/* Mobile: hide chip on small screens */
+@media (max-width: 768px) {
+    .signed-in-chip {
+        display: none !important;
+    }
+}
+
+/* Dark theme support */
+[data-theme="dark"] .signed-in-chip {
+    background: rgba(16, 185, 129, 0.12);
+}
+@media (prefers-color-scheme: dark) {
+    .navbar-signout-btn {
+        border-color: rgba(255,255,255,0.15);
+    }
+}

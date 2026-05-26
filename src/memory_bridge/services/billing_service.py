@@ -92,6 +92,7 @@ class BillingService:
                 client_reference_id=organization_id,
                 success_url=success,
                 cancel_url=cancel,
+                subscription_data={"metadata": {"organization_id": organization_id, "tier": tier}},
                 metadata={"organization_id": organization_id, "tier": tier},
             )
             logger.info(
@@ -395,10 +396,7 @@ class BillingService:
         """Find a subscription by its Stripe ID across all orgs."""
         if not self.repo:
             return None
-        # Since we don't have a direct lookup by sub_id, try to fetch
-        # from the billing service's knowledge. In practice, we can add
-        # a get_subscription_by_id to the repo if needed.
-        return None
+        return await self.repo.get_subscription_by_id(sub_id)
 
     def _resolve_tier_from_price(self, price_id: str) -> str:
         """Map Stripe price ID to tier name.

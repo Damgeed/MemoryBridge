@@ -158,6 +158,11 @@ class MemoryRepository(ABC):
         ...
 
     @abstractmethod
+    async def get_subscription_by_id(self, sub_id: str) -> Optional[Subscription]:
+        """Get subscription by its Stripe subscription ID. Returns None if not found."""
+        ...
+
+    @abstractmethod
     async def update_subscription_tier(self, sub_id: str, tier: str) -> Optional[Subscription]:
         """Update the tier of a subscription by Stripe subscription ID.
         Returns the updated Subscription or None if not found."""

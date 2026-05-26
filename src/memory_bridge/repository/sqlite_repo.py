@@ -992,6 +992,29 @@ class SQLiteMemoryRepository(MemoryRepository):
                 updated_at=datetime.fromisoformat(row["updated_at"]),
             )
 
+    async def get_subscription_by_id(self, sub_id: str) -> Optional[Subscription]:
+        """Get subscription by its Stripe subscription ID."""
+        async with aiosqlite.connect(self.db_path) as db:
+            db.row_factory = aiosqlite.Row
+            cursor = await db.execute(
+                "SELECT * FROM subscriptions WHERE id = ?",
+                (sub_id,),
+            )
+            row = await cursor.fetchone()
+            if row is None:
+                return None
+            return Subscription(
+                id=row["id"] or "",
+                organization_id=row["organization_id"],
+                stripe_customer_id=row["stripe_customer_id"] or "",
+                tier=row["tier"] or "free",
+                status=row["status"] or "active",
+                current_period_start=datetime.fromisoformat(row["current_period_start"]) if row["current_period_start"] else None,
+                current_period_end=datetime.fromisoformat(row["current_period_end"]) if row["current_period_end"] else None,
+                created_at=datetime.fromisoformat(row["created_at"]),
+                updated_at=datetime.fromisoformat(row["updated_at"]),
+            )
+
     async def update_subscription_tier(self, sub_id: str, tier: str) -> Optional[Subscription]:
         """Update the tier of a subscription by Stripe subscription ID."""
         async with aiosqlite.connect(self.db_path) as db:
