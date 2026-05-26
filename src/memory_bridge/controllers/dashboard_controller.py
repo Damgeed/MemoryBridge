@@ -5,6 +5,7 @@ their own API keys, plus serves the dashboard page with installation
 instructions and copy-to-clipboard terminal commands.
 """
 
+import asyncio
 import logging
 import os
 from typing import Optional
@@ -335,82 +336,9 @@ async def get_dashboard_data(
         except Exception:
             pass
 
-    # If STILL no subscription found, try Stripe direct lookup by email on JWT
+    # If STILL no subscription found, kick off async Stripe fallback (don't block the response)
     if not sub and user_email:
-        try:
-            import stripe as stripe_mod
-            stripe_mod.api_key = os.environ.get("STRIPE_SECRET_KEY", "")
-            if stripe_mod.api_key:
-                import asyncio
-                customers = await asyncio.wait_for(
-                    asyncio.to_thread(
-                        stripe_mod.Customer.list,
-                        email=user_email,
-                        limit=1,
-                        expand=["data.subscriptions"],
-                    ),
-                    timeout=5.0,
-                )
-                if customers and customers.data:
-                    stripe_customer = customers.data[0]
-                    # Subscriptions may or may not be expanded
-                    subs_list = None
-                    if hasattr(stripe_customer, "subscriptions") and stripe_customer.subscriptions:
-                        subs_list = stripe_customer.subscriptions.get("data", [])
-                    if not subs_list:
-                        subs_list = stripe_customer.get("subscriptions", {}) or {}
-                        subs_list = subs_list.get("data", []) if isinstance(subs_list, dict) else []
-                    if subs_list:
-                        active_sub = subs_list[0]
-                        price_id = ""
-                        items_list = []
-                        if hasattr(active_sub, "items") and active_sub.items:
-                            items_list = active_sub.items.get("data", [])
-                        if not items_list:
-                            items_list = active_sub.get("items", {}).get("data", []) if isinstance(active_sub.get("items"), dict) else []
-                        if items_list:
-                            price_obj = items_list[0].get("price", {})
-                            price_id = price_obj.get("id", "") if isinstance(price_obj, dict) else getattr(price_obj, "id", "")
-                        from ..services.billing_service import PRICE_IDS
-                        resolved_tier = "starter"
-                        for t, pid in PRICE_IDS.items():
-                            if pid == price_id:
-                                resolved_tier = t
-                                break
-                        from ..models.subscription import Subscription
-                        from datetime import datetime, timezone
-                        sub_id = ""
-                        sub_status = "active"
-                        period_end = None
-                        if hasattr(active_sub, "id"):
-                            sub_id = active_sub.id
-                            sub_status = active_sub.status or "active"
-                            if hasattr(active_sub, "current_period_end") and active_sub.current_period_end:
-                                period_end = datetime.fromtimestamp(active_sub.current_period_end, tz=timezone.utc)
-                        else:
-                            sub_id = active_sub.get("id", f"stripe-{org_id[:8]}")
-                            sub_status = active_sub.get("status", "active")
-                            if active_sub.get("current_period_end"):
-                                period_end = datetime.fromtimestamp(active_sub["current_period_end"], tz=timezone.utc)
-                        stripe_customer_id = stripe_customer.id if hasattr(stripe_customer, "id") else stripe_customer.get("id", "")
-                        sub = Subscription(
-                            id=sub_id or f"stripe-{org_id[:8]}",
-                            organization_id=org_id,
-                            stripe_customer_id=stripe_customer_id,
-                            tier=resolved_tier,
-                            status=sub_status,
-                            current_period_start=datetime.now(timezone.utc),
-                            current_period_end=period_end,
-                        )
-                        try:
-                            await storage.store_subscription(sub)
-                            logger.info("Stripe fallback: restored subscription for org=%s tier=%s", org_id, resolved_tier)
-                        except Exception as e:
-                            logger.warning("Stripe fallback: store failed %s", e)
-        except ImportError:
-            pass
-        except Exception as e:
-            logger.warning("Stripe fallback error: %s", e)
+        asyncio.ensure_future(_check_stripe_fallback(user_email, org_id, storage))
 
     # Get key count
     try:
@@ -706,3 +634,82 @@ async def recover_api_key(
         "tier": found_tier,
         "organization_id": org_id,
     }
+
+
+async def _check_stripe_fallback(user_email: str, org_id: str, storage):
+    """Background task: check Stripe for a subscription by email and store it locally."""
+    try:
+        import stripe as stripe_mod
+        stripe_mod.api_key = os.environ.get("STRIPE_SECRET_KEY", "")
+        if not stripe_mod.api_key:
+            return
+        customers = await asyncio.wait_for(
+            asyncio.to_thread(
+                stripe_mod.Customer.list,
+                email=user_email,
+                limit=1,
+                expand=["data.subscriptions"],
+            ),
+            timeout=5.0,
+        )
+        if not customers or not customers.data:
+            return
+        stripe_customer = customers.data[0]
+        subs_list = None
+        if hasattr(stripe_customer, "subscriptions") and stripe_customer.subscriptions:
+            subs_list = stripe_customer.subscriptions.get("data", [])
+        if not subs_list:
+            subs_list = stripe_customer.get("subscriptions", {}) or {}
+            subs_list = subs_list.get("data", []) if isinstance(subs_list, dict) else []
+        if not subs_list:
+            return
+        active_sub = subs_list[0]
+        price_id = ""
+        items_list = []
+        if hasattr(active_sub, "items") and active_sub.items:
+            items_list = active_sub.items.get("data", [])
+        if not items_list:
+            items_list = active_sub.get("items", {}).get("data", []) if isinstance(active_sub.get("items"), dict) else []
+        if items_list:
+            price_obj = items_list[0].get("price", {})
+            price_id = price_obj.get("id", "") if isinstance(price_obj, dict) else getattr(price_obj, "id", "")
+        from ..services.billing_service import PRICE_IDS
+        resolved_tier = "starter"
+        for t, pid in PRICE_IDS.items():
+            if pid == price_id:
+                resolved_tier = t
+                break
+        from ..models.subscription import Subscription
+        from datetime import datetime, timezone
+        sub_id = ""
+        sub_status = "active"
+        period_end = None
+        if hasattr(active_sub, "id"):
+            sub_id = active_sub.id
+            sub_status = active_sub.status or "active"
+            if hasattr(active_sub, "current_period_end") and active_sub.current_period_end:
+                period_end = datetime.fromtimestamp(active_sub.current_period_end, tz=timezone.utc)
+        else:
+            sub_id = active_sub.get("id", f"stripe-{org_id[:8]}")
+            sub_status = active_sub.get("status", "active")
+            if active_sub.get("current_period_end"):
+                period_end = datetime.fromtimestamp(active_sub["current_period_end"], tz=timezone.utc)
+        stripe_customer_id = stripe_customer.id if hasattr(stripe_customer, "id") else stripe_customer.get("id", "")
+        sub = Subscription(
+            id=sub_id or f"stripe-{org_id[:8]}",
+            organization_id=org_id,
+            stripe_customer_id=stripe_customer_id,
+            tier=resolved_tier,
+            status=sub_status,
+            current_period_start=datetime.now(timezone.utc),
+            current_period_end=period_end,
+        )
+        try:
+            await storage.store_subscription(sub)
+            logger.info("Stripe fallback: restored subscription for org=%s tier=%s", org_id, resolved_tier)
+        except Exception as e:
+            logger.warning("Stripe fallback: store failed %s", e)
+    except ImportError:
+        pass
+    except Exception as e:
+        logger.warning("Stripe fallback error: %s", e)
