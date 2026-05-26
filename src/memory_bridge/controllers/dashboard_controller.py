@@ -154,45 +154,16 @@ async def welcome_setup(
     except Exception as e:
         logger.error("Welcome: subscription storage failed for org=%s: %s", org_id, e)
 
-    # Create API key for this org (only if they don't already have one)
-    try:
-        existing_keys = await storage.list_api_keys()
-        org_keys = [k for k in existing_keys if k.get("project_id") == org_id and k.get("is_active") is not False]
-
-        if org_keys:
-            # Already has keys — don't create another, just return latest
-            latest = org_keys[-1]
-            return {
-                "welcome": True,
-                "has_keys": True,
-                "key": None,
-                "id": latest.get("id", ""),
-                "label": latest.get("label", ""),
-                "tier": actual_tier,
-                "organization_id": org_id,
-                "key_count": len(org_keys),
-                "hint": "You already have API keys. Manage them in the dashboard.",
-            }
-
-        result = await storage.create_api_key(label=f"welcome-{actual_tier}", project_id=org_id)
-        return {
-            "welcome": True,
-            "has_keys": False,
-            "key": result["key"],
-            "id": result["id"],
-            "label": result["label"],
-            "tier": actual_tier,
-            "organization_id": org_id,
-            "created_at": result.get("created_at", ""),
-        }
-    except Exception as e:
-        return {
-            "welcome": True,
-            "has_keys": True,
-            "tier": actual_tier,
-            "organization_id": org_id,
-            "hint": "Already has keys. Sign in to access them.",
-        }
+    # Don't auto-create API keys — users generate their own from the dashboard
+    return {
+        "welcome": True,
+        "has_keys": False,
+        "key": None,
+        "tier": actual_tier,
+        "organization_id": org_id,
+        "key_count": 0,
+        "hint": "Generate your first API key from the dashboard when you need one.",
+    }
 
 
 @router.get("/keys")

@@ -104,7 +104,7 @@ class OAuthService:
         result = await self.repo.create_user(new_user)
         await self.repo.link_oauth_account(result["id"], provider, provider_user_id)
 
-        # Create free API key for the new user
+        # Create free subscription for the new user
         try:
             from ..models import Subscription
             sub = Subscription(
@@ -117,9 +117,8 @@ class OAuthService:
                 current_period_end=datetime.now(timezone.utc),
             )
             await self.repo.store_subscription(sub)
-            await self.repo.create_api_key(label="oauth-key", project_id=organization_id)
         except Exception as e:
-            logger.warning("Could not create free key for OAuth user: %s", e)
+            logger.warning("Could not create free subscription for OAuth user: %s", e)
 
         logger.info("OAuth new user: provider=%s, email=%s, org=%s", provider, verified_email, organization_id)
         return {

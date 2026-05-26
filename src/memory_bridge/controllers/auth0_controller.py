@@ -163,19 +163,13 @@ async def auth0_callback(
             logger.error("Auth0 user creation failed: %s", e)
             raise HTTPException(status_code=500, detail="Could not create user account")
 
-        # Create free subscription + API key for new user so dashboard can load
+        # Create free subscription for new user so dashboard can load
         try:
             from ..models import Subscription
             sub = Subscription(id=f"free-{org_id[:8]}", organization_id=org_id, tier="free", status="active")
             await storage.store_subscription(sub)
         except Exception as e:
             logger.warning("Could not create subscription for new user: %s", e)
-        try:
-            from datetime import datetime, timezone
-            key_label = f"auth0-key-{datetime.now(timezone.utc).strftime('%Y%m%d')}"
-            await storage.create_api_key(label=key_label, project_id=org_id)
-        except Exception as e:
-            logger.warning("Could not create API key for new user: %s", e)
 
     # Generate our own JWT for the app
     user_data = {
@@ -348,19 +342,13 @@ async def passwordless_verify(
             logger.error("Passwordless user creation failed: %s", e)
             raise HTTPException(status_code=500, detail="Could not create user account")
 
-        # Create free subscription + API key for new user so dashboard can load
+        # Create free subscription for new user so dashboard can load
         try:
             from ..models import Subscription
             sub = Subscription(id=f"free-{org_id[:8]}", organization_id=org_id, tier="free", status="active")
             await storage.store_subscription(sub)
         except Exception as e:
             logger.warning("Could not create subscription for new user: %s", e)
-        try:
-            from datetime import datetime, timezone
-            key_label = f"auth0-key-{datetime.now(timezone.utc).strftime('%Y%m%d')}"
-            await storage.create_api_key(label=key_label, project_id=org_id)
-        except Exception as e:
-            logger.warning("Could not create API key for new user: %s", e)
 
     # Generate our JWT
     user_data = {
