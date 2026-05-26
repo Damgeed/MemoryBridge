@@ -315,88 +315,88 @@
         <div class="page-header">
             <h1><span class="gradient-text">Playground</span></h1>
         </div>
-        <p class="page-subtitle">
-            Cross-session memory for multi-agent AI teams.
+        <p class="page-subtitle" data-i18n="playground.subtitle">
+            Test store, search, and retrieve operations with your API key.
             <a href="#" onclick="return false;" id="api-status" style="margin-left:0.5rem;">⚪ Checking API…</a>
         </p>
 
         <!-- API Key -->
         <div class="api-key-bar card">
-            <label>🔑 API Key</label>
-            <input id="api-key-input" type="password" placeholder="Paste your API key here…" spellcheck="false">
+            <label data-i18n="playground.api_key_label">🔑 API Key</label>
+            <input id="api-key-input" type="password" placeholder="Paste your API key here…" data-i18n-placeholder="playground.api_key_pl" spellcheck="false">
             <div class="api-key-btns">
-                <button class="btn btn-secondary btn-sm" onclick="setApiKey()">Save</button>
-                <button class="btn btn-secondary btn-sm" onclick="useDemoKey()">Use Demo Key (5 req/min)</button>
+                <button class="btn btn-secondary btn-sm" onclick="setApiKey()" data-i18n="playground.save">Save</button>
+                <button class="btn btn-secondary btn-sm" onclick="useDemoKey()" data-i18n="playground.demo_key_btn">Use Demo Key (5 req/min)</button>
             </div>
             <span class="key-status" id="api-key-status"></span>
         </div>
 
         <!-- Store Memory -->
         <div class="card store-card" id="store-card">
-            <h2>💾 Store a Memory</h2>
+            <h2 data-i18n="playground.store_heading">💾 Store a Memory</h2>
             <div class="flex-row">
                 <div>
-                    <label for="session-id">Session ID</label>
-                    <input class="input" id="session-id" placeholder="e.g., demo-session" spellcheck="false">
+                    <label for="session-id" data-i18n="playground.session_id_label">Session ID</label>
+                    <input class="input" id="session-id" placeholder="e.g., demo-session" data-i18n-placeholder="playground.session_id_pl" spellcheck="false">
                 </div>
                 <div>
                     <label for="agent-id" data-i18n="playground.store_agent">Agent ID</label>
-                    <input class="input" id="agent-id" placeholder="e.g., agent-alice" spellcheck="false">
+                    <input class="input" id="agent-id" placeholder="e.g., agent-alice" data-i18n-placeholder="playground.store_agent_pl" spellcheck="false">
                 </div>
             </div>
             <div class="flex-row">
                 <div>
                     <label for="mem-key" data-i18n="playground.store_key">Key</label>
-                    <input class="input" id="mem-key" placeholder="e.g., user_preference" spellcheck="false">
+                    <input class="input" id="mem-key" placeholder="e.g., user_preference" data-i18n-placeholder="playground.store_key_pl" spellcheck="false">
                 </div>
                 <div>
-                    <label for="mem-tags">Tags (comma-separated)</label>
-                    <input class="input" id="mem-tags" placeholder="e.g., important, user-pref" spellcheck="false">
+                    <label for="mem-tags" data-i18n="playground.tags_label">Tags (comma-separated)</label>
+                    <input class="input" id="mem-tags" placeholder="e.g., important, user-pref" data-i18n-placeholder="playground.tags_pl" spellcheck="false">
                 </div>
             </div>
             <label for="mem-value" data-i18n="playground.store_value">Value</label>
-            <textarea class="input" id="mem-value" rows="2" placeholder='e.g., {"theme": "dark", "language": "en"} or just text'></textarea>
+            <textarea class="input" id="mem-value" rows="2" placeholder='e.g., {"theme": "dark", "language": "en"} or just text' data-i18n-placeholder="playground.store_value_pl"></textarea>
             <div class="btn-group">
                 <button class="btn btn-primary" onclick="storeMemory()" data-i18n="playground.store_btn">💾 Store Memory</button>
-                <button class="btn btn-secondary" onclick="clearStoreForm()">Clear</button>
+                <button class="btn btn-secondary" onclick="clearStoreForm()" data-i18n="playground.clear">Clear</button>
             </div>
             <div id="store-result"></div>
         </div>
 
         <!-- Quick Start -->
         <div class="card" id="quickstart-card">
-            <h2 class="section-header">⚡ Quick Start Examples</h2>
-            <p style="margin-bottom:0.75rem; color:var(--text-muted); font-size:0.9rem;">
+            <h2 class="section-header" data-i18n="playground.quickstart_heading">⚡ Quick Start Examples</h2>
+            <p style="margin-bottom:0.75rem; color:var(--text-muted); font-size:0.9rem;" data-i18n="playground.quickstart_desc">
                 Click an example to pre-fill the form, then press <strong style="color:var(--accent);">Store Memory</strong>.
             </p>
             <div class="btn-group">
-                <button class="btn btn-secondary btn-sm" onclick="loadExample('user-prefs')">🎨 User Preferences</button>
-                <button class="btn btn-secondary btn-sm" onclick="loadExample('conversation')">💬 Agent Conversation</button>
-                <button class="btn btn-secondary btn-sm" onclick="loadExample('config')">⚙️ Deployment Config</button>
-                <button class="btn btn-secondary btn-sm" onclick="loadExample('task')">📋 Active Task</button>
+                <button class="btn btn-secondary btn-sm" onclick="loadExample('user-prefs')" data-i18n="playground.example_userprefs">🎨 User Preferences</button>
+                <button class="btn btn-secondary btn-sm" onclick="loadExample('conversation')" data-i18n="playground.example_conversation">💬 Agent Conversation</button>
+                <button class="btn btn-secondary btn-sm" onclick="loadExample('config')" data-i18n="playground.example_config">⚙️ Deployment Config</button>
+                <button class="btn btn-secondary btn-sm" onclick="loadExample('task')" data-i18n="playground.example_task">📋 Active Task</button>
             </div>
         </div>
 
         <!-- Search & Browse -->
         <div class="card search-card" id="search-card">
-            <h2>🔍 Search &amp; Browse</h2>
+            <h2 data-i18n="playground.search_heading">🔍 Search &amp; Browse</h2>
             <div class="flex-row">
                 <div style="flex:3;">
-                    <label for="search-query">Search text (value / key)</label>
-                    <input class="input" id="search-query" placeholder="Search memory values…" spellcheck="false">
+                    <label for="search-query" data-i18n="playground.search_label">Search text (value / key)</label>
+                    <input class="input" id="search-query" placeholder="Search memory values…" data-i18n-placeholder="playground.search_pl" spellcheck="false">
                 </div>
                 <div style="flex:1;">
-                    <label for="search-session">Session filter (optional)</label>
-                    <input class="input" id="search-session" placeholder="demo-session" spellcheck="false">
+                    <label for="search-session" data-i18n="playground.session_filter">Session filter (optional)</label>
+                    <input class="input" id="search-session" placeholder="demo-session" data-i18n-placeholder="playground.session_filter_pl" spellcheck="false">
                 </div>
             </div>
             <div class="flex-row" style="margin-top:0.25rem;">
                 <div style="flex:1;">
-                    <label for="search-agent">Agent filter (optional)</label>
-                    <input class="input" id="search-agent" placeholder="agent-alice" spellcheck="false">
+                    <label for="search-agent" data-i18n="playground.agent_filter">Agent filter (optional)</label>
+                    <input class="input" id="search-agent" placeholder="agent-alice" data-i18n-placeholder="playground.agent_filter_pl" spellcheck="false">
                 </div>
                 <div style="flex:1;">
-                    <label for="search-limit">Limit</label>
+                    <label for="search-limit" data-i18n="playground.limit_label">Limit</label>
                     <select class="input" id="search-limit">
                         <option value="10">10</option>
                         <option value="25" selected>25</option>
@@ -407,28 +407,28 @@
             </div>
             <div class="btn-group">
                 <button class="btn btn-secondary" onclick="searchMemories()" data-i18n="playground.search_btn">🔍 Search</button>
-                <button class="btn btn-secondary" onclick="getAllMemories()">📋 Show All</button>
-                <button class="btn btn-secondary btn-sm" onclick="clearSearchResults()">Clear Results</button>
+                <button class="btn btn-secondary" onclick="getAllMemories()" data-i18n="playground.show_all">📋 Show All</button>
+                <button class="btn btn-secondary btn-sm" onclick="clearSearchResults()" data-i18n="playground.clear_results">Clear Results</button>
             </div>
             <div id="search-results" class="results" style="margin-top:0.75rem;"></div>
         </div>
     </div>
 
     <footer class="playground-footer">
-        <p>© 2026 Memory Bridge — API for cross-agent memory</p>
+        <p data-i18n="footer.text">© 2026 Memory Bridge — API for cross-agent memory</p>
     </footer>
 
     <!-- Logout Confirm Modal -->
     <div class="logout-modal-overlay" id="logout-overlay" onclick="closeLogoutConfirm()"></div>
     <div class="logout-modal" id="logout-modal">
         <div class="logout-icon">🚪</div>
-        <div class="logout-title">Sign out of Memory Bridge?</div>
-        <div class="logout-text">
+        <div class="logout-title" data-i18n="logout.title">Sign out of Memory Bridge?</div>
+        <div class="logout-text" data-i18n="logout.text">
             You'll need to sign in again to manage API keys, view subscription details, or access your dashboard.
         </div>
         <div class="logout-btns">
-            <button class="btn btn-secondary" onclick="closeLogoutConfirm()">Cancel</button>
-            <button class="btn btn-danger" id="logout-confirm-btn" onclick="logout()">Sign Out</button>
+            <button class="btn btn-secondary" onclick="closeLogoutConfirm()" data-i18n="logout.cancel">Cancel</button>
+            <button class="btn btn-danger" id="logout-confirm-btn" onclick="logout()" data-i18n="logout.sign_out">Sign Out</button>
         </div>
     </div>
 
@@ -810,7 +810,7 @@
                 <path fill="#1976D2" d="M43.611,20.083H42V20H24v8h11.303c-0.792,2.237-2.231,4.166-4.087,5.571c0.001-0.001,0.002-0.001,0.003-0.002l6.19,5.238C36.971,39.205,44,34,44,24C44,22.659,43.862,21.35,43.611,20.083z"/>
               </svg>
             </span>
-            <span>Continue with Google</span>
+            <span data-i18n="auth.continue_google">Continue with Google</span>
           </button>
           <button class="auth-social-btn" onclick="socialLogin('apple')">
             <span class="s-icon" style="font-size:1.3rem;">
@@ -818,7 +818,7 @@
                 <path d="M17.05 20.28c-.98.95-2.05.8-3.08.35-1.09-.46-2.09-.48-3.24 0-1.44.62-2.2.44-3.06-.35C2.79 15.25 3.51 7.59 9.05 7.31c1.35.07 2.29.74 3.08.8 1.18-.24 2.31-.93 3.57-.84 1.51.12 2.65.72 3.4 1.8-3.12 1.87-2.38 5.98.48 7.13-.57 1.5-1.31 2.99-2.54 4.09zM12.03 7.25c-.15-2.23 1.66-4.07 3.74-4.25.29 2.58-2.34 4.5-3.74 4.25z"/>
               </svg>
             </span>
-            <span>Continue with Apple</span>
+            <span data-i18n="auth.continue_apple">Continue with Apple</span>
           </button>
           <button class="auth-social-btn" onclick="phoneLogin()">
             <span class="s-icon" style="font-size:1.3rem;">
@@ -826,15 +826,15 @@
                 <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
               </svg>
             </span>
-            <span>Continue with Phone</span>
+            <span data-i18n="auth.continue_phone">Continue with Phone</span>
           </button>
           <div class="auth-divider">
             <hr>
-            <span>or continue with email</span>
+            <span data-i18n="auth.or_email">or continue with email</span>
             <hr>
           </div>
-          <input type="email" class="auth-email-field" id="pl-email" placeholder="you@example.com" autocomplete="email" onkeydown="if(event.key==='Enter')continueWithEmail()">
-          <button class="auth-email-cta" onclick="continueWithEmail()" id="pl-email-btn">Continue →</button>
+          <input type="email" class="auth-email-field" id="pl-email" placeholder="you@example.com" data-i18n="auth.email_placeholder" autocomplete="email" onkeydown="if(event.key==='Enter')continueWithEmail()">
+          <button class="auth-email-cta" onclick="continueWithEmail()" id="pl-email-btn" data-i18n="auth.continue_btn">Continue →</button>
           <div class="auth-error" id="auth-error-main"></div>
         </div>
 
@@ -842,14 +842,14 @@
         <div id="auth-phone-step" class="auth-form">
           <button class="back-link" onclick="showAuthOptions()">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
-            Back
+            <span data-i18n="auth.back">Back</span>
           </button>
           <div class="auth-code-info">
             <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
               <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
             </svg>
-            <div class="auth-code-msg">Enter your phone number</div>
-            <div style="font-size:0.8rem;color:var(--text-muted);margin-top:0.25rem;">We'll send a 6-digit code via SMS</div>
+            <div class="auth-code-msg" data-i18n="auth.enter_phone">Enter your phone number</div>
+            <div style="font-size:0.8rem;color:var(--text-muted);margin-top:0.25rem;" data-i18n="auth.sms_notice">We'll send a 6-digit code via SMS</div>
           </div>
           <div class="auth-phone-input-row">
             <div class="phone-country-select">
@@ -1038,9 +1038,9 @@
               </select>
               <span class="phone-caret">▼</span>
             </div>
-            <input type="tel" id="pl-phone" placeholder="8123 4567" autocomplete="tel" onkeydown="if(event.key==='Enter')sendPhoneCode()">
+            <input type="tel" id="pl-phone" placeholder="8123 4567" data-i18n="auth.phone_placeholder" autocomplete="tel" onkeydown="if(event.key==='Enter')sendPhoneCode()">
           </div>
-          <button class="auth-email-cta" onclick="sendPhoneCode()" id="pl-phone-btn">Send Code →</button>
+          <button class="auth-email-cta" onclick="sendPhoneCode()" id="pl-phone-btn" data-i18n="auth.send_code_btn">Send Code →</button>
           <div class="auth-error" id="auth-error-phone"></div>
         </div>
 
@@ -1048,23 +1048,23 @@
         <div id="auth-code-step" class="auth-form">
           <button class="back-link" onclick="showAuthOptions()">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
-            <span id="code-back-label">Change email</span>
+            <span id="code-back-label" data-i18n="auth.change_email">Change email</span>
           </button>
           <div class="auth-code-info">
             <svg id="code-step-icon" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
               <rect x="2" y="4" width="20" height="16" rx="2"/>
               <path d="M22 7l-10 7L2 7"/>
             </svg>
-            <div class="auth-code-msg">We sent a code to</div>
+            <div class="auth-code-msg" data-i18n="auth.sent_code">We sent a code to</div>
             <div class="auth-code-email" id="code-email-display">j***@example.com</div>
           </div>
           <div class="auth-code-input-row">
-            <input type="text" id="pl-code" placeholder="Enter 6-digit code" maxlength="6" inputmode="numeric" autocomplete="one-time-code" onkeydown="if(event.key==='Enter')verifyCode()">
+            <input type="text" id="pl-code" placeholder="Enter 6-digit code" data-i18n-placeholder="auth.code_placeholder" maxlength="6" inputmode="numeric" autocomplete="one-time-code" onkeydown="if(event.key==='Enter')verifyCode()">
           </div>
-          <button class="btn btn-primary" onclick="verifyCode()" id="pl-code-btn">Verify Code →</button>
+          <button class="btn btn-primary" onclick="verifyCode()" id="pl-code-btn" data-i18n="auth.verify_btn">Verify Code →</button>
           <div class="auth-error" id="auth-error-code"></div>
-          <div class="auth-code-resend">
-            Didn't get it? <a onclick="resendCode()">Send new code</a>
+          <div class="auth-code-resend" data-i18n="auth.resend_label">
+            Didn't get it? <a onclick="resendCode()" data-i18n="auth.send_new_code">Send new code</a>
           </div>
         </div>
       </div>

@@ -668,11 +668,11 @@
     <div class="logout-modal-overlay" id="logout-overlay" onclick="closeLogoutConfirm()"></div>
     <div class="logout-modal" id="logout-modal">
         <div class="logout-icon">🚪</div>
-        <div class="logout-title">Sign out of Memory Bridge?</div>
-        <div class="logout-text">You'll need to sign in again to manage API keys, view subscription details, or access your dashboard.</div>
+        <div class="logout-title" data-i18n="logout.title">Sign out of Memory Bridge?</div>
+        <div class="logout-text" data-i18n="logout.text">You'll need to sign in again to manage API keys, view subscription details, or access your dashboard.</div>
         <div class="logout-btns">
-            <button class="btn btn-secondary" onclick="closeLogoutConfirm()">Cancel</button>
-            <button class="btn btn-danger" id="logout-confirm-btn" onclick="logout()">Sign Out</button>
+            <button class="btn btn-secondary" onclick="closeLogoutConfirm()" data-i18n="logout.cancel">Cancel</button>
+            <button class="btn btn-danger" id="logout-confirm-btn" onclick="logout()" data-i18n="logout.sign_out">Sign Out</button>
         </div>
     </div>
 
@@ -699,16 +699,16 @@
         <div class="hero-visual">
             <div class="bubbles">
                 <div class="bubble">
-                    <div class="agent-label"><span class="henry-dot">🧠</span> Henry (AI Expert)</div>
+                    <div class="agent-label"><span class="henry-dot">🧠</span> <span data-i18n="hero.agent_henry">Henry (AI Expert)</span></div>
                     <div class="bubble-text" data-i18n="bubble.henry">"User prefers Python 3.12, dark mode, fast iteration. Stored."</div>
                 </div>
                 <div class="bubble" style="margin-left: 1.5rem;">
-                    <div class="agent-label"><span class="fred-dot">🚀</span> Fred (Co-founder)</div>
+                    <div class="agent-label"><span class="fred-dot">🚀</span> <span data-i18n="hero.agent_fred1">Fred (Co-founder)</span></div>
                     <div class="bubble-text" data-i18n="bubble.fred">"What do we know about the user? Let me check memory."</div>
                 </div>
                 <div class="bubble" style="border-color: var(--green-glow);">
-                    <div class="agent-label"><span class="fred-dot">🚀</span> Fred (Builder)</div>
-                    <div class="bubble-text">"Found it: Python 3.12 ✓, dark mode ✓. Henry already did the research. <strong style="color:var(--green)">Ship it.</strong>"</div>
+                    <div class="agent-label"><span class="fred-dot">🚀</span> <span data-i18n="hero.agent_fred2">Fred (Builder)</span></div>
+                    <div class="bubble-text" data-i18n="bubble.fred2_full">"Found it: Python 3.12 ✓, dark mode ✓. Henry already did the research. <strong style="color:var(--green)">Ship it.</strong>"</div>
                     <div class="bubble-foot" data-i18n="bubble.foot">↔ Henry wrote it. Fred found it. No hand-holding needed.</div>
                 </div>
             </div>
@@ -727,33 +727,33 @@
             </div>
             <div class="step-card fade-up">
                 <div class="num-circle">2</div>
-                <h3>Next agent queries it</h3>
-                <p>Before calling the LLM, your code fetches relevant memories. The new agent starts with full context.</p>
+                <h3 data-i18n="step2.title">Next agent queries it</h3>
+                <p data-i18n="step2.desc">Before calling the LLM, your code fetches relevant memories. The new agent starts with full context.</p>
             </div>
             <div class="step-card fade-up">
                 <div class="num-circle">3</div>
-                <h3>Handoff between agents</h3>
-                <p>When agent A passes to agent B, Memory Bridge delivers a structured context packet. Nothing lost in translation.</p>
+                <h3 data-i18n="step3.title">Handoff between agents</h3>
+                <p data-i18n="step3.desc">When agent A passes to agent B, Memory Bridge delivers a structured context packet. Nothing lost in translation.</p>
             </div>
         </div>
     </section>
 
     <!-- ═══ Q&A ═══ -->
     <section class="section" id="qa">
-        <h2 class="section-title fade-up">Everything you need to know<span class="gradient-text">.</span></h2>
-        <p class="section-subtitle fade-up">Memory Bridge solves the hard problems so your agent team can focus on shipping.</p>
+        <h2 class="section-title fade-up" data-i18n="qa.section_title">Everything you need to know<span class="gradient-text">.</span></h2>
+        <p class="section-subtitle fade-up" data-i18n="qa.section_subtitle">Memory Bridge solves the hard problems so your agent team can focus on shipping.</p>
         <div class="qa-grid">
             <div class="qa-card fade-up">
-                <div class="q"><span class="q-icon">🗄️</span> Where does my data actually go?</div>
-                <div class="a">
+                <div class="q" data-i18n="qa.card1_q"><span class="q-icon">🗄️</span> Where does my data actually go?</div>
+                <div class="a" data-i18n="qa.card1_a">
                     In production, to your own <strong>PostgreSQL database</strong>.<br><br>
                     Every memory is a row in a table you own. No vendor lock-in — self-host with SQLite, or scale up to PostgreSQL. Export, query, delete, audit: it's your data.
                 </div>
             </div>
 
             <div class="qa-card fade-up">
-                <div class="q"><span class="q-icon">🧩</span> How do I connect ChatGPT / Gemini / local models?</div>
-                <div class="a">
+                <div class="q" data-i18n="qa.card2_q"><span class="q-icon">🧩</span> How do I connect ChatGPT / Gemini / local models?</div>
+                <div class="a" data-i18n="qa.card2_a">
                     Memory Bridge is an <strong>API</strong> — not a plugin. The pattern is always the same:
                     <br><br>
                     <code>Query → Inject → Call LLM → Store</code><br><br>
@@ -770,13 +770,13 @@
 
     <!-- ═══ DATA MODEL ═══ -->
     <section class="section">
-        <h2 class="section-title fade-up">The data model<span class="gradient-text">.</span></h2>
-        <p class="section-subtitle fade-up">Four core fields. Everything else is metadata.</p>
+        <h2 class="section-title fade-up" data-i18n="model.title_full">The data model<span class="gradient-text">.</span></h2>
+        <p class="section-subtitle fade-up" data-i18n="model.subtitle">Four core fields. Everything else is metadata.</p>
         <div class="model-card fade-up">
-            <h3>📊 Memory Table Schema</h3>
+            <h3 data-i18n="model.schema_title">📊 Memory Table Schema</h3>
             <table class="model-table">
                 <thead>
-                    <tr><th>Field</th><th>What it stores</th><th>Example</th></tr>
+                    <tr><th data-i18n="model.field_header">Field</th><th data-i18n="model.what_header">What it stores</th><th data-i18n="model.example_header">Example</th></tr>
                 </thead>
                 <tbody>
                     <tr><td>agent_id</td><td>Which agent wrote this memory</td><td><code>henry</code>, <code>code-reviewer</code>, <code>assistant</code></td></tr>
@@ -792,8 +792,8 @@
 
     <!-- ═══ INTEGRATIONS ═══ -->
     <section class="section">
-        <h2 class="section-title fade-up">🔌 Works with every LLM + framework</h2>
-        <p class="section-subtitle fade-up">Memory Bridge sits between your code and any LLM. The integration pattern is the same for all of them.</p>
+        <h2 class="section-title fade-up" data-i18n="integrations.section_title">🔌 Works with every LLM + framework</h2>
+        <p class="section-subtitle fade-up" data-i18n="integrations.section_subtitle">Memory Bridge sits between your code and any LLM. The integration pattern is the same for all of them.</p>
         <div class="integrations fade-up">
             <span class="chip">OpenAI / ChatGPT</span>
             <span class="chip">Anthropic / Claude</span>
@@ -826,15 +826,15 @@
     <!-- ═══ CTA ═══ -->
     <section class="section">
         <div class="fade-up">
-            <h2 class="section-title"><span class="gradient-text">Ready to build?</span></h2>
-            <p class="section-subtitle">No registration, no email. Open the playground or jump straight into the API docs.</p>
+            <h2 class="section-title" data-i18n="cta.ready_title"><span class="gradient-text">Ready to build?</span></h2>
+            <p class="section-subtitle" data-i18n="cta.ready_desc">No registration, no email. Open the playground or jump straight into the API docs.</p>
         </div>
 
         <div class="cta-row fade-up">
-            <a href="/playground/" class="btn btn-primary">🚀 Launch Playground</a>
+            <a href="/playground/" class="btn btn-primary" data-i18n="cta.launch_playground">🚀 Launch Playground</a>
             <a href="/api-docs" class="btn btn-secondary" data-i18n="cta.api_docs">📖 Full API Docs</a>
-            <a href="/demo" class="btn btn-secondary">▶ Watch Demo</a>
-            <a href="/faq" class="btn btn-secondary" style="border-color:var(--accent);color:var(--accent);">❓ Q&amp;A</a>
+            <a href="/demo" class="btn btn-secondary" data-i18n="cta.watch_demo">▶ Watch Demo</a>
+            <a href="/faq" class="btn btn-secondary" style="border-color:var(--accent);color:var(--accent);" data-i18n="cta.qa">❓ Q&amp;A</a>
         </div>
     </section>
 
@@ -952,7 +952,7 @@
                 <path fill="#1976D2" d="M43.611,20.083H42V20H24v8h11.303c-0.792,2.237-2.231,4.166-4.087,5.571c0.001-0.001,0.002-0.001,0.003-0.002l6.19,5.238C36.971,39.205,44,34,44,24C44,22.659,43.862,21.35,43.611,20.083z"/>
               </svg>
             </span>
-            <span>Continue with Google</span>
+            <span data-i18n="auth.continue_google">Continue with Google</span>
           </button>
           <button class="auth-social-btn" onclick="socialLogin('apple')">
             <span class="s-icon apple">
@@ -960,7 +960,7 @@
                 <path d="M17.05 20.28c-.98.95-2.05.8-3.08.35-1.09-.46-2.09-.48-3.24 0-1.44.62-2.2.44-3.06-.35C2.79 15.25 3.51 7.59 9.05 7.31c1.35.07 2.29.74 3.08.8 1.18-.24 2.31-.93 3.57-.84 1.51.12 2.65.72 3.4 1.8-3.12 1.87-2.38 5.98.48 7.13-.57 1.5-1.31 2.99-2.54 4.09zM12.03 7.25c-.15-2.23 1.66-4.07 3.74-4.25.29 2.58-2.34 4.5-3.74 4.25z"/>
               </svg>
             </span>
-            <span>Continue with Apple</span>
+            <span data-i18n="auth.continue_apple">Continue with Apple</span>
           </button>
           <button class="auth-social-btn" onclick="phoneLogin()">
             <span class="s-icon phone">
@@ -968,15 +968,15 @@
                 <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
               </svg>
             </span>
-            <span>Continue with Phone</span>
+            <span data-i18n="auth.continue_phone">Continue with Phone</span>
           </button>
           <div class="auth-divider">
             <hr>
-            <span>or continue with email</span>
+            <span data-i18n="auth.or_email">or continue with email</span>
             <hr>
           </div>
-          <input type="email" class="auth-email-field" id="pl-email" placeholder="you@example.com" autocomplete="email" onkeydown="if(event.key==='Enter')continueWithEmail()">
-          <button class="auth-email-cta" onclick="continueWithEmail()" id="pl-email-btn">Continue →</button>
+          <input type="email" class="auth-email-field" id="pl-email" placeholder="you@example.com" data-i18n="auth.email_placeholder" autocomplete="email" onkeydown="if(event.key==='Enter')continueWithEmail()">
+          <button class="auth-email-cta" onclick="continueWithEmail()" id="pl-email-btn" data-i18n="auth.continue_btn">Continue →</button>
           <div class="auth-error" id="auth-error-main"></div>
         </div>
 
@@ -984,14 +984,14 @@
         <div id="auth-phone-step" class="auth-form">
           <button class="back-link" onclick="showAuthOptions()">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
-            Back
+            <span data-i18n="auth.back">Back</span>
           </button>
           <div class="auth-code-info">
             <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
               <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
             </svg>
-            <div class="auth-code-msg">Enter your phone number</div>
-            <div style="font-size:0.8rem;color:var(--text-muted);margin-top:0.25rem;">We'll send a 6-digit code via SMS</div>
+            <div class="auth-code-msg" data-i18n="auth.enter_phone">Enter your phone number</div>
+            <div style="font-size:0.8rem;color:var(--text-muted);margin-top:0.25rem;" data-i18n="auth.sms_notice">We'll send a 6-digit code via SMS</div>
           </div>
           <div class="auth-phone-input-row">
             <div class="phone-country-select">
@@ -1180,9 +1180,9 @@
               </select>
               <span class="phone-caret">▼</span>
             </div>
-            <input type="tel" id="pl-phone" placeholder="8123 4567" autocomplete="tel" onkeydown="if(event.key==='Enter')sendPhoneCode()">
+            <input type="tel" id="pl-phone" placeholder="8123 4567" data-i18n="auth.phone_placeholder" autocomplete="tel" onkeydown="if(event.key==='Enter')sendPhoneCode()">
           </div>
-          <button class="auth-email-cta" onclick="sendPhoneCode()" id="pl-phone-btn">Send Code →</button>
+          <button class="auth-email-cta" onclick="sendPhoneCode()" id="pl-phone-btn" data-i18n="auth.send_code_btn">Send Code →</button>
           <div class="auth-error" id="auth-error-phone"></div>
         </div>
 
@@ -1190,23 +1190,23 @@
         <div id="auth-code-step" class="auth-form">
           <button class="back-link" onclick="showAuthOptions()">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
-            <span id="code-back-label">Change email</span>
+            <span id="code-back-label" data-i18n="auth.change_email">Change email</span>
           </button>
           <div class="auth-code-info">
             <svg id="code-step-icon" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
               <rect x="2" y="4" width="20" height="16" rx="2"/>
               <path d="M22 7l-10 7L2 7"/>
             </svg>
-            <div class="auth-code-msg">We sent a code to</div>
+            <div class="auth-code-msg" data-i18n="auth.sent_code">We sent a code to</div>
             <div class="auth-code-email" id="code-email-display">j***@example.com</div>
           </div>
           <div class="auth-code-input-row">
-            <input type="text" id="pl-code" placeholder="Enter 6-digit code" maxlength="6" inputmode="numeric" autocomplete="one-time-code" onkeydown="if(event.key==='Enter')verifyCode()">
+            <input type="text" id="pl-code" placeholder="Enter 6-digit code" data-i18n="auth.code_placeholder" maxlength="6" inputmode="numeric" autocomplete="one-time-code" onkeydown="if(event.key==='Enter')verifyCode()">
           </div>
-          <button class="btn btn-primary" onclick="verifyCode()" id="pl-code-btn">Verify Code →</button>
+          <button class="btn btn-primary" onclick="verifyCode()" id="pl-code-btn" data-i18n="auth.verify_btn">Verify Code →</button>
           <div class="auth-error" id="auth-error-code"></div>
-          <div class="auth-code-resend">
-            Didn't get it? <a onclick="resendCode()">Send new code</a>
+          <div class="auth-code-resend" data-i18n="auth.resend_label">
+            Didn't get it? <a onclick="resendCode()" data-i18n="auth.send_new_code">Send new code</a>
           </div>
         </div>
       </div>

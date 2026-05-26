@@ -276,7 +276,78 @@ window.TRANSLATIONS = {
     "demo.pause_btn": "⏸ Pause",
   
     "dash.gate_title": "Sign in to manage your account",
-    "dash.gate_desc": "Sign in with your email, Google, or Apple to manage API keys, view your subscription, and configure Memory Bridge.",},
+    "dash.gate_desc": "Sign in with your email, Google, or Apple to manage API keys, view your subscription, and configure Memory Bridge."},
+
+    // ── New Auth Keys ────────────────────────────────
+    "auth.continue_google": "Continue with Google",
+    "auth.continue_apple": "Continue with Apple",
+    "auth.continue_phone": "Continue with Phone",
+    "auth.or_email": "or continue with email",
+    "auth.email_placeholder": "you@example.com",
+    "auth.continue_btn": "Continue \u2192",
+    "auth.enter_phone": "Enter your phone number",
+    "auth.sms_notice": "We'll send a 6-digit code via SMS",
+    "auth.phone_placeholder": "8123 4567",
+    "auth.send_code_btn": "Send Code \u2192",
+    "auth.sent_code": "We sent a code to",
+    "auth.code_placeholder": "Enter 6-digit code",
+    "auth.verify_btn": "Verify Code \u2192",
+    "auth.resend_label": "Didn't get it?",
+    "auth.send_new_code": "Send new code",
+
+    // ── Pricing FAQ 6 & 7 ────────────────────────────
+    "pricing.faq6_q": "\ud83d\udcca How do you handle rate limiting across tiers?",
+    "pricing.faq6_a": "Rate limits are per-API-key and enforced at the gateway level. Each tier has a defined limit (Free: 60/min, Starter: 300/min, Pro: 600/min, Enterprise: custom). Exceeding the limit returns a 429 response. Rate limits reset every minute.",
+    "pricing.faq7_q": "\ud83d\udd12 Is my data encrypted at rest?",
+    "pricing.faq7_a": "Yes. All stored memories are encrypted at rest using AES-256. Data in transit is secured via TLS 1.3. Your database is isolated per tenant with row-level security, ensuring no cross-tenant access.",
+
+    // ── Hero Bubble Agents ───────────────────────────
+    "hero.agent_henry": "\ud83e\udde0 Henry (AI Expert)",
+    "hero.agent_fred1": "\ud83d\ude80 Fred (Co-founder)",
+    "hero.agent_fred2": "\ud83d\ude80 Fred (Builder)",
+    "bubble.fred2_full": "Found it: Python 3.12 \u2713, dark mode \u2713. Henry already did the research. <strong style=\"color:var(--green)\">Ship it.</strong>",
+
+    // ── Q&A Section ─────────────────────────────────
+    "qa.section_title": "Everything you need to know<span class=\"gradient-text\">.</span>",
+    "qa.section_subtitle": "Memory Bridge solves the hard problems so your agent team can focus on shipping.",
+
+    // ── Data Model ──────────────────────────────────
+    "model.title_full": "The data model<span class=\"gradient-text\">.</span>",
+    "model.subtitle": "Four core fields. Everything else is metadata.",
+
+    // ── CTA Section ─────────────────────────────────
+    "cta.ready_title": "<span class=\"gradient-text\">Ready to build?</span>",
+    "cta.ready_desc": "No registration, no email. Open the playground or jump straight into the API docs.",
+    "cta.launch_playground": "\ud83d\ude80 Launch Playground",
+    "cta.watch_demo": "\u25b6 Watch Demo",
+    "cta.qa": "\u2753 Q&A",
+
+    // ── Playground Keys ─────────────────────────────
+    "playground.api_key_label": "\ud83d\udd11 API Key",
+    "playground.save": "Save",
+    "playground.demo_key_btn": "Use Demo Key (5 req/min)",
+    "playground.store_heading": "\ud83d\udcbe Store a Memory",
+    "playground.session_id_label": "Session ID",
+    "playground.session_id_pl": "e.g., demo-session",
+    "playground.tags_label": "Tags (comma-separated)",
+    "playground.tags_pl": "e.g., important, user-pref",
+    "playground.clear": "Clear",
+    "playground.quickstart_heading": "\u26a1 Quick Start Examples",
+    "playground.quickstart_desc": "Click an example to pre-fill the form, then press Store Memory.",
+    "playground.example_userprefs": "\ud83c\udfa8 User Preferences",
+    "playground.example_conversation": "\ud83d\udcac Agent Conversation",
+    "playground.example_config": "\u2699\ufe0f Deployment Config",
+    "playground.example_task": "\ud83d\udccb Active Task",
+    "playground.search_heading": "\ud83d\udd0d Search & Browse",
+    "playground.search_label": "Search text (value / key)",
+    "playground.search_pl": "Search memory values\u2026",
+    "playground.session_filter": "Session filter (optional)",
+    "playground.session_filter_pl": "demo-session",
+    "playground.agent_filter": "Agent filter (optional)",
+    "playground.agent_filter_pl": "agent-alice",
+    "playground.limit_label": "Limit",
+    "playground.show_all": "\ud83d\udccb Show All",
+    "playground.clear_results": "Clear Results",
 
   zh: {
     "nav.home": "首页",
@@ -547,7 +618,78 @@ window.TRANSLATIONS = {
 
   
     "dash.gate_title": "登录管理您的账户",
-    "dash.gate_desc": "使用您的邮箱、Google 或 Apple 登录，管理 API 密钥、查看订阅和配置 Memory Bridge。",},
+    "dash.gate_desc": "使用您的邮箱、Google 或 Apple 登录，管理 API 密钥、查看订阅和配置 Memory Bridge。"},
+
+    // ── New Auth Keys ────────────────────────────────
+    "auth.continue_google": "使用 Google 继续",
+    "auth.continue_apple": "使用 Apple 继续",
+    "auth.continue_phone": "使用手机继续",
+    "auth.or_email": "或使用邮箱继续",
+    "auth.email_placeholder": "you@example.com",
+    "auth.continue_btn": "继续 →",
+    "auth.enter_phone": "输入你的手机号码",
+    "auth.sms_notice": "我们将通过短信发送 6 位验证码",
+    "auth.phone_placeholder": "8123 4567",
+    "auth.send_code_btn": "发送验证码 →",
+    "auth.sent_code": "我们已发送验证码到",
+    "auth.code_placeholder": "输入 6 位验证码",
+    "auth.verify_btn": "验证 →",
+    "auth.resend_label": "没收到？",
+    "auth.send_new_code": "重新发送",
+
+    // ── Pricing FAQ 6 & 7 ────────────────────────────
+    "pricing.faq6_q": "📊 各层级的速率限制如何工作？",
+    "pricing.faq6_a": "速率限制按 API 密钥在网关层实施。每个层级都有定义的限制（免费版：60次/分钟，入门版：300次/分钟，专业版：600次/分钟，企业版：自定义）。超出限制返回 429 响应。速率限制每分钟重置。",
+    "pricing.faq7_q": "🔒 我的数据在存储时是否加密？",
+    "pricing.faq7_a": "是的。所有存储的记忆使用 AES-256 加密。传输中的数据通过 TLS 1.3 保护。您的数据库按租户隔离，具有行级安全性，确保无跨租户访问。",
+
+    // ── Hero Bubble Agents ───────────────────────────
+    "hero.agent_henry": "🧠 Henry（AI 专家）",
+    "hero.agent_fred1": "🚀 Fred（联合创始人）",
+    "hero.agent_fred2": "🚀 Fred（构建者）",
+    "bubble.fred2_full": "找到了：Python 3.12 ✓，深色模式 ✓。Henry 已经做了研究。<strong style=\"color:var(--green)\">发布吧。</strong>",
+
+    // ── Q&A Section ─────────────────────────────────
+    "qa.section_title": "你需要了解的一切<span class=\"gradient-text\">。</span>",
+    "qa.section_subtitle": "Memory Bridge 解决了难题，让你的智能体团队专注于交付。",
+
+    // ── Data Model ──────────────────────────────────
+    "model.title_full": "数据模型<span class=\"gradient-text\">。</span>",
+    "model.subtitle": "四个核心字段。其余都是元数据。",
+
+    // ── CTA Section ─────────────────────────────────
+    "cta.ready_title": "<span class=\"gradient-text\">准备好构建了吗？</span>",
+    "cta.ready_desc": "无需注册，无需邮箱。打开演示环境或直接进入 API 文档。",
+    "cta.launch_playground": "🚀 启动演示环境",
+    "cta.watch_demo": "▶ 观看演示",
+    "cta.qa": "❓ 问答",
+
+    // ── Playground Keys ─────────────────────────────
+    "playground.api_key_label": "🔑 API 密钥",
+    "playground.save": "保存",
+    "playground.demo_key_btn": "使用演示密钥（5 次/分钟）",
+    "playground.store_heading": "💾 存储记忆",
+    "playground.session_id_label": "会话 ID",
+    "playground.session_id_pl": "例如 demo-session",
+    "playground.tags_label": "标签（逗号分隔）",
+    "playground.tags_pl": "例如 important, user-pref",
+    "playground.clear": "清除",
+    "playground.quickstart_heading": "⚡ 快速入门示例",
+    "playground.quickstart_desc": "点击示例预填表单，然后按存储记忆。",
+    "playground.example_userprefs": "🎨 用户偏好",
+    "playground.example_conversation": "💬 智能体对话",
+    "playground.example_config": "⚙️ 部署配置",
+    "playground.example_task": "📋 活跃任务",
+    "playground.search_heading": "🔍 搜索与浏览",
+    "playground.search_label": "搜索文本（值/键）",
+    "playground.search_pl": "搜索记忆值…",
+    "playground.session_filter": "会话筛选（可选）",
+    "playground.session_filter_pl": "demo-session",
+    "playground.agent_filter": "智能体筛选（可选）",
+    "playground.agent_filter_pl": "agent-alice",
+    "playground.limit_label": "限制",
+    "playground.show_all": "📋 显示全部",
+    "playground.clear_results": "清除结果",
 
   ja: {
     "nav.home": "ホーム",
@@ -766,7 +908,78 @@ window.TRANSLATIONS = {
     "dash.keys_count": "キー: <strong>{count}</strong> アクティブ",
   
     "dash.gate_title": "アカウント管理のためにサインイン",
-    "dash.gate_desc": "メール、Google、Appleでサインインして、APIキーの管理、サブスクリプションの確認、Memory Bridgeの設定を行います。",},
+    "dash.gate_desc": "メール、Google、Appleでサインインして、APIキーの管理、サブスクリプションの確認、Memory Bridgeの設定を行います。"},
+
+    // ── New Auth Keys ────────────────────────────────
+    "auth.continue_google": "Googleで続ける",
+    "auth.continue_apple": "Appleで続ける",
+    "auth.continue_phone": "電話で続ける",
+    "auth.or_email": "またはメールで続ける",
+    "auth.email_placeholder": "you@example.com",
+    "auth.continue_btn": "続ける →",
+    "auth.enter_phone": "電話番号を入力",
+    "auth.sms_notice": "6桁のコードをSMSで送信します",
+    "auth.phone_placeholder": "8123 4567",
+    "auth.send_code_btn": "コードを送信 →",
+    "auth.sent_code": "コードを送信しました：",
+    "auth.code_placeholder": "6桁のコードを入力",
+    "auth.verify_btn": "コードを確認 →",
+    "auth.resend_label": "届きませんでしたか？",
+    "auth.send_new_code": "新しいコードを送信",
+
+    // ── Pricing FAQ 6 & 7 ────────────────────────────
+    "pricing.faq6_q": "📊 各ティアのレート制限はどのように機能しますか？",
+    "pricing.faq6_a": "レート制限はAPIキーごとにゲートウェイレベルで適用されます。各ティアには定義された制限があります（無料：60/分、スターター：300/分、プロ：600/分、エンタープライズ：カスタム）。制限を超えると429レスポンスが返されます。レート制限は毎分リセットされます。",
+    "pricing.faq7_q": "🔒 データは保存時に暗号化されていますか？",
+    "pricing.faq7_a": "はい。すべての保存されたメモリはAES-256で暗号化されています。転送中のデータはTLS 1.3で保護されています。データベースはテナントごとに分離され、行レベルのセキュリティによりクロステナントアクセスを防止します。",
+
+    // ── Hero Bubble Agents ───────────────────────────
+    "hero.agent_henry": "🧠 Henry（AI専門家）",
+    "hero.agent_fred1": "🚀 Fred（共同創業者）",
+    "hero.agent_fred2": "🚀 Fred（ビルダー）",
+    "bubble.fred2_full": "見つけました：Python 3.12 ✓、ダークモード ✓。Henryがすでに調査済みです。<strong style=\"color:var(--green)\">出荷しましょう。</strong>",
+
+    // ── Q&A Section ─────────────────────────────────
+    "qa.section_title": "知っておくべきすべてのこと<span class=\"gradient-text\">。</span>",
+    "qa.section_subtitle": "Memory Bridgeが難しい問題を解決するので、エージェントチームは出荷に集中できます。",
+
+    // ── Data Model ──────────────────────────────────
+    "model.title_full": "データモデル<span class=\"gradient-text\">。</span>",
+    "model.subtitle": "4つのコアフィールド。残りはすべてメタデータです。",
+
+    // ── CTA Section ─────────────────────────────────
+    "cta.ready_title": "<span class=\"gradient-text\">構築する準備はできましたか？</span>",
+    "cta.ready_desc": "登録もメールも不要。プレイグラウンドを開くか、APIドキュメントに直接ジャンプしてください。",
+    "cta.launch_playground": "🚀 プレイグラウンドを起動",
+    "cta.watch_demo": "▶ デモを見る",
+    "cta.qa": "❓ Q&A",
+
+    // ── Playground Keys ─────────────────────────────
+    "playground.api_key_label": "🔑 APIキー",
+    "playground.save": "保存",
+    "playground.demo_key_btn": "デモキーを使用（5 req/min）",
+    "playground.store_heading": "💾 メモリを保存",
+    "playground.session_id_label": "セッションID",
+    "playground.session_id_pl": "例：demo-session",
+    "playground.tags_label": "タグ（カンマ区切り）",
+    "playground.tags_pl": "例：important, user-pref",
+    "playground.clear": "クリア",
+    "playground.quickstart_heading": "⚡ クイックスタート例",
+    "playground.quickstart_desc": "例をクリックしてフォームを事前入力し、メモリを保存を押します。",
+    "playground.example_userprefs": "🎨 ユーザー設定",
+    "playground.example_conversation": "💬 エージェント会話",
+    "playground.example_config": "⚙️ デプロイ設定",
+    "playground.example_task": "📋 アクティブタスク",
+    "playground.search_heading": "🔍 検索と閲覧",
+    "playground.search_label": "検索テキスト（値/キー）",
+    "playground.search_pl": "メモリ値を検索…",
+    "playground.session_filter": "セッションフィルター（オプション）",
+    "playground.session_filter_pl": "demo-session",
+    "playground.agent_filter": "エージェントフィルター（オプション）",
+    "playground.agent_filter_pl": "agent-alice",
+    "playground.limit_label": "制限",
+    "playground.show_all": "📋 すべて表示",
+    "playground.clear_results": "結果をクリア",
 
   ko: {
     "nav.home": "홈",
@@ -994,7 +1207,78 @@ window.TRANSLATIONS = {
     "pricing.enterprise_feat6": "✓ 전담 지원 엔지니어",
   
     "dash.gate_title": "계정 관리를 위해 로그인",
-    "dash.gate_desc": "이메일, Google 또는 Apple로 로그인하여 API 키 관리, 구독 보기, Memory Bridge 구성을 수행하세요.",},
+    "dash.gate_desc": "이메일, Google 또는 Apple로 로그인하여 API 키 관리, 구독 보기, Memory Bridge 구성을 수행하세요."},
+
+    // ── New Auth Keys ────────────────────────────────
+    "auth.continue_google": "Google로 계속",
+    "auth.continue_apple": "Apple로 계속",
+    "auth.continue_phone": "전화로 계속",
+    "auth.or_email": "또는 이메일로 계속",
+    "auth.email_placeholder": "you@example.com",
+    "auth.continue_btn": "계속 →",
+    "auth.enter_phone": "전화번호 입력",
+    "auth.sms_notice": "6자리 코드를 SMS로 보내드립니다",
+    "auth.phone_placeholder": "8123 4567",
+    "auth.send_code_btn": "코드 보내기 →",
+    "auth.sent_code": "코드를 다음으로 보냈습니다:",
+    "auth.code_placeholder": "6자리 코드 입력",
+    "auth.verify_btn": "코드 확인 →",
+    "auth.resend_label": "받지 못하셨나요?",
+    "auth.send_new_code": "새 코드 보내기",
+
+    // ── Pricing FAQ 6 & 7 ────────────────────────────
+    "pricing.faq6_q": "📊 등급별 속도 제한은 어떻게 작동하나요?",
+    "pricing.faq6_a": "속도 제한은 API 키별로 게이트웨이 수준에서 적용됩니다. 각 등급에는 정의된 제한이 있습니다(무료: 60/분, 스타터: 300/분, 프로: 600/분, 엔터프라이즈: 맞춤 설정). 제한을 초과하면 429 응답이 반환됩니다. 속도 제한은 매분 초기화됩니다.",
+    "pricing.faq7_q": "🔒 데이터가 저장 시 암호화되나요?",
+    "pricing.faq7_a": "네. 모든 저장된 메모리는 AES-256으로 암호화됩니다. 전송 중인 데이터는 TLS 1.3으로 보호됩니다. 데이터베이스는 테넌트별로 격리되며 행 수준 보안을 통해 테넌트 간 액세스를 방지합니다.",
+
+    // ── Hero Bubble Agents ───────────────────────────
+    "hero.agent_henry": "🧠 Henry (AI 전문가)",
+    "hero.agent_fred1": "🚀 Fred (공동 창업자)",
+    "hero.agent_fred2": "🚀 Fred (빌더)",
+    "bubble.fred2_full": "찾았습니다: Python 3.12 ✓, 다크 모드 ✓. Henry가 이미 조사했습니다.<strong style=\"color:var(--green)\">출시합시다.</strong>",
+
+    // ── Q&A Section ─────────────────────────────────
+    "qa.section_title": "알아야 할 모든 것<span class=\"gradient-text\">.</span>",
+    "qa.section_subtitle": "Memory Bridge가 어려운 문제를 해결하므로 에이전트 팀은 출시에 집중할 수 있습니다.",
+
+    // ── Data Model ──────────────────────────────────
+    "model.title_full": "데이터 모델<span class=\"gradient-text\">.</span>",
+    "model.subtitle": "4개의 핵심 필드. 나머지는 모두 메타데이터입니다.",
+
+    // ── CTA Section ─────────────────────────────────
+    "cta.ready_title": "<span class=\"gradient-text\">구축할 준비가 되셨나요?</span>",
+    "cta.ready_desc": "등록도 이메일도 필요 없습니다. 플레이그라운드를 열거나 API 문서로 바로 이동하세요.",
+    "cta.launch_playground": "🚀 플레이그라운드 실행",
+    "cta.watch_demo": "▶ 데모 보기",
+    "cta.qa": "❓ Q&A",
+
+    // ── Playground Keys ─────────────────────────────
+    "playground.api_key_label": "🔑 API 키",
+    "playground.save": "저장",
+    "playground.demo_key_btn": "데모 키 사용 (5 req/min)",
+    "playground.store_heading": "💾 메모리 저장",
+    "playground.session_id_label": "세션 ID",
+    "playground.session_id_pl": "예: demo-session",
+    "playground.tags_label": "태그(쉼표로 구분)",
+    "playground.tags_pl": "예: important, user-pref",
+    "playground.clear": "지우기",
+    "playground.quickstart_heading": "⚡ 빠른 시작 예제",
+    "playground.quickstart_desc": "예제를 클릭하여 양식을 미리 채운 다음 메모리 저장을 누르세요.",
+    "playground.example_userprefs": "🎨 사용자 환경설정",
+    "playground.example_conversation": "💬 에이전트 대화",
+    "playground.example_config": "⚙️ 배포 구성",
+    "playground.example_task": "📋 활성 작업",
+    "playground.search_heading": "🔍 검색 및 찾아보기",
+    "playground.search_label": "검색 텍스트 (값/키)",
+    "playground.search_pl": "메모리 값 검색…",
+    "playground.session_filter": "세션 필터 (선택사항)",
+    "playground.session_filter_pl": "demo-session",
+    "playground.agent_filter": "에이전트 필터 (선택사항)",
+    "playground.agent_filter_pl": "agent-alice",
+    "playground.limit_label": "제한",
+    "playground.show_all": "📋 모두 표시",
+    "playground.clear_results": "결과 지우기",
 
   es: {
     "nav.home": "Inicio",
@@ -1223,7 +1507,78 @@ window.TRANSLATIONS = {
     "pricing.enterprise_feat6": "✓ Ingeniero de soporte dedicado",
   
     "dash.gate_title": "Inicia sesión para gestionar tu cuenta",
-    "dash.gate_desc": "Inicia sesión con tu correo electrónico, Google o Apple para gestionar claves API, ver tu suscripción y configurar Memory Bridge.",},
+    "dash.gate_desc": "Inicia sesión con tu correo electrónico, Google o Apple para gestionar claves API, ver tu suscripción y configurar Memory Bridge."},
+
+    // ── New Auth Keys ────────────────────────────────
+    "auth.continue_google": "Continuar con Google",
+    "auth.continue_apple": "Continuar con Apple",
+    "auth.continue_phone": "Continuar con teléfono",
+    "auth.or_email": "o continuar con correo electrónico",
+    "auth.email_placeholder": "tu@ejemplo.com",
+    "auth.continue_btn": "Continuar →",
+    "auth.enter_phone": "Ingresa tu número de teléfono",
+    "auth.sms_notice": "Enviaremos un código de 6 dígitos por SMS",
+    "auth.phone_placeholder": "8123 4567",
+    "auth.send_code_btn": "Enviar código →",
+    "auth.sent_code": "Enviamos un código a",
+    "auth.code_placeholder": "Ingresa el código de 6 dígitos",
+    "auth.verify_btn": "Verificar código →",
+    "auth.resend_label": "¿No lo recibiste?",
+    "auth.send_new_code": "Enviar nuevo código",
+
+    // ── Pricing FAQ 6 & 7 ────────────────────────────
+    "pricing.faq6_q": "📊 ¿Cómo funciona la limitación de velocidad entre niveles?",
+    "pricing.faq6_a": "Los límites de velocidad son por clave API y se aplican a nivel de puerta de enlace. Cada nivel tiene un límite definido (Gratis: 60/min, Inicial: 300/min, Pro: 600/min, Empresa: personalizado). Superar el límite devuelve una respuesta 429. Los límites se restablecen cada minuto.",
+    "pricing.faq7_q": "🔒 ¿Están cifrados mis datos en reposo?",
+    "pricing.faq7_a": "Sí. Todos los recuerdos almacenados están cifrados en reposo con AES-256. Los datos en tránsito están protegidos mediante TLS 1.3. Tu base de datos está aislada por inquilino con seguridad a nivel de fila, sin acceso cruzado entre inquilinos.",
+
+    // ── Hero Bubble Agents ───────────────────────────
+    "hero.agent_henry": "🧠 Henry (Experto en IA)",
+    "hero.agent_fred1": "🚀 Fred (Cofundador)",
+    "hero.agent_fred2": "🚀 Fred (Creador)",
+    "bubble.fred2_full": "Encontrado: Python 3.12 ✓, modo oscuro ✓. Henry ya investigó.<strong style=\"color:var(--green)\">Lanzarlo.</strong>",
+
+    // ── Q&A Section ─────────────────────────────────
+    "qa.section_title": "Todo lo que necesitas saber<span class=\"gradient-text\">.</span>",
+    "qa.section_subtitle": "Memory Bridge resuelve los problemas difíciles para que tu equipo de agentes pueda centrarse en lanzar.",
+
+    // ── Data Model ──────────────────────────────────
+    "model.title_full": "El modelo de datos<span class=\"gradient-text\">.</span>",
+    "model.subtitle": "Cuatro campos principales. Todo lo demás son metadatos.",
+
+    // ── CTA Section ─────────────────────────────────
+    "cta.ready_title": "<span class=\"gradient-text\">¿Listo para construir?</span>",
+    "cta.ready_desc": "Sin registro, sin correo electrónico. Abre el Demo o salta directamente a la documentación de la API.",
+    "cta.launch_playground": "🚀 Lanzar Demo",
+    "cta.watch_demo": "▶ Ver demo",
+    "cta.qa": "❓ Preguntas",
+
+    // ── Playground Keys ─────────────────────────────
+    "playground.api_key_label": "🔑 Clave API",
+    "playground.save": "Guardar",
+    "playground.demo_key_btn": "Usar clave demo (5 solicitudes/min)",
+    "playground.store_heading": "💾 Almacenar un recuerdo",
+    "playground.session_id_label": "ID de sesión",
+    "playground.session_id_pl": "ej., demo-session",
+    "playground.tags_label": "Etiquetas (separadas por comas)",
+    "playground.tags_pl": "ej., importante, pref-usuario",
+    "playground.clear": "Limpiar",
+    "playground.quickstart_heading": "⚡ Ejemplos de inicio rápido",
+    "playground.quickstart_desc": "Haz clic en un ejemplo para rellenar el formulario, luego presiona Almacenar recuerdo.",
+    "playground.example_userprefs": "🎨 Preferencias del usuario",
+    "playground.example_conversation": "💬 Conversación del agente",
+    "playground.example_config": "⚙️ Configuración de despliegue",
+    "playground.example_task": "📋 Tarea activa",
+    "playground.search_heading": "🔍 Buscar y explorar",
+    "playground.search_label": "Texto de búsqueda (valor/clave)",
+    "playground.search_pl": "Buscar valores de recuerdos…",
+    "playground.session_filter": "Filtro de sesión (opcional)",
+    "playground.session_filter_pl": "demo-session",
+    "playground.agent_filter": "Filtro de agente (opcional)",
+    "playground.agent_filter_pl": "agent-alice",
+    "playground.limit_label": "Límite",
+    "playground.show_all": "📋 Mostrar todo",
+    "playground.clear_results": "Limpiar resultados",
 
   fr: {
     "nav.home": "Accueil",
@@ -1485,7 +1840,78 @@ window.TRANSLATIONS = {
     "pricing.enterprise_feat6": "✓ Ingénieur de support dédié",
   
     "dash.gate_title": "Connectez-vous pour gérer votre compte",
-    "dash.gate_desc": "Connectez-vous avec votre email, Google ou Apple pour gérer les clés API, voir votre abonnement et configurer Memory Bridge.",},
+    "dash.gate_desc": "Connectez-vous avec votre email, Google ou Apple pour gérer les clés API, voir votre abonnement et configurer Memory Bridge."},
+
+    // ── New Auth Keys ────────────────────────────────
+    "auth.continue_google": "Continuer avec Google",
+    "auth.continue_apple": "Continuer avec Apple",
+    "auth.continue_phone": "Continuer avec téléphone",
+    "auth.or_email": "ou continuer avec email",
+    "auth.email_placeholder": "vous@exemple.com",
+    "auth.continue_btn": "Continuer →",
+    "auth.enter_phone": "Entrez votre numéro de téléphone",
+    "auth.sms_notice": "Nous enverrons un code à 6 chiffres par SMS",
+    "auth.phone_placeholder": "8123 4567",
+    "auth.send_code_btn": "Envoyer le code →",
+    "auth.sent_code": "Nous avons envoyé un code à",
+    "auth.code_placeholder": "Entrez le code à 6 chiffres",
+    "auth.verify_btn": "Vérifier le code →",
+    "auth.resend_label": "Vous n'avez pas reçu ?",
+    "auth.send_new_code": "Envoyer un nouveau code",
+
+    // ── Pricing FAQ 6 & 7 ────────────────────────────
+    "pricing.faq6_q": "📊 Comment fonctionne la limitation de débit entre les forfaits ?",
+    "pricing.faq6_a": "Les limites de débit sont par clé API et appliquées au niveau de la passerelle. Chaque forfait a une limite définie (Gratuit : 60/min, Débutant : 300/min, Pro : 600/min, Entreprise : personnalisé). Le dépassement de la limite renvoie une réponse 429. Les limites se réinitialisent chaque minute.",
+    "pricing.faq7_q": "🔒 Mes données sont-elles chiffrées au repos ?",
+    "pricing.faq7_a": "Oui. Tous les souvenirs stockés sont chiffrés au repos avec AES-256. Les données en transit sont sécurisées via TLS 1.3. Votre base de données est isolée par locataire avec sécurité au niveau des lignes, sans accès inter-locataire.",
+
+    // ── Hero Bubble Agents ───────────────────────────
+    "hero.agent_henry": "🧠 Henry (Expert IA)",
+    "hero.agent_fred1": "🚀 Fred (Co-fondateur)",
+    "hero.agent_fred2": "🚀 Fred (Constructeur)",
+    "bubble.fred2_full": "Trouvé : Python 3.12 ✓, mode sombre ✓. Henry a déjà fait les recherches.<strong style=\"color:var(--green)\">Livrons-le.</strong>",
+
+    // ── Q&A Section ─────────────────────────────────
+    "qa.section_title": "Tout ce que vous devez savoir<span class=\"gradient-text\">.</span>",
+    "qa.section_subtitle": "Memory Bridge résout les problèmes difficiles pour que votre équipe d'agents puisse se concentrer sur la livraison.",
+
+    // ── Data Model ──────────────────────────────────
+    "model.title_full": "Le modèle de données<span class=\"gradient-text\">.</span>",
+    "model.subtitle": "Quatre champs principaux. Tout le reste est des métadonnées.",
+
+    // ── CTA Section ─────────────────────────────────
+    "cta.ready_title": "<span class=\"gradient-text\">Prêt à construire ?</span>",
+    "cta.ready_desc": "Pas d'inscription, pas d'email. Ouvrez le Playground ou allez directement dans la documentation API.",
+    "cta.launch_playground": "🚀 Lancer le Playground",
+    "cta.watch_demo": "▶ Voir la démo",
+    "cta.qa": "❓ Questions",
+
+    // ── Playground Keys ─────────────────────────────
+    "playground.api_key_label": "🔑 Clé API",
+    "playground.save": "Enregistrer",
+    "playground.demo_key_btn": "Utiliser la clé de démo (5 req/min)",
+    "playground.store_heading": "💾 Stocker un souvenir",
+    "playground.session_id_label": "ID de session",
+    "playground.session_id_pl": "ex., demo-session",
+    "playground.tags_label": "Étiquettes (séparées par des virgules)",
+    "playground.tags_pl": "ex., important, user-pref",
+    "playground.clear": "Effacer",
+    "playground.quickstart_heading": "⚡ Exemples de démarrage rapide",
+    "playground.quickstart_desc": "Cliquez sur un exemple pour pré-remplir le formulaire, puis appuyez sur Stocker le souvenir.",
+    "playground.example_userprefs": "🎨 Préférences utilisateur",
+    "playground.example_conversation": "💬 Conversation d'agent",
+    "playground.example_config": "⚙️ Configuration de déploiement",
+    "playground.example_task": "📋 Tâche active",
+    "playground.search_heading": "🔍 Rechercher et parcourir",
+    "playground.search_label": "Texte de recherche (valeur/clé)",
+    "playground.search_pl": "Rechercher des valeurs de souvenirs…",
+    "playground.session_filter": "Filtre de session (optionnel)",
+    "playground.session_filter_pl": "demo-session",
+    "playground.agent_filter": "Filtre d'agent (optionnel)",
+    "playground.agent_filter_pl": "agent-alice",
+    "playground.limit_label": "Limite",
+    "playground.show_all": "📋 Tout afficher",
+    "playground.clear_results": "Effacer les résultats",
 
   de: {
     "nav.home": "Start",
@@ -1753,7 +2179,79 @@ window.TRANSLATIONS = {
     "demo.pause_btn": "⏸ Pause",
   
     "dash.gate_title": "Melden Sie sich an, um Ihr Konto zu verwalten",
-    "dash.gate_desc": "Melden Sie sich mit Ihrer E-Mail, Google oder Apple an, um API-Schlüssel zu verwalten, Ihr Abonnement einzusehen und Memory Bridge zu konfigurieren.",},
+    "dash.gate_desc": "Melden Sie sich mit Ihrer E-Mail, Google oder Apple an, um API-Schlüssel zu verwalten, Ihr Abonnement einzusehen und Memory Bridge zu konfigurieren."},
+
+    // ── New Auth Keys ────────────────────────────────
+    "auth.continue_google": "Mit Google fortfahren",
+    "auth.continue_apple": "Mit Apple fortfahren",
+    "auth.continue_phone": "Mit Telefon fortfahren",
+    "auth.or_email": "oder mit E-Mail fortfahren",
+    "auth.email_placeholder": "du@beispiel.de",
+    "auth.continue_btn": "Weiter →",
+    "auth.enter_phone": "Geben Sie Ihre Telefonnummer ein",
+    "auth.sms_notice": "Wir senden einen 6-stelligen Code per SMS",
+    "auth.phone_placeholder": "8123 4567",
+    "auth.send_code_btn": "Code senden →",
+    "auth.sent_code": "Wir haben einen Code gesendet an",
+    "auth.code_placeholder": "6-stelligen Code eingeben",
+    "auth.verify_btn": "Code bestätigen →",
+    "auth.resend_label": "Nichts erhalten?",
+    "auth.send_new_code": "Neuen Code senden",
+
+    // ── Pricing FAQ 6 & 7 ────────────────────────────
+    "pricing.faq6_q": "📊 Wie funktioniert die Ratenbegrenzung zwischen den Tarifen?",
+    "pricing.faq6_a": "Ratenbegrenzungen gelten pro API-Schlüssel und werden auf Gateway-Ebene durchgesetzt. Jeder Tarif hat ein definiertes Limit (Kostenlos: 60/Min., Einsteiger: 300/Min., Pro: 600/Min., Unternehmen: individuell). Überschreitung des Limits gibt eine 429-Antwort zurück. Ratenlimits werden jede Minute zurückgesetzt.",
+    "pricing.faq7_q": "🔒 Sind meine Daten im Ruhezustand verschlüsselt?",
+    "pricing.faq7_a": "Ja. Alle gespeicherten Erinnerungen sind im Ruhezustand mit AES-256 verschlüsselt. Daten in der Übertragung werden über TLS 1.3 gesichert. Ihre Datenbank ist pro Mandant mit Zeilensicherheit isoliert, ohne mandantenübergreifenden Zugriff.",
+
+    // ── Hero Bubble Agents ───────────────────────────
+    "hero.agent_henry": "🧠 Henry (KI-Experte)",
+    "hero.agent_fred1": "🚀 Fred (Mitgründer)",
+    "hero.agent_fred2": "🚀 Fred (Entwickler)",
+    "bubble.fred2_full": "Gefunden: Python 3.12 ✓, Dunkelmodus ✓. Henry hat bereits recherchiert.<strong style=\"color:var(--green)\">Ausliefern.</strong>",
+
+    // ── Q&A Section ─────────────────────────────────
+    "qa.section_title": "Alles, was Sie wissen müssen<span class=\"gradient-text\">.</span>",
+    "qa.section_subtitle": "Memory Bridge löst die schwierigen Probleme, damit sich Ihr Agententeam auf die Auslieferung konzentrieren kann.",
+
+    // ── Data Model ──────────────────────────────────
+    "model.title_full": "Das Datenmodell<span class=\"gradient-text\">.</span>",
+    "model.subtitle": "Vier Kernfelder. Alles andere sind Metadaten.",
+
+    // ── CTA Section ─────────────────────────────────
+    "cta.ready_title": "<span class=\"gradient-text\">Bereit zu bauen?</span>",
+    "cta.ready_desc": "Keine Registrierung, keine E-Mail. Öffnen Sie den Spielplatz oder springen Sie direkt in die API-Dokumentation.",
+    "cta.launch_playground": "🚀 Spielplatz starten",
+    "cta.watch_demo": "▶ Demo ansehen",
+    "cta.qa": "❓ Fragen",
+
+    // ── Playground Keys ─────────────────────────────
+    "playground.api_key_label": "🔑 API-Schlüssel",
+    "playground.save": "Speichern",
+    "playground.demo_key_btn": "Demo-Schlüssel verwenden (5 Anfragen/Min.)",
+    "playground.store_heading": "💾 Erinnerung speichern",
+    "playground.session_id_label": "Sitzungs-ID",
+    "playground.session_id_pl": "z. B. demo-session",
+    "playground.tags_label": "Tags (kommagetrennt)",
+    "playground.tags_pl": "z. B. wichtig, benutzereinst",
+    "playground.clear": "Löschen",
+    "playground.quickstart_heading": "⚡ Schnellstart-Beispiele",
+    "playground.quickstart_desc": "Klicken Sie auf ein Beispiel, um das Formular vorauszufüllen, und drücken Sie dann Erinnerung speichern.",
+    "playground.example_userprefs": "🎨 Benutzereinstellungen",
+    "playground.example_conversation": "💬 Agenten-Gespräch",
+    "playground.example_config": "⚙️ Bereitstellungskonfiguration",
+    "playground.example_task": "📋 Aktive Aufgabe",
+    "playground.search_heading": "🔍 Suchen & Durchsuchen",
+    "playground.search_label": "Suchtext (Wert/Schlüssel)",
+    "playground.search_pl": "Erinnerungswerte durchsuchen…",
+    "playground.session_filter": "Sitzungsfilter (optional)",
+    "playground.session_filter_pl": "demo-session",
+    "playground.agent_filter": "Agentenfilter (optional)",
+    "playground.agent_filter_pl": "agent-alice",
+    "playground.limit_label": "Limit",
+    "playground.show_all": "📋 Alle anzeigen",
+    "playground.clear_results": "Ergebnisse löschen",
+
 };
 
 /**
