@@ -277,6 +277,10 @@
 
   function logout() {
     closeLogoutConfirm();
+    // Best-effort server-side logout
+    try {
+      fetch('/auth/logout', { method: 'POST', headers: { 'Authorization': 'Bearer ' + getJWT() } });
+    } catch (e) { /* ignore */ }
     clearJWT();
     clearApiKey();
     localStorage.removeItem('mb_key_exists');
@@ -297,6 +301,144 @@
       if (jwt) headers['Authorization'] = 'Bearer ' + jwt;
     }
     return headers;
+  }
+
+  /* ── Account Recovery ────────────────────────────────── */
+
+  async function recoverAccount(email) {
+    if (!email) {
+      if (typeof showError === 'function') showError('Email is required.');
+      return;
+    }
+    try {
+      const res = await fetch('/dashboard/recover?email=' + encodeURIComponent(email), {
+        method: 'POST',
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        if (typeof showError === 'function') showError(data.error || 'Recovery failed.');
+        return;
+      }
+      if (data.key) localStorage.setItem(API_KEY, data.key);
+      if (data.token) localStorage.setItem(JWT_KEY, data.token);
+      window.location.href = '/dashboard';
+    } catch (e) {
+      if (typeof showError === 'function') showError('Network error during recovery.');
+    }
+  }
+
+  function showRecoveryForm() {
+    const options = document.getElementById('auth-options');
+    if (options) options.style.display = 'none';
+
+    let container = document.getElementById('recovery-form-container');
+    if (container) {
+      container.style.display = 'block';
+      return;
+    }
+
+    container = document.createElement('div');
+    container.id = 'recovery-form-container';
+    container.style.cssText = 'margin-top:16px;';
+
+    const emailInput = document.createElement('input');
+    emailInput.type = 'email';
+    emailInput.id = 'recovery-email';
+    emailInput.placeholder = 'Enter your email';
+    emailInput.style.cssText = 'width:100%;padding:10px;border:1px solid #ccc;border-radius:6px;font-size:14px;box-sizing:border-box;';
+
+    const recoverBtn = document.createElement('button');
+    recoverBtn.textContent = 'Recover';
+    recoverBtn.style.cssText = 'width:100%;padding:10px;margin-top:8px;background:#3b82f6;color:#fff;border:none;border-radius:6px;font-size:14px;cursor:pointer;';
+    recoverBtn.onclick = function () {
+      recoverAccount(document.getElementById('recovery-email')?.value);
+    };
+
+    const backLink = document.createElement('a');
+    backLink.href = '#';
+    backLink.textContent = '← Back';
+    backLink.style.cssText = 'display:inline-block;margin-top:8px;font-size:13px;color:#3b82f6;text-decoration:none;';
+    backLink.onclick = function (e) {
+      e.preventDefault();
+      container.style.display = 'none';
+      if (typeof showAuthOptions === 'function') showAuthOptions();
+    };
+
+    container.appendChild(emailInput);
+    container.appendChild(recoverBtn);
+    container.appendChild(backLink);
+    document.body.appendChild(container);
+  }
+
+  /* ── Password Setup ──────────────────────────────────── */
+
+  function showPasswordSetup() {
+    let container = document.getElementById('password-setup-container');
+    if (container) {
+      container.style.display = 'block';
+      return;
+    }
+
+    container = document.createElement('div');
+    container.id = 'password-setup-container';
+    container.style.cssText = 'margin-top:16px;max-width:360px;';
+
+    const title = document.createElement('h3');
+    title.textContent = 'Set Your Password';
+    title.style.cssText = 'margin:0 0 12px;font-size:16px;';
+
+    const pwInput = document.createElement('input');
+    pwInput.type = 'password';
+    pwInput.id = 'setup-password';
+    pwInput.placeholder = 'New password';
+    pwInput.style.cssText = 'width:100%;padding:10px;border:1px solid #ccc;border-radius:6px;font-size:14px;box-sizing:border-box;margin-bottom:8px;';
+
+    const confirmInput = document.createElement('input');
+    confirmInput.type = 'password';
+    confirmInput.id = 'setup-password-confirm';
+    confirmInput.placeholder = 'Confirm password';
+    confirmInput.style.cssText = 'width:100%;padding:10px;border:1px solid #ccc;border-radius:6px;font-size:14px;box-sizing:border-box;margin-bottom:8px;';
+
+    const setBtn = document.createElement('button');
+    setBtn.textContent = 'Set Password';
+    setBtn.style.cssText = 'width:100%;padding:10px;background:#10b981;color:#fff;border:none;border-radius:6px;font-size:14px;cursor:pointer;';
+    setBtn.onclick = setPassword;
+
+    container.appendChild(title);
+    container.appendChild(pwInput);
+    container.appendChild(confirmInput);
+    container.appendChild(setBtn);
+    document.body.appendChild(container);
+  }
+
+  async function setPassword() {
+    const password = document.getElementById('setup-password')?.value;
+    const confirm = document.getElementById('setup-password-confirm')?.value;
+
+    if (!password || !confirm) {
+      if (typeof showError === 'function') showError('Both fields are required.');
+      return;
+    }
+    if (password !== confirm) {
+      if (typeof showError === 'function') showError('Passwords do not match.');
+      return;
+    }
+
+    try {
+      const res = await fetch('/auth/set-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + getJWT() },
+        body: JSON.stringify({ password }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        if (typeof showError === 'function') showError(data.error || 'Failed to set password.');
+        return;
+      }
+      if (typeof showSuccess === 'function') showSuccess('Password set successfully.');
+    } catch (e) {
+      if (typeof showError === 'function') showError('Network error.');
+    }
   }
 
   /* ── Simple Init (for most pages) ────────────────────── */
@@ -328,4 +470,8 @@
   window.clearJWT           = clearJWT;
   window.clearApiKey        = clearApiKey;
   window.showSignInToast    = showSignInToast;
+  window.recoverAccount     = recoverAccount;
+  window.showRecoveryForm   = showRecoveryForm;
+  window.showPasswordSetup  = showPasswordSetup;
+  window.setPassword        = setPassword;
 })();

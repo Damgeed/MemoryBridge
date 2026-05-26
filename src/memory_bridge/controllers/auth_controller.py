@@ -7,6 +7,7 @@ from typing import Optional
 from fastapi import APIRouter, HTTPException, Depends, Request
 from pydantic import BaseModel, EmailStr
 
+from ..auth import revoke_token
 from ..services.user_service import UserService
 from ..dependencies import get_storage
 from ..repository import MemoryRepository
@@ -104,6 +105,26 @@ async def login(
         token=token,
         user={k: v for k, v in user.items() if k != "password_hash"},
     )
+
+
+@router.post("/logout")
+async def logout(request: Request):
+    """Invalidate the current JWT token.
+
+    Requires a valid JWT in the Authorization header.  The token is
+    added to an in-memory blacklist so that subsequent requests using
+    the same token receive a 401 response.
+
+    This is a best-effort server-side logout.  The blacklist is
+    cleared on server restart.
+    """
+    auth_header = request.headers.get("Authorization", "")
+    if not auth_header.startswith("Bearer "):
+        raise HTTPException(status_code=401, detail="Missing or invalid Authorization header")
+
+    token = auth_header.removeprefix("Bearer ")
+    revoke_token(token)
+    return {"status": "ok", "message": "Signed out successfully"}
 
 
 @router.get("/my-key")

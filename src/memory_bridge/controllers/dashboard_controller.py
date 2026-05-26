@@ -93,6 +93,7 @@ async def create_api_key(
 
 @router.get("/welcome")
 async def welcome_setup(
+    request: Request,
     session_id: str = Query("", description="Stripe checkout session ID"),
     organization_id: str = Query("", description="Organization ID passed from checkout response"),
     tier: str = Query("", description="Tier passed from checkout (starter/pro/enterprise)"),
@@ -104,6 +105,16 @@ async def welcome_setup(
     confirms payment and stores the subscription. This endpoint is
     no longer the primary flow but remains to handle old redirects.
     """
+    # Auth guard — require a valid JWT session
+    auth = getattr(request.state, "auth", None)
+    if not auth or not auth.get("user_email"):
+        raise HTTPException(status_code=401, detail="Authentication required")
+
+    # Verify org_id in request matches authenticated user's org
+    auth_org = auth.get("organization_id", "") or auth.get("project_id", "")
+    if organization_id.strip() and auth_org and organization_id.strip() != auth_org:
+        raise HTTPException(status_code=403, detail="Organization mismatch")
+
     # Use org_id from frontend if provided
     org_id = organization_id.strip() if organization_id else ""
     actual_tier = tier.strip().lower() if tier.strip() else "free"
@@ -543,6 +554,7 @@ async def free_signup(
         "tier": "free",
         "organization_id": org_id,
         "token": token,
+        "needs_password_setup": True,
     }
 
 @router.post("/recover")
@@ -762,6 +774,7 @@ async def stripe_welcome(
         "organization_id": org_id,
         "tier": tier,
         "stripe_customer_id": stripe_customer_id,
+        "needs_password_setup": True,
     }
 
 

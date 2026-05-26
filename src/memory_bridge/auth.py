@@ -1,5 +1,6 @@
 """API key + JWT authentication middleware with dual-auth support."""
 
+import hashlib
 import logging
 import os
 from datetime import datetime, timezone
@@ -13,6 +14,54 @@ from .config import get_settings
 from .dependencies import get_storage
 
 logger = logging.getLogger(__name__)
+
+# ---------------------------------------------------------------------------
+# JWT blacklist — in-memory set of revoked token identifiers.
+# On server restart the blacklist is cleared; tokens with short TTL (< 24h)
+# are effectively bounded, so this is acceptable for production use.
+# ---------------------------------------------------------------------------
+_token_blacklist: set[str] = set()
+
+
+def _token_id(claims: dict) -> str:
+    """Produce a unique, stable identifier for a JWT's claims dict.
+
+    Uses ``sub`` + ``iat`` (preferred), falling back to ``sub`` + ``exp``,
+    then finally ``sub`` alone.  The value is a hex-encoded SHA-256 hash.
+    """
+    sub = claims.get("sub", "")
+    ts = claims.get("iat") or claims.get("exp") or ""
+    return hashlib.sha256(f"{sub}:{ts}".encode()).hexdigest()
+
+
+def revoke_token(token: str) -> None:
+    """Decode *token* and add its identifier to the in-memory blacklist.
+
+    The token must be valid (not expired, not tampered) so we can extract
+    ``sub`` / ``iat`` claims.  Silently ignores decode failures
+    (e.g. already-expired tokens).
+    """
+    settings = get_settings()
+    if not settings.jwt_secret:
+        logger.warning("revoke_token called but no JWT secret is configured — ignoring")
+        return
+    try:
+        payload = jwt.decode(
+            token,
+            settings.jwt_secret,
+            algorithms=[settings.jwt_algorithm],
+            options={"verify_exp": False},  # allow revoking even near-expiry tokens
+        )
+        tid = _token_id(payload)
+        _token_blacklist.add(tid)
+        logger.info("Token %s… revoked (id=%s)", token[:12], tid[:12])
+    except jwt.InvalidTokenError:
+        logger.warning("revoke_token received an invalid token — ignored")
+
+
+def is_token_revoked(claims: dict) -> bool:
+    """Return ``True`` if the token identified by *claims* has been revoked."""
+    return _token_id(claims) in _token_blacklist
 
 # Well-known demo key for public playground testing (5 req/min rate limit)
 DEMO_API_KEY = "mb_demo_public_test"
@@ -117,6 +166,12 @@ class APIKeyMiddleware(BaseHTTPMiddleware):
                     algorithms=[settings.jwt_algorithm],
                 )
                 if payload.get("sub"):
+                    # --- blacklist check ---
+                    if is_token_revoked(payload):
+                        return JSONResponse(
+                            status_code=401,
+                            content={"detail": "Token has been revoked"},
+                        )
                     request.state.auth = {
                         "key_id": f"user:{payload['sub']}",
                         "label": f"user:{payload.get('username', '')}",
