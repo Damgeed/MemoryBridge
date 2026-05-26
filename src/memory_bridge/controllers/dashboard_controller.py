@@ -350,8 +350,8 @@ async def get_dashboard_data(
                 user_email = claims.get("email", "")
                 if user_email:
                     user_record = await storage.get_user_by_email(user_email)
-                    if user_record and hasattr(user_record, 'organization_id') and user_record.organization_id:
-                        org_id = user_record.organization_id
+                    if user_record and 'organization_id' in user_record and user_record.get('organization_id'):
+                        org_id = user_record.get('organization_id')
                         try:
                             sub = await storage.get_subscription_by_org(org_id)
                         except Exception:
@@ -452,8 +452,10 @@ async def get_dashboard_data(
     if user_email:
         try:
             user_record = await storage.get_user_by_email(user_email)
-            if user_record and hasattr(user_record, 'created_at'):
-                user_created_at = user_record.created_at.isoformat() if hasattr(user_record.created_at, 'isoformat') else str(user_record.created_at)
+            if user_record and 'created_at' in user_record:
+                created_val = user_record.get('created_at')
+                if created_val:
+                    user_created_at = created_val.isoformat() if hasattr(created_val, 'isoformat') else str(created_val)
         except Exception:
             pass
 
