@@ -347,7 +347,7 @@
         <!-- API Key -->
         <div class="api-key-bar card">
             <label data-i18n="playground.api_key_label">🔑 API Key</label>
-            <input id="api-key-input" type="password" placeholder="Paste your API key here…" data-i18n-placeholder="playground.api_key_pl" spellcheck="false">
+            <input id="api-key-input" type="password" autocomplete="new-password" placeholder="Paste your API key here…" data-i18n-placeholder="playground.api_key_pl" spellcheck="false">
             <div class="api-key-btns">
                 <button class="btn btn-secondary btn-sm" onclick="setApiKey()" data-i18n="playground.save">Save</button>
                 <button class="btn btn-secondary btn-sm" onclick="useDemoKey()" data-i18n="playground.demo_key_btn">Use Demo Key (5 req/min)</button>
@@ -804,6 +804,12 @@
 
         // ── Init ──────────────────────────────────────────────────
         document.addEventListener('DOMContentLoaded', () => {
+            // Kill browser autofill — mobile browsers aggressively fill password fields
+            document.getElementById('api-key-input').value = '';
+            // Clean up any leftover demo key from localStorage (pre-fix data)
+            if (localStorage.getItem('mb_api_key') === 'mb_demo_public_test') {
+                localStorage.removeItem('mb_api_key');
+            }
             applyQueryParams();
             const savedKey = getApiKey();
             if (savedKey) {
