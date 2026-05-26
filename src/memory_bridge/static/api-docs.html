@@ -28,7 +28,7 @@
         </div>
         <div class="nav-right">
             <div style="position:relative;display:inline-flex;">
-                <button class="nav-icon-btn lang-toggle" onclick="toggleLang()" title="Switch language" aria-label="Switch language" data-i18n="nav.lang_title">
+                <button class="nav-icon-btn lang-toggle" onclick="toggleLang()" title="Switch language" aria-label="Switch language">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/>
                         <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
@@ -44,7 +44,7 @@
                     <a href="javascript:void(0)" data-lang="de" class="lang-opt" onclick="setLang('de')">🇩🇪 Deutsch</a>
                 </div>
             </div>
-            <button class="nav-icon-btn theme-toggle-btn" onclick="toggleTheme()" title="Toggle theme" data-i18n="nav.theme_title">
+            <button class="nav-icon-btn theme-toggle-btn" onclick="toggleTheme()" title="Toggle theme">
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="theme-sun">
                     <circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/>
                     <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
@@ -56,12 +56,12 @@
                 </svg>
             </button>
             <div class="auth-btn-container" id="auth-btn-container">
-                <button class="auth-btn" id="auth-nav-btn" onclick="openAuth()" title="Sign in / Sign up" data-i18n="nav.sign_in_title">
+                <button class="auth-btn" id="auth-nav-btn" onclick="openAuth()" title="Sign in / Sign up">
                     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
                     <span id="auth-btn-label" data-i18n="nav.sign_in">Sign in</span>
                 </button>
                 <div class="user-menu" id="user-menu" style="display:none;">
-                    <button class="user-avatar-btn" id="user-btn" onclick="toggleUserDropdown()" title="Account menu" data-i18n="nav.account_menu">
+                    <button class="user-avatar-btn" id="user-btn" onclick="toggleUserDropdown()" title="Account menu">
                         <span class="user-avatar-circle" id="user-avatar-circle">👤</span>
                         <span class="session-dot" id="session-dot"></span>
                         <span class="user-avatar-name" id="user-avatar-name"></span>
@@ -89,7 +89,7 @@
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
                 <span data-i18n="nav.launch_playground">Launch Playground</span>
             </a>
-            <button class="nav-hamburger" onclick="toggleMobileNav()" aria-label="Open menu" data-i18n="nav.hamburger_aria">
+            <button class="nav-hamburger" onclick="toggleMobileNav()" aria-label="Open menu">
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <line x1="4" y1="6" x2="20" y2="6"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="18" x2="20" y2="18"/>
                 </svg>
@@ -102,7 +102,7 @@
     <div class="nav-mobile-panel" id="nav-mobile">
         <div class="nav-mobile-header">
             <div class="logo"><img src="/playground/logo.png" alt=""> <span data-i18n="nav.logo">Memory </span><span class="logo-accent">Bridge</span></div>
-            <button class="nav-mobile-close" onclick="closeMobileNav()" aria-label="Close menu" data-i18n="nav.close_menu">
+            <button class="nav-mobile-close" onclick="closeMobileNav()" aria-label="Close menu">
                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
                 </svg>
