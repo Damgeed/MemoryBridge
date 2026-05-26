@@ -1638,6 +1638,21 @@
                 catch { detail = res.statusText || `HTTP ${res.status}`; }
                 // Translate server errors to human language
                 if (res.status === 401) {
+                    // Check if we were using an API key — it might be stale/revoked
+                    const usedApiKey = currentApiKey || localStorage.getItem('mb_api_key');
+                    const usedJwt = localStorage.getItem('mb_jwt');
+                    if (usedApiKey && !usedJwt) {
+                        // API key failed with no JWT fallback — auth is permanently broken
+                        // Clear the stale key and show gate
+                        localStorage.removeItem('mb_api_key');
+                        localStorage.removeItem('mb_key_exists');
+                        currentApiKey = '';
+                        if (typeof showAuthenticatedContent === 'function') {
+                            showAuthenticatedContent(false);
+                        }
+                        if (typeof updateAuthUI === 'function') updateAuthUI();
+                        throw new Error('Session expired. Sign in again to continue.');
+                    }
                     const dot = document.getElementById('session-dot');
                     const dotIsRed = dot && dot.classList.contains('red');
                     if (!dotIsRed) {
@@ -1700,7 +1715,8 @@
                 document.getElementById('user-dropdown-plan').textContent = tierLabel;
             } catch (e) {
                 const msg = e.message || '';
-                if (msg.includes('401') || msg.includes('Unauthorized') || msg.includes('Invalid API key')) {
+                if (msg.includes('401') || msg.includes('Unauthorized') || msg.includes('Invalid API key') || msg.includes('Session expired')) {
+                    showAuthenticatedContent(false);
                     document.getElementById('dash-status').textContent = '🔑 Session expired. Please sign in again.';
                     document.getElementById('sub-content').innerHTML = `<div style="color:var(--text-muted);font-size:0.85rem;">Sign in to view your subscription details.</div>`;
                 } else if (msg.includes('Too many requests') || msg.includes('Rate limit exceeded')) {
