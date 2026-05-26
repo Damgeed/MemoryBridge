@@ -2410,85 +2410,10 @@
                 updateAuthUI();
                 reloadDashboard();
             } else if (jwt) {
-                // Has JWT — either no API key, or the stored key is the demo key.
-                // The demo key shouldn't block access; getAuthHeaders() already
-                // strips it and falls back to JWT for API calls.
+                // Has JWT — no stored API key, but can still access dashboard via JWT
                 showAuthenticatedContent(true);
-                // If no real key yet (or only the demo key), try to fetch/generate one
-                if (!currentApiKey || currentApiKey === 'mb_demo_public_test') {
-                    (async () => {
-                        try {
-                            const kvRes = await fetch('/auth/my-key-value', {
-                                headers: {'Authorization': 'Bearer ' + jwt, 'Content-Type': 'application/json'},
-                            });
-                            if (kvRes.ok) {
-                                const data = await kvRes.json();
-                                if (data.key) {
-                                    localStorage.setItem('mb_api_key', data.key);
-                                    currentApiKey = data.key;
-                                    if (data.new) {
-                                        document.getElementById('key-reveal-area').innerHTML = `
-                                            <div class="key-reveal" style="border-color:var(--green);">
-                                                <div style="margin-bottom:0.5rem;font-weight:700;font-size:0.85rem;color:var(--green);">🎉 Welcome! Your API Key</div>
-                                                <div class="key-plaintext">${escapeHtml(data.key)}</div>
-                                                <div class="key-warning">⚠️ This is the only time you'll see this key. Copy it now.</div>
-                                                <div style="margin-top:0.75rem;display:flex;gap:0.5rem;">
-                                                    <button class="btn btn-primary btn-sm" onclick="copyText(this, '${data.key}')">📋 Copy Key</button>
-                                                    <button class="btn btn-secondary btn-sm" onclick="document.getElementById('key-reveal-area').innerHTML='';">Dismiss</button>
-                                                </div>
-                                            </div>`;
-                                    }
-                                } else if (data.has_keys) {
-                                    // Keys exist but plaintext unavailable — generate a fresh key
-                                    // so the user always has a durable credential stored locally
-                                    try {
-                                        const genRes = await fetch('/dashboard/keys?label=auto', {
-                                            method: 'POST',
-                                            headers: {'Authorization': 'Bearer ' + jwt, 'Content-Type': 'application/json'},
-                                        });
-                                        if (genRes.ok) {
-                                            const genData = await genRes.json();
-                                            if (genData.key) {
-                                                localStorage.setItem('mb_api_key', genData.key);
-                                                currentApiKey = genData.key;
-                                            }
-                                        }
-                                    } catch (e) {
-                                        console.warn('Failed to generate fresh API key:', e);
-                                    }
-                                    // Fallback: keep existing stored key
-                                    if (!currentApiKey) {
-                                        currentApiKey = localStorage.getItem('mb_api_key') || '';
-                                    }
-                                } else {
-                                    currentApiKey = localStorage.getItem('mb_api_key') || '';
-                                }
-                                // Store flag that user has keys
-                                localStorage.setItem('mb_key_exists', '1');
-                            } else if (kvRes.status === 401) {
-                                // JWT genuinely expired — clear it
-                                localStorage.removeItem('mb_jwt');
-                            } else {
-                                // Non-401 error (500, 404, etc.) — log and continue
-                                console.warn('/auth/my-key-value returned', kvRes.status);
-                            }
-                        } catch (e) {
-                            // Network error — keep JWT, don't nuke auth
-                            console.warn('Failed to fetch API key, keeping JWT:', e);
-                        }
-                        updateAuthUI();
-                        if (currentApiKey) {
-                            reloadDashboard();
-                        } else {
-                            // Signed in via JWT but no API key — show dashboard anyway
-                            document.getElementById('dash-status').textContent = '✅ Signed in';
-                            reloadDashboard();
-                        }
-                    })();
-                } else {
-                    updateAuthUI();
-                    reloadDashboard();
-                }
+                updateAuthUI();
+                reloadDashboard();
             } else {
                 // Not authenticated — show the sign-in gate on dashboard
                 showAuthenticatedContent(false);
@@ -2498,54 +2423,6 @@
         async function handleStripeWelcome(sessionId) {
             const statusEl = document.getElementById('dash-status');
             statusEl.textContent = '✅ Payment confirmed! Setting up your account...';
-
-            // Bootstrap API key from JWT before polling — this is skipped by the early return in init
-            const jwt = localStorage.getItem('mb_jwt');
-            if (jwt && !currentApiKey) {
-                try {
-                    const kvRes = await fetch('/auth/my-key-value', {
-                        headers: {'Authorization': 'Bearer ' + jwt, 'Content-Type': 'application/json'},
-                    });
-                    if (kvRes.ok) {
-                        const data = await kvRes.json();
-                        if (data.key) {
-                            localStorage.setItem('mb_api_key', data.key);
-                            currentApiKey = data.key;
-                        } else if (data.has_keys) {
-                            // Keys exist but plaintext unavailable — generate a fresh key
-                            try {
-                                const genRes = await fetch('/dashboard/keys?label=auto', {
-                                    method: 'POST',
-                                    headers: {'Authorization': 'Bearer ' + jwt, 'Content-Type': 'application/json'},
-                                });
-                                if (genRes.ok) {
-                                    const genData = await genRes.json();
-                                    if (genData.key) {
-                                        localStorage.setItem('mb_api_key', genData.key);
-                                        currentApiKey = genData.key;
-                                    }
-                                }
-                            } catch (e) {
-                                console.warn('Failed to generate fresh API key during Stripe welcome:', e);
-                            }
-                            if (!currentApiKey) {
-                                currentApiKey = localStorage.getItem('mb_api_key') || '';
-                            }
-                        } else {
-                            currentApiKey = localStorage.getItem('mb_api_key') || '';
-                        }
-                    } else if (kvRes.status === 401) {
-                        localStorage.removeItem('mb_jwt');
-                    } else {
-                        console.warn('/auth/my-key-value returned', kvRes.status);
-                    }
-                } catch (e) {
-                    console.warn('Failed to fetch API key during Stripe welcome:', e);
-                }
-            } else if (!jwt && !currentApiKey) {
-                statusEl.textContent = '🔑 Session expired. Please sign in again.';
-                return;
-            }
 
             // Show the authenticated content immediately so user sees the dashboard loading
             showAuthenticatedContent(true);

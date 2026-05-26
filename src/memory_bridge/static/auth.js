@@ -299,55 +299,8 @@
       updateAuthUI();
       return null;
     }
-    const jwt = getJWT();
-    let key = getApiKey();
-    if (jwt && !key) {
-      try {
-        const kvRes = await fetch('/auth/my-key-value', {
-          headers: { 'Authorization': 'Bearer ' + jwt, 'Content-Type': 'application/json' },
-        });
-        if (kvRes.ok) {
-          const data = await kvRes.json();
-          if (data.key) {
-            setApiKey(data.key);
-            if (typeof window.currentApiKey !== 'undefined') window.currentApiKey = data.key;
-            key = data.key;
-          }
-          // Remember that the user has keys even if plaintext is hidden
-          if (data.has_keys && !data.key) {
-            // Generate a fresh key so the user always has a durable credential stored locally
-            try {
-              const genRes = await fetch('/dashboard/keys?label=auto', {
-                method: 'POST',
-                headers: { 'Authorization': 'Bearer ' + jwt, 'Content-Type': 'application/json' },
-              });
-              if (genRes.ok) {
-                const genData = await genRes.json();
-                if (genData.key) {
-                  setApiKey(genData.key);
-                  if (typeof window.currentApiKey !== 'undefined') window.currentApiKey = genData.key;
-                  key = genData.key;
-                }
-              }
-            } catch (e) {
-              console.warn('Failed to generate fresh API key:', e);
-            }
-            // Always set the flag as fallback
-            if (!key) {
-              localStorage.setItem('mb_key_exists', '1');
-            }
-          }
-        } else if (kvRes.status === 401) {
-          clearJWT();
-        } else {
-          console.warn('/auth/my-key-value returned', kvRes.status);
-        }
-      } catch (e) {
-        console.warn('Failed to fetch API key, keeping JWT:', e);
-      }
-    }
     updateAuthUI();
-    return { jwt, apiKey: key };
+    return { jwt: getJWT(), apiKey: getApiKey() };
   }
 
   /* ── Expose ──────────────────────────────────────────── */
