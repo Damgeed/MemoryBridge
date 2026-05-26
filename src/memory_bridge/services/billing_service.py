@@ -214,19 +214,8 @@ class BillingService:
         if customer_id and org_id and self.repo:
             try:
                 user = await self.repo.get_user_by_organization_id(org_id)
-                if user:
-                    user_id = user.get("id")
-                    import aiosqlite
-                    db_path = getattr(self.repo, 'db_path', None)
-                    if db_path:
-                        async with aiosqlite.connect(db_path) as db:
-                            await db.execute("UPDATE users SET stripe_customer_id = ? WHERE id = ?", (customer_id, user_id))
-                            await db.commit()
-                    else:
-                        conn = getattr(self.repo, 'pool', None)
-                        if conn:
-                            async with conn.acquire() as c:
-                                await c.execute("UPDATE users SET stripe_customer_id = $1 WHERE id = $2", customer_id, user_id)
+                if user and user.get("id"):
+                    await self.repo.update_user_stripe_customer(user["id"], customer_id)
                     logger.info("Linked stripe_customer_id=%s to user org=%s", customer_id, org_id)
             except Exception as e:
                 logger.warning("Could not link stripe_customer_id to user org=%s: %s", org_id, e)

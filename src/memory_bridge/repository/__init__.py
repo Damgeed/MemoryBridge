@@ -194,6 +194,11 @@ class MemoryRepository(ABC):
         """Look up user by organization_id. Returns user dict or None."""
         ...
 
+    @abstractmethod
+    async def update_user_stripe_customer(self, user_id: str, customer_id: str) -> bool:
+        """Update the stripe_customer_id for a user. Returns True if updated."""
+        ...
+
     # ── Audit Log ───────────────────────────────────────────────────────────
 
     @abstractmethod

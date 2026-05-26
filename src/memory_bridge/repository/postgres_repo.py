@@ -131,6 +131,9 @@ _SCHEMA_MIGRATIONS: dict[int, str] = {
         "  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()"
         ")"
     ),
+    15: (
+        "ALTER TABLE {schema}.users ADD COLUMN IF NOT EXISTS stripe_customer_id TEXT NOT NULL DEFAULT ''"
+    ),
 }
 # ──────────────────────────────────────────────────────────────────────────────
 
@@ -1071,6 +1074,27 @@ class PostgresMemoryRepository(MemoryRepository):
                 updated_at=row["updated_at"] if isinstance(row["updated_at"], datetime) else datetime.fromisoformat(row["updated_at"]),
             )
 
+    async def get_subscription_by_id(self, sub_id: str) -> Optional[Subscription]:
+        """Get subscription by its Stripe subscription ID. Returns None if not found."""
+        async with self.pool.acquire() as conn:
+            row = await conn.fetchrow(
+                f"SELECT * FROM {self.schema}.subscriptions WHERE id = $1",
+                sub_id,
+            )
+            if row is None:
+                return None
+            return Subscription(
+                id=row["id"] or "",
+                organization_id=row["organization_id"],
+                stripe_customer_id=row["stripe_customer_id"] or "",
+                tier=row["tier"] or "free",
+                status=row["status"] or "active",
+                current_period_start=row["current_period_start"],
+                current_period_end=row["current_period_end"],
+                created_at=row["created_at"] if isinstance(row["created_at"], datetime) else datetime.fromisoformat(row["created_at"]),
+                updated_at=row["updated_at"] if isinstance(row["updated_at"], datetime) else datetime.fromisoformat(row["updated_at"]),
+            )
+
     async def update_subscription_tier(self, sub_id: str, tier: str) -> Optional[Subscription]:
         """Update the tier of a subscription by Stripe subscription ID."""
         async with self.pool.acquire() as conn:
@@ -1135,6 +1159,16 @@ class PostgresMemoryRepository(MemoryRepository):
             if row is None:
                 return None
             return dict(row)
+
+    async def update_user_stripe_customer(self, user_id: str, customer_id: str) -> bool:
+        """Update stripe_customer_id for a user."""
+        async with self.pool.acquire() as conn:
+            result = await conn.execute(
+                f"UPDATE {self.schema}.users SET stripe_customer_id = $1 WHERE id = $2",
+                customer_id, user_id,
+            )
+            count = int(result.split()[-1]) if result else 0
+            return count > 0
 
     async def get_user_by_oauth(self, provider: str, provider_user_id: str):
         """Look up user by OAuth provider + user ID."""

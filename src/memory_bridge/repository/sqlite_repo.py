@@ -1087,6 +1087,16 @@ class SQLiteMemoryRepository(MemoryRepository):
                 return None
             return dict(row)
 
+    async def update_user_stripe_customer(self, user_id: str, customer_id: str) -> bool:
+        """Update stripe_customer_id for a user."""
+        async with aiosqlite.connect(self.db_path) as db:
+            cursor = await db.execute(
+                "UPDATE users SET stripe_customer_id = ? WHERE id = ?",
+                (customer_id, user_id),
+            )
+            await db.commit()
+            return cursor.rowcount > 0
+
     async def get_user_by_oauth(self, provider: str, provider_user_id: str):
         """Look up user by OAuth provider + user ID."""
         async with aiosqlite.connect(self.db_path) as db:
