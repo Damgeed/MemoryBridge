@@ -197,14 +197,15 @@ async def get_my_api_key_value(request: Request):
 
     # Return the most recent active key — never create a duplicate
     # list_api_keys returns hashes, not plaintext, which is by design.
-    # The user can see/manage full keys from the dashboard.
+    # Return the most recent active key — never create a duplicate
     latest = user_keys[-1]
     return {
         "key": None,
         "key_id": latest.get("id", ""),
         "label": latest.get("label", ""),
         "key_count": len(user_keys),
-        "hint": "View and manage your API keys in the dashboard.",
+        "has_keys": True,
+        "hint": "You already have active API keys. Manage them from the dashboard.",
     }
 
 
