@@ -757,6 +757,15 @@ a:hover { color: var(--accent-light); text-decoration: none; }
   overflow: hidden;
   text-overflow: ellipsis;
 }
+.mobile-user-plan {
+  font-size: 0.78rem;
+  color: var(--text-faint);
+}
+.mobile-user-divider {
+  height: 1px;
+  background: var(--border-subtle);
+  margin: 0.4rem 0;
+}
 .mobile-user-action {
   display: flex !important;
   align-items: center;
@@ -777,6 +786,12 @@ a:hover { color: var(--accent-light); text-decoration: none; }
 .mobile-user-action.sign-out {
   color: var(--red) !important;
   font-weight: 600;
+}
+.mobile-user-since {
+  display: block;
+  font-size: 0.72rem;
+  color: var(--text-faint);
+  padding: 0.25rem 0.5rem 0.5rem;
 }
 .nav-mobile-panel .nav-mobile-divider {
   height: 1px;

@@ -890,8 +890,16 @@
                 </div>
                 <div class="mobile-user-info">
                     <span class="mobile-user-email" id="mobile-user-email"></span>
+                    <span class="mobile-user-plan" id="mobile-user-plan" data-i18n="dash.free_plan">Free Plan</span>
                 </div>
             </div>
+            <div class="mobile-user-divider"></div>
+            <a href="/pricing" class="mobile-user-action" onclick="closeMobileNav()">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+                <span data-i18n="dash.manage_billing">Manage Billing</span>
+            </a>
+            <div class="mobile-user-divider"></div>
+            <span class="mobile-user-since" id="mobile-user-since"></span>
             <a href="javascript:void(0)" class="mobile-user-action sign-out" id="mobile-sign-out-btn" onclick="closeMobileNav();showLogoutConfirm()">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
                 <span data-i18n="nav.sign_out">Sign Out</span>

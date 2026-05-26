@@ -222,10 +222,15 @@
       if (mobileBtn) mobileBtn.style.display = 'none';
       const mobileCircle = document.getElementById('mobile-user-circle');
       const mobileEmail = document.getElementById('mobile-user-email');
+      const mobilePlan = document.getElementById('mobile-user-plan');
       const mobileSessionDot = document.getElementById('mobile-session-dot');
+      const mobileSince = document.getElementById('mobile-user-since');
       if (mobileCircle) mobileCircle.textContent = initial || '👤';
       if (mobileEmail) mobileEmail.textContent = displayName;
+      const planLabel = document.getElementById('user-dropdown-plan')?.textContent || 'Free Plan';
+      if (mobilePlan) mobilePlan.textContent = planLabel;
       if (mobileSessionDot && sessionDot) mobileSessionDot.className = sessionDot.className;
+      if (mobileSince && sinceEl) mobileSince.textContent = sinceEl.textContent;
 
     } else if (userMenu && signInBtn) {
       signInBtn.style.display = 'inline-flex';
