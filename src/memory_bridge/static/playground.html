@@ -547,6 +547,14 @@
                 let detail;
                 try { const err = await res.json(); detail = err.detail || err.message || res.statusText; }
                 catch { detail = res.statusText || `HTTP ${res.status}`; }
+                // Translate server errors to human language
+                if (res.status === 401) {
+                    detail = 'Enter an API key above and click Save, then try again.';
+                } else if (res.status === 429) {
+                    detail = 'Too many requests. Wait a moment and try again.';
+                } else if (res.status === 404) {
+                    detail = 'Nothing found. Try a different search or key.';
+                }
                 throw new Error(detail);
             }
             return res.json();

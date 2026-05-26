@@ -1726,6 +1726,12 @@
                 let detail;
                 try { const err = await res.json(); detail = err.detail || err.message || res.statusText; }
                 catch { detail = res.statusText || `HTTP ${res.status}`; }
+                // Translate server errors to human language
+                if (res.status === 401) {
+                    detail = 'Session expired. Sign in again to continue.';
+                } else if (res.status === 429) {
+                    detail = 'Too many requests. Wait a moment and try again.';
+                }
                 throw new Error(detail);
             }
             return res.json();
