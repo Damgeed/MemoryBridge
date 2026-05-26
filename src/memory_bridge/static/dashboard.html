@@ -2343,16 +2343,16 @@
 
             // Priority: API key > JWT — API key never expires
             if (currentApiKey) {
+                // Reject demo key — it should never authenticate the dashboard
+                if (currentApiKey === 'mb_demo_public_test') {
+                    showAuthenticatedContent(false);
+                    updateAuthUI();
+                    return;
+                }
                 // Already have a durable key — skip JWT validation entirely
                 showAuthenticatedContent(true);
                 updateAuthUI();
                 reloadDashboard();
-            } else if (localStorage.getItem('mb_key_exists') && !jwt) {
-                // User has keys but no stored plaintext and no JWT — show dashboard anyway
-                showAuthenticatedContent(true);
-                updateAuthUI();
-                document.getElementById('dash-status').textContent = '🔑 Using saved credentials';
-                loadDashboard();
             } else if (jwt) {
                 // Validate and potentially refresh the JWT
                 if (!await ensureValidJWT()) {
@@ -2428,10 +2428,6 @@
                     updateAuthUI();
                     reloadDashboard();
                 }
-            } else if (currentApiKey) {
-                showAuthenticatedContent(true);
-                updateAuthUI();
-                reloadDashboard();
             } else {
                 // Not authenticated — show the sign-in gate on dashboard
                 showAuthenticatedContent(false);
