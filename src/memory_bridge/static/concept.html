@@ -5,392 +5,286 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="theme-color" content="#0a0a0f" media="(prefers-color-scheme: dark)">
     <meta name="theme-color" content="#f8f9fc" media="(prefers-color-scheme: light)">
-    <title>Memory Bridge — Agent Memory Concept</title>
+    <title>Memory Bridge — Architecture</title>
     <link rel="icon" href="/playground/logo.png" type="image/png">
     <link rel="stylesheet" href="/playground/style.css">
     <style>
-@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700;800&display=swap');
-body { background: #020617; overflow: hidden; height: 100vh; }
-.concept-visual {
-    position: relative; width: 100vw; height: calc(100vh - 56px);
-    background: radial-gradient(ellipse at 50% 50%, #0f172a 0%, #020617 70%);
-    overflow: hidden;
-}
-.concept-visual::before {
-    content: ''; position: absolute; inset: 0;
-    background: radial-gradient(circle at 25% 35%, rgba(34,211,238,0.04) 0%, transparent 50%),
-                radial-gradient(circle at 75% 35%, rgba(52,211,153,0.04) 0%, transparent 50%);
-    pointer-events: none;
-    z-index: 0;
-}
-.grid { position: absolute; inset: 0;
-    background-image: linear-gradient(rgba(30,41,59,0.25) 1px, transparent 1px), linear-gradient(90deg, rgba(30,41,59,0.25) 1px, transparent 1px);
-    background-size: 40px 40px; pointer-events: none; animation: gridPulse 8s ease-in-out infinite; }
-@keyframes gridPulse { 0%,100% { opacity:0.6; } 50% { opacity:1; } }
-.particle-field { position:absolute; inset:0; pointer-events:none; overflow:hidden; }
-.particle-field span { position:absolute; border-radius:50%; opacity:0; animation:floatParticle linear infinite; }
-.concept-title { position:absolute; top:3%; left:0; right:0; text-align:center; color:#e2e8f0; font-size:clamp(9px,1.2vw,13px); font-weight:600; letter-spacing:4px; text-transform:uppercase; opacity:0.5; z-index:10; pointer-events:none; }
-.concept-title span { color:#22d3ee; }
-svg.concept-svg { position:absolute; inset:0; width:100%; height:100%; display:block; }
-.concept-legend { position:absolute; bottom:clamp(8px,2vh,24px); left:50%; transform:translateX(-50%); display:flex; gap:clamp(10px,2vw,28px); background:rgba(15,23,42,0.85); padding:clamp(6px,1vh,10px) clamp(12px,2vw,22px); border-radius:10px; border:1px solid #1e293b; backdrop-filter:blur(8px); z-index:10; flex-wrap:wrap; justify-content:center; }
-.concept-legend-item { display:flex; align-items:center; gap:clamp(4px,0.8vw,8px); color:#94a3b8; font-size:clamp(7px,0.9vw,10px); font-weight:500; letter-spacing:0.3px; white-space:nowrap; }
-.concept-legend-item .dot { width:clamp(6px,0.9vw,10px); height:clamp(6px,0.9vw,10px); border-radius:50%; flex-shrink:0; }
-.concept-legend-item .dot.cyan { background:#22d3ee; box-shadow:0 0 8px rgba(34,211,238,0.5); }
-.concept-legend-item .dot.emerald { background:#34d399; box-shadow:0 0 8px rgba(52,211,153,0.5); }
-.concept-legend-item .dot.violet { background:#a78bfa; box-shadow:0 0 8px rgba(167,139,250,0.5); }
-.concept-legend-item .dot.orange { background:#fb923c; box-shadow:0 0 8px rgba(251,146,60,0.5); }
-@keyframes floatParticle {
-    0%{transform:translateY(0) scale(0);opacity:0}
-    10%{opacity:0.8}
-    20%{transform:translateY(-30px) scale(1);opacity:0.6}
-    80%{opacity:0.4}
-    100%{transform:translateY(-120px) scale(0);opacity:0}
-}
-
-        /* ── Hero ───────────────────────────────────────────── */
-        @media (max-width: 768px) {
-            .hero-section { flex-direction: column; padding: 1.5rem 1rem 1.5rem; min-height: auto; gap: 1.5rem; }
-            .hero-content { text-align: center; }
-            .hero-section h1 { font-size: 1.8rem; }
-            .hero-cta { flex-direction: row; flex-wrap: wrap; justify-content: center; }
-            .hero-visual { width: 100%; }
-            .hero-stats { gap: 1rem; justify-content: center; }
-            .hero-stat .num { font-size: 1.3rem; }
-            .steps-grid { grid-template-columns: 1fr; }
-            .qa-grid { grid-template-columns: 1fr; }
-            .section { padding: 1.5rem 1rem; }
-            .section-title { font-size: 1.3rem; }
-            .bubble { padding: 0.8rem 1rem; }
-            .bubble .bubble-text { font-size: 0.82rem; }
-            .auth-btn-container { display: inline-flex !important; }
-            .nav-cta { display: none !important; }
-        }
-
-        @media (max-width: 480px) {
-            .hero-section { padding: 1rem 0.75rem; gap: 1.25rem; }
-            .hero-content { text-align: center; }
-            .hero-section h1 { font-size: 1.5rem; }
-            .hero-tagline { font-size: 0.95rem; }
-            .hero-cta { flex-direction: row; flex-wrap: wrap; justify-content: center; }
-            .hero-cta .btn-primary { padding: 0.5rem 1rem; font-size: 0.82rem; }
-            .hero-cta .btn-ghost-accent { padding: 0.5rem 1rem; font-size: 0.82rem; }
-            .hero-stats { flex-wrap: wrap; gap: 0.75rem; justify-content: center; }
-            .hero-stat .num { font-size: 1.1rem; }
-            .hero-stat .label { font-size: 0.7rem; }
-            .section-title { font-size: 1.15rem; }
-            .section-subtitle { font-size: 0.85rem; }
-            .step-card { padding: 1.25rem 1rem; }
-            .qa-card { padding: 1.1rem; }
-            .qa-card .q { font-size: 0.88rem; }
-            .qa-card .a { font-size: 0.82rem; }
-            .bubble:nth-child(2) { margin-left: 0.75rem !important; }
-            .cta-row { flex-direction: column; align-items: stretch; }
-            .cta-row .btn { width: 100%; justify-content: center; }
-            .model-card { padding: 1rem; overflow-x: auto; }
-            .model-table { font-size: 0.75rem; }
-            .model-table th,
-            .model-table td { padding: 0.4rem 0.5rem; }
-        }
+        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700;800&display=swap');
+        body { background: var(--bg-primary); color: var(--text-primary); display: flex; flex-direction: column; min-height: 100vh; }
+        .concept-page { flex: 1; max-width: 800px; margin: 0 auto; padding: 3rem 1.5rem 4rem; width: 100%; }
+        .concept-page h1 { font-size: 2rem; font-weight: 800; margin-bottom: 0.5rem; letter-spacing: -0.5px; }
+        .concept-page h1 span { background: var(--accent-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+        .concept-page .subtitle { color: var(--text-muted); font-size: 1.05rem; margin-bottom: 2.5rem; line-height: 1.6; }
+        .concept-page h2 { font-size: 1.3rem; font-weight: 700; margin: 2rem 0 0.75rem; color: var(--text-primary); }
+        .concept-page p { color: var(--text-secondary); line-height: 1.7; margin-bottom: 1rem; font-size: 0.95rem; }
+        .concept-page ul { list-style: none; padding: 0; margin: 0 0 1.5rem; }
+        .concept-page ul li { padding: 0.6rem 0; border-bottom: 1px solid var(--border-subtle); color: var(--text-secondary); font-size: 0.92rem; line-height: 1.5; }
+        .concept-page ul li:last-child { border-bottom: none; }
+        .concept-page ul li strong { color: var(--text-primary); }
+        .concept-page .tag { display: inline-block; padding: 0.15rem 0.5rem; border-radius: var(--radius-sm); font-size: 0.75rem; font-weight: 600; font-family: var(--font-mono); margin-right: 0.4rem; }
+        .tag-cyan { background: rgba(34,211,238,0.12); color: #22d3ee; }
+        .tag-emerald { background: rgba(52,211,153,0.12); color: #34d399; }
+        .tag-violet { background: rgba(167,139,250,0.12); color: #a78bfa; }
+        .tag-orange { background: rgba(251,146,60,0.12); color: #fb923c; }
+        .back-link { display: inline-flex; align-items: center; gap: 0.4rem; color: var(--accent); text-decoration: none; font-size: 0.88rem; font-weight: 600; margin-bottom: 2rem; transition: opacity var(--transition-fast); }
+        .back-link:hover { opacity: 0.8; }
 
         /* ── User Avatar + Dropdown ─────────────────────── */
         .user-avatar-btn {
-            display: inline-flex;
-            align-items: center;
-            gap: 0.5rem;
+            display: inline-flex; align-items: center; gap: 0.5rem;
             padding: 0.25rem 0.5rem 0.25rem 0.25rem;
             border-radius: var(--radius-full);
             border: 1px solid var(--border-primary);
-            background: transparent;
-            cursor: pointer;
+            background: transparent; cursor: pointer;
             transition: all var(--transition-fast);
-            font-family: var(--font-sans);
-            color: var(--text-primary);
+            font-family: var(--font-sans); color: var(--text-primary);
         }
-        .user-avatar-btn:hover {
-            border-color: var(--accent);
-            background: var(--accent-glow);
-        }
+        .user-avatar-btn:hover { border-color: var(--accent); background: var(--accent-glow); }
         .user-avatar-circle {
-            width: 28px;
-            height: 28px;
-            border-radius: 50%;
-            background: var(--accent-gradient);
-            color: #fff;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 0.75rem;
-            font-weight: 700;
-            flex-shrink: 0;
-            overflow: hidden;
+            width: 28px; height: 28px; border-radius: 50%;
+            background: var(--accent-gradient); color: #fff;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 0.75rem; font-weight: 700; flex-shrink: 0; overflow: hidden;
         }
-        .user-avatar-name {
-            font-size: 0.82rem;
-            font-weight: 600;
-            max-width: 110px;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-        }
-        .user-chevron {
-            color: var(--text-faint);
-            transition: transform 0.2s;
-        }
-        .user-menu.open .user-chevron {
-            transform: rotate(180deg);
-        }
-        .user-menu {
-            position: relative;
-            display: inline-flex;
-        }
+        .user-avatar-name { font-size: 0.82rem; font-weight: 600; max-width: 110px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .user-chevron { color: var(--text-faint); transition: transform 0.2s; }
+        .user-menu.open .user-chevron { transform: rotate(180deg); }
+        .user-menu { position: relative; display: inline-flex; }
         .user-dropdown {
-            display: none;
-            position: absolute;
-            top: calc(100% + 6px);
-            right: 0;
-            min-width: 220px;
-            background: var(--card-bg);
+            display: none; position: absolute; top: calc(100% + 6px); right: 0;
+            min-width: 220px; background: var(--card-bg);
             border: 1px solid var(--border-primary);
-            border-radius: var(--radius-md);
-            box-shadow: var(--shadow-xl);
-            z-index: 100;
-            overflow: hidden;
-            backdrop-filter: blur(16px);
+            border-radius: var(--radius-md); box-shadow: var(--shadow-xl);
+            z-index: 100; overflow: hidden; backdrop-filter: blur(16px);
             animation: drop-in 0.15s ease;
         }
-        @keyframes drop-in {
-            from { opacity: 0; transform: translateY(-6px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
+        @keyframes drop-in { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: translateY(0); } }
         .user-menu.open .user-dropdown { display: block; }
-        .user-dropdown-header {
-            padding: 0.75rem 1rem;
-            display: flex;
-            flex-direction: column;
-            gap: 0.2rem;
-        }
-        .user-dropdown-email {
-            font-size: 0.85rem;
-            font-weight: 600;
-            color: var(--text-primary);
-            word-break: break-all;
-        }
-        .user-dropdown-plan {
-            font-size: 0.72rem;
-            color: var(--text-muted);
-            font-weight: 500;
-        }
-        .user-dropdown-divider {
-            height: 1px;
-            background: var(--border-subtle);
-            margin: 0;
-        }
-        .user-dropdown-item {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            padding: 0.65rem 1rem;
-            font-size: 0.85rem;
-            color: var(--text-secondary);
-            text-decoration: none;
-            transition: background var(--transition-fast);
-        }
-        .user-dropdown-item svg {
-            flex-shrink: 0;
-            color: var(--text-muted);
-        }
-        .user-dropdown-item:hover {
-            background: var(--btn-secondary-hover);
-            color: var(--text-primary);
-        }
-        .user-dropdown-item:last-child:hover {
-            color: var(--red);
-        }
-        .user-dropdown-item:last-child:hover svg {
-            color: var(--red);
-        }
+        .user-dropdown-header { padding: 0.75rem 1rem; display: flex; flex-direction: column; gap: 0.2rem; }
+        .user-dropdown-email { font-size: 0.85rem; font-weight: 600; color: var(--text-primary); word-break: break-all; }
+        .user-dropdown-plan { font-size: 0.72rem; color: var(--text-muted); font-weight: 500; }
+        .user-dropdown-divider { height: 1px; background: var(--border-subtle); margin: 0; }
+        .user-dropdown-item { display: flex; align-items: center; gap: 0.5rem; padding: 0.65rem 1rem; font-size: 0.85rem; color: var(--text-secondary); text-decoration: none; transition: background var(--transition-fast); }
+        .user-dropdown-item svg { flex-shrink: 0; color: var(--text-muted); }
+        .user-dropdown-item:hover { background: var(--btn-secondary-hover); color: var(--text-primary); }
+        .user-dropdown-item:last-child:hover { color: var(--red); }
+        .user-dropdown-item:last-child:hover svg { color: var(--red); }
 
         /* ── Logout Confirm Modal ────────────────────────── */
         .logout-modal-overlay {
-            display: none;
-            position: fixed;
-            inset: 0;
-            background: rgba(0,0,0,0.6);
-            z-index: 1001;
-            backdrop-filter: blur(6px);
+            display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6);
+            z-index: 1001; backdrop-filter: blur(6px);
         }
         .logout-modal-overlay.open { display: block; }
         .logout-modal {
-            display: none;
-            position: fixed;
-            top: 50%;
-            left: 50%;
+            display: none; position: fixed; top: 50%; left: 50%;
             transform: translate(-50%, -50%) scale(0.96);
-            z-index: 1002;
-            background: var(--card-bg);
+            z-index: 1002; background: var(--card-bg);
             border: 1px solid var(--border-primary);
-            border-radius: var(--radius-lg);
-            padding: 2rem;
-            min-width: 360px;
-            max-width: 90vw;
-            box-shadow: var(--shadow-xl);
-            text-align: center;
-            opacity: 0;
-            transition: all 0.2s ease;
+            border-radius: var(--radius-lg); padding: 2rem;
+            min-width: 360px; max-width: 90vw; box-shadow: var(--shadow-xl);
+            text-align: center; opacity: 0; transition: all 0.2s ease;
         }
-        .logout-modal.open {
-            display: block;
-            opacity: 1;
-            transform: translate(-50%, -50%) scale(1);
-        }
+        .logout-modal.open { display: block; opacity: 1; transform: translate(-50%, -50%) scale(1); }
         .logout-modal .logout-icon {
-            width: 56px;
-            height: 56px;
-            border-radius: 50%;
+            width: 56px; height: 56px; border-radius: 50%;
             background: var(--red-bg, rgba(239,68,68,0.12));
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin: 0 auto 1rem;
-            font-size: 1.6rem;
+            display: flex; align-items: center; justify-content: center;
+            margin: 0 auto 1rem; font-size: 1.6rem;
         }
-        .logout-modal .logout-title {
-            font-size: 1.15rem;
-            font-weight: 700;
-            margin-bottom: 0.5rem;
-            color: var(--text-primary);
+        .logout-modal .logout-title { font-size: 1.15rem; font-weight: 700; margin-bottom: 0.5rem; color: var(--text-primary); }
+        .logout-modal .logout-desc { font-size: 0.9rem; color: var(--text-muted); margin-bottom: 1.5rem; }
+        .logout-modal .logout-actions { display: flex; gap: 0.75rem; justify-content: center; }
+
+        @media (max-width: 768px) {
+            .nav-cta { display: none !important; }
+            .auth-btn-container { display: inline-flex !important; }
+            .concept-page { padding: 2rem 1rem 3rem; }
+            .concept-page h1 { font-size: 1.6rem; }
         }
-   501    <!-- Concept Visualization -->
-    <div class="concept-visual">
-        <div class="grid"></div>
-        <div class="particle-field"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></div>
-        <div class="concept-title">Memory Bridge &middot; <span>Agent Memory Architecture</span></div>
-        <svg class="concept-svg" viewBox="0 0 1100 700" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg">
-            <defs>
-                <filter id="gC" x="-40%" y="-40%" width="180%" height="180%"><feGaussianBlur stdDeviation="6"/><feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge></filter>
-                <filter id="gV" x="-40%" y="-40%" width="180%" height="180%"><feGaussianBlur stdDeviation="10"/><feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge></filter>
-                <filter id="gE" x="-40%" y="-40%" width="180%" height="180%"><feGaussianBlur stdDeviation="5"/><feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge></filter>
-                <filter id="gO" x="-40%" y="-40%" width="180%" height="180%"><feGaussianBlur stdDeviation="4"/><feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge></filter>
-                <radialGradient id="bg" cx="50%" cy="45%" r="50%"><stop offset="0%" stop-color="#a78bfa" stop-opacity="0.4"/><stop offset="50%" stop-color="#7c3aed" stop-opacity="0.2"/><stop offset="100%" stop-color="#4c1d95" stop-opacity="0"/></radialGradient>
-                <marker id="aC" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M 0 0 L 10 5 L 0 10 z" fill="#22d3ee"/></marker>
-                <marker id="aE" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M 0 0 L 10 5 L 0 10 z" fill="#34d399"/></marker>
-                <marker id="aV" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M 0 0 L 10 5 L 0 10 z" fill="#a78bfa"/></marker>
-                <marker id="aO" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M 0 0 L 10 5 L 0 10 z" fill="#fb923c"/></marker>
-                <filter id="bn"><feTurbulence type="fractalNoise" baseFrequency="0.015" numOctaves="3" result="n"/><feDisplacementMap in="SourceGraphic" in2="n" scale="3" xChannelSelector="R" yChannelSelector="G"/></filter>
-                <filter id="pg"><feGaussianBlur stdDeviation="2"/></filter>
-                <linearGradient id="a1g" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#22d3ee" stop-opacity="0.2"/><stop offset="100%" stop-color="#0891b2" stop-opacity="0.08"/></linearGradient>
-                <linearGradient id="a2g" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#34d399" stop-opacity="0.2"/><stop offset="100%" stop-color="#059669" stop-opacity="0.08"/></linearGradient>
-            </defs>
+        @media (max-width: 480px) {
+            .concept-page h1 { font-size: 1.3rem; }
+            .concept-page .subtitle { font-size: 0.9rem; }
+        }
+    </style>
+</head>
+<body>
 
-            <!-- Agent 1: Storing (cyan) -->
-            <g><animateTransform attributeName="transform" type="translate" values="0,0;0,-10;0,0;0,8;0,0" dur="5s" repeatCount="indefinite"/>
-            <g transform="translate(130,180)">
-                <ellipse cx="110" cy="140" rx="135" ry="125" fill="url(#a1g)" filter="url(#gC)" opacity="0.5"/>
-                <rect x="42" y="97" width="136" height="116" rx="16" fill="rgba(34,211,238,0.06)" stroke="#22d3ee" stroke-width="2" opacity="0.95"/>
-                <rect x="45" y="100" width="130" height="110" rx="14" fill="rgba(15,23,42,0.6)" stroke="rgba(34,211,238,0.25)" stroke-width="1" opacity="0.95"/>
-                <rect x="60" y="120" width="100" height="50" rx="6" fill="rgba(34,211,238,0.08)" stroke="rgba(34,211,238,0.25)" stroke-width="0.8"/>
-                <circle cx="80" cy="137" r="4" fill="#22d3ee" filter="url(#gC)"><animate attributeName="opacity" values="1;0.3;1" dur="1.5s" repeatCount="indefinite"/></circle>
-                <circle cx="100" cy="137" r="4" fill="#22d3ee" filter="url(#gC)"><animate attributeName="opacity" values="0.3;1;0.3" dur="1.5s" repeatCount="indefinite" begin="0.5s"/></circle>
-                <circle cx="120" cy="137" r="4" fill="#22d3ee" filter="url(#gC)"><animate attributeName="opacity" values="1;0.3;1" dur="1.5s" repeatCount="indefinite" begin="1s"/></circle>
-                <rect x="52" y="37" width="106" height="61" rx="14" fill="rgba(34,211,238,0.06)" stroke="#22d3ee" stroke-width="2"/>
-                <rect x="55" y="40" width="100" height="55" rx="12" fill="rgba(15,23,42,0.6)" stroke="rgba(34,211,238,0.25)" stroke-width="1"/>
-                <ellipse cx="80" cy="60" rx="10" ry="9" fill="rgba(34,211,238,0.15)" stroke="#22d3ee" stroke-width="1"/>
-                <ellipse cx="130" cy="60" rx="10" ry="9" fill="rgba(34,211,238,0.15)" stroke="#22d3ee" stroke-width="1"/>
-                <circle cx="80" cy="60" r="4" fill="#22d3ee" filter="url(#gC)"><animate attributeName="r" values="4;2;4" dur="3s" repeatCount="indefinite"/></circle>
-                <circle cx="130" cy="60" r="4" fill="#22d3ee" filter="url(#gC)"><animate attributeName="r" values="4;2;4" dur="3s" repeatCount="indefinite" begin="1.5s"/></circle>
-                <line x1="105" y1="95" x2="105" y2="20" stroke="#22d3ee" stroke-width="1" opacity="0.5"/>
-                <circle cx="105" cy="18" r="3" fill="#22d3ee" filter="url(#gC)"><animate attributeName="r" values="3;4;3" dur="2s" repeatCount="indefinite"/></circle>
-                <circle cx="105" cy="18" r="7" fill="none" stroke="#22d3ee" stroke-width="0.5" opacity="0"><animate attributeName="r" values="3;12" dur="2s" repeatCount="indefinite"/><animate attributeName="opacity" values="0.5;0" dur="2s" repeatCount="indefinite"/></circle>
-                <text x="105" y="260" text-anchor="middle" fill="#22d3ee" font-size="10" font-weight="700" letter-spacing="1" opacity="0.9">AGENT</text>
-                <text x="105" y="272" text-anchor="middle" fill="#64748b" font-size="7" letter-spacing="0.5">STORING</text>
-            </g></g>
+    <!-- Navbar -->
+    <nav class="navbar" id="mainNav">
+        <div class="nav-inner">
+            <a href="/" class="nav-logo">
+                <img src="/playground/logo.png" alt="" class="nav-logo-img">
+                <span class="nav-logo-text">Memory Bridge</span>
+            </a>
+            <div class="nav-links">
+                <a href="/" class="nav-link" data-i18n="nav.home">Home</a>
+                <a href="/concept" class="nav-link active" data-i18n="nav.concept">Concept</a>
+                <a href="/playground/" class="nav-link" data-i18n="nav.playground">Playground</a>
+                <a href="/dashboard" class="nav-link" data-i18n="nav.dashboard">Dashboard</a>
+                <a href="/pricing" class="nav-link" data-i18n="nav.pricing">Pricing</a>
+            </div>
+            <div class="nav-right">
+                <a href="/playground/" class="btn-primary nav-cta" data-i18n="nav.cta">Get Started</a>
+                <div class="auth-btn-container" style="display:none;">
+                    <button class="btn-ghost" onclick="openAuthModal()" id="auth-nav-btn">Sign in</button>
+                </div>
+                <div class="user-menu" id="userMenu" style="display:none;">
+                    <button class="user-avatar-btn" onclick="toggleUserMenu()">
+                        <span class="user-avatar-circle" id="userAvatarSmall"></span>
+                        <span class="user-avatar-name" id="userNameSmall">User</span>
+                        <span class="user-chevron">▾</span>
+                    </button>
+                    <div class="user-dropdown">
+                        <div class="user-dropdown-header">
+                            <span class="user-dropdown-email" id="userDropdownEmail">user@example.com</span>
+                            <span class="user-dropdown-plan" id="userDropdownPlan">Free Plan</span>
+                        </div>
+                        <div class="user-dropdown-divider"></div>
+                        <a href="/dashboard" class="user-dropdown-item">Dashboard</a>
+                        <a href="/pricing" class="user-dropdown-item">Upgrade</a>
+                        <div class="user-dropdown-divider"></div>
+                        <button class="user-dropdown-item" onclick="showLogoutConfirm()" style="width:100%;background:none;border:none;cursor:pointer;font-family:inherit;text-align:left;">Sign Out</button>
+                    </div>
+                </div>
+                <button class="nav-toggle" onclick="toggleMobileNav()" aria-label="Menu">☰</button>
+            </div>
+        </div>
+        <!-- Mobile Nav -->
+        <div class="nav-mobile" id="mobileNav">
+            <div class="nav-mobile-header">
+                <button class="nav-toggle open" onclick="toggleMobileNav()" aria-label="Close">✕</button>
+            </div>
+            <div class="nav-mobile-user" id="mobileUserCard" style="display:none;">
+                <span class="user-avatar-circle" id="mobileAvatar" style="width:36px;height:36px;font-size:1rem;"></span>
+                <div><div id="mobileUserName">User</div><div class="user-dropdown-plan" id="mobileUserPlan" style="font-size:0.75rem;"></div></div>
+            </div>
+            <div class="nav-mobile-links">
+                <a href="/" data-i18n="nav.home">Home</a>
+                <a href="/concept" data-i18n="nav.concept">Concept</a>
+                <a href="/playground/" data-i18n="nav.playground">Playground</a>
+                <a href="/dashboard" data-i18n="nav.dashboard">Dashboard</a>
+                <a href="/pricing" data-i18n="nav.pricing">Pricing</a>
+                <hr>
+                <a href="#" onclick="openAuthModal()" class="mobile-signin" id="mobileSignInBtn" data-i18n="nav.signin">Sign In</a>
+                <button class="user-dropdown-item" onclick="showLogoutConfirm()" id="mobileSignOutBtn" style="display:none;width:100%;background:none;border:none;cursor:pointer;font-family:inherit;text-align:left;padding:0.75rem 1rem;color:var(--red);">Sign Out</button>
+            </div>
+        </div>
+    </nav>
 
-            <!-- Agent 2: Retrieving (green) -->
-            <g><animateTransform attributeName="transform" type="translate" values="0,0;0,8;0,0;0,-10;0,0" dur="6s" repeatCount="indefinite"/>
-            <g transform="translate(710,180)">
-                <ellipse cx="110" cy="140" rx="135" ry="125" fill="url(#a2g)" filter="url(#gE)" opacity="0.5"/>
-                <rect x="42" y="97" width="136" height="116" rx="16" fill="rgba(52,211,153,0.06)" stroke="#34d399" stroke-width="2" opacity="0.95"/>
-                <rect x="45" y="100" width="130" height="110" rx="14" fill="rgba(15,23,42,0.6)" stroke="rgba(52,211,153,0.25)" stroke-width="1" opacity="0.95"/>
-                <rect x="60" y="120" width="100" height="50" rx="6" fill="rgba(52,211,153,0.08)" stroke="rgba(52,211,153,0.25)" stroke-width="0.8"/>
-                <circle cx="80" cy="137" r="4" fill="#34d399" filter="url(#gE)"><animate attributeName="opacity" values="1;0.3;1" dur="1.5s" repeatCount="indefinite" begin="0.3s"/></circle>
-                <circle cx="100" cy="137" r="4" fill="#34d399" filter="url(#gE)"><animate attributeName="opacity" values="0.3;1;0.3" dur="1.5s" repeatCount="indefinite" begin="0.8s"/></circle>
-                <circle cx="120" cy="137" r="4" fill="#34d399" filter="url(#gE)"><animate attributeName="opacity" values="1;0.3;1" dur="1.5s" repeatCount="indefinite" begin="1.3s"/></circle>
-                <path d="M 57,92 L 52,52 Q 52,37 67,37 L 153,37 Q 168,37 168,52 L 163,92 Z" fill="rgba(52,211,153,0.06)" stroke="#34d399" stroke-width="2"/>
-                <path d="M 60,95 L 55,55 Q 55,40 70,40 L 150,40 Q 165,40 165,55 L 160,95 Z" fill="rgba(15,23,42,0.6)" stroke="rgba(52,211,153,0.25)" stroke-width="1"/>
-                <rect x="72" y="55" width="75" height="18" rx="8" fill="rgba(52,211,153,0.1)" stroke="#34d399" stroke-width="0.8"/>
-                <rect x="78" y="61" width="63" height="3" rx="1.5" fill="#34d399" filter="url(#gE)" opacity="0.6"><animate attributeName="y" values="57;70;57" dur="1.5s" repeatCount="indefinite"/></rect>
-                <line x1="90" y1="40" x2="85" y2="22" stroke="#34d399" stroke-width="1" opacity="0.4"/>
-                <line x1="130" y1="40" x2="135" y2="22" stroke="#34d399" stroke-width="1" opacity="0.4"/>
-                <circle cx="85" cy="20" r="2.5" fill="#34d399" filter="url(#gE)"><animate attributeName="r" values="2.5;3.5;2.5" dur="1.8s" repeatCount="indefinite"/></circle>
-                <circle cx="135" cy="20" r="2.5" fill="#34d399" filter="url(#gE)"><animate attributeName="r" values="2.5;3.5;2.5" dur="1.8s" repeatCount="indefinite" begin="0.9s"/></circle>
-                <text x="105" y="260" text-anchor="middle" fill="#34d399" font-size="10" font-weight="700" letter-spacing="1" opacity="0.9">AGENT</text>
-                <text x="105" y="272" text-anchor="middle" fill="#64748b" font-size="7" letter-spacing="0.5">RETRIEVING</text>
-            </g></g>
-
-            <!-- Memory Core -->
-            <g><animateTransform attributeName="transform" type="translate" values="0,0;0,-5;0,0;0,5;0,0" dur="4s" repeatCount="indefinite"/>
-            <g transform="translate(550,300)">
-                <ellipse cx="0" cy="0" rx="85" ry="75" fill="url(#bg)" filter="url(#gV)">
-                    <animate attributeName="rx" values="85;100;85" dur="4s" repeatCount="indefinite"/>
-                    <animate attributeName="ry" values="75;90;75" dur="4s" repeatCount="indefinite"/>
-                </ellipse>
-                <ellipse cx="0" cy="0" rx="50" ry="40" fill="none" stroke="#a78bfa" stroke-width="1" opacity="0"><animate attributeName="rx" values="65;105" dur="3s" repeatCount="indefinite"/><animate attributeName="ry" values="55;95" dur="3s" repeatCount="indefinite"/><animate attributeName="opacity" values="0.4;0" dur="3s" repeatCount="indefinite"/></ellipse>
-                <ellipse cx="0" cy="0" rx="65" ry="55" fill="#0f172a" stroke="#a78bfa" stroke-width="1.2" filter="url(#bn)"/>
-                <g opacity="0.3"><animateTransform attributeName="transform" type="rotate" from="0" to="360" dur="20s" repeatCount="indefinite"/>
-                    <line x1="-25" y1="-15" x2="15" y2="-25" stroke="#a78bfa" stroke-width="0.5"/><line x1="15" y1="-25" x2="35" y2="0" stroke="#a78bfa" stroke-width="0.5"/>
-                    <line x1="35" y1="0" x2="20" y2="20" stroke="#a78bfa" stroke-width="0.5"/><line x1="-35" y1="-20" x2="0" y2="-35" stroke="#c4b5fd" stroke-width="0.5"/>
-                    <line x1="0" y1="-35" x2="30" y2="-5" stroke="#c4b5fd" stroke-width="0.5"/><line x1="-40" y1="5" x2="-10" y2="-10" stroke="#a78bfa" stroke-width="0.5"/>
-                    <line x1="-10" y1="-10" x2="25" y2="10" stroke="#a78bfa" stroke-width="0.5"/><line x1="25" y1="10" x2="0" y2="30" stroke="#a78bfa" stroke-width="0.5"/>
-                </g>
-                <circle cx="-25" cy="-15" r="4" fill="#a78bfa" filter="url(#gV)"><animate attributeName="r" values="4;6;4" dur="3s" repeatCount="indefinite"/></circle>
-                <circle cx="15" cy="-25" r="3" fill="#c4b5fd"><animate attributeName="r" values="3;5;3" dur="2.5s" repeatCount="indefinite" begin="0.5s"/></circle>
-                <circle cx="35" cy="0" r="4" fill="#a78bfa" filter="url(#gV)"><animate attributeName="r" values="4;6;4" dur="3.5s" repeatCount="indefinite" begin="1s"/></circle>
-                <circle cx="20" cy="20" r="3" fill="#c4b5fd"><animate attributeName="r" values="3;5;3" dur="2s" repeatCount="indefinite" begin="1.5s"/></circle>
-                <text x="0" y="50" text-anchor="middle" fill="#a78bfa" font-size="9" font-weight="700" letter-spacing="2">MEMORY CORE</text>
-                <text x="0" y="62" text-anchor="middle" fill="#7c3aed" font-size="6" letter-spacing="1">CROSS-SESSION</text>
-            </g></g>
-
-            <!-- Data particles -->
-            <g><circle r="3.5" fill="#22d3ee" filter="url(#pg)"><animateMotion dur="3s" repeatCount="indefinite" path="M 285,250 C 310,210 360,190 420,210 C 450,220 480,250 500,270 C 520,290 540,295 550,300"/></circle>
-            <circle r="2" fill="#67e8f9" opacity="0.6"><animateMotion dur="3s" repeatCount="indefinite" begin="0.5s" path="M 285,280 C 310,310 360,350 420,330 C 450,320 470,290 490,270 C 510,280 530,290 550,300"/></circle>
-            <circle r="2.5" fill="#22d3ee" filter="url(#pg)"><animateMotion dur="3.5s" repeatCount="indefinite" begin="1s" path="M 285,220 C 310,180 380,160 430,190 C 460,210 480,250 520,280 C 530,290 540,295 550,300"/></circle></g>
-            <g><circle r="3.5" fill="#34d399" filter="url(#pg)"><animateMotion dur="3s" repeatCount="indefinite" path="M 550,350 C 570,360 610,380 640,350 C 670,330 710,310 740,300 C 770,290 800,285 820,285"/></circle>
-            <circle r="2" fill="#6ee7b7" opacity="0.6"><animateMotion dur="3s" repeatCount="indefinite" begin="0.5s" path="M 550,380 C 580,400 620,420 660,390 C 690,370 720,350 760,330 C 780,320 810,310 820,310"/></circle>
-            <circle r="2.5" fill="#34d399" filter="url(#pg)"><animateMotion dur="3.5s" repeatCount="indefinite" begin="1.5s" path="M 550,320 C 590,290 630,280 670,290 C 700,300 740,320 770,300 C 790,290 810,290 820,295"/></circle></g>
-            <g><circle r="2.5" fill="#a78bfa" filter="url(#pg)"><animateMotion dur="4s" repeatCount="indefinite" begin="0s" path="M 820,250 C 770,220 720,200 670,220 C 630,240 590,260 570,280 C 560,290 555,295 550,300"/></circle>
-            <circle r="1.5" fill="#c4b5fd" opacity="0.5"><animateMotion dur="4s" repeatCount="indefinite" begin="2s" path="M 820,230 C 760,200 700,180 650,210 C 610,230 580,260 560,280 C 555,290 552,295 550,300"/></circle></g>
-
-            <!-- Arrows -->
-            <path d="M 280,240 C 320,220 370,210 420,230 C 450,240 480,260 505,280" stroke="#22d3ee" stroke-width="1.5" fill="none" stroke-dasharray="6,4" marker-end="url(#aC)" opacity="0.7"><animate attributeName="opacity" values="0.7;0.3;0.7" dur="2s" repeatCount="indefinite"/></path>
-            <path d="M 610,340 C 640,360 670,350 700,330 C 730,310 760,300 790,295" stroke="#34d399" stroke-width="1.5" fill="none" stroke-dasharray="6,4" marker-end="url(#aE)" opacity="0.7"><animate attributeName="opacity" values="0.7;0.3;0.7" dur="2s" repeatCount="indefinite" begin="1s"/></path>
-            <path d="M 800,260 C 760,230 710,220 660,240 C 630,250 600,270 575,290" stroke="#a78bfa" stroke-width="1" fill="none" stroke-dasharray="4,4" marker-end="url(#aV)" opacity="0.5"><animate attributeName="opacity" values="0.5;0.2;0.5" dur="3s" repeatCount="indefinite" begin="0.5s"/></path>
-
-            <rect x="340" y="200" width="55" height="20" rx="5" fill="rgba(15,23,42,0.85)" stroke="rgba(34,211,238,0.3)" stroke-width="0.8"/>
-            <text x="367" y="214" text-anchor="middle" fill="#22d3ee" font-size="8" font-weight="700">STORE</text>
-            <rect x="665" y="348" width="65" height="20" rx="5" fill="rgba(15,23,42,0.85)" stroke="rgba(52,211,153,0.3)" stroke-width="0.8"/>
-            <text x="697" y="362" text-anchor="middle" fill="#34d399" font-size="8" font-weight="700">RETRIEVE</text>
-            <rect x="680" y="210" width="72" height="20" rx="5" fill="rgba(15,23,42,0.85)" stroke="rgba(167,139,250,0.3)" stroke-width="0.8"/>
-            <text x="716" y="224" text-anchor="middle" fill="#a78bfa" font-size="7" font-weight="600">SHARE</text>
-
-            <!-- Orchestrator -->
-            <g><animateTransform attributeName="transform" type="translate" values="0,0;0,-4;0,0;0,4;0,0" dur="7s" repeatCount="indefinite"/>
-            <g transform="translate(440,510)" opacity="0.7">
-                <rect x="37" y="17" width="66" height="51" rx="10" fill="rgba(251,146,60,0.06)" stroke="#fb923c" stroke-width="1.5"/>
-                <rect x="40" y="20" width="60" height="45" rx="8" fill="rgba(15,23,42,0.6)" stroke="rgba(251,146,60,0.25)" stroke-width="0.8"/>
-                <rect x="50" y="32" width="40" height="20" rx="4" fill="rgba(251,146,60,0.08)" stroke="rgba(251,146,60,0.25)" stroke-width="0.8"/>
-                <path d="M 52,17 L 47,-3 Q 52,-7 67,-7 L 87,-7 Q 92,-3 87,17 Z" fill="rgba(251,146,60,0.06)" stroke="#fb923c" stroke-width="1.5"/>
-                <path d="M 55,20 L 50,0 Q 55,-4 70,-4 L 90,-4 Q 95,0 90,20 Z" fill="rgba(15,23,42,0.6)" stroke="rgba(251,146,60,0.25)" stroke-width="0.8"/>
-                <circle cx="65" cy="5" r="3" fill="#fb923c" filter="url(#gO)"><animate attributeName="r" values="3;5;3" dur="1.5s" repeatCount="indefinite"/></circle>
-                <circle cx="80" cy="5" r="3" fill="#fb923c" filter="url(#gO)"><animate attributeName="r" values="3;5;3" dur="1.5s" repeatCount="indefinite" begin="0.75s"/></circle>
-                <text x="70" y="92" text-anchor="middle" fill="#fb923c" font-size="7" font-weight="600" letter-spacing="0.5">ORCHESTRATOR</text>
-            </g></g>
-            <path d="M 490,515 C 490,470 480,430 460,400" stroke="#fb923c" stroke-width="1" fill="none" stroke-dasharray="3,3" marker-end="url(#aO)" opacity="0.35"><animate attributeName="opacity" values="0.35;0.1;0.35" dur="4s" repeatCount="indefinite"/></path>
-            <path d="M 560,515 C 570,470 580,430 580,400" stroke="#fb923c" stroke-width="1" fill="none" stroke-dasharray="3,3" marker-end="url(#aO)" opacity="0.35"><animate attributeName="opacity" values="0.35;0.1;0.35" dur="4s" repeatCount="indefinite" begin="2s"/></path>
-        </svg>
-        <div class="concept-legend">
-            <div class="concept-legend-item"><span class="dot cyan"></span> Store</div>
-            <div class="concept-legend-item"><span class="dot emerald"></span> Retrieve</div>
-            <div class="concept-legend-item"><span class="dot violet"></span> Memory Core</div>
-            <div class="concept-legend-item"><span class="dot orange"></span> Orchestrator</div>
+    <!-- Logout Confirm Modal -->
+    <div class="logout-modal-overlay" id="logoutOverlay" onclick="hideLogoutConfirm()"></div>
+    <div class="logout-modal" id="logoutModal">
+        <div class="logout-icon">🚪</div>
+        <div class="logout-title">Sign Out?</div>
+        <div class="logout-desc">You'll need to sign in again to access your dashboard.</div>
+        <div class="logout-actions">
+            <button class="btn-ghost" onclick="hideLogoutConfirm()">Cancel</button>
+            <button class="btn-primary" onclick="confirmLogout()" style="background:var(--red);">Sign Out</button>
         </div>
     </div>
+
+    <!-- Auth Modal -->
+    <div class="modal-overlay" id="authOverlay"></div>
+    <div class="auth-modal" id="authModal">
+        <button class="modal-close" onclick="closeAuthModal()">✕</button>
+        <div class="auth-container">
+            <div class="auth-header">
+                <div class="auth-logo"><img src="/playground/logo.png" alt="" style="width:32px;height:32px;"></div>
+                <h2 class="auth-title">Welcome to Memory Bridge</h2>
+                <p class="auth-subtitle" id="authSubtitle">Sign in to your account</p>
+            </div>
+            <div class="auth-providers">
+                <button class="auth-btn" onclick="socialLogin('google')" data-i18n="auth.continueGoogle">Continue with Google</button>
+                <button class="auth-btn" onclick="socialLogin('apple')" data-i18n="auth.continueApple">Continue with Apple</button>
+                <button class="auth-btn email-btn" onclick="switchAuthTab('email')" data-i18n="auth.emailPasswordless">Email a Magic Link</button>
+            </div>
+            <div class="auth-divider"><span data-i18n="auth.or">or</span></div>
+            <div class="auth-tabs">
+                <button class="auth-tab active" onclick="switchAuthTab('email')" data-i18n="auth.email">Email</button>
+                <button class="auth-tab" onclick="switchAuthTab('phone')" data-i18n="auth.phone">Phone</button>
+            </div>
+            <div class="auth-tab-content" id="authTabEmail">
+                <input type="email" class="auth-input" id="authEmail" placeholder="you@example.com" autocomplete="email">
+                <button class="btn-primary auth-submit" id="sendMagicLinkBtn" onclick="sendMagicLink()">Send Magic Link</button>
+            </div>
+            <div class="auth-tab-content" id="authTabPhone" style="display:none;">
+                <div class="phone-input-container">
+                    <select class="country-select" id="countrySelect"></select>
+                    <input type="tel" class="auth-input phone-input" id="authPhone" placeholder="Phone number">
+                </div>
+                <button class="btn-primary auth-submit" onclick="sendPhoneCode()">Send Code</button>
+            </div>
+            <div class="auth-terms">By continuing, you agree to our Terms of Service and Privacy Policy.</div>
+        </div>
+    </div>
+
+    <div class="concept-page">
+        <a href="/" class="back-link">← Back to Home</a>
+        <h1><span>Memory Bridge</span> Architecture</h1>
+        <p class="subtitle">
+            Cross-session memory persistence for AI agents — store, retrieve, and share memories across conversations and sessions.
+        </p>
+
+        <h2>Core Components</h2>
+        <ul>
+            <li>
+                <span class="tag tag-cyan">STORE</span>
+                <strong>Memory Ingestion</strong> — Agents write structured memories (facts, decisions, preferences) to a central store via a lightweight API. Each memory carries context, tags, and metadata for precise retrieval.
+            </li>
+            <li>
+                <span class="tag tag-emerald">RETRIEVE</span>
+                <strong>Contextual Recall</strong> — When an agent needs past context, it queries the store with semantic search, keyword matching, or entity graph traversal. Results are ranked by relevance and returned as actionable context.
+            </li>
+            <li>
+                <span class="tag tag-violet">CORE</span>
+                <strong>Memory Core</strong> — The central persistence layer. Dual-backend (SQLite for dev, PostgreSQL for production) with multi-tenancy via schema-per-tenant and RLS. Redis-backed rate limiting for production safety.
+            </li>
+            <li>
+                <span class="tag tag-orange">ORCHESTRATE</span>
+                <strong>Agent Coordination</strong> — The orchestrator manages which agent stores what, resolves conflicts (duplicate facts, contradictory preferences), and triggers consolidation when the memory graph grows beyond thresholds.
+            </li>
+        </ul>
+
+        <h2>Data Flow</h2>
+        <p>
+            When an agent stores a memory, the payload is validated, indexed by embedding (for semantic search), and persisted with full metadata.
+            Retrieval queries run through a multi-stage pipeline: <strong>keyword filter → semantic ranker → entity resolver → dedup → response</strong>.
+            Cross-session sharing uses the entity graph — agents can discover related memories created by other agents in the same organization.
+        </p>
+
+        <h2>Security & Multi-Tenancy</h2>
+        <p>
+            Every organization gets an isolated schema. Row-Level Security (RLS) enforces tenant boundaries at the database level.
+            Authentication uses stateless JWTs (HS256, 60-minute expiry) for users and bcrypt-hashed API keys for programmatic access.
+            All endpoints are gated by the API key middleware with 34 exempt paths for public pages and webhooks.
+        </p>
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="footer-inner">
+            <div class="footer-brand">
+                <img src="/playground/logo.png" alt="" style="width:22px;height:22px;">
+                <span>Memory Bridge</span>
+            </div>
+            <div class="footer-links">
+                <a href="/pricing" data-i18n="nav.pricing">Pricing</a>
+                <a href="/api-docs" data-i18n="nav.docs">API Docs</a>
+                <a href="/faq" data-i18n="nav.faq">FAQ</a>
+                <a href="/demo" data-i18n="nav.demo">Demo</a>
+            </div>
+            <div class="footer-copy">&copy; 2025 Memory Bridge. All rights reserved.</div>
+        </div>
+    </footer>
+
+    <script src="/playground/i18n.js"></script>
+    <script src="/playground/auth.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            if (typeof initI18n === 'function') initI18n();
+            if (typeof initAuth === 'function') initAuth();
+        });
+    </script>
+</body>
+</html>
