@@ -47,11 +47,11 @@
     if (!jwt) return false;
     try {
       const parts = jwt.split('.');
-      if (parts.length !== 3) { clearJWT(); clearApiKey(); return false; }
+      if (parts.length !== 3) { clearJWT(); return false; }
       const payload = JSON.parse(atob(parts[1]));
       const now = Date.now();
       const expMs = payload.exp * 1000;
-      if (expMs < now) { clearJWT(); clearApiKey(); return false; }
+      if (expMs < now) { clearJWT(); return false; }
       if (expMs - now < 300000) {
         try {
           const res = await fetch('/auth/refresh', {
@@ -74,8 +74,8 @@
   /* ── Cross‑Tab Sync ──────────────────────────────────── */
 
   window.addEventListener('storage', (e) => {
-    if (e.key === JWT_KEY || e.key === API_KEY) {
-      if (!e.newValue) { clearJWT(); clearApiKey(); location.reload(); }
+    if ((e.key === JWT_KEY || e.key === API_KEY) && !e.newValue) {
+      if (typeof updateAuthUI === 'function') updateAuthUI();
     }
   });
 
@@ -117,7 +117,7 @@
       if (parts.length === 3) {
         const payload = JSON.parse(atob(parts[1]));
         if (payload.exp && payload.exp * 1000 < Date.now()) {
-          clearJWT(); clearApiKey();
+          clearJWT();
           if (typeof updateAuthUI === 'function') updateAuthUI();
           if (typeof window._mbOnAuthExpired === 'function') window._mbOnAuthExpired();
         }
@@ -277,6 +277,7 @@
     closeLogoutConfirm();
     clearJWT();
     clearApiKey();
+    localStorage.removeItem('mb_key_exists');
     sessionStorage.removeItem('_mb_signin_toast');
     if (typeof showAuthenticatedContent === 'function') showAuthenticatedContent(false);
     updateAuthUI();
@@ -312,6 +313,10 @@
             setApiKey(data.key);
             if (typeof window.currentApiKey !== 'undefined') window.currentApiKey = data.key;
             key = data.key;
+          }
+          // Remember that the user has keys even if plaintext is hidden
+          if (data.has_keys && !data.key) {
+            localStorage.setItem('mb_key_exists', '1');
           }
         } else if (kvRes.status === 401) {
           clearJWT();

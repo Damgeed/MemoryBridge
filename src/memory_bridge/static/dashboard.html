@@ -947,7 +947,12 @@
             </button>
             <div class="auth-icon">🔑</div>
             <div class="auth-title">Memory Bridge</div>
-            <div class="auth-subtitle" data-i18n="auth.subtitle">Welcome to Memory Bridge. Sign in or create an account.</div>
+            <!-- Sign In / Create Account tabs -->
+            <div class="auth-tabs" style="display:flex;gap:0;margin:0.5rem 0 1rem;border:1px solid var(--border-primary);border-radius:var(--radius-md);overflow:hidden;width:100%;">
+              <button class="auth-tab active" id="auth-tab-signin" onclick="selectAuthTab('signin')" style="flex:1;padding:0.5rem 0;border:none;background:var(--accent);color:#fff;font-size:0.88rem;font-weight:600;cursor:pointer;">Sign In</button>
+              <button class="auth-tab" id="auth-tab-signup" onclick="selectAuthTab('signup')" style="flex:1;padding:0.5rem 0;border:none;background:transparent;color:var(--text-muted);font-size:0.88rem;font-weight:600;cursor:pointer;">Create Account</button>
+            </div>
+            <div class="auth-subtitle" id="auth-subtitle" data-i18n="auth.subtitle">Sign in to access your account.</div>
 
             <!-- Step 1: Options (social + email) -->
             <div id="auth-options" class="auth-options">
@@ -1603,6 +1608,7 @@
             closeLogoutConfirm();
             localStorage.removeItem('mb_jwt');
             localStorage.removeItem('mb_api_key');
+            localStorage.removeItem('mb_key_exists');
             currentApiKey = '';
             updateAuthUI();
             showAuthenticatedContent(false);
@@ -1921,6 +1927,9 @@
                 try {
                     const result = await api('DELETE', '/dashboard/keys/' + keyId);
                     showToast('🗑️ Key revoked');
+                    // Auto-dismiss key-limit popup since we're now below the limit
+                    const revealArea = document.getElementById('key-reveal-area');
+                    if (revealArea) revealArea.innerHTML = '';
                     loadKeys();
                     loadDashboard();  // Refresh subscription card key count
                 } catch (e) {
@@ -1939,10 +1948,36 @@
             document.getElementById('auth-overlay').classList.add('open');
             document.body.style.overflow = 'hidden';
             showAuthOptions();
+            // Default to Sign In tab on modal open
+            selectAuthTab('signin');
         }
 
         function socialLogin(connection) {
             window.location.href = '/auth/auth0/login?connection=' + connection;
+        }
+
+        let authMode = 'signin'; // 'signin' or 'signup'
+
+        function selectAuthTab(mode) {
+            authMode = mode;
+            const signinTab = document.getElementById('auth-tab-signin');
+            const signupTab = document.getElementById('auth-tab-signup');
+            if (!signinTab || !signupTab) return;
+            const subtitle = document.getElementById('auth-subtitle');
+
+            if (mode === 'signin') {
+                signinTab.style.background = 'var(--accent)';
+                signinTab.style.color = '#fff';
+                signupTab.style.background = 'transparent';
+                signupTab.style.color = 'var(--text-muted)';
+                subtitle.textContent = 'Sign in to access your account.';
+            } else {
+                signupTab.style.background = 'var(--accent)';
+                signupTab.style.color = '#fff';
+                signinTab.style.background = 'transparent';
+                signinTab.style.color = 'var(--text-muted)';
+                subtitle.textContent = 'Create an account to get started.';
+            }
         }
 
         function closeAuth() {
@@ -2245,6 +2280,14 @@
 
         // ── Init ──────────────────────────────────────────────────
         window._mbOnAuthExpired = function() {
+            // Don't force re-auth if user has a valid API key
+            const storedKey = localStorage.getItem('mb_api_key');
+            if (storedKey && storedKey !== 'mb_demo_public_test') {
+                currentApiKey = storedKey;
+                showAuthenticatedContent(true);
+                updateAuthUI();
+                return;
+            }
             showAuthenticatedContent(false);
             openAuth();
         };
@@ -2273,8 +2316,19 @@
                 return;
             }
 
-            // Check JWT first — auto-login and fetch API key
-            if (jwt) {
+            // Priority: API key > JWT — API key never expires
+            if (currentApiKey) {
+                // Already have a durable key — skip JWT validation entirely
+                showAuthenticatedContent(true);
+                updateAuthUI();
+                reloadDashboard();
+            } else if (localStorage.getItem('mb_key_exists') && !jwt) {
+                // User has keys but no stored plaintext and no JWT — show dashboard anyway
+                showAuthenticatedContent(true);
+                updateAuthUI();
+                document.getElementById('dash-status').textContent = '🔑 Using saved credentials';
+                loadDashboard();
+            } else if (jwt) {
                 // Validate and potentially refresh the JWT
                 if (!await ensureValidJWT()) {
                     showAuthenticatedContent(false);
@@ -2286,10 +2340,9 @@
                 // Check if JWT is expired before making any API calls
                 const claims = decodeJWT(jwt);
                 if (claims && claims.exp && claims.exp * 1000 < Date.now()) {
-                    // JWT expired — force re-auth
+                    // JWT expired — only clear JWT, keep API key for persistent auth
                     localStorage.removeItem('mb_jwt');
-                    localStorage.removeItem('mb_api_key');
-                    currentApiKey = '';
+                    currentApiKey = localStorage.getItem('mb_api_key') || currentApiKey;
                     showAuthenticatedContent(false);
                     return;
                 }
@@ -2321,6 +2374,10 @@
                                     // Keys exist but plaintext unavailable — keep existing key in localStorage
                                     // The stored API key still works for auth even if we can't show it
                                     currentApiKey = localStorage.getItem('mb_api_key') || '';
+                                }
+                                // Store flag that user has keys (for cross-session persistence)
+                                if (data.has_keys) {
+                                    localStorage.setItem('mb_key_exists', '1');
                                 }
                             } else if (kvRes.status === 401) {
                                 // JWT genuinely expired — clear it
