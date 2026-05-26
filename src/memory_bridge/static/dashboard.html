@@ -2261,8 +2261,8 @@
                 updateAuthUI();
                 reloadDashboard();
             } else {
-                showAuthenticatedContent(false);
-                updateAuthUI();
+                // Not authenticated — redirect to pricing page where they can sign in
+                window.location.href = '/pricing';
             }
         });
 
