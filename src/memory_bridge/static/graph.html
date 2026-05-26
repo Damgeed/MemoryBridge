@@ -156,7 +156,7 @@
         .error-state p { font-size: 0.9rem; color: var(--text-muted); }
 
         @media (max-width: 640px) {
-            .auth-btn-container { display: none !important; }
+            .auth-btn-container { display: inline-flex !important; }
             .nav-cta { display: none !important; }
             .graph-toolbar { flex-wrap: wrap; height: auto; padding: 0.4rem 0.75rem; gap: 0.4rem; }
             .graph-toolbar input { max-width: 100%; }
@@ -164,7 +164,7 @@
             #graph { height: calc(100vh - 100px); }
         }
         @media (max-width: 768px) {
-            .auth-btn-container { display: none !important; }
+            .auth-btn-container { display: inline-flex !important; }
             .nav-cta { display: none !important; }
         }
         @media (max-width: 480px) {
@@ -242,7 +242,7 @@
                             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
                             Manage Billing
                         </a>
-                        <div class="user-dropdown-item sign-out" onclick="showLogoutConfirm()" style="cursor:pointer;">
+                        <div class="user-dropdown-item sign-out" onclick="showLogoutConfirm()" style="cursor:pointer;" data-i18n="nav.sign_out">
                             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
                             <span data-i18n="nav.sign_out">Sign Out</span>
                         </div>
@@ -1507,6 +1507,16 @@
                     currentApiKey = data.api_key;
                 }
                 updateAuthUI();
+                window.postAuthCallback?.();
+                window.postAuthCallback = null;
+                const _params = new URLSearchParams(window.location.search);
+                if (_params.has('pending_org_id')) {
+                    fetch('/auth/link-subscription', {
+                        method: 'POST',
+                        headers: { 'Authorization': 'Bearer ' + data.token, 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ pending_org_id: _params.get('pending_org_id') })
+                    }).catch(() => {});
+                }
                 closeAuth();
                 window.location.reload();
             } catch (e) {
@@ -1563,6 +1573,66 @@
                 return {};
             }
         }
+
+        // ── JWT Validity & Renewal ────────────────────────────────
+        async function ensureValidJWT() {
+            const jwt = localStorage.getItem('mb_jwt');
+            if (!jwt) return false;
+            try {
+                const parts = jwt.split('.');
+                if (parts.length !== 3) {
+                    localStorage.removeItem('mb_jwt');
+                    localStorage.removeItem('mb_api_key');
+                    return false;
+                }
+                const payload = JSON.parse(atob(parts[1]));
+                const now = Date.now();
+                const expMs = payload.exp * 1000;
+                if (expMs < now) {
+                    localStorage.removeItem('mb_jwt');
+                    localStorage.removeItem('mb_api_key');
+                    return false;
+                }
+                if (expMs - now < 300000) {
+                    const res = await fetch('/auth/refresh', {
+                        method: 'POST',
+                        headers: { 'Authorization': 'Bearer ' + jwt, 'Content-Type': 'application/json' },
+                    });
+                    if (res.ok) {
+                        const data = await res.json();
+                        if (data.jwt) localStorage.setItem('mb_jwt', data.jwt);
+                        if (data.api_key) localStorage.setItem('mb_api_key', data.api_key);
+                    }
+                }
+                return true;
+            } catch { return false; }
+        }
+
+        // ── Cross-Tab Sync ─────────────────────────────────────────
+        window.addEventListener('storage', (e) => {
+            if (e.key === 'mb_jwt' || e.key === 'mb_api_key') {
+                if (!e.newValue) { localStorage.removeItem('mb_jwt'); localStorage.removeItem('mb_api_key'); location.reload(); }
+            }
+        });
+
+        // ── Periodic JWT Expiry Check ──────────────────────────────
+        setInterval(() => {
+            const jwt = localStorage.getItem('mb_jwt');
+            if (jwt) {
+                try {
+                    const parts = jwt.split('.');
+                    if (parts.length === 3) {
+                        const payload = JSON.parse(atob(parts[1]));
+                        if (payload.exp && payload.exp * 1000 < Date.now()) {
+                            localStorage.removeItem('mb_jwt');
+                            localStorage.removeItem('mb_api_key');
+                            if (typeof updateAuthUI === 'function') updateAuthUI();
+                            if (typeof showAuthGate === 'function') showAuthGate();
+                        }
+                    }
+                } catch (e) {}
+            }
+        }, 60000);
 
         function updateAuthUI() {
             const jwt = localStorage.getItem('mb_jwt');
@@ -1693,7 +1763,11 @@
         }
 
         // ── Init ──────────────────────────────────────────────────
-        document.addEventListener('DOMContentLoaded', () => {
+        document.addEventListener('DOMContentLoaded', async () => {
+            if (!await ensureValidJWT()) {
+                updateAuthUI();
+                return;
+            }
             currentApiKey = localStorage.getItem('mb_api_key') || '';
             const jwt = localStorage.getItem('mb_jwt');
             if (jwt && !currentApiKey) {

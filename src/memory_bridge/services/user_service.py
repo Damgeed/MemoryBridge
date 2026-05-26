@@ -132,7 +132,14 @@ class UserService:
         )
 
     async def refresh_token(self, token: str) -> Optional[str]:
-        """Refresh an expired token if the refresh window is valid."""
+        """Refresh an expiring token before it expires.
+
+        Decodes the current token (must still be valid), remaps JWT
+        claims to the user dict format expected by generate_token,
+        and issues a fresh token with a new expiry window.
+
+        Returns a new JWT string or None if the token is expired/invalid.
+        """
         settings = self.settings
         jwt_secret = self._get_jwt_secret()
         try:
@@ -143,7 +150,15 @@ class UserService:
                 options={"verify_exp": True},
             )
             if payload.get("sub"):
-                return await self.generate_token(payload)
+                # Remap JWT claims to user dict keys for generate_token
+                user_data = {
+                    "id": payload.get("sub"),
+                    "email": payload.get("email", ""),
+                    "name": payload.get("name", ""),
+                    "organization_id": payload.get("project_id", ""),
+                    "role": payload.get("role", "member"),
+                }
+                return await self.generate_token(user_data)
         except jwt.ExpiredSignatureError:
             pass
         except jwt.InvalidTokenError:

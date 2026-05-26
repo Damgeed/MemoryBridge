@@ -734,7 +734,7 @@
 
             .key-reveal { padding: 0.75rem; }
             .key-reveal .key-plaintext { font-size: 0.75rem; }
-            .auth-btn-container { display: none !important; }
+            .auth-btn-container { display: inline-flex !important; }
             .nav-cta { display: none !important; }
         }
         @media (max-width: 480px) {
@@ -751,7 +751,7 @@
             .step-num { width: 24px; height: 24px; font-size: 0.7rem; }
             .step-content h3 { font-size: 0.82rem; }
             .step-content p { font-size: 0.75rem; }
-            .auth-btn-container { display: none !important; }
+            .auth-btn-container { display: inline-flex !important; }
             .nav-cta { display: none !important; }
         }
     </style>
@@ -824,7 +824,7 @@
                             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
                             <span data-i18n="dash.manage_billing">Manage Billing</span>
                         </a>
-                        <div class="user-dropdown-item sign-out" onclick="showLogoutConfirm()" style="cursor:pointer;">
+                        <div class="user-dropdown-item sign-out" onclick="showLogoutConfirm()" style="cursor:pointer;" data-i18n="nav.sign_out">
                             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
                             <span data-i18n="nav.sign_out">Sign Out</span>
                         </div>
@@ -1597,6 +1597,66 @@
             } catch { return null; }
         }
 
+        // ── JWT Validity & Renewal ────────────────────────────────
+        async function ensureValidJWT() {
+            const jwt = localStorage.getItem('mb_jwt');
+            if (!jwt) return false;
+            try {
+                const parts = jwt.split('.');
+                if (parts.length !== 3) {
+                    localStorage.removeItem('mb_jwt');
+                    localStorage.removeItem('mb_api_key');
+                    return false;
+                }
+                const payload = JSON.parse(atob(parts[1]));
+                const now = Date.now();
+                const expMs = payload.exp * 1000;
+                if (expMs < now) {
+                    localStorage.removeItem('mb_jwt');
+                    localStorage.removeItem('mb_api_key');
+                    return false;
+                }
+                if (expMs - now < 300000) {
+                    const res = await fetch('/auth/refresh', {
+                        method: 'POST',
+                        headers: { 'Authorization': 'Bearer ' + jwt, 'Content-Type': 'application/json' },
+                    });
+                    if (res.ok) {
+                        const data = await res.json();
+                        if (data.jwt) localStorage.setItem('mb_jwt', data.jwt);
+                        if (data.api_key) localStorage.setItem('mb_api_key', data.api_key);
+                    }
+                }
+                return true;
+            } catch { return false; }
+        }
+
+        // ── Cross-Tab Sync ─────────────────────────────────────────
+        window.addEventListener('storage', (e) => {
+            if (e.key === 'mb_jwt' || e.key === 'mb_api_key') {
+                if (!e.newValue) { localStorage.removeItem('mb_jwt'); localStorage.removeItem('mb_api_key'); location.reload(); }
+            }
+        });
+
+        // ── Periodic JWT Expiry Check ──────────────────────────────
+        setInterval(() => {
+            const jwt = localStorage.getItem('mb_jwt');
+            if (jwt) {
+                try {
+                    const parts = jwt.split('.');
+                    if (parts.length === 3) {
+                        const payload = JSON.parse(atob(parts[1]));
+                        if (payload.exp && payload.exp * 1000 < Date.now()) {
+                            localStorage.removeItem('mb_jwt');
+                            localStorage.removeItem('mb_api_key');
+                            if (typeof updateAuthUI === 'function') updateAuthUI();
+                            if (typeof showAuthGate === 'function') showAuthGate();
+                        }
+                    }
+                } catch (e) {}
+            }
+        }, 60000);
+
         function updateAuthUI() {
             const jwt = localStorage.getItem('mb_jwt');
             const key = localStorage.getItem('mb_api_key');
@@ -2141,6 +2201,16 @@
                     currentApiKey = data.api_key;
                 }
                 updateAuthUI();
+                window.postAuthCallback?.();
+                window.postAuthCallback = null;
+                const _params = new URLSearchParams(window.location.search);
+                if (_params.has('pending_org_id')) {
+                    fetch('/auth/link-subscription', {
+                        method: 'POST',
+                        headers: { 'Authorization': 'Bearer ' + data.token, 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ pending_org_id: _params.get('pending_org_id') })
+                    }).catch(() => {});
+                }
                 closeAuth();
                 window.location.reload();
             } catch (e) {
@@ -2272,7 +2342,7 @@
         }
 
         // ── Init ──────────────────────────────────────────────────
-        document.addEventListener('DOMContentLoaded', () => {
+        document.addEventListener('DOMContentLoaded', async () => {
             currentApiKey = localStorage.getItem('mb_api_key') || '';
             let jwt = localStorage.getItem('mb_jwt');
 
@@ -2299,6 +2369,14 @@
 
             // Check JWT first — auto-login and fetch API key
             if (jwt) {
+                // Validate and potentially refresh the JWT
+                if (!await ensureValidJWT()) {
+                    showAuthenticatedContent(false);
+                    updateAuthUI();
+                    return;
+                }
+                // Re-read jwt in case it was refreshed
+                jwt = localStorage.getItem('mb_jwt');
                 // Check if JWT is expired before making any API calls
                 const claims = decodeJWT(jwt);
                 if (claims && claims.exp && claims.exp * 1000 < Date.now()) {

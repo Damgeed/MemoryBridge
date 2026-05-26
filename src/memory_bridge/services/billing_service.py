@@ -50,6 +50,11 @@ class BillingService:
         """Whether Stripe integration is active."""
         return bool(self._stripe_key)
 
+    @property
+    def app_url(self) -> str:
+        """The base application URL for redirects."""
+        return APP_URL
+
     async def create_checkout_session(
         self,
         organization_id: str,

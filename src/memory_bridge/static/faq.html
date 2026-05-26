@@ -397,7 +397,7 @@
     .right .tag-cloud { position: relative; bottom: auto; left: auto; transform: none; margin-top: 1rem; }
     .faq-item summary { padding: 0.75rem 0.9rem; font-size: 0.84rem; }
     .faq-answer { padding: 0.7rem 0.9rem; font-size: 0.82rem; }
-    .auth-btn-container { display: none !important; }
+    .auth-btn-container { display: inline-flex !important; }
     .nav-cta { display: none !important; }
   }
 
@@ -738,6 +738,66 @@ function setLang(code) {
   initLanguage();
 }
 
+// ── JWT Validity & Renewal ────────────────────────────────
+async function ensureValidJWT() {
+    const jwt = localStorage.getItem('mb_jwt');
+    if (!jwt) return false;
+    try {
+        const parts = jwt.split('.');
+        if (parts.length !== 3) {
+            localStorage.removeItem('mb_jwt');
+            localStorage.removeItem('mb_api_key');
+            return false;
+        }
+        const payload = JSON.parse(atob(parts[1]));
+        const now = Date.now();
+        const expMs = payload.exp * 1000;
+        if (expMs < now) {
+            localStorage.removeItem('mb_jwt');
+            localStorage.removeItem('mb_api_key');
+            return false;
+        }
+        if (expMs - now < 300000) {
+            const res = await fetch('/auth/refresh', {
+                method: 'POST',
+                headers: { 'Authorization': 'Bearer ' + jwt, 'Content-Type': 'application/json' },
+            });
+            if (res.ok) {
+                const data = await res.json();
+                if (data.jwt) localStorage.setItem('mb_jwt', data.jwt);
+                if (data.api_key) localStorage.setItem('mb_api_key', data.api_key);
+            }
+        }
+        return true;
+    } catch { return false; }
+}
+
+// ── Cross-Tab Sync ─────────────────────────────────────────
+window.addEventListener('storage', (e) => {
+    if (e.key === 'mb_jwt' || e.key === 'mb_api_key') {
+        if (!e.newValue) { localStorage.removeItem('mb_jwt'); localStorage.removeItem('mb_api_key'); location.reload(); }
+    }
+});
+
+// ── Periodic JWT Expiry Check ──────────────────────────────
+setInterval(() => {
+    const jwt = localStorage.getItem('mb_jwt');
+    if (jwt) {
+        try {
+            const parts = jwt.split('.');
+            if (parts.length === 3) {
+                const payload = JSON.parse(atob(parts[1]));
+                if (payload.exp && payload.exp * 1000 < Date.now()) {
+                    localStorage.removeItem('mb_jwt');
+                    localStorage.removeItem('mb_api_key');
+                    if (typeof updateAuthUI === 'function') updateAuthUI();
+                    if (typeof showAuthGate === 'function') showAuthGate();
+                }
+            }
+        } catch (e) {}
+    }
+}, 60000);
+
 // ── Auth ────────────────────────────────────────────────
 function decodeJWT(token) {
     try {
@@ -860,7 +920,8 @@ function openAuth() {
 }
 
 // ── Init ──────────────────────────────────────────────────
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
+    await ensureValidJWT();
     initLanguage();
     updateAuthUI();
 });

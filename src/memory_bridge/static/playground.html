@@ -162,7 +162,7 @@
         }
 
         @media (max-width: 768px) {
-            .auth-btn-container { display: none !important; }
+            .auth-btn-container { display: inline-flex !important; }
             .nav-cta { display: none !important; }
         }
 
@@ -232,6 +232,7 @@
                         <span class="user-avatar-circle" id="user-avatar-circle">👤</span>
                         <span class="session-dot" id="session-dot"></span>
                         <span class="user-avatar-name" id="user-avatar-name"></span>
+                        <span class="user-plan-badge" id="user-plan-badge"></span>
                         <svg class="user-chevron" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
                     </button>
                     <div class="user-dropdown" id="user-dropdown">
@@ -1675,6 +1676,16 @@
                     currentApiKey = data.api_key;
                 }
                 updateAuthUI();
+                window.postAuthCallback?.();
+                window.postAuthCallback = null;
+                const _params = new URLSearchParams(window.location.search);
+                if (_params.has('pending_org_id')) {
+                    fetch('/auth/link-subscription', {
+                        method: 'POST',
+                        headers: { 'Authorization': 'Bearer ' + data.token, 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ pending_org_id: _params.get('pending_org_id') })
+                    }).catch(() => {});
+                }
                 closeAuth();
                 window.location.reload();
             } catch (e) {
@@ -1730,6 +1741,59 @@
             } catch { return null; }
         }
 
+        // ── JWT Validity & Renewal ────────────────────────────────
+        async function ensureValidJWT() {
+            const jwt = localStorage.getItem('mb_jwt');
+            if (!jwt) return false;
+            try {
+                const parts = jwt.split('.');
+                if (parts.length !== 3) {
+                    localStorage.removeItem('mb_jwt');
+                    localStorage.removeItem('mb_api_key');
+                    return false;
+                }
+                const payload = JSON.parse(atob(parts[1]));
+                const now = Date.now();
+                const expMs = payload.exp * 1000;
+                if (expMs < now) {
+                    localStorage.removeItem('mb_jwt');
+                    localStorage.removeItem('mb_api_key');
+                    return false;
+                }
+                if (expMs - now < 300000) {
+                    const res = await fetch('/auth/refresh', {
+                        method: 'POST',
+                        headers: { 'Authorization': 'Bearer ' + jwt, 'Content-Type': 'application/json' },
+                    });
+                    if (res.ok) {
+                        const data = await res.json();
+                        if (data.jwt) localStorage.setItem('mb_jwt', data.jwt);
+                        if (data.api_key) localStorage.setItem('mb_api_key', data.api_key);
+                    }
+                }
+                return true;
+            } catch { return false; }
+        }
+
+        // ── Periodic JWT Expiry Check ──────────────────────────────
+        setInterval(() => {
+            const jwt = localStorage.getItem('mb_jwt');
+            if (jwt) {
+                try {
+                    const parts = jwt.split('.');
+                    if (parts.length === 3) {
+                        const payload = JSON.parse(atob(parts[1]));
+                        if (payload.exp && payload.exp * 1000 < Date.now()) {
+                            localStorage.removeItem('mb_jwt');
+                            localStorage.removeItem('mb_api_key');
+                            if (typeof updateAuthUI === 'function') updateAuthUI();
+                            if (typeof showAuthGate === 'function') showAuthGate();
+                        }
+                    }
+                } catch (e) {}
+            }
+        }, 60000);
+
         function updateAuthUI() {
             const jwt = localStorage.getItem('mb_jwt');
             const key = localStorage.getItem('mb_api_key');
@@ -1739,18 +1803,27 @@
             const avatarName = document.getElementById('user-avatar-name');
             const avatarCircle = document.getElementById('user-avatar-circle');
             const dropdownEmail = document.getElementById('user-dropdown-email');
+            const planBadge = document.getElementById('user-plan-badge');
 
             if ((jwt || key) && userMenu && signInBtn) {
                 signInBtn.style.display = 'none';
                 userMenu.style.display = 'inline-flex';
 
                 const claims = jwt ? decodeJWT(jwt) : null;
-                const displayName = claims?.email || claims?.name || claims?.sub || key?.slice(0, 8) + '…' || '';
+                const displayName = claims?.email || claims?.name || claims?.sub || (key ? key.slice(0, 8) + '…' : '');
                 const initial = (displayName && displayName.length > 0) ? displayName[0].toUpperCase() : '?';
 
                 if (avatarName) avatarName.textContent = displayName.length > 16 ? displayName.slice(0, 14) + '…' : displayName;
                 if (avatarCircle) avatarCircle.textContent = initial;
                 if (dropdownEmail) dropdownEmail.textContent = displayName;
+
+                // Plan badge on avatar button
+                const planLabel = document.getElementById('user-dropdown-plan');
+                if (planBadge && planLabel) {
+                    const planText = planLabel.textContent || 'Free';
+                    planBadge.textContent = planText.length > 10 ? planText.slice(0, 8) + '…' : planText;
+                    planBadge.style.display = 'inline-block';
+                }
 
                 // Session dot + signed-in-since
                 const sessionDot = document.getElementById('session-dot');
@@ -1765,8 +1838,10 @@
                             sessionDot.className = 'session-dot red';
                         } else if (remaining < 300) {
                             sessionDot.className = 'session-dot amber';
+                            showSessionExpiryWarning(remaining);
                         } else {
                             sessionDot.className = 'session-dot green';
+                            hideSessionExpiryWarning();
                         }
                         if (sinceEl && iat) {
                             const d = new Date(iat * 1000);
@@ -1777,6 +1852,7 @@
                     } else if (key) {
                         sessionDot.className = 'session-dot green';
                         if (sinceEl) sinceEl.textContent = 'Using API key';
+                        hideSessionExpiryWarning();
                     }
                 }
 
@@ -1790,15 +1866,15 @@
                 const mobilePlan = document.getElementById('mobile-user-plan');
                 const mobileSessionDot = document.getElementById('mobile-session-dot');
                 const mobileSince = document.getElementById('mobile-user-since');
-                if (mobileCircle) mobileCircle.textContent = initial || '👤';
+                if (mobileCircle) mobileCircle.textContent = initial || '?';
                 if (mobileEmail) mobileEmail.textContent = displayName;
-                const planLabel = document.getElementById('user-dropdown-plan')?.textContent || 'Free Plan';
-                if (mobilePlan) mobilePlan.textContent = planLabel;
+                if (mobilePlan) mobilePlan.textContent = planLabel?.textContent || 'Free Plan';
                 if (mobileSessionDot && sessionDot) mobileSessionDot.className = sessionDot.className;
                 if (mobileSince && sinceEl) mobileSince.textContent = sinceEl.textContent;
             } else if (userMenu && signInBtn) {
                 signInBtn.style.display = 'inline-flex';
                 userMenu.style.display = 'none';
+                if (planBadge) planBadge.style.display = 'none';
                 const mobileCard = document.getElementById('mobile-user-card');
                 const mobileBtn = document.getElementById('auth-mobile-btn');
                 if (mobileCard) mobileCard.style.display = 'none';
@@ -1806,10 +1882,99 @@
                     mobileBtn.style.display = 'flex';
                     mobileBtn.onclick = function() { closeMobileNav(); openAuth(); };
                 }
-                const mobileLabel = document.getElementById('auth-mobile-label');
                 if (mobileLabel) mobileLabel.textContent = 'Sign in';
+                hideSessionExpiryWarning();
             }
         }
+
+        // ── Periodic Session Health Check ────────────────────────
+        let sessionCheckInterval = null;
+        function startSessionCheck() {
+            if (sessionCheckInterval) clearInterval(sessionCheckInterval);
+            sessionCheckInterval = setInterval(() => {
+                const jwt = localStorage.getItem('mb_jwt');
+                if (!jwt) return;
+                const claims = decodeJWT(jwt);
+                if (!claims || !claims.exp) return;
+                const now = Math.floor(Date.now() / 1000);
+                const remaining = claims.exp - now;
+                const sessionDot = document.getElementById('session-dot');
+                if (sessionDot) {
+                    if (remaining <= 0) {
+                        sessionDot.className = 'session-dot red';
+                        showSessionExpiryWarning(0);
+                    } else if (remaining < 300) {
+                        sessionDot.className = 'session-dot amber';
+                        showSessionExpiryWarning(remaining);
+                    } else {
+                        sessionDot.className = 'session-dot green';
+                        hideSessionExpiryWarning();
+                    }
+                }
+                // Sync mobile session dot
+                const mobileSessionDot = document.getElementById('mobile-session-dot');
+                if (mobileSessionDot) mobileSessionDot.className = sessionDot ? sessionDot.className : 'session-dot green';
+            }, 30000); // Every 30 seconds
+        }
+
+        // ── Session Expiry Warning Toast ─────────────────────────
+        let expiryToast = null;
+        function ensureExpiryToast() {
+            if (!expiryToast) {
+                expiryToast = document.createElement('div');
+                expiryToast.className = 'session-expiry-toast';
+                expiryToast.id = 'session-expiry-toast';
+                expiryToast.innerHTML = '<span>⚠️ Your session will expire soon</span><button class="expiry-btn" onclick="handleSessionKeepAlive()">Stay signed in</button>';
+                document.body.appendChild(expiryToast);
+            }
+            return expiryToast;
+        }
+        function showSessionExpiryWarning(remaining) {
+            const toast = ensureExpiryToast();
+            const msg = remaining <= 0
+                ? '⚠️ Your session has expired. Please sign in again.'
+                : '⚠️ Your session expires in ' + Math.ceil(remaining / 60) + ' min';
+            toast.querySelector('span').textContent = msg;
+            toast.classList.add('show');
+        }
+        function hideSessionExpiryWarning() {
+            if (expiryToast) expiryToast.classList.remove('show');
+        }
+        async function handleSessionKeepAlive() {
+            const jwt = localStorage.getItem('mb_jwt');
+            if (!jwt) return;
+            try {
+                const res = await fetch('/auth/refresh', {
+                    method: 'POST',
+                    headers: { 'Authorization': 'Bearer ' + jwt, 'Content-Type': 'application/json' },
+                });
+                if (res.ok) {
+                    const data = await res.json();
+                    if (data.jwt) localStorage.setItem('mb_jwt', data.jwt);
+                    if (data.api_key) localStorage.setItem('mb_api_key', data.api_key);
+                    updateAuthUI();
+                    hideSessionExpiryWarning();
+                }
+            } catch {}
+        }
+
+        // ── Cross-Tab Session Sync ───────────────────────────────
+        window.addEventListener('storage', (e) => {
+            if (e.key === 'mb_jwt' || e.key === 'mb_api_key') {
+                if (!e.newValue) {
+                    localStorage.removeItem('mb_jwt');
+                    localStorage.removeItem('mb_api_key');
+                    location.reload();
+                }
+                updateAuthUI();
+                if (e.newValue === null) {
+                    // Signed out in another tab
+                    const toast = document.getElementById('session-expiry-toast');
+                    if (toast) toast.remove();
+                    expiryToast = null;
+                }
+            }
+        });
 
         function toggleUserDropdown() {
             const menu = document.getElementById('user-menu');
@@ -1838,6 +2003,8 @@
             localStorage.removeItem('mb_jwt');
             localStorage.removeItem('mb_api_key');
             currentApiKey = '';
+            if (sessionCheckInterval) { clearInterval(sessionCheckInterval); sessionCheckInterval = null; }
+            hideSessionExpiryWarning();
             updateAuthUI();
         }
 
@@ -1849,7 +2016,12 @@
         }
 
         // ── Init ──────────────────────────────────────────────────
-        document.addEventListener('DOMContentLoaded', () => {
+        document.addEventListener('DOMContentLoaded', async () => {
+            if (!await ensureValidJWT()) {
+                updateAuthUI();
+                initLanguage();
+                return;
+            }
             currentApiKey = localStorage.getItem('mb_api_key') || '';
             const jwt = localStorage.getItem('mb_jwt');
             if (jwt && !currentApiKey) {
@@ -1859,10 +2031,13 @@
                         if (kvRes.ok) { const data = await kvRes.json(); localStorage.setItem('mb_api_key', data.key); currentApiKey = data.key; }
                     } catch (e) { localStorage.removeItem('mb_jwt'); }
                     updateAuthUI();
+                    startSessionCheck();
                 })();
             } else {
                 updateAuthUI();
+                if (jwt) startSessionCheck();
             }
+            initLanguage();
         });
     </script>
 </body>

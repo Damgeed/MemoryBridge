@@ -1198,6 +1198,38 @@ select.input { cursor: pointer; }
 ::-webkit-scrollbar-thumb { background: var(--border-primary); border-radius: 4px; }
 ::-webkit-scrollbar-thumb:hover { background: var(--text-faint); }
 
+/* ── Scroll Indicator ───────────────────────────────────── */
+.scroll-indicator {
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+  color: var(--text-faint);
+  font-size: 0.75rem;
+  font-weight: 500;
+  opacity: 0.7;
+  animation: scrollBounce 2s ease-in-out infinite;
+  pointer-events: none;
+  z-index: 5;
+}
+.scroll-indicator svg {
+  width: 20px;
+  height: 20px;
+  animation: scrollPulse 2s ease-in-out infinite;
+}
+@keyframes scrollBounce {
+  0%, 100% { transform: translateX(-50%) translateY(0); }
+  50% { transform: translateX(-50%) translateY(6px); }
+}
+@keyframes scrollPulse {
+  0%, 100% { opacity: 0.5; }
+  50% { opacity: 1; }
+}
+
 /* ── Responsive ────────────────────────────────────────── */
 @media (max-width: 820px) {
   .nav-links { display: none; }
@@ -1206,6 +1238,11 @@ select.input { cursor: pointer; }
   .nav-mobile-panel { display: flex; flex-direction: column; }
   .nav-cta { display: none; }
   .auth-btn { display: none !important; }
+  /* Keep user avatar + dropdown visible on mobile */
+  .user-menu .auth-btn,
+  .user-avatar-btn,
+  .auth-btn-container .user-menu .auth-btn,
+  .auth-btn-container .user-avatar-btn { display: inline-flex !important; }
   .navbar { padding: 0 1rem; }
 }
 @media (max-width: 768px) {
@@ -1217,6 +1254,7 @@ select.input { cursor: pointer; }
   .nav-icon-btn svg { width: 16px; height: 16px; }
   .container { padding: 0 0.75rem; }
   body { font-size: 0.95rem; }
+  .auth-btn-container { display: inline-flex !important; }
 }
 
 @media (max-width: 480px) {
@@ -1266,4 +1304,65 @@ select.input { cursor: pointer; }
 }
 .user-dropdown-item.sign-out svg {
     color: var(--red);
+}
+
+/* ── Plan Badge on Avatar Button ────────────────────────── */
+.user-plan-badge {
+    font-size: 0.62rem;
+    font-weight: 700;
+    padding: 0.1rem 0.35rem;
+    border-radius: 4px;
+    background: var(--accent-glow);
+    color: var(--accent);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    line-height: 1.2;
+    margin-left: -0.15rem;
+    flex-shrink: 0;
+}
+
+/* ── Session Expiry Toast ───────────────────────────────── */
+.session-expiry-toast {
+    position: fixed;
+    bottom: 2rem;
+    left: 50%;
+    transform: translateX(-50%) translateY(100px);
+    background: var(--bg-glass-strong);
+    backdrop-filter: blur(16px);
+    border: 1px solid var(--orange);
+    border-radius: var(--radius-md);
+    padding: 0.7rem 1.2rem;
+    font-size: 0.85rem;
+    color: var(--text-primary);
+    box-shadow: var(--shadow-lg);
+    opacity: 0;
+    transition: all 0.3s ease;
+    z-index: 999;
+    max-width: calc(100vw - 2rem);
+    text-align: center;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+.session-expiry-toast.show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+}
+.session-expiry-toast .expiry-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    padding: 0.3rem 0.7rem;
+    font-size: 0.78rem;
+    font-weight: 600;
+    border: none;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    background: var(--accent);
+    color: #fff;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+.session-expiry-toast .expiry-btn:hover {
+    opacity: 0.85;
 }

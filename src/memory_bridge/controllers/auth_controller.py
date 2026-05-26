@@ -41,7 +41,7 @@ async def register(
     req: RegisterRequest,
     service: UserService = Depends(get_user_service),
 ):
-    """Register a new user account and generate an API key."""
+    """Register a new user account and generate a JWT."""
     if len(req.password) < 8:
         raise HTTPException(status_code=400, detail="Password must be at least 8 characters")
 
@@ -53,6 +53,17 @@ async def register(
         )
     except ValueError as e:
         raise HTTPException(status_code=409, detail=str(e))
+
+    # Create free subscription so the user's dashboard can load
+    try:
+        from ..models import Subscription
+        storage = await get_storage()
+        org_id = user.get("organization_id", "")
+        if org_id:
+            sub = Subscription(id=f"free-{org_id[:8]}", organization_id=org_id, tier="free", status="active")
+            await storage.store_subscription(sub)
+    except Exception as e:
+        logger.warning("Could not create subscription for new user: %s", e)
 
     token = await service.generate_token(user)
 
@@ -230,4 +241,98 @@ async def oauth_login(
     return {
         "token": token,
         "user": {k: v for k, v in user.items() if k != "password_hash"},
+    }
+
+
+class RefreshRequest(BaseModel):
+    token: str
+
+
+@router.post("/refresh")
+async def refresh_token(
+    req: RefreshRequest,
+    service: UserService = Depends(get_user_service),
+):
+    """Exchange an expiring JWT for a fresh one.
+
+    The current token must still be valid (within its expiry window).
+    Returns a new JWT with a fresh expiry or 401 if the token is
+    too old or invalid.
+    """
+    from ..services.user_service import UserService as US
+    new_token = await service.refresh_token(req.token)
+    if not new_token:
+        raise HTTPException(status_code=401, detail="Token expired. Please sign in again.")
+    return {"token": new_token}
+
+
+@router.get("/me")
+async def get_me(request: Request):
+    """Return basic info about the currently authenticated user.
+
+    Requires a valid JWT in the Authorization header. Lightweight
+    endpoint — no DB queries, just decodes the existing JWT.
+    """
+    auth = getattr(request.state, "auth", None)
+    if not auth:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+    return {
+        "email": auth.get("user_email", ""),
+        "name": auth.get("user_name", ""),
+        "organization_id": auth.get("project_id", ""),
+        "role": auth.get("role", "member"),
+    }
+
+
+class LinkSubscriptionRequest(BaseModel):
+    pending_org_id: str
+
+
+@router.post("/link-subscription")
+async def link_subscription(
+    req: LinkSubscriptionRequest,
+    request: Request,
+    storage: MemoryRepository = Depends(get_storage),
+):
+    """Link a pending (pre-registration) subscription to the user's account.
+
+    When a user subscribes before registering, the Stripe webhook stores
+    the subscription under a temporary 'pending-*' org_id. After the user
+    registers, this endpoint transfers that subscription to their real
+    org_id so they don't lose paid access.
+    """
+    auth = getattr(request.state, "auth", None)
+    if not auth:
+        raise HTTPException(status_code=401, detail="Authentication required")
+
+    real_org_id = auth.get("project_id", "")
+    if not real_org_id or real_org_id in ("default", "demo", ""):
+        raise HTTPException(status_code=401, detail="Could not resolve your account. Please sign in again.")
+
+    pending_org_id = req.pending_org_id
+    if not pending_org_id.startswith("pending-"):
+        raise HTTPException(status_code=400, detail="Invalid pending subscription token")
+
+    # Look up the subscription stored under the pending org_id
+    pending_sub = await storage.get_subscription_by_org(pending_org_id)
+    if not pending_sub:
+        return {"status": "not_found", "message": "No pending subscription found. Payment may still be processing."}
+
+    # Transfer the subscription to the user's real org
+    pending_sub.organization_id = real_org_id
+    from datetime import timezone
+    pending_sub.updated_at = datetime.now(timezone.utc)
+    await storage.store_subscription(pending_sub)
+
+    # Clean up the old record still referencing pending org_id
+    # (store_subscription upserts by id, so the org_id is now updated)
+
+    logger.info(
+        "Transferred pending subscription %s from %s to %s",
+        pending_sub.id, pending_org_id, real_org_id,
+    )
+    return {
+        "status": "linked",
+        "tier": pending_sub.tier,
+        "subscription_id": pending_sub.id,
     }
