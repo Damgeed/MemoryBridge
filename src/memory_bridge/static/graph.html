@@ -1427,7 +1427,7 @@
 
         async function sendPhoneCode() {
             const countryCode = document.getElementById('pl-country-code').value;
-            const localNum = document.getElementById('pl-phone').value.trim().replace(/\s/g, '');
+            const localNum = document.getElementById('pl-phone').value.trim().replace(/[^0-9]/g, '');
             const errorEl = document.getElementById('auth-error-phone');
             const btn = document.getElementById('pl-phone-btn');
             if (!localNum) {
@@ -1482,8 +1482,17 @@
                     body: JSON.stringify({phone: fullPhone}),
                 });
                 if (!res.ok) {
-                    const err = await res.json().catch(() => ({}));
-                    errorEl.innerHTML = '❌ ' + (err.detail || 'Failed to send code');
+                    let errMsg = 'Failed to send code';
+                    try {
+                        const err = await res.json();
+                        errMsg = err.detail || err.message || errMsg;
+                    } catch {
+                        try {
+                            const text = await res.text();
+                            if (text) errMsg = text.slice(0, 200);
+                        } catch {}
+                    }
+                    errorEl.innerHTML = '❌ ' + errMsg;
                     btn.disabled = false;
                     return;
                 }
@@ -1500,7 +1509,10 @@
                 setTimeout(() => document.getElementById('pl-code').focus(), 150);
                 btn.disabled = false;
             } catch (e) {
-                errorEl.innerHTML = '❌ ' + e.message;
+                                const isNetwork = e.message === 'Failed to fetch' || e.name === 'TypeError' || e.message === 'NetworkError';
+                errorEl.innerHTML = isNetwork
+                    ? '❌ Could not reach server. Check your connection.'
+                    : '❌ ' + e.message;
                 btn.disabled = false;
             }
         }
@@ -1541,7 +1553,10 @@
                 setTimeout(() => document.getElementById('pl-code').focus(), 150);
                 btn.disabled = false;
             } catch (e) {
-                errorEl.innerHTML = '❌ ' + e.message;
+                                const isNetwork = e.message === 'Failed to fetch' || e.name === 'TypeError' || e.message === 'NetworkError';
+                errorEl.innerHTML = isNetwork
+                    ? '❌ Could not reach server. Check your connection.'
+                    : '❌ ' + e.message;
                 btn.disabled = false;
             }
         }
@@ -1591,7 +1606,10 @@
                 closeAuth();
                 window.location.reload();
             } catch (e) {
-                errorEl.innerHTML = '❌ ' + e.message;
+                                const isNetwork = e.message === 'Failed to fetch' || e.name === 'TypeError' || e.message === 'NetworkError';
+                errorEl.innerHTML = isNetwork
+                    ? '❌ Could not reach server. Check your connection.'
+                    : '❌ ' + e.message;
                 btn.disabled = false;
             }
         }
@@ -1625,7 +1643,10 @@
                 setTimeout(() => document.getElementById('pl-code').focus(), 150);
                 btn.disabled = false;
             } catch (e) {
-                errorEl.innerHTML = '❌ ' + e.message;
+                                const isNetwork = e.message === 'Failed to fetch' || e.name === 'TypeError' || e.message === 'NetworkError';
+                errorEl.innerHTML = isNetwork
+                    ? '❌ Could not reach server. Check your connection.'
+                    : '❌ ' + e.message;
                 btn.disabled = false;
             }
         }
