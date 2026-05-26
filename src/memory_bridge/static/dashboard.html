@@ -2291,6 +2291,17 @@
 
             // Check JWT first — auto-login and fetch API key
             if (jwt) {
+                // Check if JWT is expired before making any API calls
+                const claims = decodeJWT(jwt);
+                if (claims && claims.exp && claims.exp * 1000 < Date.now()) {
+                    // JWT expired — force re-auth
+                    localStorage.removeItem('mb_jwt');
+                    localStorage.removeItem('mb_api_key');
+                    currentApiKey = '';
+                    showAuthenticatedContent(false);
+                    openAuth();
+                    return;
+                }
                 showAuthenticatedContent(true);
                 if (!currentApiKey) {
                     (async () => {
