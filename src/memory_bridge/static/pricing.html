@@ -691,8 +691,7 @@
             if (!jwt) return null;
             try {
                 const res = await fetch('/dashboard/data', {
-                    headers: { .Content-Type.: .application/json. },
-                        body: JSON.stringify({ token: jwt }),
+                    headers: { 'Authorization': 'Bearer ' + jwt, 'Content-Type': 'application/json' },
                 });
                 if (res.ok) {
                     const data = await res.json();
@@ -1574,7 +1573,7 @@
                 if (expMs - now < 300000) {
                     const res = await fetch('/auth/refresh', {
                         method: 'POST',
-                        headers: { .Content-Type.: .application/json. },
+                        headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ token: jwt }),
                     });
                     if (res.ok) {
