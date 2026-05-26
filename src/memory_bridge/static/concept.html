@@ -1,456 +1,664 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>Memory Bridge — Agent Memory Concept</title>
-<style>
-  @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700;800&display=swap');
-  * { margin: 0; padding: 0; box-sizing: border-box; }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Memory Bridge — Agent Memory Concept</title>
+    <link rel="icon" href="/playground/logo.png" type="image/png">
+    <link rel="stylesheet" href="/playground/style.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700;800&display=swap');
 
-  body {
-    background: #020617;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    min-height: 100dvh;
-    min-height: 100vh;
-    font-family: 'JetBrains Mono', monospace;
-    overflow: hidden;
-    user-select: none;
-  }
+        body {
+            background: #020617;
+            font-family: 'JetBrains Mono', monospace;
+            overflow: hidden;
+            height: 100vh;
+            height: 100dvh;
+        }
 
-  .container {
-    position: relative;
-    width: 100vw;
-    height: 100vh;
-    height: 100dvh;
-    background: radial-gradient(ellipse at 50% 50%, #0f172a 0%, #020617 70%);
-    overflow: hidden;
-  }
+        .concept-container {
+            position: relative;
+            width: 100vw;
+            height: calc(100vh - 56px);
+            height: calc(100dvh - 56px);
+            background: radial-gradient(ellipse at 50% 50%, #0f172a 0%, #020617 70%);
+            overflow: hidden;
+        }
 
-  /* Floating grid background */
-  .grid {
-    position: absolute;
-    inset: 0;
-    background-image:
-      linear-gradient(rgba(30, 41, 59, 0.25) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(30, 41, 59, 0.25) 1px, transparent 1px);
-    background-size: 40px 40px;
-    pointer-events: none;
-    animation: gridPulse 8s ease-in-out infinite;
-  }
-  @keyframes gridPulse {
-    0%, 100% { opacity: 0.6; }
-    50% { opacity: 1; }
-  }
+        /* Floating grid background */
+        .grid {
+            position: absolute;
+            inset: 0;
+            background-image:
+                linear-gradient(rgba(30, 41, 59, 0.25) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(30, 41, 59, 0.25) 1px, transparent 1px);
+            background-size: 40px 40px;
+            pointer-events: none;
+            animation: gridPulse 8s ease-in-out infinite;
+        }
+        @keyframes gridPulse {
+            0%, 100% { opacity: 0.6; }
+            50% { opacity: 1; }
+        }
 
-  /* Ambient floating particles (CSS) */
-  .particle-field {
-    position: absolute;
-    inset: 0;
-    pointer-events: none;
-    overflow: hidden;
-  }
-  .particle-field span {
-    position: absolute;
-    width: 3px; height: 3px;
-    border-radius: 50%;
-    background: #22d3ee;
-    opacity: 0;
-    animation: floatParticle linear infinite;
-  }
-  .particle-field span:nth-child(1)  { left: 10%; top: 20%; width: 2px; height: 2px; animation-duration: 12s; animation-delay: 0s; background: #22d3ee; }
-  .particle-field span:nth-child(2)  { left: 25%; top: 60%; width: 3px; height: 3px; animation-duration: 15s; animation-delay: 1s; background: #34d399; }
-  .particle-field span:nth-child(3)  { left: 40%; top: 30%; width: 2px; height: 2px; animation-duration: 10s; animation-delay: 2s; background: #a78bfa; }
-  .particle-field span:nth-child(4)  { left: 55%; top: 70%; width: 3px; height: 3px; animation-duration: 14s; animation-delay: 0.5s; background: #22d3ee; }
-  .particle-field span:nth-child(5)  { left: 70%; top: 15%; width: 2px; height: 2px; animation-duration: 11s; animation-delay: 3s; background: #34d399; }
-  .particle-field span:nth-child(6)  { left: 85%; top: 50%; width: 3px; height: 3px; animation-duration: 13s; animation-delay: 1.5s; background: #fb923c; }
-  .particle-field span:nth-child(7)  { left: 15%; top: 80%; width: 2px; height: 2px; animation-duration: 16s; animation-delay: 0.2s; background: #a78bfa; }
-  .particle-field span:nth-child(8)  { left: 50%; top: 10%; width: 4px; height: 4px; animation-duration: 18s; animation-delay: 2.5s; background: #22d3ee; }
-  .particle-field span:nth-child(9)  { left: 90%; top: 75%; width: 2px; height: 2px; animation-duration: 9s; animation-delay: 1s; background: #34d399; }
-  .particle-field span:nth-child(10) { left: 35%; top: 85%; width: 3px; height: 3px; animation-duration: 17s; animation-delay: 0.8s; background: #fb923c; }
-  .particle-field span:nth-child(11) { left: 5%; top: 40%; width: 2px; height: 2px; animation-duration: 11s; animation-delay: 3.5s; background: #a78bfa; }
-  .particle-field span:nth-child(12) { left: 75%; top: 40%; width: 4px; height: 4px; animation-duration: 14s; animation-delay: 1.2s; background: #22d3ee; }
+        /* Ambient floating particles */
+        .particle-field {
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+            overflow: hidden;
+        }
+        .particle-field span {
+            position: absolute;
+            border-radius: 50%;
+            opacity: 0;
+            animation: floatParticle linear infinite;
+        }
+        .particle-field span:nth-child(1)  { left: 10%; top: 20%; width: 2px; height: 2px; animation-duration: 12s; animation-delay: 0s; background: #22d3ee; }
+        .particle-field span:nth-child(2)  { left: 25%; top: 60%; width: 3px; height: 3px; animation-duration: 15s; animation-delay: 1s; background: #34d399; }
+        .particle-field span:nth-child(3)  { left: 40%; top: 30%; width: 2px; height: 2px; animation-duration: 10s; animation-delay: 2s; background: #a78bfa; }
+        .particle-field span:nth-child(4)  { left: 55%; top: 70%; width: 3px; height: 3px; animation-duration: 14s; animation-delay: 0.5s; background: #22d3ee; }
+        .particle-field span:nth-child(5)  { left: 70%; top: 15%; width: 2px; height: 2px; animation-duration: 11s; animation-delay: 3s; background: #34d399; }
+        .particle-field span:nth-child(6)  { left: 85%; top: 50%; width: 3px; height: 3px; animation-duration: 13s; animation-delay: 1.5s; background: #fb923c; }
+        .particle-field span:nth-child(7)  { left: 15%; top: 80%; width: 2px; height: 2px; animation-duration: 16s; animation-delay: 0.2s; background: #a78bfa; }
+        .particle-field span:nth-child(8)  { left: 50%; top: 10%; width: 4px; height: 4px; animation-duration: 18s; animation-delay: 2.5s; background: #22d3ee; }
+        .particle-field span:nth-child(9)  { left: 90%; top: 75%; width: 2px; height: 2px; animation-duration: 9s; animation-delay: 1s; background: #34d399; }
+        .particle-field span:nth-child(10) { left: 35%; top: 85%; width: 3px; height: 3px; animation-duration: 17s; animation-delay: 0.8s; background: #fb923c; }
+        .particle-field span:nth-child(11) { left: 5%; top: 40%; width: 2px; height: 2px; animation-duration: 11s; animation-delay: 3.5s; background: #a78bfa; }
+        .particle-field span:nth-child(12) { left: 75%; top: 40%; width: 4px; height: 4px; animation-duration: 14s; animation-delay: 1.2s; background: #22d3ee; }
 
-  @keyframes floatParticle {
-    0%   { transform: translateY(0) scale(0); opacity: 0; }
-    10%  { opacity: 0.8; }
-    20%  { transform: translateY(-30px) scale(1); opacity: 0.6; }
-    80%  { opacity: 0.4; }
-    100% { transform: translateY(-120px) scale(0); opacity: 0; }
-  }
+        @keyframes floatParticle {
+            0%   { transform: translateY(0) scale(0); opacity: 0; }
+            10%  { opacity: 0.8; }
+            20%  { transform: translateY(-30px) scale(1); opacity: 0.6; }
+            80%  { opacity: 0.4; }
+            100% { transform: translateY(-120px) scale(0); opacity: 0; }
+        }
 
-  /* Title */
-  .title {
-    position: absolute;
-    top: 3%;
-    left: 0; right: 0;
-    text-align: center;
-    color: #e2e8f0;
-    font-size: clamp(9px, 1.2vw, 13px);
-    font-weight: 600;
-    letter-spacing: 4px;
-    text-transform: uppercase;
-    opacity: 0.5;
-    z-index: 10;
-    pointer-events: none;
-  }
-  .title span { color: #22d3ee; }
+        /* Title overlay */
+        .concept-title {
+            position: absolute;
+            top: 3%;
+            left: 0; right: 0;
+            text-align: center;
+            color: #e2e8f0;
+            font-size: clamp(9px, 1.2vw, 13px);
+            font-weight: 600;
+            letter-spacing: 4px;
+            text-transform: uppercase;
+            opacity: 0.5;
+            z-index: 10;
+            pointer-events: none;
+        }
+        .concept-title span { color: #22d3ee; }
 
-  /* Main SVG */
-  svg.main-svg {
-    position: absolute;
-    inset: 0;
-    width: 100%;
-    height: 100%;
-    display: block;
-  }
+        svg.concept-svg {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
 
-  /* Legend */
-  .legend {
-    position: absolute;
-    bottom: clamp(8px, 2vh, 24px);
-    left: 50%;
-    transform: translateX(-50%);
-    display: flex;
-    gap: clamp(10px, 2vw, 28px);
-    background: rgba(15, 23, 42, 0.85);
-    padding: clamp(6px, 1vh, 10px) clamp(12px, 2vw, 22px);
-    border-radius: 10px;
-    border: 1px solid #1e293b;
-    backdrop-filter: blur(8px);
-    z-index: 10;
-    flex-wrap: wrap;
-    justify-content: center;
-  }
-  .legend-item {
-    display: flex;
-    align-items: center;
-    gap: clamp(4px, 0.8vw, 8px);
-    color: #94a3b8;
-    font-size: clamp(7px, 0.9vw, 10px);
-    font-weight: 500;
-    letter-spacing: 0.3px;
-    white-space: nowrap;
-  }
-  .legend-item .dot {
-    width: clamp(6px, 0.9vw, 10px);
-    height: clamp(6px, 0.9vw, 10px);
-    border-radius: 50%;
-    flex-shrink: 0;
-  }
-  .legend-item .dot.cyan { background: #22d3ee; box-shadow: 0 0 8px rgba(34,211,238,0.5); }
-  .legend-item .dot.emerald { background: #34d399; box-shadow: 0 0 8px rgba(52,211,153,0.5); }
-  .legend-item .dot.violet { background: #a78bfa; box-shadow: 0 0 8px rgba(167,139,250,0.5); }
-  .legend-item .dot.orange { background: #fb923c; box-shadow: 0 0 8px rgba(251,146,60,0.5); }
-</style>
+        .concept-legend {
+            position: absolute;
+            bottom: clamp(8px, 2vh, 24px);
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: clamp(10px, 2vw, 28px);
+            background: rgba(15, 23, 42, 0.85);
+            padding: clamp(6px, 1vh, 10px) clamp(12px, 2vw, 22px);
+            border-radius: 10px;
+            border: 1px solid #1e293b;
+            backdrop-filter: blur(8px);
+            z-index: 10;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        .concept-legend-item {
+            display: flex;
+            align-items: center;
+            gap: clamp(4px, 0.8vw, 8px);
+            color: #94a3b8;
+            font-size: clamp(7px, 0.9vw, 10px);
+            font-weight: 500;
+            letter-spacing: 0.3px;
+            white-space: nowrap;
+        }
+        .concept-legend-item .dot {
+            width: clamp(6px, 0.9vw, 10px);
+            height: clamp(6px, 0.9vw, 10px);
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+        .concept-legend-item .dot.cyan { background: #22d3ee; box-shadow: 0 0 8px rgba(34,211,238,0.5); }
+        .concept-legend-item .dot.emerald { background: #34d399; box-shadow: 0 0 8px rgba(52,211,153,0.5); }
+        .concept-legend-item .dot.violet { background: #a78bfa; box-shadow: 0 0 8px rgba(167,139,250,0.5); }
+        .concept-legend-item .dot.orange { background: #fb923c; box-shadow: 0 0 8px rgba(251,146,60,0.5); }
+
+        /* Override navbar for dark concept background */
+        .navbar {
+            background: rgba(2, 6, 23, 0.95);
+            backdrop-filter: blur(16px) saturate(1.5);
+            border-bottom: 1px solid rgba(30, 41, 59, 0.6);
+        }
+    </style>
+    <script src="/playground/i18n.js"></script>
+    <script src="/playground/auth.js?v=1"></script>
 </head>
 <body>
-<div class="container">
-  <div class="grid"></div>
-  <div class="particle-field">
-    <span></span><span></span><span></span><span></span><span></span>
-    <span></span><span></span><span></span><span></span><span></span>
-    <span></span><span></span>
-  </div>
-  <div class="title">Memory Bridge · <span>Agent Memory Architecture</span></div>
+    <!-- Navbar -->
+    <nav class="navbar">
+        <a href="/" class="logo">
+            <img src="/playground/logo.png" alt="Memory Bridge" data-i18n-alt="nav.logo_alt">
+            Memory <span class="logo-accent">Bridge</span>
+        </a>
+        <div class="nav-links">
+            <a href="/" data-i18n="nav.home">Home</a>
+            <a href="/concept" class="active" data-i18n="nav.concept">Concept</a>
+            <a href="/playground/graph.html" data-i18n="nav.graph">Graph</a>
+            <a href="/dashboard/" data-i18n="nav.dashboard">Dashboard</a>
+            <a href="/pricing" data-i18n="nav.pricing">Pricing</a>
+        </div>
+        <div class="nav-right">
+            <div style="position:relative;display:inline-flex;">
+                <button class="nav-icon-btn lang-toggle" onclick="toggleLang()" title="Switch language" aria-label="Switch language">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="10"/>
+                        <line x1="2" y1="12" x2="22" y2="12"/>
+                        <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+                    </svg>
+                </button>
+                <div class="lang-dropdown" id="lang-dropdown">
+                    <a href="javascript:void(0)" data-lang="en" class="lang-opt active" onclick="setLang('en')">🇬🇧 English</a>
+                    <a href="javascript:void(0)" data-lang="zh" class="lang-opt" onclick="setLang('zh')">🇨🇳 中文</a>
+                    <a href="javascript:void(0)" data-lang="ja" class="lang-opt" onclick="setLang('ja')">🇯🇵 日本語</a>
+                    <a href="javascript:void(0)" data-lang="ko" class="lang-opt" onclick="setLang('ko')">🇰🇷 한국어</a>
+                    <a href="javascript:void(0)" data-lang="es" class="lang-opt" onclick="setLang('es')">🇪🇸 Español</a>
+                    <a href="javascript:void(0)" data-lang="fr" class="lang-opt" onclick="setLang('fr')">🇫🇷 Français</a>
+                    <a href="javascript:void(0)" data-lang="de" class="lang-opt" onclick="setLang('de')">🇩🇪 Deutsch</a>
+                </div>
+            </div>
+            <button class="nav-icon-btn theme-toggle-btn" onclick="toggleTheme()" title="Toggle theme" aria-label="Toggle theme">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="theme-sun">
+                    <circle cx="12" cy="12" r="5"/>
+                    <line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/>
+                    <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+                    <line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/>
+                    <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+                </svg>
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="theme-moon" style="display:none">
+                    <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+                </svg>
+            </button>
+            <div class="auth-btn-container" id="auth-btn-container">
+                <button class="auth-btn" id="auth-nav-btn" onclick="openAuth()" title="Sign in / Sign up" data-i18n-title="nav.sign_in_title">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                    <span id="auth-btn-label" data-i18n="auth.sign_in">Sign in</span>
+                </button>
+                <div class="user-menu" id="user-menu" style="display:none;">
+                    <button class="user-avatar-btn" id="user-btn" onclick="toggleUserDropdown()" title="Account menu">
+                        <span class="user-avatar-circle" id="user-avatar-circle">👤</span>
+                        <span class="session-dot" id="session-dot"></span>
+                        <span class="user-avatar-name" id="user-avatar-name"></span>
+                        <span class="user-plan-badge" id="user-plan-badge"></span>
+                        <svg class="user-chevron" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+                    </button>
+                    <div class="user-dropdown" id="user-dropdown">
+                        <div class="user-dropdown-header">
+                            <span class="user-dropdown-email" id="user-dropdown-email"></span>
+                            <span class="user-dropdown-plan" id="user-dropdown-plan" data-i18n="dash.free_plan">Free Plan</span>
+                            <span class="user-dropdown-since" id="user-dropdown-since"></span>
+                        </div>
+                        <div class="user-dropdown-divider"></div>
+                        <a href="/pricing" class="user-dropdown-item" data-i18n="dash.manage_billing">
+                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+                            Manage Billing
+                        </a>
+                        <div class="user-dropdown-item sign-out" onclick="showLogoutConfirm()" style="cursor:pointer;" data-i18n="nav.sign_out">
+                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+                            <span data-i18n="nav.sign_out">Sign Out</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <a href="/playground/" class="nav-cta">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <polygon points="5 3 19 12 5 21 5 3"/>
+                </svg>
+                <span data-i18n="nav.launch_playground">Launch Playground</span>
+            </a>
+            <button class="nav-hamburger" onclick="toggleMobileNav()" aria-label="Open menu">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="4" y1="6" x2="20" y2="6"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="18" x2="20" y2="18"/>
+                </svg>
+            </button>
+        </div>
+    </nav>
 
-  <svg class="main-svg" viewBox="0 0 1100 750" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg">
-    <defs>
-      <filter id="glow-cyan" x="-40%" y="-40%" width="180%" height="180%">
-        <feGaussianBlur stdDeviation="6" result="blur"/>
-        <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
-      </filter>
-      <filter id="glow-violet" x="-40%" y="-40%" width="180%" height="180%">
-        <feGaussianBlur stdDeviation="10" result="blur"/>
-        <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
-      </filter>
-      <filter id="glow-emerald" x="-40%" y="-40%" width="180%" height="180%">
-        <feGaussianBlur stdDeviation="5" result="blur"/>
-        <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
-      </filter>
-      <filter id="glow-orange" x="-40%" y="-40%" width="180%" height="180%">
-        <feGaussianBlur stdDeviation="4" result="blur"/>
-        <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
-      </filter>
-      <radialGradient id="brain-grad" cx="50%" cy="45%" r="50%">
-        <stop offset="0%" stop-color="#a78bfa" stop-opacity="0.4"/>
-        <stop offset="50%" stop-color="#7c3aed" stop-opacity="0.2"/>
-        <stop offset="100%" stop-color="#4c1d95" stop-opacity="0"/>
-      </radialGradient>
-      <linearGradient id="agent1-grad" x1="0" y1="0" x2="1" y2="1">
-        <stop offset="0%" stop-color="#22d3ee" stop-opacity="0.15"/>
-        <stop offset="100%" stop-color="#0891b2" stop-opacity="0.05"/>
-      </linearGradient>
-      <linearGradient id="agent2-grad" x1="0" y1="0" x2="1" y2="1">
-        <stop offset="0%" stop-color="#34d399" stop-opacity="0.15"/>
-        <stop offset="100%" stop-color="#059669" stop-opacity="0.05"/>
-      </linearGradient>
-      <marker id="arrow-cyan" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto">
-        <path d="M 0 0 L 10 5 L 0 10 z" fill="#22d3ee"/>
-      </marker>
-      <marker id="arrow-emerald" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto">
-        <path d="M 0 0 L 10 5 L 0 10 z" fill="#34d399"/>
-      </marker>
-      <marker id="arrow-violet" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto">
-        <path d="M 0 0 L 10 5 L 0 10 z" fill="#a78bfa"/>
-      </marker>
-      <marker id="arrow-orange" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto">
-        <path d="M 0 0 L 10 5 L 0 10 z" fill="#fb923c"/>
-      </marker>
-      <filter id="brain-noise">
-        <feTurbulence type="fractalNoise" baseFrequency="0.015" numOctaves="3" result="noise"/>
-        <feDisplacementMap in="SourceGraphic" in2="noise" scale="3" xChannelSelector="R" yChannelSelector="G"/>
-      </filter>
-      <filter id="particle-glow"><feGaussianBlur stdDeviation="2"/></filter>
-    </defs>
+    <!-- Mobile Nav Panel -->
+    <div class="nav-mobile-backdrop" id="nav-backdrop" onclick="closeMobileNav()"></div>
+    <div class="nav-mobile-panel" id="nav-mobile">
+        <div class="nav-mobile-header">
+            <div class="logo">
+                <img src="/playground/logo.png" alt="Memory Bridge" data-i18n-alt="nav.logo_alt">
+                Memory <span class="logo-accent">Bridge</span>
+            </div>
+            <button class="nav-mobile-close" onclick="closeMobileNav()" aria-label="Close menu">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+                </svg>
+            </button>
+        </div>
+        <a href="/" onclick="closeMobileNav()" data-i18n="nav.home">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+            Home
+        </a>
+        <a href="/concept" class="active" onclick="closeMobileNav()" data-i18n="nav.concept">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="2 12 22 12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+            Concept
+        </a>
+        <a href="/playground/graph.html" onclick="closeMobileNav()" data-i18n="nav.graph">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="5" cy="5" r="3"/><circle cx="19" cy="5" r="3"/><circle cx="12" cy="19" r="3"/><line x1="5" y1="5" x2="19" y2="5"/><line x1="5" y1="5" x2="12" y2="19"/><line x1="19" y1="5" x2="12" y2="19"/></svg>
+            Graph
+        </a>
+        <a href="/pricing" onclick="closeMobileNav()" data-i18n="nav.pricing">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+            Pricing
+        </a>
+        <a href="/dashboard/" onclick="closeMobileNav()" data-i18n="nav.dashboard">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+            Dashboard
+        </a>
+        <a href="javascript:void(0)" id="auth-mobile-btn" onclick="closeMobileNav();openAuth()" style="display:flex;align-items:center;gap:0.45rem;padding:0.7rem 1.25rem;border-radius:var(--radius-sm);font-size:0.88rem;font-weight:600;color:var(--accent);text-decoration:none;">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+            <span id="auth-mobile-label" data-i18n="auth.sign_in">Sign in</span>
+        </a>
+        <div id="mobile-user-card" style="display:none;">
+            <div class="mobile-user-header">
+                <div class="mobile-user-avatar">
+                    <span class="mobile-user-circle" id="mobile-user-circle">👤</span>
+                    <span class="session-dot" id="mobile-session-dot"></span>
+                </div>
+                <div class="mobile-user-info">
+                    <span class="mobile-user-email" id="mobile-user-email"></span>
+                    <span class="mobile-user-plan" id="mobile-user-plan" data-i18n="dash.free_plan">Free Plan</span>
+                </div>
+            </div>
+            <div class="mobile-user-divider"></div>
+            <a href="/pricing" class="mobile-user-action" onclick="closeMobileNav()">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+                <span data-i18n="dash.manage_billing">Manage Billing</span>
+            </a>
+            <div class="mobile-user-divider"></div>
+            <span class="mobile-user-since" id="mobile-user-since"></span>
+            <a href="javascript:void(0)" class="mobile-user-action sign-out" id="mobile-sign-out-btn" onclick="closeMobileNav();showLogoutConfirm()">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+                <span data-i18n="nav.sign_out">Sign Out</span>
+            </a>
+        </div>
+        <div class="nav-mobile-divider"></div>
+        <a href="/playground/" class="nav-mobile-cta" onclick="closeMobileNav()">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+            <span data-i18n="nav.launch_playground">Launch Playground</span>
+        </a>
+    </div>
 
-    <!-- ── AGENT 1: THE STORING AGENT ── -->
-    <g>
-      <animateTransform attributeName="transform" type="translate" values="0,0; 0,-12; 0,0; 0,8; 0,0" dur="6s" repeatCount="indefinite"/>
-      <g transform="translate(130, 200)">
-        <ellipse cx="110" cy="140" rx="140" ry="130" fill="url(#agent1-grad)" filter="url(#glow-cyan)" opacity="0.3"/>
-        <rect x="40" y="100" width="140" height="120" rx="16" fill="#0f172a" stroke="#22d3ee" stroke-width="1.5" opacity="0.95"/>
-        <rect x="60" y="120" width="100" height="60" rx="8" fill="rgba(34,211,238,0.06)" stroke="rgba(34,211,238,0.2)" stroke-width="1"/>
-        <circle cx="80" cy="140" r="5" fill="#22d3ee" filter="url(#glow-cyan)">
-          <animate attributeName="opacity" values="1;0.3;1" dur="1.5s" repeatCount="indefinite"/>
-        </circle>
-        <circle cx="100" cy="140" r="5" fill="#22d3ee" filter="url(#glow-cyan)">
-          <animate attributeName="opacity" values="0.3;1;0.3" dur="1.5s" repeatCount="indefinite" begin="0.5s"/>
-        </circle>
-        <circle cx="120" cy="140" r="5" fill="#22d3ee" filter="url(#glow-cyan)">
-          <animate attributeName="opacity" values="1;0.3;1" dur="1.5s" repeatCount="indefinite" begin="1s"/>
-        </circle>
-        <line x1="60" y1="195" x2="160" y2="195" stroke="rgba(34,211,238,0.2)" stroke-width="1"/>
-        <rect x="80" y="205" width="60" height="4" rx="2" fill="rgba(34,211,238,0.1)"/>
+    <!-- Concept Visualization -->
+    <div class="concept-container">
+        <div class="grid"></div>
+        <div class="particle-field">
+            <span></span><span></span><span></span><span></span><span></span>
+            <span></span><span></span><span></span><span></span><span></span>
+            <span></span><span></span>
+        </div>
+        <div class="concept-title">Memory Bridge · <span>Agent Memory Architecture</span></div>
 
-        <rect x="55" y="35" width="110" height="65" rx="14" fill="#0f172a" stroke="#22d3ee" stroke-width="1.5"/>
-        <ellipse cx="85" cy="60" rx="14" ry="12" fill="rgba(34,211,238,0.12)" stroke="rgba(34,211,238,0.4)" stroke-width="1"/>
-        <ellipse cx="135" cy="60" rx="14" ry="12" fill="rgba(34,211,238,0.12)" stroke="rgba(34,211,238,0.4)" stroke-width="1"/>
-        <circle cx="85" cy="60" r="6" fill="#22d3ee" filter="url(#glow-cyan)">
-          <animate attributeName="rx" values="6;2;6" dur="4s" repeatCount="indefinite"/>
-        </circle>
-        <circle cx="135" cy="60" r="6" fill="#22d3ee" filter="url(#glow-cyan)">
-          <animate attributeName="rx" values="6;2;6" dur="4s" repeatCount="indefinite" begin="2s"/>
-        </circle>
-        <line x1="110" y1="35" x2="110" y2="15" stroke="#22d3ee" stroke-width="1.5" opacity="0.6"/>
-        <circle cx="110" cy="13" r="4" fill="#22d3ee" filter="url(#glow-cyan)">
-          <animate attributeName="r" values="4;5;4" dur="2s" repeatCount="indefinite"/>
-        </circle>
+        <svg class="concept-svg" viewBox="0 0 1100 700" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+                <filter id="glow-cyan" x="-40%" y="-40%" width="180%" height="180%">
+                    <feGaussianBlur stdDeviation="6" result="blur"/>
+                    <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+                </filter>
+                <filter id="glow-violet" x="-40%" y="-40%" width="180%" height="180%">
+                    <feGaussianBlur stdDeviation="10" result="blur"/>
+                    <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+                </filter>
+                <filter id="glow-emerald" x="-40%" y="-40%" width="180%" height="180%">
+                    <feGaussianBlur stdDeviation="5" result="blur"/>
+                    <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+                </filter>
+                <filter id="glow-orange" x="-40%" y="-40%" width="180%" height="180%">
+                    <feGaussianBlur stdDeviation="4" result="blur"/>
+                    <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+                </filter>
+                <radialGradient id="brain-grad" cx="50%" cy="45%" r="50%">
+                    <stop offset="0%" stop-color="#a78bfa" stop-opacity="0.4"/>
+                    <stop offset="50%" stop-color="#7c3aed" stop-opacity="0.2"/>
+                    <stop offset="100%" stop-color="#4c1d95" stop-opacity="0"/>
+                </radialGradient>
+                <linearGradient id="agent1-grad" x1="0" y1="0" x2="1" y2="1">
+                    <stop offset="0%" stop-color="#22d3ee" stop-opacity="0.15"/>
+                    <stop offset="100%" stop-color="#0891b2" stop-opacity="0.05"/>
+                </linearGradient>
+                <linearGradient id="agent2-grad" x1="0" y1="0" x2="1" y2="1">
+                    <stop offset="0%" stop-color="#34d399" stop-opacity="0.15"/>
+                    <stop offset="100%" stop-color="#059669" stop-opacity="0.05"/>
+                </linearGradient>
+                <marker id="arrow-cyan" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto">
+                    <path d="M 0 0 L 10 5 L 0 10 z" fill="#22d3ee"/>
+                </marker>
+                <marker id="arrow-emerald" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto">
+                    <path d="M 0 0 L 10 5 L 0 10 z" fill="#34d399"/>
+                </marker>
+                <marker id="arrow-violet" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto">
+                    <path d="M 0 0 L 10 5 L 0 10 z" fill="#a78bfa"/>
+                </marker>
+                <marker id="arrow-orange" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto">
+                    <path d="M 0 0 L 10 5 L 0 10 z" fill="#fb923c"/>
+                </marker>
+                <filter id="brain-noise">
+                    <feTurbulence type="fractalNoise" baseFrequency="0.015" numOctaves="3" result="noise"/>
+                    <feDisplacementMap in="SourceGraphic" in2="noise" scale="3" xChannelSelector="R" yChannelSelector="G"/>
+                </filter>
+                <filter id="particle-glow"><feGaussianBlur stdDeviation="2"/></filter>
+            </defs>
 
-        <!-- Animated left arm -->
-        <g>
-          <animateTransform attributeName="transform" type="rotate" values="-10,30,120;10,30,120;-10,30,120" dur="3s" repeatCount="indefinite"/>
-          <rect x="15" y="110" width="25" height="12" rx="6" fill="#0f172a" stroke="#22d3ee" stroke-width="1" opacity="0.8"/>
-          <rect x="-5" y="105" width="22" height="22" rx="6" fill="#0f172a" stroke="#22d3ee" stroke-width="1"/>
-          <path d="M 0,110 L -8,100" stroke="#22d3ee" stroke-width="1.5" fill="none" opacity="0.8">
-            <animate attributeName="d" values="M 0,110 L -8,100;M 0,110 L -8,108;M 0,110 L -8,100" dur="3s" repeatCount="indefinite"/>
-          </path>
-          <path d="M 15,110 L 23,100" stroke="#22d3ee" stroke-width="1.5" fill="none" opacity="0.8">
-            <animate attributeName="d" values="M 15,110 L 23,100;M 15,110 L 23,108;M 15,110 L 23,100" dur="3s" repeatCount="indefinite"/>
-          </path>
-        </g>
-        <!-- Animated right arm -->
-        <g>
-          <animateTransform attributeName="transform" type="rotate" values="10,180,130;-10,180,130;10,180,130" dur="2.5s" repeatCount="indefinite"/>
-          <rect x="185" y="120" width="25" height="12" rx="6" fill="#0f172a" stroke="#22d3ee" stroke-width="1" opacity="0.8"/>
-          <circle cx="212" cy="126" r="8" fill="rgba(34,211,238,0.1)" stroke="#22d3ee" stroke-width="1"/>
-          <line x1="220" y1="126" x2="260" y2="140" stroke="#22d3ee" stroke-width="1.5" stroke-dasharray="4,4" opacity="0.6">
-            <animate attributeName="opacity" values="0.6;0.2;0.6" dur="2s" repeatCount="indefinite"/>
-          </line>
-        </g>
-        <rect x="65" y="220" width="20" height="40" rx="6" fill="#0f172a" stroke="rgba(34,211,238,0.3)" stroke-width="1"/>
-        <rect x="135" y="220" width="20" height="40" rx="6" fill="#0f172a" stroke="rgba(34,211,238,0.3)" stroke-width="1"/>
-        <rect x="55" y="255" width="40" height="10" rx="4" fill="#0f172a" stroke="rgba(34,211,238,0.3)" stroke-width="1"/>
-        <rect x="125" y="255" width="40" height="10" rx="4" fill="#0f172a" stroke="rgba(34,211,238,0.3)" stroke-width="1"/>
-        <text x="110" y="285" text-anchor="middle" fill="#22d3ee" font-size="11" font-weight="700" letter-spacing="1" opacity="0.9">AGENT</text>
-        <text x="110" y="298" text-anchor="middle" fill="#64748b" font-size="8" letter-spacing="0.5">STORING · WRITE</text>
-      </g>
-    </g>
+            <g><animateTransform attributeName="transform" type="translate" values="0,0; 0,-12; 0,0; 0,8; 0,0" dur="6s" repeatCount="indefinite"/>
+            <g transform="translate(130, 180)">
+                <ellipse cx="110" cy="140" rx="140" ry="130" fill="url(#agent1-grad)" filter="url(#glow-cyan)" opacity="0.3"/>
+                <rect x="40" y="100" width="140" height="120" rx="16" fill="#0f172a" stroke="#22d3ee" stroke-width="1.5" opacity="0.95"/>
+                <rect x="60" y="120" width="100" height="60" rx="8" fill="rgba(34,211,238,0.06)" stroke="rgba(34,211,238,0.2)" stroke-width="1"/>
+                <circle cx="80" cy="140" r="5" fill="#22d3ee" filter="url(#glow-cyan)"><animate attributeName="opacity" values="1;0.3;1" dur="1.5s" repeatCount="indefinite"/></circle>
+                <circle cx="100" cy="140" r="5" fill="#22d3ee" filter="url(#glow-cyan)"><animate attributeName="opacity" values="0.3;1;0.3" dur="1.5s" repeatCount="indefinite" begin="0.5s"/></circle>
+                <circle cx="120" cy="140" r="5" fill="#22d3ee" filter="url(#glow-cyan)"><animate attributeName="opacity" values="1;0.3;1" dur="1.5s" repeatCount="indefinite" begin="1s"/></circle>
+                <line x1="60" y1="195" x2="160" y2="195" stroke="rgba(34,211,238,0.2)" stroke-width="1"/>
+                <rect x="80" y="205" width="60" height="4" rx="2" fill="rgba(34,211,238,0.1)"/>
+                <rect x="55" y="35" width="110" height="65" rx="14" fill="#0f172a" stroke="#22d3ee" stroke-width="1.5"/>
+                <ellipse cx="85" cy="60" rx="14" ry="12" fill="rgba(34,211,238,0.12)" stroke="rgba(34,211,238,0.4)" stroke-width="1"/>
+                <ellipse cx="135" cy="60" rx="14" ry="12" fill="rgba(34,211,238,0.12)" stroke="rgba(34,211,238,0.4)" stroke-width="1"/>
+                <circle cx="85" cy="60" r="6" fill="#22d3ee" filter="url(#glow-cyan)"><animate attributeName="rx" values="6;2;6" dur="4s" repeatCount="indefinite"/></circle>
+                <circle cx="135" cy="60" r="6" fill="#22d3ee" filter="url(#glow-cyan)"><animate attributeName="rx" values="6;2;6" dur="4s" repeatCount="indefinite" begin="2s"/></circle>
+                <line x1="110" y1="35" x2="110" y2="15" stroke="#22d3ee" stroke-width="1.5" opacity="0.6"/>
+                <circle cx="110" cy="13" r="4" fill="#22d3ee" filter="url(#glow-cyan)"><animate attributeName="r" values="4;5;4" dur="2s" repeatCount="indefinite"/></circle>
+                <g><animateTransform attributeName="transform" type="rotate" values="-10,30,120;10,30,120;-10,30,120" dur="3s" repeatCount="indefinite"/>
+                    <rect x="15" y="110" width="25" height="12" rx="6" fill="#0f172a" stroke="#22d3ee" stroke-width="1" opacity="0.8"/>
+                    <rect x="-5" y="105" width="22" height="22" rx="6" fill="#0f172a" stroke="#22d3ee" stroke-width="1"/>
+                    <path d="M 0,110 L -8,100" stroke="#22d3ee" stroke-width="1.5" fill="none" opacity="0.8"><animate attributeName="d" values="M 0,110 L -8,100;M 0,110 L -8,108;M 0,110 L -8,100" dur="3s" repeatCount="indefinite"/></path>
+                    <path d="M 15,110 L 23,100" stroke="#22d3ee" stroke-width="1.5" fill="none" opacity="0.8"><animate attributeName="d" values="M 15,110 L 23,100;M 15,110 L 23,108;M 15,110 L 23,100" dur="3s" repeatCount="indefinite"/></path>
+                </g>
+                <g><animateTransform attributeName="transform" type="rotate" values="10,180,130;-10,180,130;10,180,130" dur="2.5s" repeatCount="indefinite"/>
+                    <rect x="185" y="120" width="25" height="12" rx="6" fill="#0f172a" stroke="#22d3ee" stroke-width="1" opacity="0.8"/>
+                    <circle cx="212" cy="126" r="8" fill="rgba(34,211,238,0.1)" stroke="#22d3ee" stroke-width="1"/>
+                    <line x1="220" y1="126" x2="260" y2="140" stroke="#22d3ee" stroke-width="1.5" stroke-dasharray="4,4" opacity="0.6"><animate attributeName="opacity" values="0.6;0.2;0.6" dur="2s" repeatCount="indefinite"/></line>
+                </g>
+                <rect x="65" y="220" width="20" height="40" rx="6" fill="#0f172a" stroke="rgba(34,211,238,0.3)" stroke-width="1"/>
+                <rect x="135" y="220" width="20" height="40" rx="6" fill="#0f172a" stroke="rgba(34,211,238,0.3)" stroke-width="1"/>
+                <rect x="55" y="255" width="40" height="10" rx="4" fill="#0f172a" stroke="rgba(34,211,238,0.3)" stroke-width="1"/>
+                <rect x="125" y="255" width="40" height="10" rx="4" fill="#0f172a" stroke="rgba(34,211,238,0.3)" stroke-width="1"/>
+                <text x="110" y="285" text-anchor="middle" fill="#22d3ee" font-size="11" font-weight="700" letter-spacing="1" opacity="0.9">AGENT</text>
+                <text x="110" y="298" text-anchor="middle" fill="#64748b" font-size="8" letter-spacing="0.5">STORING · WRITE</text>
+            </g></g>
 
-    <!-- ── AGENT 2: THE RETRIEVING AGENT ── -->
-    <g>
-      <animateTransform attributeName="transform" type="translate" values="0,0; 0,10; 0,0; 0,-8; 0,0" dur="7s" repeatCount="indefinite"/>
-      <g transform="translate(700, 200)">
-        <ellipse cx="110" cy="140" rx="140" ry="130" fill="url(#agent2-grad)" filter="url(#glow-emerald)" opacity="0.3"/>
-        <rect x="40" y="100" width="140" height="120" rx="16" fill="#0f172a" stroke="#34d399" stroke-width="1.5" opacity="0.95"/>
-        <rect x="60" y="120" width="100" height="60" rx="8" fill="rgba(52,211,153,0.06)" stroke="rgba(52,211,153,0.2)" stroke-width="1"/>
-        <circle cx="80" cy="140" r="5" fill="#34d399" filter="url(#glow-emerald)">
-          <animate attributeName="opacity" values="1;0.3;1" dur="2s" repeatCount="indefinite" begin="0.3s"/>
-        </circle>
-        <circle cx="100" cy="140" r="5" fill="#34d399" filter="url(#glow-emerald)">
-          <animate attributeName="opacity" values="0.3;1;0.3" dur="2s" repeatCount="indefinite" begin="0.8s"/>
-        </circle>
-        <circle cx="120" cy="140" r="5" fill="#34d399" filter="url(#glow-emerald)">
-          <animate attributeName="opacity" values="1;0.3;1" dur="2s" repeatCount="indefinite" begin="1.3s"/>
-        </circle>
-        <line x1="60" y1="195" x2="160" y2="195" stroke="rgba(52,211,153,0.2)" stroke-width="1"/>
-        <rect x="80" y="205" width="60" height="4" rx="2" fill="rgba(52,211,153,0.1)"/>
+            <g><animateTransform attributeName="transform" type="translate" values="0,0; 0,10; 0,0; 0,-8; 0,0" dur="7s" repeatCount="indefinite"/>
+            <g transform="translate(700, 180)">
+                <ellipse cx="110" cy="140" rx="140" ry="130" fill="url(#agent2-grad)" filter="url(#glow-emerald)" opacity="0.3"/>
+                <rect x="40" y="100" width="140" height="120" rx="16" fill="#0f172a" stroke="#34d399" stroke-width="1.5" opacity="0.95"/>
+                <rect x="60" y="120" width="100" height="60" rx="8" fill="rgba(52,211,153,0.06)" stroke="rgba(52,211,153,0.2)" stroke-width="1"/>
+                <circle cx="80" cy="140" r="5" fill="#34d399" filter="url(#glow-emerald)"><animate attributeName="opacity" values="1;0.3;1" dur="2s" repeatCount="indefinite" begin="0.3s"/></circle>
+                <circle cx="100" cy="140" r="5" fill="#34d399" filter="url(#glow-emerald)"><animate attributeName="opacity" values="0.3;1;0.3" dur="2s" repeatCount="indefinite" begin="0.8s"/></circle>
+                <circle cx="120" cy="140" r="5" fill="#34d399" filter="url(#glow-emerald)"><animate attributeName="opacity" values="1;0.3;1" dur="2s" repeatCount="indefinite" begin="1.3s"/></circle>
+                <line x1="60" y1="195" x2="160" y2="195" stroke="rgba(52,211,153,0.2)" stroke-width="1"/>
+                <rect x="80" y="205" width="60" height="4" rx="2" fill="rgba(52,211,153,0.1)"/>
+                <path d="M 60,95 L 55,50 Q 55,35 70,35 L 150,35 Q 165,35 165,50 L 160,95 Z" fill="#0f172a" stroke="#34d399" stroke-width="1.5"/>
+                <rect x="70" y="52" width="80" height="22" rx="10" fill="rgba(52,211,153,0.08)" stroke="rgba(52,211,153,0.3)" stroke-width="1"/>
+                <line x1="110" y1="52" x2="110" y2="74" stroke="rgba(52,211,153,0.15)" stroke-width="1"/>
+                <rect x="75" y="60" width="70" height="3" rx="2" fill="#34d399" filter="url(#glow-emerald)" opacity="0.6"><animate attributeName="y" values="55;72;55" dur="3s" repeatCount="indefinite"/></rect>
+                <line x1="90" y1="35" x2="85" y2="16" stroke="#34d399" stroke-width="1.5" opacity="0.5"/>
+                <line x1="130" y1="35" x2="135" y2="16" stroke="#34d399" stroke-width="1.5" opacity="0.5"/>
+                <circle cx="85" cy="14" r="3" fill="#34d399" filter="url(#glow-emerald)"><animate attributeName="r" values="3;4.5;3" dur="1.8s" repeatCount="indefinite"/></circle>
+                <circle cx="135" cy="14" r="3" fill="#34d399" filter="url(#glow-emerald)"><animate attributeName="r" values="3;4.5;3" dur="1.8s" repeatCount="indefinite" begin="0.9s"/></circle>
+                <g><animateTransform attributeName="transform" type="rotate" values="-10,30,120;10,30,120;-10,30,120" dur="2.5s" repeatCount="indefinite"/>
+                    <rect x="15" y="120" width="25" height="12" rx="6" fill="#0f172a" stroke="#34d399" stroke-width="1" opacity="0.8"/>
+                    <path d="M -5,115 Q -15,126 -5,137" stroke="#34d399" stroke-width="1.5" fill="none" opacity="0.7"/>
+                    <circle cx="-5" cy="126" r="3" fill="#34d399" filter="url(#glow-emerald)" opacity="0.4"><animate attributeName="opacity" values="0.4;0.8;0.4" dur="2s" repeatCount="indefinite"/></circle>
+                </g>
+                <g><animateTransform attributeName="transform" type="rotate" values="10,180,140;-10,180,140;10,180,140" dur="3.5s" repeatCount="indefinite"/>
+                    <rect x="185" y="130" width="22" height="12" rx="6" fill="#0f172a" stroke="#34d399" stroke-width="1" opacity="0.8"/>
+                    <circle cx="210" cy="136" r="7" fill="rgba(52,211,153,0.08)" stroke="#34d399" stroke-width="1"/>
+                </g>
+                <rect x="65" y="220" width="20" height="40" rx="6" fill="#0f172a" stroke="rgba(52,211,153,0.3)" stroke-width="1"/>
+                <rect x="135" y="220" width="20" height="40" rx="6" fill="#0f172a" stroke="rgba(52,211,153,0.3)" stroke-width="1"/>
+                <rect x="55" y="255" width="40" height="10" rx="4" fill="#0f172a" stroke="rgba(52,211,153,0.3)" stroke-width="1"/>
+                <rect x="125" y="255" width="40" height="10" rx="4" fill="#0f172a" stroke="rgba(52,211,153,0.3)" stroke-width="1"/>
+                <text x="110" y="285" text-anchor="middle" fill="#34d399" font-size="11" font-weight="700" letter-spacing="1" opacity="0.9">AGENT</text>
+                <text x="110" y="298" text-anchor="middle" fill="#64748b" font-size="8" letter-spacing="0.5">RETRIEVING · READ</text>
+            </g></g>
 
-        <path d="M 60,95 L 55,50 Q 55,35 70,35 L 150,35 Q 165,35 165,50 L 160,95 Z" fill="#0f172a" stroke="#34d399" stroke-width="1.5"/>
-        <rect x="70" y="52" width="80" height="22" rx="10" fill="rgba(52,211,153,0.08)" stroke="rgba(52,211,153,0.3)" stroke-width="1"/>
-        <line x1="110" y1="52" x2="110" y2="74" stroke="rgba(52,211,153,0.15)" stroke-width="1"/>
-        <rect x="75" y="60" width="70" height="3" rx="2" fill="#34d399" filter="url(#glow-emerald)" opacity="0.6">
-          <animate attributeName="y" values="55;72;55" dur="3s" repeatCount="indefinite"/>
-        </rect>
-        <line x1="90" y1="35" x2="85" y2="16" stroke="#34d399" stroke-width="1.5" opacity="0.5"/>
-        <line x1="130" y1="35" x2="135" y2="16" stroke="#34d399" stroke-width="1.5" opacity="0.5"/>
-        <circle cx="85" cy="14" r="3" fill="#34d399" filter="url(#glow-emerald)">
-          <animate attributeName="r" values="3;4.5;3" dur="1.8s" repeatCount="indefinite"/>
-        </circle>
-        <circle cx="135" cy="14" r="3" fill="#34d399" filter="url(#glow-emerald)">
-          <animate attributeName="r" values="3;4.5;3" dur="1.8s" repeatCount="indefinite" begin="0.9s"/>
-        </circle>
+            <g><animateTransform attributeName="transform" type="translate" values="0,0; 0,-6; 0,0; 0,6; 0,0" dur="5s" repeatCount="indefinite"/>
+            <g transform="translate(550, 300)">
+                <ellipse cx="0" cy="0" rx="100" ry="90" fill="url(#brain-grad)" filter="url(#glow-violet)">
+                    <animate attributeName="rx" values="100;115;100" dur="4s" repeatCount="indefinite"/>
+                    <animate attributeName="ry" values="90;105;90" dur="4s" repeatCount="indefinite"/>
+                </ellipse>
+                <ellipse cx="0" cy="0" rx="75" ry="65" fill="#0f172a" stroke="#a78bfa" stroke-width="1.5" filter="url(#brain-noise)"/>
+                <g opacity="0.4">
+                    <line x1="-30" y1="-20" x2="20" y2="-30" stroke="#a78bfa" stroke-width="0.5"/>
+                    <line x1="20" y1="-30" x2="40" y2="0" stroke="#a78bfa" stroke-width="0.5"/>
+                    <line x1="40" y1="0" x2="25" y2="25" stroke="#a78bfa" stroke-width="0.5"/>
+                    <line x1="-40" y1="-25" x2="0" y2="-40" stroke="#c4b5fd" stroke-width="0.5"/>
+                    <line x1="0" y1="-40" x2="35" y2="-10" stroke="#c4b5fd" stroke-width="0.5"/>
+                    <line x1="35" y1="-10" x2="10" y2="30" stroke="#c4b5fd" stroke-width="0.5"/>
+                    <line x1="-45" y1="10" x2="-15" y2="-15" stroke="#a78bfa" stroke-width="0.5"/>
+                    <line x1="-15" y1="-15" x2="30" y2="15" stroke="#a78bfa" stroke-width="0.5"/>
+                    <line x1="30" y1="15" x2="0" y2="35" stroke="#a78bfa" stroke-width="0.5"/>
+                </g>
+                <circle cx="-30" cy="-20" r="5" fill="#a78bfa" filter="url(#glow-violet)"><animate attributeName="r" values="5;7;5" dur="3s" repeatCount="indefinite"/></circle>
+                <circle cx="20" cy="-30" r="4" fill="#c4b5fd"><animate attributeName="r" values="4;6;4" dur="2.5s" repeatCount="indefinite" begin="0.5s"/></circle>
+                <circle cx="40" cy="0" r="5" fill="#a78bfa" filter="url(#glow-violet)"><animate attributeName="r" values="5;7;5" dur="3.5s" repeatCount="indefinite" begin="1s"/></circle>
+                <circle cx="25" cy="25" r="3.5" fill="#c4b5fd"><animate attributeName="r" values="3.5;5.5;3.5" dur="2s" repeatCount="indefinite" begin="1.5s"/></circle>
+                <text x="0" y="58" text-anchor="middle" fill="#a78bfa" font-size="10" font-weight="700" letter-spacing="2">MEMORY CORE</text>
+                <text x="0" y="70" text-anchor="middle" fill="#7c3aed" font-size="7" letter-spacing="1">CROSS-SESSION · PERSISTENT</text>
+            </g></g>
 
-        <!-- Left arm -->
-        <g>
-          <animateTransform attributeName="transform" type="rotate" values="-10,30,120;10,30,120;-10,30,120" dur="2.5s" repeatCount="indefinite"/>
-          <rect x="15" y="120" width="25" height="12" rx="6" fill="#0f172a" stroke="#34d399" stroke-width="1" opacity="0.8"/>
-          <path d="M -5,115 Q -15,126 -5,137" stroke="#34d399" stroke-width="1.5" fill="none" opacity="0.7"/>
-          <circle cx="-5" cy="126" r="3" fill="#34d399" filter="url(#glow-emerald)" opacity="0.4">
-            <animate attributeName="opacity" values="0.4;0.8;0.4" dur="2s" repeatCount="indefinite"/>
-          </circle>
-        </g>
-        <!-- Right arm -->
-        <g>
-          <animateTransform attributeName="transform" type="rotate" values="10,180,140;-10,180,140;10,180,140" dur="3.5s" repeatCount="indefinite"/>
-          <rect x="185" y="130" width="22" height="12" rx="6" fill="#0f172a" stroke="#34d399" stroke-width="1" opacity="0.8"/>
-          <circle cx="210" cy="136" r="7" fill="rgba(52,211,153,0.08)" stroke="#34d399" stroke-width="1"/>
-        </g>
-        <rect x="65" y="220" width="20" height="40" rx="6" fill="#0f172a" stroke="rgba(52,211,153,0.3)" stroke-width="1"/>
-        <rect x="135" y="220" width="20" height="40" rx="6" fill="#0f172a" stroke="rgba(52,211,153,0.3)" stroke-width="1"/>
-        <rect x="55" y="255" width="40" height="10" rx="4" fill="#0f172a" stroke="rgba(52,211,153,0.3)" stroke-width="1"/>
-        <rect x="125" y="255" width="40" height="10" rx="4" fill="#0f172a" stroke="rgba(52,211,153,0.3)" stroke-width="1"/>
-        <text x="110" y="285" text-anchor="middle" fill="#34d399" font-size="11" font-weight="700" letter-spacing="1" opacity="0.9">AGENT</text>
-        <text x="110" y="298" text-anchor="middle" fill="#64748b" font-size="8" letter-spacing="0.5">RETRIEVING · READ</text>
-      </g>
-    </g>
+            <g><circle r="4" fill="#22d3ee" filter="url(#particle-glow)"><animateMotion dur="3s" repeatCount="indefinite" path="M 290,270 C 300,230 360,180 420,200 C 450,210 470,240 490,260 C 510,280 530,290 550,300"/></circle>
+            <circle r="2.5" fill="#67e8f9" opacity="0.6"><animateMotion dur="3s" repeatCount="indefinite" begin="0.5s" path="M 290,300 C 300,330 360,380 420,360 C 450,350 470,320 490,300 C 510,280 530,290 550,300"/></circle>
+            <circle r="3" fill="#22d3ee" filter="url(#particle-glow)"><animateMotion dur="3.5s" repeatCount="indefinite" begin="1s" path="M 290,240 C 310,190 380,160 430,190 C 460,210 480,250 500,270 C 520,290 540,295 550,300"/></circle></g>
+            <g><circle r="4" fill="#34d399" filter="url(#particle-glow)"><animateMotion dur="3s" repeatCount="indefinite" path="M 550,350 C 570,360 600,380 630,360 C 660,340 690,320 720,310 C 750,300 780,290 810,290"/></circle>
+            <circle r="2.5" fill="#6ee7b7" opacity="0.6"><animateMotion dur="3s" repeatCount="indefinite" begin="0.5s" path="M 550,380 C 570,400 610,420 650,400 C 680,385 710,360 740,340 C 770,320 800,310 810,310"/></circle>
+            <circle r="3" fill="#34d399" filter="url(#particle-glow)"><animateMotion dur="3.5s" repeatCount="indefinite" begin="1.5s" path="M 550,320 C 580,300 620,280 660,290 C 690,300 720,320 750,310 C 780,300 800,300 810,300"/></circle></g>
+            <g><circle r="3" fill="#a78bfa" filter="url(#particle-glow)"><animateMotion dur="4s" repeatCount="indefinite" begin="0s" path="M 810,250 C 780,220 730,200 680,220 C 640,235 600,260 570,280 C 555,290 555,300 550,300"/></circle>
+            <circle r="2" fill="#c4b5fd" opacity="0.5"><animateMotion dur="4s" repeatCount="indefinite" begin="2s" path="M 810,230 C 770,200 710,180 660,210 C 620,230 590,260 570,280 C 560,290 555,295 550,300"/></circle></g>
 
-    <!-- ── CENTRAL BRAIN / MEMORY CORE ── -->
-    <g>
-      <animateTransform attributeName="transform" type="translate" values="0,0; 0,-6; 0,0; 0,6; 0,0" dur="5s" repeatCount="indefinite"/>
-      <g transform="translate(550, 320)">
-        <ellipse cx="0" cy="0" rx="100" ry="90" fill="url(#brain-grad)" filter="url(#glow-violet)">
-          <animate attributeName="rx" values="100;115;100" dur="4s" repeatCount="indefinite"/>
-          <animate attributeName="ry" values="90;105;90" dur="4s" repeatCount="indefinite"/>
-        </ellipse>
-        <ellipse cx="0" cy="0" rx="75" ry="65" fill="#0f172a" stroke="#a78bfa" stroke-width="1.5" filter="url(#brain-noise)"/>
-        <g opacity="0.4">
-          <line x1="-30" y1="-20" x2="20" y2="-30" stroke="#a78bfa" stroke-width="0.5"/>
-          <line x1="20" y1="-30" x2="40" y2="0" stroke="#a78bfa" stroke-width="0.5"/>
-          <line x1="40" y1="0" x2="25" y2="25" stroke="#a78bfa" stroke-width="0.5"/>
-          <line x1="-40" y1="-25" x2="0" y2="-40" stroke="#c4b5fd" stroke-width="0.5"/>
-          <line x1="0" y1="-40" x2="35" y2="-10" stroke="#c4b5fd" stroke-width="0.5"/>
-          <line x1="35" y1="-10" x2="10" y2="30" stroke="#c4b5fd" stroke-width="0.5"/>
-          <line x1="-45" y1="10" x2="-15" y2="-15" stroke="#a78bfa" stroke-width="0.5"/>
-          <line x1="-15" y1="-15" x2="30" y2="15" stroke="#a78bfa" stroke-width="0.5"/>
-          <line x1="30" y1="15" x2="0" y2="35" stroke="#a78bfa" stroke-width="0.5"/>
-        </g>
-        <circle cx="-30" cy="-20" r="5" fill="#a78bfa" filter="url(#glow-violet)">
-          <animate attributeName="r" values="5;7;5" dur="3s" repeatCount="indefinite"/>
-        </circle>
-        <circle cx="20" cy="-30" r="4" fill="#c4b5fd">
-          <animate attributeName="r" values="4;6;4" dur="2.5s" repeatCount="indefinite" begin="0.5s"/>
-        </circle>
-        <circle cx="40" cy="0" r="5" fill="#a78bfa" filter="url(#glow-violet)">
-          <animate attributeName="r" values="5;7;5" dur="3.5s" repeatCount="indefinite" begin="1s"/>
-        </circle>
-        <circle cx="25" cy="25" r="3.5" fill="#c4b5fd">
-          <animate attributeName="r" values="3.5;5.5;3.5" dur="2s" repeatCount="indefinite" begin="1.5s"/>
-        </circle>
-        <text x="0" y="58" text-anchor="middle" fill="#a78bfa" font-size="10" font-weight="700" letter-spacing="2">MEMORY CORE</text>
-        <text x="0" y="70" text-anchor="middle" fill="#7c3aed" font-size="7" letter-spacing="1">CROSS-SESSION · PERSISTENT</text>
-      </g>
-    </g>
+            <path d="M 280,240 C 320,220 370,210 420,230 C 450,240 480,260 505,280" stroke="#22d3ee" stroke-width="2" fill="none" stroke-dasharray="6,4" marker-end="url(#arrow-cyan)" opacity="0.8"><animate attributeName="opacity" values="0.8;0.4;0.8" dur="2s" repeatCount="indefinite"/></path>
+            <path d="M 610,340 C 640,360 670,350 700,330 C 730,310 760,300 790,295" stroke="#34d399" stroke-width="2" fill="none" stroke-dasharray="6,4" marker-end="url(#arrow-emerald)" opacity="0.8"><animate attributeName="opacity" values="0.8;0.4;0.8" dur="2s" repeatCount="indefinite" begin="1s"/></path>
+            <path d="M 800,260 C 760,230 710,220 660,240 C 630,250 600,270 575,290" stroke="#a78bfa" stroke-width="1.5" fill="none" stroke-dasharray="4,4" marker-end="url(#arrow-violet)" opacity="0.5"><animate attributeName="opacity" values="0.5;0.2;0.5" dur="3s" repeatCount="indefinite" begin="0.5s"/></path>
 
-    <!-- ── ANIMATED DATA STREAMS ── -->
-    <!-- Agent 1 → Brain -->
-    <g>
-      <circle r="4" fill="#22d3ee" filter="url(#particle-glow)">
-        <animateMotion dur="3s" repeatCount="indefinite" path="M 290,290 C 300,250 360,200 420,220 C 450,230 470,260 490,280 C 510,300 530,310 550,320"/>
-      </circle>
-      <circle r="2.5" fill="#67e8f9" opacity="0.6">
-        <animateMotion dur="3s" repeatCount="indefinite" begin="0.5s" path="M 290,320 C 300,350 360,400 420,380 C 450,370 470,340 490,320 C 510,300 530,310 550,320"/>
-      </circle>
-      <circle r="3" fill="#22d3ee" filter="url(#particle-glow)">
-        <animateMotion dur="3.5s" repeatCount="indefinite" begin="1s" path="M 290,260 C 310,210 380,180 430,210 C 460,230 480,270 500,290 C 520,310 540,315 550,320"/>
-      </circle>
-    </g>
-    <!-- Brain → Agent 2 -->
-    <g>
-      <circle r="4" fill="#34d399" filter="url(#particle-glow)">
-        <animateMotion dur="3s" repeatCount="indefinite" path="M 550,370 C 570,380 600,400 630,380 C 660,360 690,340 720,330 C 750,320 780,310 810,310"/>
-      </circle>
-      <circle r="2.5" fill="#6ee7b7" opacity="0.6">
-        <animateMotion dur="3s" repeatCount="indefinite" begin="0.5s" path="M 550,400 C 570,420 610,440 650,420 C 680,405 710,380 740,360 C 770,340 800,330 810,330"/>
-      </circle>
-      <circle r="3" fill="#34d399" filter="url(#particle-glow)">
-        <animateMotion dur="3.5s" repeatCount="indefinite" begin="1.5s" path="M 550,340 C 580,320 620,300 660,310 C 690,320 720,340 750,330 C 780,320 800,320 810,320"/>
-      </circle>
-    </g>
-    <!-- Agent 2 → Brain (cross-store) -->
-    <g>
-      <circle r="3" fill="#a78bfa" filter="url(#particle-glow)">
-        <animateMotion dur="4s" repeatCount="indefinite" begin="0s" path="M 810,270 C 780,240 730,220 680,240 C 640,255 600,280 570,300 C 555,310 555,320 550,320"/>
-      </circle>
-      <circle r="2" fill="#c4b5fd" opacity="0.5">
-        <animateMotion dur="4s" repeatCount="indefinite" begin="2s" path="M 810,250 C 770,220 710,200 660,230 C 620,250 590,280 570,300 C 560,310 555,315 550,320"/>
-      </circle>
-    </g>
+            <rect x="335" y="195" width="60" height="22" rx="6" fill="rgba(15,23,42,0.85)" stroke="rgba(34,211,238,0.3)" stroke-width="1"/>
+            <text x="365" y="210" text-anchor="middle" fill="#22d3ee" font-size="9" font-weight="700">STORE</text>
+            <rect x="660" y="358" width="72" height="22" rx="6" fill="rgba(15,23,42,0.85)" stroke="rgba(52,211,153,0.3)" stroke-width="1"/>
+            <text x="696" y="373" text-anchor="middle" fill="#34d399" font-size="9" font-weight="700">RETRIEVE</text>
+            <rect x="676" y="206" width="82" height="22" rx="6" fill="rgba(15,23,42,0.85)" stroke="rgba(167,139,250,0.3)" stroke-width="1"/>
+            <text x="717" y="221" text-anchor="middle" fill="#a78bfa" font-size="8" font-weight="600">SHARE</text>
 
-    <!-- ── ARROWS ── -->
-    <path d="M 280,260 C 320,240 370,230 420,250 C 450,260 480,280 505,300" stroke="#22d3ee" stroke-width="2" fill="none" stroke-dasharray="6,4" marker-end="url(#arrow-cyan)" opacity="0.8">
-      <animate attributeName="opacity" values="0.8;0.4;0.8" dur="2s" repeatCount="indefinite"/>
-    </path>
-    <path d="M 610,360 C 640,380 670,370 700,350 C 730,330 760,320 790,315" stroke="#34d399" stroke-width="2" fill="none" stroke-dasharray="6,4" marker-end="url(#arrow-emerald)" opacity="0.8">
-      <animate attributeName="opacity" values="0.8;0.4;0.8" dur="2s" repeatCount="indefinite" begin="1s"/>
-    </path>
-    <path d="M 800,280 C 760,250 710,240 660,260 C 630,270 600,290 575,310" stroke="#a78bfa" stroke-width="1.5" fill="none" stroke-dasharray="4,4" marker-end="url(#arrow-violet)" opacity="0.5">
-      <animate attributeName="opacity" values="0.5;0.2;0.5" dur="3s" repeatCount="indefinite" begin="0.5s"/>
-    </path>
+            <g><animateTransform attributeName="transform" type="translate" values="0,0; 0,-5; 0,0; 0,5; 0,0" dur="8s" repeatCount="indefinite"/>
+            <g transform="translate(430, 510)" opacity="0.75">
+                <rect x="40" y="20" width="70" height="55" rx="10" fill="#0f172a" stroke="#fb923c" stroke-width="1.2"/>
+                <rect x="52" y="32" width="46" height="24" rx="5" fill="rgba(251,146,60,0.06)" stroke="rgba(251,146,60,0.2)" stroke-width="0.8"/>
+                <rect x="50" y="65" width="50" height="24" rx="6" fill="#0f172a" stroke="rgba(251,146,60,0.2)" stroke-width="1"/>
+                <path d="M 55,20 L 50,0 Q 55,-5 75,-5 L 95,-5 Q 100,0 95,20 Z" fill="#0f172a" stroke="#fb923c" stroke-width="1.2"/>
+                <circle cx="70" cy="6" r="4" fill="#fb923c" filter="url(#glow-orange)"><animate attributeName="r" values="4;6;4" dur="1.5s" repeatCount="indefinite"/></circle>
+                <circle cx="85" cy="6" r="4" fill="#fb923c" filter="url(#glow-orange)"><animate attributeName="r" values="4;6;4" dur="1.5s" repeatCount="indefinite" begin="0.75s"/></circle>
+                <line x1="35" y1="35" x2="10" y2="10" stroke="#fb923c" stroke-width="1" opacity="0.5"/>
+                <line x1="115" y1="35" x2="140" y2="10" stroke="#fb923c" stroke-width="1" opacity="0.5"/>
+                <text x="75" y="104" text-anchor="middle" fill="#fb923c" font-size="8" font-weight="600" letter-spacing="0.5">ORCHESTRATOR</text>
+            </g></g>
+            <path d="M 490,520 C 490,470 480,430 460,400" stroke="#fb923c" stroke-width="1" fill="none" stroke-dasharray="3,3" marker-end="url(#arrow-orange)" opacity="0.4"><animate attributeName="opacity" values="0.4;0.1;0.4" dur="4s" repeatCount="indefinite"/></path>
+            <path d="M 560,520 C 570,470 580,430 580,400" stroke="#fb923c" stroke-width="1" fill="none" stroke-dasharray="3,3" marker-end="url(#arrow-orange)" opacity="0.4"><animate attributeName="opacity" values="0.4;0.1;0.4" dur="4s" repeatCount="indefinite" begin="2s"/></path>
+        </svg>
 
-    <!-- Labels -->
-    <rect x="335" y="215" width="60" height="22" rx="6" fill="rgba(15,23,42,0.85)" stroke="rgba(34,211,238,0.3)" stroke-width="1"/>
-    <text x="365" y="230" text-anchor="middle" fill="#22d3ee" font-size="9" font-weight="700">STORE</text>
-    <rect x="660" y="378" width="72" height="22" rx="6" fill="rgba(15,23,42,0.85)" stroke="rgba(52,211,153,0.3)" stroke-width="1"/>
-    <text x="696" y="393" text-anchor="middle" fill="#34d399" font-size="9" font-weight="700">RETRIEVE</text>
-    <rect x="676" y="226" width="82" height="22" rx="6" fill="rgba(15,23,42,0.85)" stroke="rgba(167,139,250,0.3)" stroke-width="1"/>
-    <text x="717" y="241" text-anchor="middle" fill="#a78bfa" font-size="8" font-weight="600">SHARE</text>
+        <div class="concept-legend">
+            <div class="concept-legend-item"><span class="dot cyan"></span> Store</div>
+            <div class="concept-legend-item"><span class="dot emerald"></span> Retrieve</div>
+            <div class="concept-legend-item"><span class="dot violet"></span> Memory Core</div>
+            <div class="concept-legend-item"><span class="dot orange"></span> Orchestrator</div>
+        </div>
+    </div>
 
-    <!-- ── ORCHESTRATOR ── -->
-    <g>
-      <animateTransform attributeName="transform" type="translate" values="0,0; 0,-5; 0,0; 0,5; 0,0" dur="8s" repeatCount="indefinite"/>
-      <g transform="translate(430, 535)" opacity="0.75">
-        <rect x="40" y="20" width="70" height="55" rx="10" fill="#0f172a" stroke="#fb923c" stroke-width="1.2"/>
-        <rect x="52" y="32" width="46" height="24" rx="5" fill="rgba(251,146,60,0.06)" stroke="rgba(251,146,60,0.2)" stroke-width="0.8"/>
-        <rect x="50" y="65" width="50" height="24" rx="6" fill="#0f172a" stroke="rgba(251,146,60,0.2)" stroke-width="1"/>
-        <path d="M 55,20 L 50,0 Q 55,-5 75,-5 L 95,-5 Q 100,0 95,20 Z" fill="#0f172a" stroke="#fb923c" stroke-width="1.2"/>
-        <circle cx="70" cy="6" r="4" fill="#fb923c" filter="url(#glow-orange)">
-          <animate attributeName="r" values="4;6;4" dur="1.5s" repeatCount="indefinite"/>
-        </circle>
-        <circle cx="85" cy="6" r="4" fill="#fb923c" filter="url(#glow-orange)">
-          <animate attributeName="r" values="4;6;4" dur="1.5s" repeatCount="indefinite" begin="0.75s"/>
-        </circle>
-        <line x1="35" y1="35" x2="10" y2="10" stroke="#fb923c" stroke-width="1" opacity="0.5"/>
-        <line x1="115" y1="35" x2="140" y2="10" stroke="#fb923c" stroke-width="1" opacity="0.5"/>
-        <text x="75" y="104" text-anchor="middle" fill="#fb923c" font-size="8" font-weight="600" letter-spacing="0.5">ORCHESTRATOR</text>
-      </g>
-    </g>
-    <path d="M 490,550 C 490,500 480,460 460,430" stroke="#fb923c" stroke-width="1" fill="none" stroke-dasharray="3,3" marker-end="url(#arrow-orange)" opacity="0.4">
-      <animate attributeName="opacity" values="0.4;0.1;0.4" dur="4s" repeatCount="indefinite"/>
-    </path>
-    <path d="M 560,550 C 570,500 580,460 580,430" stroke="#fb923c" stroke-width="1" fill="none" stroke-dasharray="3,3" marker-end="url(#arrow-orange)" opacity="0.4">
-      <animate attributeName="opacity" values="0.4;0.1;0.4" dur="4s" repeatCount="indefinite" begin="2s"/>
-    </path>
-  </svg>
+    <script>
+        // ── Theme ──────────────────────────────────────────────────
+        (function initTheme() {
+            const saved = localStorage.getItem('mb-theme');
+            if (saved) document.documentElement.setAttribute('data-theme', saved);
+            else {
+                const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+                document.documentElement.setAttribute('data-theme', prefersDark ? 'dark' : 'light');
+            }
+            updateThemeIcons();
+        })();
+        function toggleTheme() {
+            const html = document.documentElement;
+            const next = html.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+            html.setAttribute('data-theme', next);
+            localStorage.setItem('mb-theme', next);
+            updateThemeIcons();
+        }
+        function updateThemeIcons() {
+            const theme = document.documentElement.getAttribute('data-theme');
+            const isDark = theme === 'dark';
+            document.querySelectorAll('.theme-toggle-btn').forEach(btn => {
+                const sun = btn.querySelector('.theme-sun');
+                const moon = btn.querySelector('.theme-moon');
+                if (sun) sun.style.display = isDark ? 'block' : 'none';
+                if (moon) moon.style.display = isDark ? 'none' : 'block';
+            });
+        }
 
-  <div class="legend">
-    <div class="legend-item"><span class="dot cyan"></span> Store</div>
-    <div class="legend-item"><span class="dot emerald"></span> Retrieve</div>
-    <div class="legend-item"><span class="dot violet"></span> Memory Core</div>
-    <div class="legend-item"><span class="dot orange"></span> Orchestrator</div>
-  </div>
-</div>
+        // ── Mobile Nav ───────────────────────────────────────────
+        function toggleMobileNav() {
+            const panel = document.getElementById('nav-mobile');
+            const backdrop = document.getElementById('nav-backdrop');
+            const isOpen = panel.classList.toggle('open');
+            backdrop.classList.toggle('open');
+            document.body.style.overflow = isOpen ? 'hidden' : '';
+        }
+        function closeMobileNav() {
+            const panel = document.getElementById('nav-mobile');
+            const backdrop = document.getElementById('nav-backdrop');
+            if (panel) panel.classList.remove('open');
+            if (backdrop) backdrop.classList.remove('open');
+            document.body.style.overflow = '';
+        }
+
+        // ── Auth Modal ───────────────────────────────────────────
+        function openAuth() {
+            const backdrop = document.getElementById('auth-modal-backdrop');
+            const modal = document.getElementById('auth-modal');
+            if (backdrop) backdrop.classList.add('open');
+            if (modal) modal.classList.add('open');
+            document.body.style.overflow = 'hidden';
+        }
+        function closeAuth() {
+            const backdrop = document.getElementById('auth-modal-backdrop');
+            const modal = document.getElementById('auth-modal');
+            if (backdrop) backdrop.classList.remove('open');
+            if (modal) modal.classList.remove('open');
+            document.body.style.overflow = '';
+        }
+        function switchAuthTab(tab) {
+            document.querySelectorAll('.auth-tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.auth-panel').forEach(p => p.classList.remove('active'));
+            document.querySelector(`.auth-tab[data-tab="${tab}"]`)?.classList.add('active');
+            document.getElementById(`auth-panel-${tab}`)?.classList.add('active');
+        }
+
+        // ── I18n ─────────────────────────────────────────────────
+        function toggleLang() {
+            const dd = document.getElementById('lang-dropdown');
+            if (dd) dd.classList.toggle('open');
+        }
+        function setLang(locale) {
+            localStorage.setItem('mb-lang', locale);
+            document.querySelectorAll('.lang-opt').forEach(o => o.classList.remove('active'));
+            document.querySelector(`.lang-opt[data-lang="${locale}"]`)?.classList.add('active');
+            document.getElementById('lang-dropdown')?.classList.remove('open');
+            if (window.applyTranslations) applyTranslations();
+        }
+        document.addEventListener('click', (e) => {
+            const dd = document.getElementById('lang-dropdown');
+            if (dd && dd.classList.contains('open') && !e.target.closest('.lang-toggle') && !e.target.closest('#lang-dropdown')) {
+                dd.classList.remove('open');
+            }
+        });
+
+        // ── Init ──────────────────────────────────────────────────
+        document.addEventListener('DOMContentLoaded', async () => {
+            await initAuth();
+            // Update active nav link
+            document.querySelectorAll('.nav-links a, .nav-mobile-panel a').forEach(a => {
+                if (a.getAttribute('href') === '/concept') a.classList.add('active');
+            });
+        });
+    </script>
+
+    <!-- Auth Modal -->
+    <div class="auth-modal-backdrop" id="auth-modal-backdrop" onclick="closeAuth()"></div>
+    <div class="auth-modal" id="auth-modal">
+        <div class="auth-modal-header">
+            <div class="auth-tabs">
+                <button class="auth-tab active" data-tab="email" onclick="switchAuthTab('email')" data-i18n="auth.tab_email">Email</button>
+                <button class="auth-tab" data-tab="phone" onclick="switchAuthTab('phone')" data-i18n="auth.tab_phone">Phone</button>
+                <button class="auth-tab" data-tab="social" onclick="switchAuthTab('social')" data-i18n="auth.tab_social">Social</button>
+            </div>
+            <button class="auth-modal-close" onclick="closeAuth()">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
+        </div>
+        <div class="auth-modal-body">
+            <div class="auth-panel active" id="auth-panel-email">
+                <div class="auth-input-group">
+                    <label data-i18n="auth.email_label">Email address</label>
+                    <input type="email" id="auth-email-input" placeholder="you@example.com" autocomplete="email">
+                </div>
+                <button class="btn btn-primary auth-submit" onclick="sendEmailCode()" data-i18n="auth.send_code">Send Code</button>
+                <div class="auth-error" id="auth-email-error"></div>
+            </div>
+            <div class="auth-panel" id="auth-panel-phone">
+                <div class="auth-input-group">
+                    <label data-i18n="auth.phone_label">Phone number</label>
+                    <input type="tel" id="auth-phone-input" placeholder="+1 (555) 000-0000" autocomplete="tel">
+                </div>
+                <button class="btn btn-primary auth-submit" onclick="sendPhoneCode()" data-i18n="auth.send_code">Send Code</button>
+                <div class="auth-error" id="auth-phone-error"></div>
+            </div>
+            <div class="auth-panel" id="auth-panel-social">
+                <button class="btn btn-google" onclick="socialLogin('google')">
+                    <svg width="18" height="18" viewBox="0 0 24 24"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg>
+                    <span data-i18n="auth.google">Continue with Google</span>
+                </button>
+                <button class="btn btn-apple" onclick="socialLogin('apple')">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="#fff"><path d="M17.05 20.28c-.98.95-2.05.8-3.08.35-1.09-.46-2.09-.48-3.24 0-1.44.62-2.2.44-3.06-.35C2.79 15.25 3.51 7.59 9.05 7.31c1.35.07 2.29.74 3.08.8 1.18-.24 2.31-.93 3.57-.84 1.51.12 2.65.72 3.4 1.8-3.12 1.87-2.38 5.98.48 7.13-.57 1.5-1.31 2.99-2.54 4.09zM12.03 7.25c-.15-2.23 1.66-4.07 3.74-4.25.29 2.58-2.34 4.5-3.74 4.25z"/></svg>
+                    <span data-i18n="auth.apple">Continue with Apple</span>
+                </button>
+                <div class="auth-error" id="auth-social-error"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Logout Confirm Modal -->
+    <div class="logout-modal-overlay" id="logout-overlay" onclick="closeLogoutConfirm()"></div>
+    <div class="logout-modal" id="logout-modal">
+        <div class="logout-icon">🚪</div>
+        <div class="logout-title" data-i18n="logout.title">Sign out of Memory Bridge?</div>
+        <div class="logout-text" data-i18n="logout.text">You'll need to sign in again to manage API keys, view subscription details, or access your dashboard.</div>
+        <div class="logout-btns">
+            <button class="btn btn-secondary" onclick="closeLogoutConfirm()" data-i18n="logout.cancel">Cancel</button>
+            <button class="btn btn-danger" id="logout-confirm-btn" onclick="logout()" data-i18n="logout.sign_out">Sign Out</button>
+        </div>
+    </div>
+
+    <footer class="footer" data-i18n="footer.text">© 2026 Memory Bridge — API for cross-agent memory</footer>
 </body>
 </html>

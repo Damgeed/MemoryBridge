@@ -8,6 +8,7 @@ window.TRANSLATIONS = {
     // ── Navbar ──────────────────────────────────────
     "nav.home": "Home",
     "nav.playground": "Playground",
+    "nav.concept": "Concept",
     "nav.graph": "Graph",
     "nav.pricing": "Pricing",
     "nav.dashboard": "Dashboard",
@@ -365,6 +366,7 @@ window.TRANSLATIONS = {
   zh: {
     "nav.home": "首页",
     "nav.playground": "演示",
+    "nav.concept": "概念",
     "nav.graph": "图谱",
     "nav.pricing": "定价",
     "nav.dashboard": "控制台",
@@ -720,6 +722,7 @@ window.TRANSLATIONS = {
   ja: {
     "nav.home": "ホーム",
     "nav.playground": "プレイグラウンド",
+    "nav.concept": "コンセプト",
     "nav.graph": "グラフ",
     "nav.pricing": "料金",
     "nav.dashboard": "ダッシュボード",
@@ -1043,6 +1046,7 @@ window.TRANSLATIONS = {
   ko: {
     "nav.home": "홈",
     "nav.playground": "데모",
+    "nav.concept": "개념",
     "nav.graph": "그래프",
     "nav.pricing": "가격",
     "nav.dashboard": "대시보드",
@@ -1375,6 +1379,7 @@ window.TRANSLATIONS = {
   es: {
     "nav.home": "Inicio",
     "nav.playground": "Demo",
+    "nav.concept": "Concepto",
     "nav.graph": "Grafo",
     "nav.pricing": "Precios",
     "nav.dashboard": "Panel",
@@ -1708,6 +1713,7 @@ window.TRANSLATIONS = {
   fr: {
     "nav.home": "Accueil",
     "nav.playground": "Démo",
+    "nav.concept": "Concept",
     "nav.graph": "Graphe",
     "nav.pricing": "Tarifs",
     "nav.dashboard": "Tableau de bord",
@@ -2054,6 +2060,7 @@ window.TRANSLATIONS = {
   de: {
     "nav.home": "Start",
     "nav.playground": "Demo",
+    "nav.concept": "Konzept",
     "nav.graph": "Graph",
     "nav.pricing": "Preise",
     "nav.dashboard": "Dashboard",
