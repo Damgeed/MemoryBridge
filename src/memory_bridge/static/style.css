@@ -1256,6 +1256,7 @@ select.input { cursor: pointer; }
   body { font-size: 0.95rem; }
   .auth-btn-container { display: inline-flex !important; }
   .user-avatar-name { display: none !important; }
+  .user-plan-badge { display: none !important; }
 }
 
 @media (max-width: 480px) {
