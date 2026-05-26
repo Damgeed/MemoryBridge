@@ -1031,6 +1031,16 @@ class SQLiteMemoryRepository(MemoryRepository):
             return None
         return dict(row)
 
+    async def get_user_by_organization_id(self, org_id: str):
+        cursor = await self.conn.execute(
+            "SELECT id, email, password_hash, name, organization_id, created_at, stripe_customer_id FROM users WHERE organization_id = ?",
+            (org_id,),
+        )
+        row = await cursor.fetchone()
+        if row is None:
+            return None
+        return dict(row)
+
     async def get_user_by_oauth(self, provider: str, provider_user_id: str):
         """Look up user by OAuth provider + user ID."""
         async with aiosqlite.connect(self.db_path) as db:

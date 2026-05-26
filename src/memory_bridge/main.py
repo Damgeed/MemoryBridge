@@ -5,6 +5,7 @@ assembles the FastAPI app with middleware and lifecycle management.
 """
 
 import asyncio
+import json
 import logging
 import os
 import time
@@ -255,8 +256,14 @@ def create_app() -> FastAPI:
                 key_id=key_id, tier=tier, client_ip=client_ip
             )
             if not allowed:
+                # Differentiate message based on tier
+                if tier == "demo":
+                    msg = "You've reached the 5 API call limit on the Free plan. Upgrade to a paid plan for higher limits."
+                else:
+                    limit = _limiter.tier_limits.get(tier, 300)
+                    msg = f"Rate limit exceeded ({limit} requests/min). Upgrade your plan for higher limits."
                 return Response(
-                    content='{"detail":"Rate limit exceeded. Try again in 60 seconds."}',
+                    content=json.dumps({"detail": msg}),
                     status_code=429,
                     media_type="application/json",
                     headers={

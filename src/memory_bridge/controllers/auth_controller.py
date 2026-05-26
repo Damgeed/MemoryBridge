@@ -298,3 +298,54 @@ async def get_me(request: Request):
         "organization_id": auth.get("project_id", ""),
         "role": auth.get("role", "member"),
     }
+
+
+class SetPasswordRequest(BaseModel):
+    password: str
+
+
+@router.post("/set-password")
+async def set_password(
+    req: SetPasswordRequest,
+    request: Request,
+    storage: MemoryRepository = Depends(get_storage),
+):
+    """Set a password on an account that was created without one (e.g. free sign-up).
+
+    Requires a valid JWT. The authenticated user's email is used to
+    find the user record, then the password is bcrypt-hashed and saved.
+    After this, the user can sign in via /auth/login normally.
+    """
+    if len(req.password) < 8:
+        raise HTTPException(status_code=400, detail="Password must be at least 8 characters")
+
+    auth = getattr(request.state, "auth", None)
+    if not auth:
+        raise HTTPException(status_code=401, detail="Authentication required")
+
+    email = auth.get("user_email", "")
+    if not email:
+        raise HTTPException(status_code=401, detail="Could not identify your account. Please sign in again.")
+
+    import bcrypt
+    password_hash = bcrypt.hashpw(req.password.encode(), bcrypt.gensalt()).decode()
+
+    try:
+        import aiosqlite
+        db_path = getattr(storage, 'db_path', None)
+        if db_path:
+            async with aiosqlite.connect(db_path) as db:
+                await db.execute("UPDATE users SET password_hash = ? WHERE email = ?", (password_hash, email))
+                await db.commit()
+        else:
+            conn = getattr(storage, 'pool', None)
+            if conn:
+                async with conn.acquire() as c:
+                    await c.execute("UPDATE users SET password_hash = $1 WHERE email = $2", password_hash, email)
+            else:
+                raise RuntimeError("No database backend available")
+    except Exception as e:
+        logger.error("Failed to set password for %s: %s", email, e)
+        raise HTTPException(status_code=500, detail="Could not save password. Try again later.")
+
+    return {"status": "ok", "message": "Password set successfully. You can now sign in with email + password."}

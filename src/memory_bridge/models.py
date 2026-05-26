@@ -72,6 +72,7 @@ class User(BaseModel):
     name: str = ""
     organization_id: str
     auth0_sub: str = ""
+    stripe_customer_id: str = ""
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 

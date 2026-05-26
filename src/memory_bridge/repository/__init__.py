@@ -183,6 +183,10 @@ class MemoryRepository(ABC):
     @abstractmethod
     async def link_oauth_account(self, user_id: str, provider: str, provider_user_id: str):
         """Link an OAuth account to an existing user."""
+
+    @abstractmethod
+    async def get_user_by_organization_id(self, org_id: str):
+        """Look up user by organization_id. Returns user dict or None."""
         ...
 
     # ── Audit Log ───────────────────────────────────────────────────────────

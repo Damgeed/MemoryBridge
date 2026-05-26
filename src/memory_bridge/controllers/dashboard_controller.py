@@ -510,6 +510,7 @@ async def free_signup(
 
     logger.info("Free signup: org=%s, email=%s, ip=%s", org_id, email_clean, client_ip)
     # Create a user account for this free signup
+    user_dict = None
     try:
         import bcrypt
         from ..models import User as UserModel
@@ -521,9 +522,19 @@ async def free_signup(
             name=email_clean.split("@")[0],
             organization_id=org_id,
         )
-        await storage.create_user(user)
+        user_dict = await storage.create_user(user)
     except Exception as e:
         logger.warning("Could not create free user account: %s", e)
+
+    # Generate JWT so the user gets a real session
+    token = ""
+    if user_dict:
+        try:
+            from ..services.user_service import UserService
+            svc = UserService(repo=storage)
+            token = await svc.generate_token(user_dict)
+        except Exception as e:
+            logger.warning("Could not generate JWT for free signup: %s", e)
 
     return {
         "key": result["key"],
@@ -531,6 +542,7 @@ async def free_signup(
         "label": result["label"],
         "tier": "free",
         "organization_id": org_id,
+        "token": token,
     }
 
 @router.post("/recover")
