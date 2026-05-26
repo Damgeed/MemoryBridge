@@ -16,6 +16,13 @@ body { background: #020617; overflow: hidden; height: 100vh; }
     background: radial-gradient(ellipse at 50% 50%, #0f172a 0%, #020617 70%);
     overflow: hidden;
 }
+.concept-visual::before {
+    content: ''; position: absolute; inset: 0;
+    background: radial-gradient(circle at 25% 35%, rgba(34,211,238,0.04) 0%, transparent 50%),
+                radial-gradient(circle at 75% 35%, rgba(52,211,153,0.04) 0%, transparent 50%);
+    pointer-events: none;
+    z-index: 0;
+}
 .grid { position: absolute; inset: 0;
     background-image: linear-gradient(rgba(30,41,59,0.25) 1px, transparent 1px), linear-gradient(90deg, rgba(30,41,59,0.25) 1px, transparent 1px);
     background-size: 40px 40px; pointer-events: none; animation: gridPulse 8s ease-in-out infinite; }
@@ -279,12 +286,14 @@ svg.concept-svg { position:absolute; inset:0; width:100%; height:100%; display:b
             <g><animateTransform attributeName="transform" type="translate" values="0,0;0,-10;0,0;0,8;0,0" dur="5s" repeatCount="indefinite"/>
             <g transform="translate(130,180)">
                 <ellipse cx="110" cy="140" rx="135" ry="125" fill="url(#a1g)" filter="url(#gC)" opacity="0.5"/>
-                <rect x="45" y="100" width="130" height="110" rx="14" fill="#1e293b" stroke="#22d3ee" stroke-width="1.5" opacity="0.95"/>
-                <rect x="60" y="120" width="100" height="50" rx="6" fill="rgba(34,211,238,0.05)" stroke="rgba(34,211,238,0.15)" stroke-width="0.8"/>
+                <rect x="42" y="97" width="136" height="116" rx="16" fill="rgba(34,211,238,0.06)" stroke="#22d3ee" stroke-width="2" opacity="0.95"/>
+                <rect x="45" y="100" width="130" height="110" rx="14" fill="rgba(15,23,42,0.6)" stroke="rgba(34,211,238,0.25)" stroke-width="1" opacity="0.95"/>
+                <rect x="60" y="120" width="100" height="50" rx="6" fill="rgba(34,211,238,0.08)" stroke="rgba(34,211,238,0.25)" stroke-width="0.8"/>
                 <circle cx="80" cy="137" r="4" fill="#22d3ee" filter="url(#gC)"><animate attributeName="opacity" values="1;0.3;1" dur="1.5s" repeatCount="indefinite"/></circle>
                 <circle cx="100" cy="137" r="4" fill="#22d3ee" filter="url(#gC)"><animate attributeName="opacity" values="0.3;1;0.3" dur="1.5s" repeatCount="indefinite" begin="0.5s"/></circle>
                 <circle cx="120" cy="137" r="4" fill="#22d3ee" filter="url(#gC)"><animate attributeName="opacity" values="1;0.3;1" dur="1.5s" repeatCount="indefinite" begin="1s"/></circle>
-                <rect x="55" y="40" width="100" height="55" rx="12" fill="#1e293b" stroke="#22d3ee" stroke-width="1.5"/>
+                <rect x="52" y="37" width="106" height="61" rx="14" fill="rgba(34,211,238,0.06)" stroke="#22d3ee" stroke-width="2"/>
+                <rect x="55" y="40" width="100" height="55" rx="12" fill="rgba(15,23,42,0.6)" stroke="rgba(34,211,238,0.25)" stroke-width="1"/>
                 <ellipse cx="80" cy="60" rx="10" ry="9" fill="rgba(34,211,238,0.15)" stroke="#22d3ee" stroke-width="1"/>
                 <ellipse cx="130" cy="60" rx="10" ry="9" fill="rgba(34,211,238,0.15)" stroke="#22d3ee" stroke-width="1"/>
                 <circle cx="80" cy="60" r="4" fill="#22d3ee" filter="url(#gC)"><animate attributeName="r" values="4;2;4" dur="3s" repeatCount="indefinite"/></circle>
@@ -300,12 +309,14 @@ svg.concept-svg { position:absolute; inset:0; width:100%; height:100%; display:b
             <g><animateTransform attributeName="transform" type="translate" values="0,0;0,8;0,0;0,-10;0,0" dur="6s" repeatCount="indefinite"/>
             <g transform="translate(710,180)">
                 <ellipse cx="110" cy="140" rx="135" ry="125" fill="url(#a2g)" filter="url(#gE)" opacity="0.5"/>
-                <rect x="45" y="100" width="130" height="110" rx="14" fill="#1e293b" stroke="#34d399" stroke-width="1.5" opacity="0.95"/>
-                <rect x="60" y="120" width="100" height="50" rx="6" fill="rgba(52,211,153,0.05)" stroke="rgba(52,211,153,0.15)" stroke-width="0.8"/>
+                <rect x="42" y="97" width="136" height="116" rx="16" fill="rgba(52,211,153,0.06)" stroke="#34d399" stroke-width="2" opacity="0.95"/>
+                <rect x="45" y="100" width="130" height="110" rx="14" fill="rgba(15,23,42,0.6)" stroke="rgba(52,211,153,0.25)" stroke-width="1" opacity="0.95"/>
+                <rect x="60" y="120" width="100" height="50" rx="6" fill="rgba(52,211,153,0.08)" stroke="rgba(52,211,153,0.25)" stroke-width="0.8"/>
                 <circle cx="80" cy="137" r="4" fill="#34d399" filter="url(#gE)"><animate attributeName="opacity" values="1;0.3;1" dur="1.5s" repeatCount="indefinite" begin="0.3s"/></circle>
                 <circle cx="100" cy="137" r="4" fill="#34d399" filter="url(#gE)"><animate attributeName="opacity" values="0.3;1;0.3" dur="1.5s" repeatCount="indefinite" begin="0.8s"/></circle>
                 <circle cx="120" cy="137" r="4" fill="#34d399" filter="url(#gE)"><animate attributeName="opacity" values="1;0.3;1" dur="1.5s" repeatCount="indefinite" begin="1.3s"/></circle>
-                <path d="M 60,95 L 55,55 Q 55,40 70,40 L 150,40 Q 165,40 165,55 L 160,95 Z" fill="#1e293b" stroke="#34d399" stroke-width="1.5"/>
+                <path d="M 57,92 L 52,52 Q 52,37 67,37 L 153,37 Q 168,37 168,52 L 163,92 Z" fill="rgba(52,211,153,0.06)" stroke="#34d399" stroke-width="2"/>
+                <path d="M 60,95 L 55,55 Q 55,40 70,40 L 150,40 Q 165,40 165,55 L 160,95 Z" fill="rgba(15,23,42,0.6)" stroke="rgba(52,211,153,0.25)" stroke-width="1"/>
                 <rect x="72" y="55" width="75" height="18" rx="8" fill="rgba(52,211,153,0.1)" stroke="#34d399" stroke-width="0.8"/>
                 <rect x="78" y="61" width="63" height="3" rx="1.5" fill="#34d399" filter="url(#gE)" opacity="0.6"><animate attributeName="y" values="57;70;57" dur="1.5s" repeatCount="indefinite"/></rect>
                 <line x1="90" y1="40" x2="85" y2="22" stroke="#34d399" stroke-width="1" opacity="0.4"/>
@@ -364,9 +375,11 @@ svg.concept-svg { position:absolute; inset:0; width:100%; height:100%; display:b
             <!-- Orchestrator -->
             <g><animateTransform attributeName="transform" type="translate" values="0,0;0,-4;0,0;0,4;0,0" dur="7s" repeatCount="indefinite"/>
             <g transform="translate(440,510)" opacity="0.7">
-                <rect x="40" y="20" width="60" height="45" rx="8" fill="#0f172a" stroke="#fb923c" stroke-width="1"/>
-                <rect x="50" y="32" width="40" height="20" rx="4" fill="rgba(251,146,60,0.05)" stroke="rgba(251,146,60,0.15)" stroke-width="0.8"/>
-                <path d="M 55,20 L 50,0 Q 55,-4 70,-4 L 90,-4 Q 95,0 90,20 Z" fill="#0f172a" stroke="#fb923c" stroke-width="1"/>
+                <rect x="37" y="17" width="66" height="51" rx="10" fill="rgba(251,146,60,0.06)" stroke="#fb923c" stroke-width="1.5"/>
+                <rect x="40" y="20" width="60" height="45" rx="8" fill="rgba(15,23,42,0.6)" stroke="rgba(251,146,60,0.25)" stroke-width="0.8"/>
+                <rect x="50" y="32" width="40" height="20" rx="4" fill="rgba(251,146,60,0.08)" stroke="rgba(251,146,60,0.25)" stroke-width="0.8"/>
+                <path d="M 52,17 L 47,-3 Q 52,-7 67,-7 L 87,-7 Q 92,-3 87,17 Z" fill="rgba(251,146,60,0.06)" stroke="#fb923c" stroke-width="1.5"/>
+                <path d="M 55,20 L 50,0 Q 55,-4 70,-4 L 90,-4 Q 95,0 90,20 Z" fill="rgba(15,23,42,0.6)" stroke="rgba(251,146,60,0.25)" stroke-width="0.8"/>
                 <circle cx="65" cy="5" r="3" fill="#fb923c" filter="url(#gO)"><animate attributeName="r" values="3;5;3" dur="1.5s" repeatCount="indefinite"/></circle>
                 <circle cx="80" cy="5" r="3" fill="#fb923c" filter="url(#gO)"><animate attributeName="r" values="3;5;3" dur="1.5s" repeatCount="indefinite" begin="0.75s"/></circle>
                 <text x="70" y="92" text-anchor="middle" fill="#fb923c" font-size="7" font-weight="600" letter-spacing="0.5">ORCHESTRATOR</text>
