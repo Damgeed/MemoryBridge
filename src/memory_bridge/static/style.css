@@ -703,8 +703,12 @@ a:hover { color: var(--accent-light); text-decoration: none; }
 }
 /* Mobile User Card */
 .nav-mobile-panel #mobile-user-card {
-  padding: 0.5rem 0.75rem;
-  margin: 0 0.25rem;
+  margin: 0.5rem 0.25rem;
+  padding: 0.75rem;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-primary);
+  border-radius: 12px;
+  box-shadow: var(--shadow-sm, 0 1px 3px rgba(0,0,0,0.15));
 }
 .mobile-user-header {
   display: flex;
