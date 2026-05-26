@@ -2383,6 +2383,7 @@
             openAuth();
         };
         document.addEventListener('DOMContentLoaded', async () => {
+            await initAuth();
             currentApiKey = localStorage.getItem('mb_api_key') || '';
             let jwt = localStorage.getItem('mb_jwt');
 
@@ -2420,23 +2421,8 @@
                 updateAuthUI();
                 reloadDashboard();
             } else if (jwt) {
-                // Validate and potentially refresh the JWT
-                if (!await ensureValidJWT()) {
-                    showAuthenticatedContent(false);
-                    updateAuthUI();
-                    return;
-                }
-                // Re-read jwt in case it was refreshed
-                jwt = localStorage.getItem('mb_jwt');
-                // Check if JWT is expired before making any API calls
-                const claims = decodeJWT(jwt);
-                if (claims && claims.exp && claims.exp * 1000 < Date.now()) {
-                    // JWT expired — only clear JWT, keep API key for persistent auth
-                    localStorage.removeItem('mb_jwt');
-                    currentApiKey = localStorage.getItem('mb_api_key') || currentApiKey;
-                    showAuthenticatedContent(false);
-                    return;
-                }
+                // Validate and potentially refresh the JWT — initAuth handles this
+                // plus auto-fetching API key from the server
                 showAuthenticatedContent(true);
                 if (!currentApiKey) {
                     (async () => {

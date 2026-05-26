@@ -709,7 +709,7 @@
             if (!jwt) {
                 // Not signed in — open auth modal with sign-up option
                 window.postAuthCallback = () => checkout(tier);
-                document.getElementById('auth-modal-subtitle').textContent = 'Create an account to subscribe to the ' + tier + ' plan.';
+                document.getElementById('auth-subtitle').textContent = 'Create an account to subscribe to the ' + tier + ' plan.';
                 openAuth();
                 return;
             }
@@ -1640,23 +1640,8 @@
         // ── Init ──────────────────────────────────────────────────
         document.addEventListener('DOMContentLoaded', async () => {
             document.querySelectorAll('.fade-up').forEach(el => observer.observe(el));
-            if (!await ensureValidJWT()) {
-                updateAuthUI();
-                return;
-            }
+            await initAuth();
             currentApiKey = localStorage.getItem('mb_api_key') || '';
-            const jwt = localStorage.getItem('mb_jwt');
-            if (jwt && !currentApiKey) {
-                (async () => {
-                    try {
-                        const kvRes = await fetch('/auth/my-key-value', { headers: {'Authorization': 'Bearer ' + jwt, 'Content-Type': 'application/json'} });
-                        if (kvRes.ok) { const data = await kvRes.json(); localStorage.setItem('mb_api_key', data.key); currentApiKey = data.key; }
-                    } catch (e) { localStorage.removeItem('mb_jwt'); }
-                    updateAuthUI();
-                })();
-            } else {
-                updateAuthUI();
-            }
         });
     </script>
 </body>

@@ -368,12 +368,16 @@ async def passwordless_verify(
     # Fetch API key for the user
     api_key = ""
     try:
-        # Generate a fresh API key so the user always has a durable credential
-        new_key = await storage.create_api_key(
-            label="auto",
-            project_id=org_id,
-        )
-        api_key = new_key.get("key", "")
+        # Check if user already has API keys before creating another
+        existing_keys = await storage.list_api_keys()
+        org_keys = [k for k in existing_keys if k.get("project_id") == org_id and k.get("is_active") is not False]
+        if not org_keys:
+            # Generate a fresh API key so the user always has a durable credential
+            new_key = await storage.create_api_key(
+                label="auto",
+                project_id=org_id,
+            )
+            api_key = new_key.get("key", "")
     except Exception as e:
         logger.warning("Could not create API key: %s", e)
         pass

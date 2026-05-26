@@ -1664,23 +1664,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // ── Init ──────────────────────────────────────────────────
         document.addEventListener('DOMContentLoaded', async () => {
-            if (!await ensureValidJWT()) {
-                updateAuthUI();
-                return;
-            }
-            currentApiKey = localStorage.getItem('mb_api_key') || '';
-            const jwt = localStorage.getItem('mb_jwt');
-            if (jwt && !currentApiKey) {
-                (async () => {
-                    try {
-                        const kvRes = await fetch('/auth/my-key-value', { headers: {'Authorization': 'Bearer ' + jwt, 'Content-Type': 'application/json'} });
-                        if (kvRes.ok) { const data = await kvRes.json(); localStorage.setItem('mb_api_key', data.key); currentApiKey = data.key; }
-                    } catch (e) { localStorage.removeItem('mb_jwt'); }
-                    updateAuthUI();
-                })();
-            } else {
-                updateAuthUI();
-            }
+            await initAuth();
         });
     </script>
 

@@ -281,7 +281,6 @@
     sessionStorage.removeItem('_mb_signin_toast');
     if (typeof showAuthenticatedContent === 'function') showAuthenticatedContent(false);
     updateAuthUI();
-    if (typeof openAuth === 'function') openAuth();
   }
 
   /* ── Auth Headers ────────────────────────────────────── */

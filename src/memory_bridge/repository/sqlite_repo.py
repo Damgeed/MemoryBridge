@@ -116,6 +116,7 @@ _SCHEMA_MIGRATIONS: dict[int, str] = {
         "  UNIQUE(provider, provider_user_id)"
         ")"
     ),
+    13: "ALTER TABLE users ADD COLUMN stripe_customer_id TEXT NOT NULL DEFAULT ''",
 }
 # ──────────────────────────────────────────────────────────────────────────────
 
@@ -1010,36 +1011,46 @@ class SQLiteMemoryRepository(MemoryRepository):
     # ── User Management ───────────────────────────────────────────────────────
 
     async def create_user(self, user) -> dict:
-        await self.conn.execute(
-            """
-            INSERT OR IGNORE INTO users
-                (id, email, password_hash, name, organization_id, created_at, updated_at)
-            VALUES (?, ?, ?, ?, ?, ?, ?)
-            """,
-            (user.id, user.email, user.password_hash, user.name,
-             user.organization_id, user.created_at.isoformat(), user.updated_at.isoformat()),
-        )
-        return {"id": user.id, "email": user.email, "name": user.name, "organization_id": user.organization_id}
+        async with aiosqlite.connect(self.db_path) as db:
+            cursor = await db.execute(
+                """INSERT INTO users
+                    (id, email, password_hash, name, organization_id, created_at, updated_at)
+                VALUES (?, ?, ?, ?, ?, ?, ?)
+                ON CONFLICT(email) DO UPDATE SET
+                    name = excluded.name,
+                    updated_at = excluded.updated_at
+                RETURNING id""",
+                (user.id, user.email, user.password_hash, user.name,
+                 user.organization_id, user.created_at.isoformat(), user.updated_at.isoformat()),
+            )
+            row = await cursor.fetchone()
+            user_id = row[0] if row else user.id
+            await db.commit()
+            return {"id": user_id, "email": user.email, "name": user.name, "organization_id": user.organization_id}
 
     async def get_user_by_email(self, email: str):
-        cursor = await self.conn.execute(
-            "SELECT id, email, password_hash, name, organization_id, created_at FROM users WHERE email = ?",
-            (email,),
-        )
-        row = await cursor.fetchone()
-        if row is None:
-            return None
-        return dict(row)
+        async with aiosqlite.connect(self.db_path) as db:
+            db.row_factory = aiosqlite.Row
+            cursor = await db.execute(
+                "SELECT id, email, password_hash, name, organization_id, created_at FROM users WHERE email = ?",
+                (email,),
+            )
+            row = await cursor.fetchone()
+            if row is None:
+                return None
+            return dict(row)
 
     async def get_user_by_organization_id(self, org_id: str):
-        cursor = await self.conn.execute(
-            "SELECT id, email, password_hash, name, organization_id, created_at, stripe_customer_id FROM users WHERE organization_id = ?",
-            (org_id,),
-        )
-        row = await cursor.fetchone()
-        if row is None:
-            return None
-        return dict(row)
+        async with aiosqlite.connect(self.db_path) as db:
+            db.row_factory = aiosqlite.Row
+            cursor = await db.execute(
+                "SELECT id, email, password_hash, name, organization_id, created_at, stripe_customer_id FROM users WHERE organization_id = ?",
+                (org_id,),
+            )
+            row = await cursor.fetchone()
+            if row is None:
+                return None
+            return dict(row)
 
     async def get_user_by_oauth(self, provider: str, provider_user_id: str):
         """Look up user by OAuth provider + user ID."""
