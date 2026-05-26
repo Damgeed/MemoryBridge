@@ -123,6 +123,8 @@ class APIKeyMiddleware(BaseHTTPMiddleware):
                         "project_id": payload.get("project_id") or payload.get("organization_id"),
                         "user_id": payload["sub"],
                         "role": payload.get("role", "member"),
+                        "user_email": payload.get("email", ""),
+                        "user_name": payload.get("name", ""),
                     }
                     return await call_next(request)
             except jwt.ExpiredSignatureError:

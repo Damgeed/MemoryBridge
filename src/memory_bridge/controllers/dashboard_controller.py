@@ -300,40 +300,14 @@ async def get_dashboard_data(
     """Get dashboard data: subscription info, key count, memory count."""
     org_id = _resolve_org(request)
 
-    # Decode user email from JWT early for fallback lookups
-    user_email = ""
-    user_name = ""
+    # Extract user identity from auth state (set by middleware for JWT) or from JWT fallback
+    auth = getattr(request.state, "auth", None) or {}
+    user_email = auth.get("user_email", "")
+    user_name = auth.get("user_name", "")
     user_created_at = None
-    try:
-        import jwt as pyjwt
-        from ..config import get_settings
-        settings = get_settings()
-        auth_header = request.headers.get("Authorization", "")
-        if auth_header.startswith("Bearer "):
-            token = auth_header[7:]
-            claims = pyjwt.decode(
-                token,
-                settings.jwt_secret,
-                algorithms=[settings.jwt_algorithm or "HS256"],
-                options={"verify_exp": False},
-            )
-            if claims.get("email"):
-                user_email = claims.get("email", "")
-                user_name = claims.get("name", "")
-            elif claims.get("sub"):
-                user_email = claims.get("sub", "")
-    except Exception:
-        pass
 
-    # Get subscription
-    sub = None
-    try:
-        sub = await storage.get_subscription_by_org(org_id)
-    except Exception:
-        pass
-
-    # If no subscription found for the resolved org_id, try looking up by user email from JWT
-    if not sub:
+    # Fallback: if auth state doesn't have user_email (API key auth), try decoding the JWT
+    if not user_email:
         try:
             import jwt as pyjwt
             from ..config import get_settings
@@ -347,15 +321,28 @@ async def get_dashboard_data(
                     algorithms=[settings.jwt_algorithm or "HS256"],
                     options={"verify_exp": False},
                 )
-                user_email = claims.get("email", "")
-                if user_email:
-                    user_record = await storage.get_user_by_email(user_email)
-                    if user_record and 'organization_id' in user_record and user_record.get('organization_id'):
-                        org_id = user_record.get('organization_id')
-                        try:
-                            sub = await storage.get_subscription_by_org(org_id)
-                        except Exception:
-                            pass
+                user_email = claims.get("email", "") or claims.get("sub", "")
+                user_name = claims.get("name", "")
+        except Exception:
+            pass
+
+    # Get subscription
+    sub = None
+    try:
+        sub = await storage.get_subscription_by_org(org_id)
+    except Exception:
+        pass
+
+    # If no subscription found for the resolved org_id, try looking up by user email
+    if not sub and user_email:
+        try:
+            user_record = await storage.get_user_by_email(user_email)
+            if user_record and 'organization_id' in user_record and user_record.get('organization_id'):
+                org_id = user_record.get('organization_id')
+                try:
+                    sub = await storage.get_subscription_by_org(org_id)
+                except Exception:
+                    pass
         except Exception:
             pass
 
@@ -455,7 +442,7 @@ async def get_dashboard_data(
     # Per-tier rate limits
     rate_limits = {"free": 30, "starter": 60, "pro": 120, "enterprise": 300}
 
-    # Look up user record for created_at (email already decoded at top)
+    # Look up user record for created_at
     if user_email:
         try:
             user_record = await storage.get_user_by_email(user_email)
@@ -463,6 +450,38 @@ async def get_dashboard_data(
                 created_val = user_record.get('created_at')
                 if created_val:
                     user_created_at = created_val.isoformat() if hasattr(created_val, 'isoformat') else str(created_val)
+        except Exception:
+            pass
+
+    # Fallback: if no email-based lookup worked, try by org_id (for API-key-authenticated users)
+    if not user_created_at and org_id and org_id not in ("default", "demo", ""):
+        try:
+            # Try to find user by organization_id using the storage's pool/conn
+            pool = getattr(storage, 'pool', None)
+            if pool:
+                async with pool.acquire() as conn:
+                    schema = getattr(storage, 'schema', 'public')
+                    row = await conn.fetchrow(
+                        f"SELECT created_at FROM {schema}.users WHERE organization_id = $1 LIMIT 1",
+                        org_id,
+                    )
+                    if row and row['created_at']:
+                        created_val = row['created_at']
+                        user_created_at = created_val.isoformat() if hasattr(created_val, 'isoformat') else str(created_val)
+            else:
+                # SQLite fallback
+                db_path = getattr(storage, 'db_path', None)
+                if db_path:
+                    import aiosqlite
+                    async with aiosqlite.connect(db_path) as db:
+                        db.row_factory = aiosqlite.Row
+                        cursor = await db.execute(
+                            "SELECT created_at FROM users WHERE organization_id = ? LIMIT 1",
+                            (org_id,),
+                        )
+                        row = await cursor.fetchone()
+                        if row and row['created_at']:
+                            user_created_at = row['created_at']
         except Exception:
             pass
 

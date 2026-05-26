@@ -92,12 +92,16 @@ async def get_my_api_key(request: Request):
 
     # Reuse existing JWT auth from auth.py middleware
     auth = getattr(request.state, "auth", None)
-    if not auth or not auth.get("project_id"):
+    if not auth:
         raise HTTPException(status_code=401, detail="Authentication required")
+
+    # Resolve org_id: prefer project_id, fall back to key_id
+    org_id = auth.get("project_id") or auth.get("key_id", "")
+    if not org_id or org_id in ("default", "demo", ""):
+        raise HTTPException(status_code=401, detail="Could not resolve your account. Please sign in again.")
 
     storage = await get_storage()
     all_keys = await storage.list_api_keys()
-    org_id = auth["project_id"]
     user_keys = [k for k in all_keys if k.get("project_id") == org_id and k.get("is_active") is not False]
 
     if not user_keys:
@@ -116,12 +120,16 @@ async def get_my_api_key_value(request: Request):
     from ..dependencies import get_storage
 
     auth = getattr(request.state, "auth", None)
-    if not auth or not auth.get("project_id"):
+    if not auth:
         raise HTTPException(status_code=401, detail="Authentication required")
+
+    # Resolve org_id: prefer project_id, fall back to key_id
+    org_id = auth.get("project_id") or auth.get("key_id", "")
+    if not org_id or org_id in ("default", "demo", ""):
+        raise HTTPException(status_code=401, detail="Could not resolve your account. Please sign in again.")
 
     storage = await get_storage()
     all_keys = await storage.list_api_keys()
-    org_id = auth["project_id"]
     user_keys = [k for k in all_keys if k.get("project_id") == org_id and k.get("is_active") is not False]
 
     if not user_keys:
