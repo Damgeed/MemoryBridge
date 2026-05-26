@@ -771,6 +771,34 @@
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
     <span id="auth-mobile-label" data-i18n="nav.sign_in">Sign in</span>
   </a>
+  <!-- Mobile User Card (when signed in) -->
+  <div id="mobile-user-card" style="display:none;">
+    <div class="mobile-user-header">
+      <div class="mobile-user-avatar">
+        <span class="mobile-user-circle" id="mobile-user-circle">👤</span>
+        <span class="session-dot" id="mobile-session-dot"></span>
+      </div>
+      <div class="mobile-user-info">
+        <span class="mobile-user-email" id="mobile-user-email"></span>
+        <span class="mobile-user-plan" id="mobile-user-plan">Free Plan</span>
+      </div>
+    </div>
+    <div class="mobile-user-divider"></div>
+    <a href="/dashboard/" class="mobile-user-action" onclick="closeMobileNav()">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+      <span>Dashboard</span>
+    </a>
+    <a href="/pricing" class="mobile-user-action" onclick="closeMobileNav()">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+      <span>Manage Billing</span>
+    </a>
+    <div class="mobile-user-divider"></div>
+    <span class="mobile-user-since" id="mobile-user-since"></span>
+    <a href="javascript:void(0)" class="mobile-user-action sign-out" id="mobile-sign-out-btn" onclick="closeMobileNav();showLogoutConfirm()">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+      <span>Sign Out</span>
+    </a>
+  </div>
   <div class="nav-mobile-divider"></div>
     <a href="/playground/" class="nav-mobile-cta" onclick="closeMobileNav()" data-i18n="nav.launch_playground">
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
@@ -1589,15 +1617,34 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
                 }
 
-                if (mobileLabel) mobileLabel.textContent = 'Sign out';
+                // Mobile user card
+                const mobileCard = document.getElementById('mobile-user-card');
                 const mobileBtn = document.getElementById('auth-mobile-btn');
-                if (mobileBtn) mobileBtn.onclick = function() { closeMobileNav(); showLogoutConfirm(); };
+                if (mobileCard) mobileCard.style.display = 'block';
+                if (mobileBtn) mobileBtn.style.display = 'none';
+                const mobileCircle = document.getElementById('mobile-user-circle');
+                const mobileEmail = document.getElementById('mobile-user-email');
+                const mobilePlan = document.getElementById('mobile-user-plan');
+                const mobileSessionDot = document.getElementById('mobile-session-dot');
+                const mobileSince = document.getElementById('mobile-user-since');
+                if (mobileCircle) mobileCircle.textContent = initial || '👤';
+                if (mobileEmail) mobileEmail.textContent = displayName;
+                const planLabel = document.getElementById('user-dropdown-plan')?.textContent || 'Free Plan';
+                if (mobilePlan) mobilePlan.textContent = planLabel;
+                if (mobileSessionDot && sessionDot) mobileSessionDot.className = sessionDot.className;
+                if (mobileSince && sinceEl) mobileSince.textContent = sinceEl.textContent;
             } else if (userMenu && signInBtn) {
                 signInBtn.style.display = 'inline-flex';
                 userMenu.style.display = 'none';
-                if (mobileLabel) mobileLabel.textContent = 'Sign in';
+                const mobileCard = document.getElementById('mobile-user-card');
                 const mobileBtn = document.getElementById('auth-mobile-btn');
-                if (mobileBtn) mobileBtn.onclick = function() { closeMobileNav(); openAuth(); };
+                if (mobileCard) mobileCard.style.display = 'none';
+                if (mobileBtn) {
+                    mobileBtn.style.display = 'flex';
+                    mobileBtn.onclick = function() { closeMobileNav(); openAuth(); };
+                }
+                const mobileLabel = document.getElementById('auth-mobile-label');
+                if (mobileLabel) mobileLabel.textContent = 'Sign in';
             }
         }
 
