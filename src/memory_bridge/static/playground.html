@@ -865,7 +865,7 @@
                     <!-- Sign In / Create Account tabs -->
             <div class="auth-tabs" style="display:flex;flex-direction:row;flex-wrap:nowrap;margin:0.5rem 0 1rem;border:1px solid var(--border-primary);border-radius:var(--radius-md);overflow:hidden;width:100%;">
               <button class="auth-tab active" id="auth-tab-signin" onclick="selectAuthTab('signin')" style="flex:1 1 0%;padding:0.5rem 0.75rem;border:none;background:var(--accent);color:#fff;font-size:0.88rem;font-weight:600;cursor:pointer;min-width:0;">Sign In</button>
-              <button class="auth-tab" id="auth-tab-signup" onclick="selectAuthTab('signup')" style="flex:1 1 0%;padding:0.5rem 0.75rem;border:none;background:var(--bg-secondary);color:var(--text-muted);font-size:0.88rem;font-weight:600;cursor:pointer;min-width:0;">Create Account</button>
+              <button class="auth-tab" id="auth-tab-signup" onclick="selectAuthTab('signup')" style="flex:1 1 0%;padding:0.5rem 0.75rem;border:none;background:var(--bg-tertiary);color:var(--text-muted);font-size:0.88rem;font-weight:600;cursor:pointer;min-width:0;">Create Account</button>
             </div>
             <div class="auth-subtitle" id="auth-subtitle" data-i18n="auth.subtitle">Sign in to access your account.</div>
 
@@ -1597,13 +1597,13 @@
             if (mode === 'signin') {
                 signinTab.style.background = 'var(--accent)';
                 signinTab.style.color = '#fff';
-                signupTab.style.background = 'transparent';
+                signupTab.style.background = 'var(--bg-tertiary)';
                 signupTab.style.color = 'var(--text-muted)';
                 subtitle.textContent = 'Sign in to access your account.';
             } else {
                 signupTab.style.background = 'var(--accent)';
                 signupTab.style.color = '#fff';
-                signinTab.style.background = 'transparent';
+                signinTab.style.background = 'var(--bg-tertiary)';
                 signinTab.style.color = 'var(--text-muted)';
                 subtitle.textContent = 'Create an account to get started.';
             }
