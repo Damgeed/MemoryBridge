@@ -928,13 +928,15 @@
                 Sign in with your email, Google, or Apple to manage API keys, view your subscription, and configure Memory Bridge.
             </p>
             <button class="btn btn-primary" onclick="openAuth()" style="font-size:0.95rem;padding:0.6rem 1.5rem;" data-i18n="auth.sign_in">Sign In →</button>
-            <div style="margin-top:1rem;font-size:0.82rem;color:var(--text-faint);">
-                <span data-i18n="dash.gate_new_before">New here?</span>
-                <a href="javascript:void(0)" onclick="openAuth()" style="color:var(--accent);text-decoration:underline;" data-i18n="dash.gate_new_link">Create an account</a>
-                <span data-i18n="dash.gate_new_after"> — no password needed.</span>
-            </div>
-            <div style="margin-top:0.5rem;font-size:0.82rem;color:var(--text-faint);">
-                🛠️ <a href="javascript:void(0)" onclick="openAuth()" style="color:var(--text-muted);text-decoration:underline;" data-i18n="dash.gate_recover">Lost access? Sign in with your email to recover your account.</a>
+            <div style="margin-top:1rem;font-size:0.82rem;color:var(--text-faint);display:flex;flex-direction:column;gap:0.25rem;align-items:center;">
+                <div>
+                    <span data-i18n="dash.gate_new_before">New here?</span>
+                    <a href="javascript:void(0)" onclick="openAuth()" style="color:var(--accent);text-decoration:underline;margin-left:0.25rem;" data-i18n="dash.gate_new_link">Create an account</a>
+                    <span data-i18n="dash.gate_new_after"> — no password needed.</span>
+                </div>
+                <div>
+                    <a href="javascript:void(0)" onclick="showRecoveryForm(); return false;" style="color:var(--text-faint);text-decoration:none;border-bottom:1px dotted var(--border-primary);" data-i18n="dash.gate_recover">Lost your account? Recover it here.</a>
+                </div>
             </div>
         </div>
 
@@ -990,8 +992,8 @@
               </div>
               <input type="email" class="auth-email-field" id="pl-email" placeholder="you@example.com" data-i18n="auth.email_placeholder" autocomplete="email" onkeydown="if(event.key==='Enter')continueWithEmail()"><button class="auth-email-cta" onclick="continueWithEmail()" id="pl-email-btn" data-i18n="auth.continue_btn">Continue →</button>
               <div class="auth-error" id="auth-error-main"></div>
-              <div style="margin-top: 0.75rem; text-align: center; font-size: 0.82rem;">
-                <a href="#" onclick="showRecoveryForm(); return false;" style="color: var(--text-muted); text-decoration: none;">Lost access? Recover your account</a>
+              <div style="margin-top: 0.6rem; text-align: center; font-size: 0.78rem;">
+                <a href="#" onclick="showRecoveryForm(); return false;" style="color: var(--text-faint); text-decoration: none; border-bottom: 1px dotted var(--border-primary);">Lost your account? Recover it here.</a>
               </div>
             </div>
 
