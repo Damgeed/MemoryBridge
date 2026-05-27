@@ -1154,7 +1154,7 @@
           <div style="font-size:0.8rem;color:var(--text-muted);margin-top:0.25rem;">Enter your email to recover your API keys and subscription.</div>
         </div>
         <input type="email" class="auth-email-field" id="recovery-email" placeholder="you@example.com" autocomplete="email" style="margin-bottom:0.5rem;" onkeydown="if(event.key==='Enter')recoverAccount(document.getElementById('recovery-email')?.value)">
-        <button class="btn-primary auth-submit" onclick="recoverAccount(document.getElementById('recovery-email')?.value)" style="width:100%;">Recover Account →</button>
+        <button class="btn-primary auth-submit" id="recovery-btn" onclick="recoverAccount(document.getElementById('recovery-email')?.value)" style="width:100%;">Recover Account →</button>
         <div class="auth-error" id="auth-error-recovery" style="margin-top:0.5rem;"></div>
       </div>
       </div>

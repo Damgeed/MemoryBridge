@@ -262,6 +262,11 @@
     }
     const errEl = document.getElementById('auth-error-recovery');
     if (errEl) errEl.textContent = '';
+    const btn = document.getElementById('recovery-btn');
+    if (btn) {
+      btn.innerHTML = '<span class="spinner-sm"></span> Recovering...';
+      btn.disabled = true;
+    }
     try {
       const res = await fetch('/dashboard/recover?email=' + encodeURIComponent(email), { method: 'POST' });
       const data = await res.json();
@@ -280,9 +285,11 @@
         }
       } else {
         if (errEl) errEl.textContent = data.detail || data.error || 'No user found. Create an account to get started.';
+        if (btn) { btn.innerHTML = 'Recover Account →'; btn.disabled = false; }
       }
     } catch (e) {
       if (errEl) errEl.textContent = 'Network error. Please try again.';
+      if (btn) { btn.innerHTML = 'Recover Account →'; btn.disabled = false; }
     }
   }
 
