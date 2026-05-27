@@ -2455,32 +2455,32 @@
             localStorage.removeItem('mb_pending_tier');
             window.history.replaceState({}, '', '/dashboard/');
 
-            // If no JWT and no API key, try to get a fresh one from the Stripe session
-            // (JWT may have expired during Stripe checkout)
+            // Always call stripe-welcome to store the subscription locally
+            // (previously this was gated on !jwt&&!apiKey, which meant logged-in
+            // users with a valid JWT skipped it — causing the poll below to loop
+            // forever because the subscription was never persisted)
             let jwt = localStorage.getItem('mb_jwt');
             let apiKey = localStorage.getItem('mb_api_key');
-            if (!jwt && !apiKey) {
-                try {
-                    statusEl.textContent = '🔄 Verifying payment...';
-                    const welcomeRes = await fetch('/dashboard/stripe-welcome?session_id=' + encodeURIComponent(sessionId), {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                    });
-                    if (welcomeRes.ok) {
-                        const welcomeData = await welcomeRes.json();
-                        if (welcomeData.token) {
-                            localStorage.setItem('mb_jwt', welcomeData.token);
-                            jwt = welcomeData.token;
-                            currentApiKey = '';
-                            showAuthenticatedContent(true);
-                            updateAuthUI();
-                            statusEl.textContent = '✅ Payment confirmed! Setting up your account...';
-                        }
+            try {
+                statusEl.textContent = '🔄 Verifying payment...';
+                const welcomeRes = await fetch('/dashboard/stripe-welcome?session_id=' + encodeURIComponent(sessionId), {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                });
+                if (welcomeRes.ok) {
+                    const welcomeData = await welcomeRes.json();
+                    // Only set JWT if we don't already have one
+                    if (welcomeData.token && !jwt) {
+                        localStorage.setItem('mb_jwt', welcomeData.token);
+                        jwt = welcomeData.token;
+                        currentApiKey = '';
                     }
-                } catch (e) {
-                    // Stripe welcome failed — user may need to sign in manually
-                    console.warn('Stripe welcome refresh failed:', e);
+                    showAuthenticatedContent(true);
+                    updateAuthUI();
+                    statusEl.textContent = '✅ Payment confirmed! Setting up your account...';
                 }
+            } catch (e) {
+                console.warn('Stripe welcome failed:', e);
             }
 
             // Show the authenticated content
