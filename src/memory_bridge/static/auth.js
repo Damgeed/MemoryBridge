@@ -339,13 +339,6 @@
     const codeStep = document.getElementById('auth-code-step');
     if (codeStep) codeStep.style.display = 'none';
 
-    // Hide sign-in/create-account tabs — not needed during recovery
-    const authTabs = document.querySelector('.auth-modal .auth-tabs, .auth-modal .auth_tabs');
-    if (authTabs) authTabs.style.display = 'none';
-    // Also hide the subtitle
-    const subtitle = document.getElementById('auth-subtitle');
-    if (subtitle) subtitle.style.display = 'none';
-
     // Show recovery step
     const recoveryStep = document.getElementById('auth-recovery-step');
     if (recoveryStep) {
