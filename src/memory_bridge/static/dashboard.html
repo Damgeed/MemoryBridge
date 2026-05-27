@@ -2185,21 +2185,13 @@
                 if (checkRes.ok) checkData = await checkRes.json();
 
                 if (authMode === 'signin' && !checkData.exists) {
-                    errorEl.innerHTML = '<span class="auth-notice">No account found with this email. Create an account to get started.</span>';
+                    errorEl.innerHTML = '<span class="auth-notice">No account found. Try the Create Account tab.</span>';
                     btn.innerHTML = originalBtnHTML;
                     btn.disabled = false;
                     return;
                 }
                 if (authMode === 'signup' && checkData.exists) {
                     errorEl.innerHTML = '<span class="auth-notice">An account already exists with this email. Sign in to your account.</span>';
-                    btn.innerHTML = originalBtnHTML;
-                    btn.disabled = false;
-                    return;
-                }
-
-                // Block codes for unregistered emails regardless of authMode
-                if (!checkData.exists) {
-                    errorEl.innerHTML = '<span class="auth-notice">No account found with this email. Create an account to get started.</span>';
                     btn.innerHTML = originalBtnHTML;
                     btn.disabled = false;
                     return;
