@@ -1040,6 +1040,7 @@ async function continueWithEmail() {
         if (!res.ok) {
             const err = await res.json().catch(() => ({}));
             errorEl.innerHTML = '❌ ' + (err.detail || 'Failed to send code');
+            btn.innerHTML = originalBtnHTML;
             btn.disabled = false;
             return;
         }
