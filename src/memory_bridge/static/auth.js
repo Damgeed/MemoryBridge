@@ -296,6 +296,7 @@
       if (infoText) infoText.textContent = 'Check your email';
       const infoSub = document.querySelector('#auth-recovery-step .recovery-subtitle');
       if (infoSub) infoSub.textContent = 'We sent a 6-digit code to ' + email;
+      if (errEl) errEl.textContent = '✅ New code sent!';
     } catch (e) {
       if (errEl) errEl.textContent = '❌ ' + e.message;
       if (btn) { btn.innerHTML = 'Recover Account →'; btn.disabled = false; }
