@@ -270,6 +270,21 @@
       btn.disabled = true;
     }
     try {
+      // Step 0: Check if email exists in our database first
+      const checkRes = await fetch('/auth/auth0/check-email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email })
+      });
+      if (!checkRes.ok) {
+        const err = await checkRes.json().catch(() => ({}));
+        throw new Error(err.detail || 'Could not verify email');
+      }
+      const checkData = await checkRes.json();
+      if (!checkData.exists) {
+        throw new Error('No account found with this email. Create an account to get started.');
+      }
+
       // Step 1: Send verification code to the email
       const startRes = await fetch('/auth/auth0/passwordless/start', {
         method: 'POST',
