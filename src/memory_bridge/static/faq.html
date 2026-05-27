@@ -976,10 +976,19 @@
         <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
       </svg>
       <div class="auth-code-msg">Recover Your Account</div>
-      <div style="font-size:0.8rem;color:var(--text-muted);margin-top:0.25rem;">Enter your email to recover your API keys and subscription.</div>
+      <div class="recovery-subtitle" style="font-size:0.8rem;color:var(--text-muted);margin-top:0.25rem;">Enter your email to recover your API keys and subscription.</div>
     </div>
-    <input type="email" class="auth-email-field" id="recovery-email" placeholder="you@example.com" autocomplete="email" style="margin-bottom:0.5rem;" onkeydown="if(event.key==='Enter')recoverAccount(document.getElementById('recovery-email')?.value)">
-    <button class="btn-primary auth-submit" id="recovery-btn" onclick="recoverAccount(document.getElementById('recovery-email')?.value)" style="width:100%;">Recover Account →</button>
+    <div id="recovery-email-row">
+      <input type="email" class="auth-email-field" id="recovery-email" placeholder="you@example.com" autocomplete="email" style="margin-bottom:0.5rem;" onkeydown="if(event.key==='Enter')recoverAccount(document.getElementById('recovery-email')?.value)">
+      <button class="btn-primary auth-submit" id="recovery-btn" onclick="recoverAccount(document.getElementById('recovery-email')?.value)" style="width:100%;">Recover Account →</button>
+    </div>
+    <div id="recovery-code-section" style="display:none;">
+      <input type="text" class="auth-email-field" id="recovery-code" placeholder="Enter 6-digit code" maxlength="6" inputmode="numeric" autocomplete="one-time-code" style="margin-bottom:0.5rem;" onkeydown="if(event.key==='Enter')recoverVerifyCode()">
+      <button class="btn-primary auth-submit" id="recovery-verify-btn" onclick="recoverVerifyCode()" style="width:100%;">Verify Code →</button>
+      <div style="margin-top:0.5rem;text-align:center;font-size:0.78rem;color:var(--text-muted);">
+        Didn't get it? <a href="#" onclick="recoverAccount(document.getElementById('recovery-email')?.value); return false;" style="color:var(--accent);text-decoration:none;">Send new code</a>
+      </div>
+    </div>
     <div class="auth-error" id="auth-error-recovery" style="margin-top:0.5rem;"></div>
   </div>
   </div>
@@ -1274,6 +1283,13 @@ document.getElementById('auth-code-step').classList.remove('active');
     document.getElementById('pl-phone-btn').disabled = false;
     pendingMethod = 'email';
     pendingPhone = '';
+    // Reset recovery code section
+    const recoveryCodeSection = document.getElementById('recovery-code-section');
+    if (recoveryCodeSection) recoveryCodeSection.style.display = 'none';
+    const recoveryEmailRow = document.getElementById('recovery-email-row');
+    if (recoveryEmailRow) recoveryEmailRow.style.display = '';
+    const recoveryBtn = document.getElementById('recovery-btn');
+    if (recoveryBtn) recoveryBtn.style.display = '';
 }
 
 function phoneLogin() {

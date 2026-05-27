@@ -254,6 +254,8 @@
 
   /* ── Account Recovery ────────────────────────────────── */
 
+  let _pendingRecoveryEmail = '';
+
   async function recoverAccount(email) {
     if (!email) {
       const errEl = document.getElementById('auth-error-recovery');
@@ -264,19 +266,76 @@
     if (errEl) errEl.textContent = '';
     const btn = document.getElementById('recovery-btn');
     if (btn) {
-      btn.innerHTML = '<span class="spinner-sm"></span> Recovering...';
+      btn.innerHTML = '<span class="spinner-sm"></span> Sending code...';
       btn.disabled = true;
     }
     try {
-      const res = await fetch('/dashboard/recover?email=' + encodeURIComponent(email), { method: 'POST' });
-      const data = await res.json();
-      if (res.ok) {
+      // Step 1: Send verification code to the email
+      const startRes = await fetch('/auth/auth0/passwordless/start', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email })
+      });
+      if (!startRes.ok) {
+        const err = await startRes.json().catch(() => ({}));
+        throw new Error(err.detail || 'Failed to send verification code');
+      }
+      _pendingRecoveryEmail = email;
+      // Hide email input, show code input
+      const emailRow = document.getElementById('recovery-email-row');
+      if (emailRow) emailRow.style.display = 'none';
+      const codeSection = document.getElementById('recovery-code-section');
+      if (codeSection) codeSection.style.display = 'block';
+      if (btn) {
+        btn.style.display = 'none';
+      }
+      const codeInput = document.getElementById('recovery-code');
+      if (codeInput) setTimeout(function() { codeInput.focus(); }, 100);
+      // Update info text
+      const infoText = document.querySelector('#auth-recovery-step .auth-code-msg');
+      if (infoText) infoText.textContent = 'Check your email';
+      const infoSub = document.querySelector('#auth-recovery-step .recovery-subtitle');
+      if (infoSub) infoSub.textContent = 'We sent a 6-digit code to ' + email;
+    } catch (e) {
+      if (errEl) errEl.textContent = '❌ ' + e.message;
+      if (btn) { btn.innerHTML = 'Recover Account →'; btn.disabled = false; }
+    }
+  }
+
+  async function recoverVerifyCode() {
+    const code = document.getElementById('recovery-code')?.value;
+    if (!code || code.length < 6) {
+      const errEl = document.getElementById('auth-error-recovery');
+      if (errEl) errEl.textContent = 'Please enter the 6-digit code.';
+      return;
+    }
+    const errEl = document.getElementById('auth-error-recovery');
+    if (errEl) errEl.textContent = '';
+    const btn = document.getElementById('recovery-verify-btn');
+    if (btn) {
+      btn.innerHTML = '<span class="spinner-sm"></span> Verifying...';
+      btn.disabled = true;
+    }
+    try {
+      // Step 2: Verify the code
+      const verifyRes = await fetch('/auth/auth0/passwordless/verify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: _pendingRecoveryEmail, code })
+      });
+      if (!verifyRes.ok) {
+        const err = await verifyRes.json().catch(() => ({}));
+        throw new Error(err.detail || 'Wrong code. Please try again.');
+      }
+      // Step 3: Code verified — now recover the account
+      const recoverRes = await fetch('/dashboard/recover?email=' + encodeURIComponent(_pendingRecoveryEmail), { method: 'POST' });
+      const data = await recoverRes.json();
+      if (recoverRes.ok) {
         if (data.key) localStorage.setItem(API_KEY, data.key);
         if (data.token) localStorage.setItem(JWT_KEY, data.token);
         if (typeof updateAuthUI === 'function') updateAuthUI();
         if (typeof closeAuth === 'function') closeAuth();
         if (typeof showToast === 'function') showToast('🔑 Account recovered!');
-        // If already on the dashboard, show content in-place (no reload flash)
         if (window.location.pathname.startsWith('/dashboard')) {
           if (typeof showAuthenticatedContent === 'function') showAuthenticatedContent(true);
           if (typeof reloadDashboard === 'function') setTimeout(reloadDashboard, 300);
@@ -285,11 +344,11 @@
         }
       } else {
         if (errEl) errEl.textContent = data.detail || data.error || 'No user found. Create an account to get started.';
-        if (btn) { btn.innerHTML = 'Recover Account →'; btn.disabled = false; }
+        if (btn) { btn.innerHTML = 'Verify Code →'; btn.disabled = false; }
       }
     } catch (e) {
-      if (errEl) errEl.textContent = 'Network error. Please try again.';
-      if (btn) { btn.innerHTML = 'Recover Account →'; btn.disabled = false; }
+      if (errEl) errEl.textContent = '❌ ' + e.message;
+      if (btn) { btn.innerHTML = 'Verify Code →'; btn.disabled = false; }
     }
   }
 
@@ -305,6 +364,20 @@
     // Show recovery step
     const recoveryStep = document.getElementById('auth-recovery-step');
     if (recoveryStep) {
+      _pendingRecoveryEmail = '';
+      // Reset to email input view
+      const emailRow = document.getElementById('recovery-email-row');
+      if (emailRow) emailRow.style.display = '';
+      const codeSection = document.getElementById('recovery-code-section');
+      if (codeSection) codeSection.style.display = 'none';
+      const recoveryBtn = document.getElementById('recovery-btn');
+      if (recoveryBtn) recoveryBtn.style.display = '';
+      const infoMsg = document.querySelector('#auth-recovery-step .auth-code-msg');
+      if (infoMsg) infoMsg.textContent = 'Recover Your Account';
+      const infoSub = document.querySelector('#auth-recovery-step .recovery-subtitle');
+      if (infoSub) infoSub.textContent = 'Enter your email to recover your API keys and subscription.';
+      const errEl = document.getElementById('auth-error-recovery');
+      if (errEl) errEl.textContent = '';
       recoveryStep.style.display = 'block';
       const emailInput = document.getElementById('recovery-email');
       if (emailInput) setTimeout(function() { emailInput.focus(); }, 100);
@@ -342,5 +415,6 @@
   window.clearApiKey        = clearApiKey;
   window.showSignInToast    = showSignInToast;
   window.recoverAccount     = recoverAccount;
+  window.recoverVerifyCode  = recoverVerifyCode;
   window.showRecoveryForm   = showRecoveryForm;
 })();
