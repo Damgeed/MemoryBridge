@@ -2185,29 +2185,15 @@
                 if (checkRes.ok) checkData = await checkRes.json();
 
                 if (authMode === 'signin' && !checkData.exists) {
-                    // No account — auto-switch to Create Account tab
-                    errorEl.innerHTML = '<span class="auth-notice">No account found with this email. Redirecting to Create Account...</span>';
-                    btn.disabled = true;
-                    document.getElementById('pl-email').disabled = true;
-                    setTimeout(() => {
-                        selectAuthTab('signup');
-                        document.getElementById('pl-email').disabled = false;
-                        document.getElementById('pl-email-btn').disabled = false;
-                        document.getElementById('auth-error-main').innerHTML = '';
-                    }, 1200);
+                    errorEl.innerHTML = '<span class="auth-notice">No account found with this email. Create an account to get started.</span>';
+                    btn.innerHTML = originalBtnHTML;
+                    btn.disabled = false;
                     return;
                 }
                 if (authMode === 'signup' && checkData.exists) {
-                    // Account exists — auto-switch to Sign In tab
-                    errorEl.innerHTML = '<span class="auth-notice">An account already exists with this email. Redirecting to Sign In...</span>';
-                    btn.disabled = true;
-                    document.getElementById('pl-email').disabled = true;
-                    setTimeout(() => {
-                        selectAuthTab('signin');
-                        document.getElementById('pl-email').disabled = false;
-                        document.getElementById('pl-email-btn').disabled = false;
-                        document.getElementById('auth-error-main').innerHTML = '';
-                    }, 1200);
+                    errorEl.innerHTML = '<span class="auth-notice">An account already exists with this email. Sign in to your account.</span>';
+                    btn.innerHTML = originalBtnHTML;
+                    btn.disabled = false;
                     return;
                 }
 
