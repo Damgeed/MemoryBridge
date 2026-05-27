@@ -1123,9 +1123,12 @@
         </div>
         <div id="recovery-code-section" style="display:none;">
           <div class="auth-code-input-row">
-          <input type="text" id="recovery-code" placeholder="Enter 6-digit code" data-i18n="auth.code_placeholder" maxlength="6" inputmode="numeric" autocomplete="one-time-code" onkeydown="if(event.key==='Enter')recoverVerifyCode()">
-        </div>
-          <button class="btn-primary auth-submit" id="recovery-verify-btn" onclick="recoverVerifyCode()" style="width:100%;">Verify Code →</button>
+
+            <input type="text" id="recovery-code" placeholder="Enter 6-digit code" data-i18n="auth.code_placeholder" maxlength="6" inputmode="numeric" autocomplete="one-time-code" onkeydown="if(event.key==='Enter')recoverVerifyCode()">
+
+          </div>
+
+          <button class="btn btn-primary" id="recovery-verify-btn" onclick="recoverVerifyCode()" data-i18n="auth.verify_btn">Verify Code →</button>
           <div style="margin-top:0.5rem;text-align:center;font-size:0.78rem;color:var(--text-muted);">
             Didn't get it? <a href="#" onclick="recoverAccount(document.getElementById('recovery-email')?.value); return false;" style="color:var(--accent);text-decoration:none;">Send new code</a>
           </div>
