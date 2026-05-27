@@ -931,7 +931,7 @@
             <div style="margin-top:1rem;font-size:0.82rem;color:var(--text-faint);display:flex;flex-direction:column;gap:1rem;align-items:center;">
                 <div>
                     <span data-i18n="dash.gate_new_before">New here?</span>
-                    <a href="javascript:void(0)" onclick="openAuth()" style="color:var(--accent);text-decoration:underline;margin-left:0.25rem;" data-i18n="dash.gate_new_link">Create an account</a>
+                    <a href="javascript:void(0)" onclick="openAuth('signup')" style="color:var(--accent);text-decoration:underline;margin-left:0.25rem;" data-i18n="dash.gate_new_link">Create an account</a>
                     <span data-i18n="dash.gate_new_after"> — no password needed.</span>
                 </div>
                 <div>
@@ -1999,12 +1999,11 @@
         }
 
         // ── Auth Modal ──────────────────────────────────────────────
-        function openAuth() {
+        function openAuth(tab) {
             document.getElementById('auth-overlay').classList.add('open');
             document.body.style.overflow = 'hidden';
             showAuthOptions();
-            // Default to Sign In tab on modal open
-            selectAuthTab('signin');
+            selectAuthTab(tab === 'signup' ? 'signup' : 'signin');
         }
 
         function socialLogin(connection) {
