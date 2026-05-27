@@ -1333,10 +1333,12 @@ document.addEventListener('DOMContentLoaded', () => {
           </div>
           <div id="recovery-email-row">
             <input type="email" class="auth-email-field" id="recovery-email" placeholder="you@example.com" autocomplete="email" style="margin-bottom:0.5rem;" onkeydown="if(event.key==='Enter')recoverAccount(document.getElementById('recovery-email')?.value)">
-            <button class="btn-primary auth-submit" id="recovery-btn" onclick="recoverAccount(document.getElementById('recovery-email')?.value)" style="width:100%;">Recover Account →</button>
+            <button class="auth-email-cta" id="recovery-btn" onclick="recoverAccount(document.getElementById('recovery-email')?.value)">Recover Account →</button>
           </div>
           <div id="recovery-code-section" style="display:none;">
-            <input type="text" class="auth-email-field" id="recovery-code" placeholder="Enter 6-digit code" maxlength="6" inputmode="numeric" autocomplete="one-time-code" style="margin-bottom:0.5rem;" onkeydown="if(event.key==='Enter')recoverVerifyCode()">
+            <div class="auth-code-input-row">
+            <input type="text" id="recovery-code" placeholder="Enter 6-digit code" data-i18n="auth.code_placeholder" maxlength="6" inputmode="numeric" autocomplete="one-time-code" onkeydown="if(event.key==='Enter')recoverVerifyCode()">
+        </div>
             <button class="btn-primary auth-submit" id="recovery-verify-btn" onclick="recoverVerifyCode()" style="width:100%;">Verify Code →</button>
             <div style="margin-top:0.5rem;text-align:center;font-size:0.78rem;color:var(--text-muted);">
               Didn't get it? <a href="#" onclick="recoverAccount(document.getElementById('recovery-email')?.value); return false;" style="color:var(--accent);text-decoration:none;">Send new code</a>
@@ -1423,6 +1425,13 @@ document.addEventListener('DOMContentLoaded', () => {
             if (recoveryEmailRow) recoveryEmailRow.style.display = '';
             const recoveryBtn = document.getElementById('recovery-btn');
             if (recoveryBtn) recoveryBtn.style.display = '';
+            // Reset buttons
+            const continueBtn = document.getElementById('pl-email-btn');
+            if (continueBtn) { continueBtn.innerHTML = 'Continue →'; continueBtn.disabled = false; }
+            const recoveryResetBtn = document.getElementById('recovery-btn');
+            if (recoveryResetBtn) { recoveryResetBtn.innerHTML = 'Recover Account →'; recoveryResetBtn.disabled = false; }
+            const recoveryVerifyBtn = document.getElementById('recovery-verify-btn');
+            if (recoveryVerifyBtn) { recoveryVerifyBtn.innerHTML = 'Verify Code →'; recoveryVerifyBtn.disabled = false; }
         }
 
         function phoneLogin() {
