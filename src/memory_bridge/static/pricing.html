@@ -1666,6 +1666,19 @@
             btn.innerHTML = '<span class="spinner-sm"></span> Sending...';
             btn.disabled = true;
             try {
+                // Check if email exists before sending a code
+                const checkRes = await fetch('/auth/check-email', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({email}),
+                });
+                const checkData = checkRes.ok ? await checkRes.json() : {exists: false};
+                if (!checkData.exists) {
+                    errorEl.innerHTML = '❌ No account found with this email. Create an account to get started.';
+                    btn.innerHTML = originalBtnHTML;
+                    btn.disabled = false;
+                    return;
+                }
                 const res = await fetch('/auth/auth0/passwordless/start', {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
