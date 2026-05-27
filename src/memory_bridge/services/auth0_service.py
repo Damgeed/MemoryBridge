@@ -45,7 +45,7 @@ class Auth0Service:
     def _jwks_url(self) -> str:
         return f"https://{self.domain}/.well-known/jwks.json"
 
-    def _authorize_url(self, redirect_uri: str, state: str = "", connection: str = "") -> str:
+    def _authorize_url(self, redirect_uri: str, state: str = "", connection: str = "", screen_hint: str = "") -> str:
         """Build the Auth0 Universal Login URL.
 
         Args:
@@ -53,6 +53,7 @@ class Auth0Service:
             state: CSRF token
             connection: Optional — if set, Auth0 goes directly to that social provider.
                         Examples: 'google-oauth2', 'apple', 'windowslive'
+            screen_hint: Optional — 'signup' to pre-select sign-up screen, 'login' for login.
         """
         from urllib.parse import urlencode
 
@@ -68,6 +69,8 @@ class Auth0Service:
             params["state"] = state
         if connection:
             params["connection"] = connection
+        if screen_hint and screen_hint in ("login", "signup"):
+            params["screen_hint"] = screen_hint
         return f"https://{self.domain}/authorize?{urlencode(params)}"
 
     async def _fetch_jwks(self) -> dict:

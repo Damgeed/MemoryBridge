@@ -1371,7 +1371,7 @@
         }
 
         function socialLogin(connection) {
-            window.location.href = '/auth/auth0/login?connection=' + connection;
+            window.location.href = '/auth/auth0/login?connection=' + connection + (authMode === 'signup' ? '&screen_hint=signup' : '');
         }
 
         function closeAuth() {

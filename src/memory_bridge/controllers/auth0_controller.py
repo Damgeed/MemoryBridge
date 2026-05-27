@@ -55,11 +55,13 @@ def _get_user_service(storage: MemoryRepository = Depends(get_storage)) -> UserS
 async def auth0_login(
     request: Request,
     connection: str = Query("", description="Specific social connection (e.g. google-oauth2, apple, windowslive)"),
+    screen_hint: str = Query("", description="'signup' or 'login' to pre-select Auth0 screen"),
 ):
     """Redirect user to Auth0's Universal Login page.
 
     If a connection is specified, Auth0 skips the login page and
     goes directly to that provider's authentication flow.
+    screen_hint can be 'signup' or 'login' to pre-select the tab.
     """
     svc = get_auth0_service()
     if not svc.enabled:
@@ -70,8 +72,8 @@ async def auth0_login(
     redirect_uri = f"{base}/auth/auth0/callback"
     state = str(uuid.uuid4())[:8]  # Simple CSRF token
 
-    authorize_url = svc._authorize_url(redirect_uri, state=state, connection=connection)
-    logger.info("Auth0 login redirect: %s (connection=%s)", authorize_url, connection or "default")
+    authorize_url = svc._authorize_url(redirect_uri, state=state, connection=connection, screen_hint=screen_hint)
+    logger.info("Auth0 login redirect: %s (connection=%s, screen_hint=%s)", authorize_url, connection or "default", screen_hint or "none")
     return RedirectResponse(url=authorize_url)
 
 
