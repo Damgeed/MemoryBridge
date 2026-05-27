@@ -4,10 +4,9 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title data-i18n="demo.title">Memory Bridge — Demo</title>
-<link rel="icon" href="/playground/logo.png" type="image/png">
+<link rel="icon" href="/playground/logo.svg" type="image/svg+xml">
 <link rel="stylesheet" href="/playground/style.css">
 <script src="/playground/i18n.js"></script>
-<script src="/playground/auth.js?v=1"></script>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
   :root {
@@ -646,7 +645,7 @@
     .main { flex-direction: column; }
     .left { max-height: 55vh; }
     .right { width: 100%; min-width: unset; height: 45vh; border-left: none; border-top: 1px solid var(--border); }
-    .auth-btn-container { display: inline-flex !important; }
+    .auth-btn-container { display: none !important; }
     .nav-cta { display: none !important; }
   }
 </style>
@@ -655,7 +654,7 @@
 <!-- Navbar (matches site theme) -->
 <nav class="navbar">
   <a href="/" class="logo">
-    <img src="/playground/logo.png" alt="Memory Bridge" data-i18n="nav.logo_alt">
+    <img src="/playground/logo.svg" alt="Memory Bridge">
     Memory <span class="logo-accent">Bridge</span>
   </a>
   <div class="nav-links">
@@ -695,30 +694,27 @@
       </svg>
     </button>
     <div class="auth-btn-container" id="auth-btn-container">
-        <button class="auth-btn" id="auth-nav-btn" onclick="openAuth()" title="Sign in / Sign up" data-i18n-title="nav.sign_in_title">
+        <button class="auth-btn" id="auth-nav-btn" onclick="openAuth()" title="Sign in / Sign up">
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-            <span id="auth-btn-label" data-i18n="auth.sign_in">Sign in</span>
+            <span id="auth-btn-label" data-i18n="nav.sign_in">Sign in</span>
         </button>
         <div class="user-menu" id="user-menu" style="display:none;">
             <button class="user-avatar-btn" id="user-btn" onclick="toggleUserDropdown()" title="Account menu">
                 <span class="user-avatar-circle" id="user-avatar-circle">👤</span>
-                <span class="session-dot" id="session-dot"></span>
                 <span class="user-avatar-name" id="user-avatar-name"></span>
-                <span class="user-plan-badge" id="user-plan-badge"></span>
                 <svg class="user-chevron" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
             </button>
             <div class="user-dropdown" id="user-dropdown">
                 <div class="user-dropdown-header">
                     <span class="user-dropdown-email" id="user-dropdown-email"></span>
                     <span class="user-dropdown-plan" id="user-dropdown-plan" data-i18n="dash.free_plan">Free Plan</span>
-                    <span class="user-dropdown-since" id="user-dropdown-since"></span>
                 </div>
                 <div class="user-dropdown-divider"></div>
                 <a href="/pricing" class="user-dropdown-item" data-i18n="dash.manage_billing">
                     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
                     Manage Billing
                 </a>
-                <div class="user-dropdown-item sign-out" onclick="showLogoutConfirm()" style="cursor:pointer;" data-i18n="nav.sign_out">
+                <div class="user-dropdown-item" onclick="showLogoutConfirm()" style="cursor:pointer;" data-i18n="nav.sign_out">
                     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
                     Sign Out
                 </div>
@@ -744,7 +740,7 @@
 <div class="nav-mobile-panel" id="nav-mobile">
   <div class="nav-mobile-header">
     <div class="logo">
-      <img src="/playground/logo.png" alt="Memory Bridge" data-i18n="nav.logo_alt">
+      <img src="/playground/logo.svg" alt="Memory Bridge">
       Memory <span class="logo-accent">Bridge</span>
     </div>
     <button class="nav-mobile-close" onclick="closeMobileNav()" aria-label="Close menu">
@@ -773,34 +769,10 @@
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
     <span id="auth-mobile-label" data-i18n="nav.sign_in">Sign in</span>
   </a>
-  <!-- Mobile User Card (when signed in) -->
-  <div id="mobile-user-card" style="display:none;">
-    <div class="mobile-user-header">
-      <div class="mobile-user-avatar">
-        <span class="mobile-user-circle" id="mobile-user-circle">👤</span>
-        <span class="session-dot" id="mobile-session-dot"></span>
-      </div>
-      <div class="mobile-user-info">
-        <span class="mobile-user-email" id="mobile-user-email"></span>
-        <span class="mobile-user-plan" id="mobile-user-plan" data-i18n="dash.free_plan">Free Plan</span>
-      </div>
-    </div>
-    <div class="mobile-user-divider"></div>
-    <a href="/pricing" class="mobile-user-action" onclick="closeMobileNav()">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
-      <span data-i18n="dash.manage_billing">Manage Billing</span>
-      </a>
-    <div class="mobile-user-divider"></div>
-    <span class="mobile-user-since" id="mobile-user-since"></span>
-    <a href="javascript:void(0)" class="mobile-user-action sign-out" id="mobile-sign-out-btn" onclick="closeMobileNav();showLogoutConfirm()">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
-      <span data-i18n="nav.sign_out">Sign Out</span>
-    </a>
-</div>
   <div class="nav-mobile-divider"></div>
-    <a href="/playground/" class="nav-mobile-cta" onclick="closeMobileNav()">
+    <a href="/playground/" class="nav-mobile-cta" onclick="closeMobileNav()" data-i18n="nav.launch_playground">
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
-    <span data-i18n="nav.launch_playground">Launch Playground</span>
+    Launch Playground
   </a>
 
 </div>
@@ -1062,12 +1034,7 @@ document.addEventListener('DOMContentLoaded', () => {
         </button>
         <div class="auth-icon">🔑</div>
         <div class="auth-title" data-i18n="auth.title">Memory Bridge</div>
-                    <!-- Sign In / Create Account tabs -->
-            <div class="auth-tabs" style="display:flex;gap:0;margin:0.5rem 0 1rem;border:1px solid var(--border-primary);border-radius:var(--radius-md);overflow:hidden;width:100%;">
-              <button class="auth-tab active" id="auth-tab-signin" onclick="selectAuthTab('signin')" style="flex:1;padding:0.5rem 0;border:none;background:var(--accent);color:#fff;font-size:0.88rem;font-weight:600;cursor:pointer;">Sign In</button>
-              <button class="auth-tab" id="auth-tab-signup" onclick="selectAuthTab('signup')" style="flex:1;padding:0.5rem 0;border:none;background:transparent;color:var(--text-muted);font-size:0.88rem;font-weight:600;cursor:pointer;">Create Account</button>
-            </div>
-            <div class="auth-subtitle" id="auth-subtitle" data-i18n="auth.subtitle">Sign in to access your account.</div>
+        <div class="auth-subtitle" data-i18n="auth.subtitle">Sign in to manage your API keys and account.</div>
 
         <!-- Step 1: Options (social + email) -->
         <div id="auth-options" class="auth-options">
@@ -1106,9 +1073,6 @@ document.addEventListener('DOMContentLoaded', () => {
           <input type="email" class="auth-email-field" id="pl-email" placeholder="you@example.com" autocomplete="email" onkeydown="if(event.key==='Enter')continueWithEmail()" data-i18n="auth.email_pl">
           <button class="auth-email-cta" onclick="continueWithEmail()" id="pl-email-btn" data-i18n="auth.continue">Continue →</button>
           <div class="auth-error" id="auth-error-main"></div>
-          <div style="margin-top: 0.75rem; text-align: center; font-size: 0.82rem;">
-            <a href="#" onclick="showRecoveryForm(); return false;" style="color: var(--text-muted); text-decoration: none;">Lost access? Recover your account</a>
-          </div>
         </div>
 
         <!-- Step 2: Phone input -->
@@ -1350,15 +1314,14 @@ document.addEventListener('DOMContentLoaded', () => {
         let pendingPhone = '';
         let pendingMethod = 'email'; // 'email' or 'phone'
 
-        function openAuth(tab) {
+        function openAuth() {
             document.getElementById('auth-overlay').classList.add('open');
             document.body.style.overflow = 'hidden';
             showAuthOptions();
-            selectAuthTab(tab === 'signup' ? 'signup' : 'signin');
         }
 
         function socialLogin(connection) {
-            window.location.href = '/auth/auth0/login?connection=' + connection + (authMode === 'signup' ? '&screen_hint=signup' : '');
+            window.location.href = '/auth/auth0/login?connection=' + connection;
         }
 
         function closeAuth() {
@@ -1366,31 +1329,6 @@ document.addEventListener('DOMContentLoaded', () => {
             document.body.style.overflow = '';
             pendingEmail = '';
         }
-
-        let authMode = 'signin'; // 'signin' or 'signup'
-
-        function selectAuthTab(mode) {
-            authMode = mode;
-            const signinTab = document.getElementById('auth-tab-signin');
-            const signupTab = document.getElementById('auth-tab-signup');
-            if (!signinTab || !signupTab) return;
-            const subtitle = document.getElementById('auth-subtitle');
-
-            if (mode === 'signin') {
-                signinTab.style.background = 'var(--accent)';
-                signinTab.style.color = '#fff';
-                signupTab.style.background = 'transparent';
-                signupTab.style.color = 'var(--text-muted)';
-                subtitle.textContent = 'Sign in to access your account.';
-            } else {
-                signupTab.style.background = 'var(--accent)';
-                signupTab.style.color = '#fff';
-                signinTab.style.background = 'transparent';
-                signinTab.style.color = 'var(--text-muted)';
-                subtitle.textContent = 'Create an account to get started.';
-            }
-        }
-
 
         function showAuthOptions() {
             document.querySelectorAll('.auth-form').forEach(el => el.classList.remove('active'));
@@ -1401,6 +1339,7 @@ document.addEventListener('DOMContentLoaded', () => {
             document.getElementById('pl-email').value = '';
             document.getElementById('pl-phone').value = '';
             document.getElementById('pl-country-code').value = '65';
+            document.getElementById('pl-email').focus();
             document.getElementById('auth-code-step').classList.remove('active');
             document.getElementById('auth-phone-step').classList.remove('active');
             // Clear all errors
@@ -1427,7 +1366,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         async function sendPhoneCode() {
             const countryCode = document.getElementById('pl-country-code').value;
-            const localNum = document.getElementById('pl-phone').value.trim().replace(/[^0-9]/g, '');
+            const localNum = document.getElementById('pl-phone').value.trim().replace(/\s/g, '');
             const errorEl = document.getElementById('auth-error-phone');
             const btn = document.getElementById('pl-phone-btn');
             if (!localNum) {
@@ -1438,24 +1377,14 @@ document.addEventListener('DOMContentLoaded', () => {
             errorEl.innerHTML = '<span class="auth-spinner"></span>';
             btn.disabled = true;
             try {
-
                 const res = await fetch('/auth/auth0/passwordless/start-sms', {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
                     body: JSON.stringify({phone: fullPhone}),
                 });
                 if (!res.ok) {
-                    let errMsg = 'Failed to send code';
-                    try {
-                        const err = await res.json();
-                        errMsg = err.detail || err.message || errMsg;
-                    } catch {
-                        try {
-                            const text = await res.text();
-                            if (text) errMsg = text.slice(0, 200);
-                        } catch {}
-                    }
-                    errorEl.innerHTML = '❌ ' + errMsg;
+                    const err = await res.json().catch(() => ({}));
+                    errorEl.innerHTML = '❌ ' + (err.detail || 'Failed to send code');
                     btn.disabled = false;
                     return;
                 }
@@ -1472,10 +1401,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 setTimeout(() => document.getElementById('pl-code').focus(), 150);
                 btn.disabled = false;
             } catch (e) {
-                                const isNetwork = e.message === 'Failed to fetch' || e.name === 'TypeError' || e.message === 'NetworkError';
-                errorEl.innerHTML = isNetwork
-                    ? '❌ Could not reach server. Check your connection.'
-                    : '❌ ' + e.message;
+                errorEl.innerHTML = '❌ ' + e.message;
                 btn.disabled = false;
             }
         }
@@ -1520,10 +1446,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 setTimeout(() => document.getElementById('pl-code').focus(), 150);
                 btn.disabled = false;
             } catch (e) {
-                                const isNetwork = e.message === 'Failed to fetch' || e.name === 'TypeError' || e.message === 'NetworkError';
-                errorEl.innerHTML = isNetwork
-                    ? '❌ Could not reach server. Check your connection.'
-                    : '❌ ' + e.message;
+                errorEl.innerHTML = '❌ ' + e.message;
                 btn.disabled = false;
             }
         }
@@ -1560,23 +1483,10 @@ document.addEventListener('DOMContentLoaded', () => {
                     currentApiKey = data.api_key;
                 }
                 updateAuthUI();
-                window.postAuthCallback?.();
-                window.postAuthCallback = null;
-                const _params = new URLSearchParams(window.location.search);
-                if (_params.has('pending_org_id')) {
-                    fetch('/auth/link-subscription', {
-                        method: 'POST',
-                        headers: { 'Authorization': 'Bearer ' + data.token, 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ pending_org_id: _params.get('pending_org_id') })
-                    }).catch(() => {});
-                }
                 closeAuth();
                 window.location.reload();
             } catch (e) {
-                                const isNetwork = e.message === 'Failed to fetch' || e.name === 'TypeError' || e.message === 'NetworkError';
-                errorEl.innerHTML = isNetwork
-                    ? '❌ Could not reach server. Check your connection.'
-                    : '❌ ' + e.message;
+                errorEl.innerHTML = '❌ ' + e.message;
                 btn.disabled = false;
             }
         }
@@ -1610,10 +1520,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 setTimeout(() => document.getElementById('pl-code').focus(), 150);
                 btn.disabled = false;
             } catch (e) {
-                                const isNetwork = e.message === 'Failed to fetch' || e.name === 'TypeError' || e.message === 'NetworkError';
-                errorEl.innerHTML = isNetwork
-                    ? '❌ Could not reach server. Check your connection.'
-                    : '❌ ' + e.message;
+                errorEl.innerHTML = '❌ ' + e.message;
                 btn.disabled = false;
             }
         }
@@ -1624,12 +1531,94 @@ document.addEventListener('DOMContentLoaded', () => {
             return div.innerHTML;
         }
 
+        function decodeJWT(token) {
+            try {
+                const payload = token.split('.')[1];
+                return JSON.parse(atob(payload.replace(/-/g, '+').replace(/_/g, '/')));
+            } catch { return null; }
+        }
+
+        function updateAuthUI() {
+            const jwt = localStorage.getItem('mb_jwt');
+            const key = localStorage.getItem('mb_api_key');
+            const signInBtn = document.getElementById('auth-nav-btn');
+            const userMenu = document.getElementById('user-menu');
+            const mobileLabel = document.getElementById('auth-mobile-label');
+            const avatarName = document.getElementById('user-avatar-name');
+            const avatarCircle = document.getElementById('user-avatar-circle');
+            const dropdownEmail = document.getElementById('user-dropdown-email');
+
+            if (jwt && userMenu && signInBtn) {
+                signInBtn.style.display = 'none';
+                userMenu.style.display = 'inline-flex';
+
+                const claims = decodeJWT(jwt);
+                const displayName = claims?.email || claims?.name || claims?.sub || '';
+                const initial = (displayName && displayName.length > 0) ? displayName[0].toUpperCase() : '?';
+
+                if (avatarName) avatarName.textContent = displayName.length > 16 ? displayName.slice(0, 14) + '…' : displayName;
+                if (avatarCircle) avatarCircle.textContent = initial;
+                if (dropdownEmail) dropdownEmail.textContent = displayName;
+
+                if (mobileLabel) mobileLabel.textContent = 'Sign out';
+                const mobileBtn = document.getElementById('auth-mobile-btn');
+                if (mobileBtn) mobileBtn.onclick = function() { closeMobileNav(); showLogoutConfirm(); };
+            } else if (userMenu && signInBtn) {
+                signInBtn.style.display = 'inline-flex';
+                userMenu.style.display = 'none';
+                if (mobileLabel) mobileLabel.textContent = 'Sign in';
+                const mobileBtn = document.getElementById('auth-mobile-btn');
+                if (mobileBtn) mobileBtn.onclick = function() { closeMobileNav(); openAuth(); };
+            }
+        }
+
+        function toggleUserDropdown() {
+            const menu = document.getElementById('user-menu');
+            menu.classList.toggle('open');
+        }
+        // Close user dropdown on outside click
+        document.addEventListener('click', (e) => {
+            const menu = document.getElementById('user-menu');
+            if (menu && menu.classList.contains('open') && !e.target.closest('#user-menu')) {
+                menu.classList.remove('open');
+            }
+        });
+
+        function showLogoutConfirm() {
+            document.getElementById('user-menu')?.classList.remove('open');
+            document.getElementById('logout-overlay').classList.add('open');
+            document.getElementById('logout-modal').classList.add('open');
+        }
+        function closeLogoutConfirm() {
+            document.getElementById('logout-overlay').classList.remove('open');
+            document.getElementById('logout-modal').classList.remove('open');
+        }
+
+        function logout() {
+            closeLogoutConfirm();
+            localStorage.removeItem('mb_jwt');
+            localStorage.removeItem('mb_api_key');
+            currentApiKey = '';
+            updateAuthUI();
+        }
+
         // ── Init ──────────────────────────────────────────────────
-        document.addEventListener('DOMContentLoaded', async () => {
-            await initAuth();
+        document.addEventListener('DOMContentLoaded', () => {
+            currentApiKey = localStorage.getItem('mb_api_key') || '';
+            const jwt = localStorage.getItem('mb_jwt');
+            if (jwt && !currentApiKey) {
+                (async () => {
+                    try {
+                        const kvRes = await fetch('/auth/my-key-value', { headers: {'Authorization': 'Bearer ' + jwt, 'Content-Type': 'application/json'} });
+                        if (kvRes.ok) { const data = await kvRes.json(); localStorage.setItem('mb_api_key', data.key); currentApiKey = data.key; }
+                    } catch (e) { localStorage.removeItem('mb_jwt'); }
+                    updateAuthUI();
+                })();
+            } else {
+                updateAuthUI();
+            }
         });
     </script>
 
-    <footer class="footer" data-i18n="footer.text">© 2026 Memory Bridge — API for cross-agent memory</footer>
 </body>
 </html>
