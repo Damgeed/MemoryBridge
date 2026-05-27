@@ -270,11 +270,12 @@
       if (res.ok) {
         if (data.key) localStorage.setItem(API_KEY, data.key);
         if (data.token) localStorage.setItem(JWT_KEY, data.token);
+        if (typeof updateAuthUI === 'function') updateAuthUI();
         if (typeof closeAuth === 'function') closeAuth();
         if (typeof showToast === 'function') showToast('🔑 Account recovered!');
         setTimeout(function() { window.location.href = '/dashboard'; }, 1000);
       } else {
-        if (errEl) errEl.textContent = data.detail || data.error || 'Could not find an account with that email.';
+        if (errEl) errEl.textContent = data.detail || data.error || 'No user found. Create an account to get started.';
       }
     } catch (e) {
       if (errEl) errEl.textContent = 'Network error. Please try again.';

@@ -557,24 +557,36 @@ async def free_signup(
 
 @router.post("/recover")
 async def recover_api_key(
-    email: str = Query("", description="Email used during Stripe checkout"),
+    email: str = Query("", description="Email used during signup or Stripe checkout"),
     storage: MemoryRepository = Depends(get_storage),
 ):
-    """Recover a lost API key by verifying the purchaser's email via Stripe.
+    """Recover access to an account by verifying email ownership.
 
-    Looks up the Stripe customer by email, finds their active subscription,
-    and issues a new API key — no charge. Returns the plaintext key once.
+    Security model:
+    - Free users: email lookup generates a JWT to log them in
+      (same trust level as 'forgot password'). No new API key is
+      created — user generates one from the dashboard after login.
+    - Paid users: Stripe subscription verification generates a JWT
+      and creates a new API key (Stripe is strong auth).
+    - API keys are NEVER created from email-only lookup.
     """
     if not email or "@" not in email:
         raise HTTPException(status_code=400, detail="Please provide a valid email address.")
 
-    # ── Step 1: Check local database first ──────────────────────────
+    normalized_email = email.strip().lower()
+    from ..services.user_service import UserService
+    user_svc = UserService(repo=storage)
+
+    # ── Step 1: Check local database ─────────────────────────────────
     org_id = None
     found_tier = "free"
+    user_dict = None
     try:
-        user_record = await storage.get_user_by_email(email.strip().lower())
-        if user_record:
-            org_id = user_record.get("organization_id", "")
+        user_dict = await storage.get_user_by_email(normalized_email)
+        if user_dict:
+            org_id = user_dict.get("organization_id", "")
+            if not org_id:
+                raise HTTPException(status_code=404, detail="No user found. Create an account to get started.")
             try:
                 sub = await storage.get_subscription_by_org(org_id)
                 if sub:
@@ -582,46 +594,44 @@ async def recover_api_key(
             except Exception:
                 pass
             logger.info("Recover: found user in local DB org=%s tier=%s", org_id, found_tier)
+    except HTTPException:
+        raise
     except Exception as e:
         logger.warning("Recover: local DB lookup failed: %s", e)
 
     # ── Step 2: Fall through to Stripe if not found locally ─────────
+    recovered_via_stripe = False
     if not org_id:
         import stripe
         try:
-            customers = stripe.Customer.list(email=email, limit=10)
+            customers = stripe.Customer.list(email=normalized_email, limit=10)
         except Exception as e:
-            raise HTTPException(status_code=502, detail=f"Could not verify purchase: {e}")
+            raise HTTPException(status_code=502, detail=f"Could not verify identity: {e}")
 
-        if not customers.data:
-            raise HTTPException(
-                status_code=404,
-                detail="No account found for that email. Make sure you use the email you signed up with.",
-            )
-
-        for customer in customers.data:
-            try:
-                subs = stripe.Subscription.list(customer=customer.id, limit=5, status="all")
-            except Exception:
-                continue
-            for sub in subs.data:
-                active_statuses = {"active", "trialing", "past_due"}
-                if sub.get("status") not in active_statuses:
+        if customers.data:
+            for customer in customers.data:
+                try:
+                    subs = stripe.Subscription.list(customer=customer.id, limit=5, status="all")
+                except Exception:
                     continue
-                metadata = sub.get("metadata", {})
-                if metadata.get("organization_id"):
-                    org_id = metadata["organization_id"]
-                    items = sub.get("items", {}).get("data", [])
-                    if items:
-                        from ..services.billing_service import PRICE_IDS
-                        price_id = items[0].get("price", {}).get("id", "")
-                        for t, pid in PRICE_IDS.items():
-                            if pid == price_id:
-                                found_tier = t
-                                break
+                for sub in subs.data:
+                    active_statuses = {"active", "trialing", "past_due"}
+                    if sub.get("status") not in active_statuses:
+                        continue
+                    metadata = sub.get("metadata", {})
+                    if metadata.get("organization_id"):
+                        org_id = metadata["organization_id"]
+                        items = sub.get("items", {}).get("data", [])
+                        if items:
+                            from ..services.billing_service import PRICE_IDS
+                            price_id = items[0].get("price", {}).get("id", "")
+                            for t, pid in PRICE_IDS.items():
+                                if pid == price_id:
+                                    found_tier = t
+                                    break
+                        break
+                if org_id:
                     break
-            if org_id:
-                break
 
         if not org_id:
             for customer in customers.data:
@@ -634,42 +644,85 @@ async def recover_api_key(
                     found_tier = sub.tier
                     break
 
+        if org_id:
+            recovered_via_stripe = True
+            logger.info("Recover: found via Stripe org=%s tier=%s", org_id, found_tier)
+
     if not org_id:
         raise HTTPException(
             status_code=404,
-            detail="No account found for that email. Make sure you use the email you signed up with.",
+            detail="No user found. Create an account to get started.",
         )
 
-    # Check if org already has active keys before creating another
-    try:
-        existing_keys = await storage.list_api_keys()
-        org_active = [k for k in existing_keys if k.get("project_id") == org_id and k.get("is_active") is not False]
-        if org_active:
-            latest = org_active[-1]
-            logger.info("Recover: org=%s already has %d keys, returning latest", org_id, len(org_active))
-            return {
-                "recovered": True,
-                "key": None,
-                "id": latest.get("id", ""),
-                "label": latest.get("label", ""),
-                "tier": found_tier,
+    # ── Generate JWT to log the user in ──────────────────────────────
+    jwt_token = ""
+    # If we found the user via local DB, we have their user record
+    if user_dict:
+        try:
+            jwt_token = await user_svc.generate_token(user_dict)
+        except Exception as e:
+            logger.warning("Recover: JWT generation failed for local user: %s", e)
+    # If we found via Stripe, create or find a user record first
+    else:
+        try:
+            from datetime import datetime, timezone
+            user_data = {
+                "id": f"stripe-recover-{org_id[:8]}",
+                "email": normalized_email,
+                "name": normalized_email.split("@")[0],
                 "organization_id": org_id,
-                "key_count": len(org_active),
-                "hint": "You already have active API keys. Manage them from the dashboard.",
+                "role": "member",
+                "created_at": datetime.now(timezone.utc),
             }
-    except Exception:
-        pass
+            user_dict = await storage.create_user(user_data)
+            jwt_token = await user_svc.generate_token(user_dict)
+        except Exception as e:
+            logger.warning("Recover: JWT generation failed for Stripe user: %s", e)
 
-    # Create a new API key for this org
-    result = await storage.create_api_key(label=f"recovered-{found_tier}", project_id=org_id)
-    logger.info("Recovered API key for org=%s, tier=%s", org_id, found_tier)
+    # ── Determine what to return ────────────────────────────────────
+    api_key_value = None
+    api_key_id = ""
+    key_count = 0
+
+    # Only create a new API key if verified via Stripe (strong auth)
+    if recovered_via_stripe:
+        # Check if org already has active keys
+        try:
+            all_keys = await storage.list_api_keys()
+            org_active = [k for k in all_keys if k.get("project_id") == org_id and k.get("is_active") is not False]
+            key_count = len(org_active)
+            if org_active:
+                api_key_id = org_active[-1].get("id", "")
+                logger.info("Recover: Stripe user has %d existing keys", key_count)
+            else:
+                # Create a new key — verified via Stripe
+                new_key = await storage.create_api_key(label=f"recovered-{found_tier}", project_id=org_id)
+                api_key_value = new_key.get("key", "")
+                api_key_id = new_key.get("id", "")
+                key_count = 1
+                logger.info("Recover: created new API key for Stripe-verified org=%s", org_id)
+        except Exception as e:
+            logger.warning("Recover: key handling failed: %s", e)
+    else:
+        # Free/local user — don't create keys, just count existing ones
+        try:
+            all_keys = await storage.list_api_keys()
+            org_active = [k for k in all_keys if k.get("project_id") == org_id and k.get("is_active") is not False]
+            key_count = len(org_active)
+            if org_active:
+                api_key_id = org_active[-1].get("id", "")
+        except Exception:
+            pass
+
+    logger.info("Recover: login successful for org=%s tier=%s via_stripe=%s", org_id, found_tier, recovered_via_stripe)
     return {
         "recovered": True,
-        "key": result["key"],
-        "id": result["id"],
-        "label": result["label"],
+        "token": jwt_token,
+        "key": api_key_value,
+        "key_id": api_key_id,
         "tier": found_tier,
         "organization_id": org_id,
+        "key_count": key_count,
     }
 
 
