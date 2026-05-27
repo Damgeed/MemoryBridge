@@ -282,7 +282,7 @@
       }
       const checkData = await checkRes.json();
       if (!checkData.exists) {
-        if (errEl) errEl.textContent = 'No account found with this email. Create an account to get started.';
+        if (errEl) errEl.innerHTML = '<span class="auth-notice">No account found with this email. Create an account to get started.</span>';
         if (btn) { btn.innerHTML = 'Recover Account →'; btn.disabled = false; }
         return;
       }

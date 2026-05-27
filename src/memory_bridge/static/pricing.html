@@ -1674,7 +1674,7 @@
                 });
                 const checkData = checkRes.ok ? await checkRes.json() : {exists: false};
                 if (!checkData.exists) {
-                    errorEl.innerHTML = 'No account found with this email. Create an account to get started.';
+                    errorEl.innerHTML = '<span class="auth-notice">No account found with this email. Create an account to get started.</span>';
                     btn.innerHTML = originalBtnHTML;
                     btn.disabled = false;
                     return;
