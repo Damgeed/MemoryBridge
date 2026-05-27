@@ -928,13 +928,15 @@
                 Sign in with your email, Google, or Apple to manage API keys, view your subscription, and configure Memory Bridge.
             </p>
             <button class="btn btn-primary" onclick="openAuth()" style="font-size:0.95rem;padding:0.6rem 1.5rem;" data-i18n="auth.sign_in">Sign In →</button>
-            <div style="margin-top:1rem;font-size:0.82rem;color:var(--text-faint);">
-                <span data-i18n="dash.gate_new_before">New here?</span>
-onclick="openAuth('signup')" style="color:var(--accent);text-decoration:underline;" data-i18n="dash.gate_new_link">Create an account</a>
-                <span data-i18n="dash.gate_new_after"> — no password needed.</span>
-            </div>
-            <div style="margin-top:0.5rem;font-size:0.82rem;color:var(--text-faint);">
-                🛠️ <a href="javascript:void(0)" onclick="openAuth()" style="color:var(--text-muted);text-decoration:underline;" data-i18n="dash.gate_recover">Lost access? Sign in with your email to recover your account.</a>
+            <div style="margin-top:1rem;font-size:0.82rem;color:var(--text-faint);display:flex;flex-direction:column;gap:0.6rem;align-items:center;">
+                <div>
+                    <span data-i18n="dash.gate_new_before">New here?</span>
+                    <a href="javascript:void(0)" onclick="openAuth('signup')" style="color:var(--accent);text-decoration:underline;margin-left:0.25rem;" data-i18n="dash.gate_new_link">Create an account</a>
+                    <span data-i18n="dash.gate_new_after"> — no password needed.</span>
+                </div>
+                <div>
+                    <a href="javascript:void(0)" onclick="openAuth(); setTimeout(showRecoveryForm, 300); return false;" style="color: var(--accent); text-decoration: none; font-size: 0.85rem; font-weight: 500; opacity: 0.85; transition: opacity 0.15s;" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0.85'" data-i18n="dash.gate_recover">Lost your account? Recover it here →</a>
+                </div>
             </div>
         </div>
 
@@ -990,8 +992,8 @@ onclick="openAuth('signup')" style="color:var(--accent);text-decoration:underlin
               </div>
               <input type="email" class="auth-email-field" id="pl-email" placeholder="you@example.com" data-i18n="auth.email_placeholder" autocomplete="email" onkeydown="if(event.key==='Enter')continueWithEmail()"><button class="auth-email-cta" onclick="continueWithEmail()" id="pl-email-btn" data-i18n="auth.continue_btn">Continue →</button>
               <div class="auth-error" id="auth-error-main"></div>
-              <div style="margin-top: 0.75rem; text-align: center; font-size: 0.82rem;">
-                <a href="#" onclick="showRecoveryForm(); return false;" style="color: var(--text-muted); text-decoration: none;">Lost access? Recover your account</a>
+              <div style="margin-top: 0.75rem; text-align: center;">
+                <a href="#" onclick="showRecoveryForm(); return false;" style="color: var(--accent); text-decoration: none; font-size: 0.85rem; font-weight: 500; opacity: 0.85; transition: opacity 0.15s;" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0.85'">Lost your account? Recover it here →</a>
               </div>
             </div>
 
@@ -1223,6 +1225,24 @@ onclick="openAuth('signup')" style="color:var(--accent);text-decoration:underlin
               <div class="auth-code-resend">
                 <span data-i18n="auth.resend_label">Didn't get it?</span> <a onclick="resendCode()" data-i18n="auth.send_new_code">Send new code</a>
               </div>
+            </div>
+
+            <!-- Step 4: Recovery -->
+            <div id="auth-recovery-step" class="auth-form" style="display:none;">
+              <button class="back-link" onclick="showAuthOptions()">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+                <span data-i18n="auth.back">Back</span>
+              </button>
+              <div class="auth-code-info">
+                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                </svg>
+                <div class="auth-code-msg">Recover Your Account</div>
+                <div style="font-size:0.8rem;color:var(--text-muted);margin-top:0.25rem;">Enter your email to recover your API keys and subscription.</div>
+              </div>
+              <input type="email" class="auth-email-field" id="recovery-email" placeholder="you@example.com" autocomplete="email" style="margin-bottom:0.5rem;" onkeydown="if(event.key==='Enter')recoverAccount(document.getElementById('recovery-email')?.value)">
+              <button class="btn-primary auth-submit" onclick="recoverAccount(document.getElementById('recovery-email')?.value)" style="width:100%;">Recover Account →</button>
+              <div class="auth-error" id="auth-error-recovery" style="margin-top:0.5rem;"></div>
             </div>
           </div>  <!-- /auth-modal -->
         </div>  <!-- /auth-overlay -->
@@ -2032,6 +2052,7 @@ onclick="openAuth('signup')" style="color:var(--accent);text-decoration:underlin
             document.getElementById('pl-phone').value = '';
             document.getElementById('auth-code-step').classList.remove('active');
             document.getElementById('auth-phone-step').classList.remove('active');
+            document.getElementById('auth-recovery-step').style.display = 'none';
             // Clear all errors
             document.querySelectorAll('.auth-error').forEach(el => el.textContent = '');
             // Re-enable buttons

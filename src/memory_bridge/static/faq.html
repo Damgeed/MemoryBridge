@@ -731,9 +731,9 @@
       <input type="email" class="auth-email-field" id="pl-email" placeholder="you@example.com" data-i18n="auth.email_placeholder" autocomplete="email" onkeydown="if(event.key==='Enter')continueWithEmail()">
       <button class="auth-email-cta" onclick="continueWithEmail()" id="pl-email-btn" data-i18n="auth.continue_btn">Continue →</button>
       <div class="auth-error" id="auth-error-main"></div>
-      <div style="margin-top: 0.75rem; text-align: center; font-size: 0.82rem;">
-        <a href="#" onclick="showRecoveryForm(); return false;" style="color: var(--text-muted); text-decoration: none;">Lost access? Recover your account</a>
-      </div>
+<div style="margin-top: 0.75rem; text-align: center;">
+                <a href="#" onclick="showRecoveryForm(); return false;" style="color: var(--accent); text-decoration: none; font-size: 0.85rem; font-weight: 500; opacity: 0.85; transition: opacity 0.15s;" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0.85'">Lost your account? Recover it here →</a>
+              </div>
     </div>
 
     <!-- Step 2: Phone input -->
@@ -1244,8 +1244,9 @@ function showAuthOptions() {
     document.getElementById('pl-code').value = '';
     document.getElementById('pl-email').value = '';
     document.getElementById('pl-phone').value = '';
-    document.getElementById('auth-code-step').classList.remove('active');
-    document.getElementById('auth-phone-step').classList.remove('active');
+document.getElementById('auth-code-step').classList.remove('active');
+            document.getElementById('auth-phone-step').classList.remove('active');
+            document.getElementById('auth-recovery-step').style.display = 'none';
     // Clear all errors
     document.querySelectorAll('.auth-error').forEach(el => el.textContent = '');
     // Re-enable buttons
