@@ -2,10 +2,7 @@
  * Memory Bridge — Shared Auth Module
  *
  * Loaded by all pages. Provides JWT management, session dot,
- * user menu, logout flow, cross‑tab sync, and periodic expiry checks.
- *
- * Pages define these callbacks (optional):
- *   window._mbOnAuthExpired() — called when JWT expires during periodic check
+ * user menu, logout flow, and cross‑tab sync.
  *
  * Pages define these functions (optional/shared):
  *   openAuth() — opens sign‑in modal (each page may have its own)
@@ -78,52 +75,6 @@
       if (typeof updateAuthUI === 'function') updateAuthUI();
     }
   });
-
-  /* ── Periodic JWT Expiry Check ───────────────────────── */
-
-  // Default session expiry handler: orange banner 30s, then auto-open auth modal
-  if (typeof window._mbOnAuthExpired !== 'function') {
-    window._mbOnAuthExpired = function () {
-      // Stage 1: show non-destructive orange banner
-      const existing = document.getElementById('session-expiry-banner');
-      if (existing) return;
-      const banner = document.createElement('div');
-      banner.id = 'session-expiry-banner';
-      banner.style.cssText = 'position:fixed;top:56px;left:0;right:0;z-index:9999;background:#f59e0b;color:#fff;padding:10px 20px;text-align:center;font-size:14px;display:flex;align-items:center;justify-content:center;gap:8px;cursor:pointer;';
-      banner.innerHTML = '<span>⚠️</span> Your session has expired. <a href="#" style="color:#fff;font-weight:700;text-decoration:underline;" id="expiry-signin-link">Sign in again</a>';
-      document.body.prepend(banner);
-
-      // Click the link to open auth modal immediately
-      document.getElementById('expiry-signin-link')?.addEventListener('click', function (e) {
-        e.preventDefault();
-        banner.remove();
-        if (typeof openAuth === 'function') openAuth();
-      });
-
-      // Stage 2: auto-open auth modal after 30 seconds
-      setTimeout(function () {
-        const b = document.getElementById('session-expiry-banner');
-        if (b) b.remove();
-        if (typeof openAuth === 'function') openAuth();
-      }, 30000);
-    };
-  }
-
-  setInterval(() => {
-    const jwt = getJWT();
-    if (!jwt) return;
-    try {
-      const parts = jwt.split('.');
-      if (parts.length === 3) {
-        const payload = JSON.parse(atob(parts[1]));
-        if (payload.exp && payload.exp * 1000 < Date.now()) {
-          clearJWT();
-          if (typeof updateAuthUI === 'function') updateAuthUI();
-          if (typeof window._mbOnAuthExpired === 'function') window._mbOnAuthExpired();
-        }
-      }
-    } catch (e) { /* ignore */ }
-  }, 60000);
 
   /* ── Auth UI ─────────────────────────────────────────── */
 

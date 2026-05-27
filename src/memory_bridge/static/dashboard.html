@@ -2391,18 +2391,6 @@
         }
 
         // ── Init ──────────────────────────────────────────────────
-        window._mbOnAuthExpired = function() {
-            // Don't force re-auth if user has a valid API key
-            const storedKey = localStorage.getItem('mb_api_key');
-            if (storedKey && storedKey !== 'mb_demo_public_test') {
-                currentApiKey = storedKey;
-                showAuthenticatedContent(true);
-                updateAuthUI();
-                return;
-            }
-            showAuthenticatedContent(false);
-            openAuth();
-        };
         document.addEventListener('DOMContentLoaded', async () => {
             await initAuth();
             currentApiKey = localStorage.getItem('mb_api_key') || '';
