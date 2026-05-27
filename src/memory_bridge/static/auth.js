@@ -281,10 +281,12 @@
         throw new Error(err.detail || 'Failed to send verification code');
       }
       _pendingRecoveryEmail = email;
+      // Check if this is a resend (code section already visible)
+      const codeSection = document.getElementById('recovery-code-section');
+      const isResend = codeSection && codeSection.style.display !== 'none';
       // Hide email input, show code input
       const emailRow = document.getElementById('recovery-email-row');
       if (emailRow) emailRow.style.display = 'none';
-      const codeSection = document.getElementById('recovery-code-section');
       if (codeSection) codeSection.style.display = 'block';
       if (btn) {
         btn.style.display = 'none';
@@ -296,7 +298,8 @@
       if (infoText) infoText.textContent = 'Check your email';
       const infoSub = document.querySelector('#auth-recovery-step .recovery-subtitle');
       if (infoSub) infoSub.textContent = 'We sent a 6-digit code to ' + email;
-      if (errEl) errEl.textContent = '✅ New code sent!';
+      if (isResend && errEl) errEl.textContent = '✅ New code sent!';
+      else if (errEl) errEl.textContent = '';
     } catch (e) {
       if (errEl) errEl.textContent = '❌ ' + e.message;
       if (btn) { btn.innerHTML = 'Recover Account →'; btn.disabled = false; }
