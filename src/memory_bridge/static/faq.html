@@ -1395,7 +1395,8 @@ async function verifyCode() {
         errorEl.innerHTML = '⚠️ Enter your 6-digit verification code';
         return;
     }
-    errorEl.innerHTML = '<span class="auth-spinner"></span>';
+    const originalBtnHTML = btn.innerHTML;
+    btn.innerHTML = '<span class="spinner-sm"></span> Verifying...';
     btn.disabled = true;
     try {
         const body = pendingMethod === 'phone'
@@ -1408,8 +1409,9 @@ async function verifyCode() {
         });
         if (!res.ok) {
             const err = await res.json().catch(() => ({}));
-            errorEl.innerHTML = '❌ ' + (err.detail || 'Verification failed');
-            btn.disabled = false;
+                    errorEl.innerHTML = '❌ ' + (err.detail || 'Verification failed');
+                    btn.innerHTML = originalBtnHTML;
+                    btn.disabled = false;
             return;
         }
         const data = await res.json();
@@ -1438,6 +1440,7 @@ async function verifyCode() {
         errorEl.innerHTML = isNetwork
             ? '❌ Could not reach server. Check your connection.'
             : '❌ ' + e.message;
+        btn.innerHTML = originalBtnHTML;
         btn.disabled = false;
     }
 }
