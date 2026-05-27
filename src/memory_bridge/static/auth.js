@@ -273,7 +273,13 @@
         if (typeof updateAuthUI === 'function') updateAuthUI();
         if (typeof closeAuth === 'function') closeAuth();
         if (typeof showToast === 'function') showToast('🔑 Account recovered!');
-        setTimeout(function() { window.location.href = '/dashboard'; }, 1000);
+        // If already on the dashboard, show content in-place (no reload flash)
+        if (window.location.pathname.startsWith('/dashboard')) {
+          if (typeof showAuthenticatedContent === 'function') showAuthenticatedContent(true);
+          if (typeof reloadDashboard === 'function') setTimeout(reloadDashboard, 300);
+        } else {
+          setTimeout(function() { window.location.href = '/dashboard'; }, 1000);
+        }
       } else {
         if (errEl) errEl.textContent = data.detail || data.error || 'No user found. Create an account to get started.';
       }
