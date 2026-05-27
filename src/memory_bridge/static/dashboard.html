@@ -869,13 +869,13 @@
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="5" cy="5" r="3"/><circle cx="19" cy="5" r="3"/><circle cx="12" cy="19" r="3"/><line x1="5" y1="5" x2="19" y2="5"/><line x1="5" y1="5" x2="12" y2="19"/><line x1="19" y1="5" x2="12" y2="19"/></svg>
             Graph
         </a>
-        <a href="/pricing" onclick="closeMobileNav()" data-i18n="nav.pricing">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
-            Pricing
-        </a>
         <a href="/dashboard/" class="active" onclick="closeMobileNav()" data-i18n="nav.dashboard">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
             Dashboard
+        </a>
+        <a href="/pricing" onclick="closeMobileNav()" data-i18n="nav.pricing">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+            Pricing
         </a>
         <a href="javascript:void(0)" id="auth-mobile-btn" onclick="closeMobileNav();openAuth()" style="display:flex;align-items:center;gap:0.45rem;padding:0.7rem 1.25rem;border-radius:var(--radius-sm);font-size:0.88rem;font-weight:600;color:var(--accent);text-decoration:none;">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
@@ -944,11 +944,11 @@
         <!-- Auth Modal -->
         <div class="auth-overlay" id="auth-overlay">
           <div class="auth-modal">
-            <button class="auth-close" onclick="closeAuth()" aria-label="Close">
+            <button class="auth-close" onclick="closeAuth()" aria-label="Close" data-i18n="auth.close">×</button>
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
             </button>
             <div class="auth-icon">🔑</div>
-            <div class="auth-title">Memory Bridge</div>
+            <div class="auth-title" data-i18n="auth.title">Memory Bridge</div>
             <!-- Sign In / Create Account tabs -->
             <div class="auth-tabs" style="display:flex;gap:0;margin:0.5rem 0 1rem;border:1px solid var(--border-primary);border-radius:var(--radius-md);overflow:hidden;width:100%;">
               <button class="auth-tab active" id="auth-tab-signin" onclick="selectAuthTab('signin')" style="flex:1;padding:0.5rem 0;border:none;background:var(--accent);color:#fff;font-size:0.88rem;font-weight:600;cursor:pointer;">Sign In</button>

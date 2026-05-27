@@ -703,20 +703,23 @@
         <div class="user-menu" id="user-menu" style="display:none;">
             <button class="user-avatar-btn" id="user-btn" onclick="toggleUserDropdown()" title="Account menu">
                 <span class="user-avatar-circle" id="user-avatar-circle">👤</span>
+                <span class="session-dot" id="session-dot"></span>
                 <span class="user-avatar-name" id="user-avatar-name"></span>
+                <span class="user-plan-badge" id="user-plan-badge">Free</span>
                 <svg class="user-chevron" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
             </button>
             <div class="user-dropdown" id="user-dropdown">
                 <div class="user-dropdown-header">
                     <span class="user-dropdown-email" id="user-dropdown-email"></span>
                     <span class="user-dropdown-plan" id="user-dropdown-plan" data-i18n="dash.free_plan">Free Plan</span>
+                    <div class="user-dropdown-since" id="user-dropdown-since"></div>
                 </div>
                 <div class="user-dropdown-divider"></div>
                 <a href="/pricing" class="user-dropdown-item" data-i18n="dash.manage_billing">
                     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
                     Manage Billing
                 </a>
-                <div class="user-dropdown-item" onclick="showLogoutConfirm()" style="cursor:pointer;" data-i18n="nav.sign_out">
+                <div class="user-dropdown-item sign-out" onclick="showLogoutConfirm()" style="cursor:pointer;" data-i18n="nav.sign_out">
                     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
                     Sign Out
                 </div>
@@ -1031,7 +1034,7 @@ document.addEventListener('DOMContentLoaded', () => {
 <!-- Auth Modal -->
     <div class="auth-overlay" id="auth-overlay">
       <div class="auth-modal">
-        <button class="auth-close" onclick="closeAuth()" aria-label="Close">
+        <button class="auth-close" onclick="closeAuth()" aria-label="Close" data-i18n="auth.close">×</button>
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
         </button>
         <div class="auth-icon">🔑</div>
@@ -1681,5 +1684,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     </script>
 
+    <footer class="footer" data-i18n="footer.text">© 2026 Memory Bridge — API for cross-agent memory</footer>
 </body>
 </html>
