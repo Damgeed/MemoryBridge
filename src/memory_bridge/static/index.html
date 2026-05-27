@@ -962,9 +962,9 @@
         <div class="auth-icon">🔑</div>
         <div class="auth-title">Memory Bridge</div>
                     <!-- Sign In / Create Account tabs -->
-            <div class="auth-tabs" style="display:flex;margin:0.5rem 0 1rem;border:1px solid var(--border-primary);border-radius:var(--radius-md);overflow:hidden;width:100%;">
-              <button class="auth-tab active" id="auth-tab-signin" onclick="selectAuthTab('signin')" style="width:50%;flex:none;padding:0.5rem 0.75rem;border:none;background:var(--accent);color:#fff;font-size:0.88rem;font-weight:600;cursor:pointer;white-space:nowrap;">Sign In</button>
-              <button class="auth-tab" id="auth-tab-signup" onclick="selectAuthTab('signup')" style="width:50%;flex:none;padding:0.5rem 0.75rem;border:none;background:var(--bg-tertiary);color:var(--text-muted);font-size:0.88rem;font-weight:600;cursor:pointer;white-space:nowrap;">Create Account</button>
+            <div class="auth-tabs" style="display:flex;gap:0;margin:0.5rem 0 1rem;border:1px solid var(--border-primary);border-radius:var(--radius-md);overflow:hidden;width:100%;">
+              <button class="auth-tab active" id="auth-tab-signin" onclick="selectAuthTab('signin')" style="flex:1;padding:0.5rem 0;border:none;background:var(--accent);color:#fff;font-size:0.88rem;font-weight:600;cursor:pointer;">Sign In</button>
+              <button class="auth-tab" id="auth-tab-signup" onclick="selectAuthTab('signup')" style="flex:1;padding:0.5rem 0;border:none;background:transparent;color:var(--text-muted);font-size:0.88rem;font-weight:600;cursor:pointer;">Create Account</button>
             </div>
             <div class="auth-subtitle" id="auth-subtitle" data-i18n="auth.subtitle">Sign in to access your account.</div>
 
@@ -1455,13 +1455,13 @@
             if (mode === 'signin') {
                 signinTab.style.background = 'var(--accent)';
                 signinTab.style.color = '#fff';
-                signupTab.style.background = 'var(--bg-tertiary)';
+                signupTab.style.background = 'transparent';
                 signupTab.style.color = 'var(--text-muted)';
                 subtitle.textContent = 'Sign in to access your account.';
             } else {
                 signupTab.style.background = 'var(--accent)';
                 signupTab.style.color = '#fff';
-                signinTab.style.background = 'var(--bg-tertiary)';
+                signinTab.style.background = 'transparent';
                 signinTab.style.color = 'var(--text-muted)';
                 subtitle.textContent = 'Create an account to get started.';
             }
