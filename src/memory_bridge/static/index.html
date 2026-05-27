@@ -1479,6 +1479,9 @@
             document.getElementById('auth-code-step').classList.remove('active');
             document.getElementById('auth-phone-step').classList.remove('active');
             document.getElementById('auth-recovery-step').style.display = 'none';
+            document.querySelector('.auth-modal .auth-tabs')?.style?.display = '';
+            const authSub = document.getElementById('auth-subtitle');
+            if (authSub) authSub.style.display = '';
             // Clear all errors
             document.querySelectorAll('.auth-error').forEach(el => el.textContent = '');
             // Re-enable buttons
