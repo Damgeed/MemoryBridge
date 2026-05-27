@@ -2088,7 +2088,8 @@
                 return;
             }
             const fullPhone = '+' + countryCode + localNum;
-            errorEl.innerHTML = '<span class="auth-spinner"></span>';
+            const originalBtnHTML = btn.innerHTML;
+            btn.innerHTML = '<span class="spinner-sm"></span> Sending...';
             btn.disabled = true;
             try {
                 const res = await fetch('/auth/auth0/passwordless/start-sms', {
@@ -2108,6 +2109,7 @@
                         } catch {}
                     }
                     errorEl.innerHTML = '❌ ' + errMsg;
+                    btn.innerHTML = originalBtnHTML;
                     btn.disabled = false;
                     return;
                 }
@@ -2463,8 +2465,9 @@
                 });
                 if (welcomeRes.ok) {
                     const welcomeData = await welcomeRes.json();
-                    // Only set JWT if we don't already have one
-                    if (welcomeData.token && !jwt) {
+                    // Always update JWT — stripe-welcome generates a fresh token
+                    // with the correct org_id and subscription info from Stripe
+                    if (welcomeData.token) {
                         localStorage.setItem('mb_jwt', welcomeData.token);
                         jwt = welcomeData.token;
                         currentApiKey = '';

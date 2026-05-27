@@ -1656,7 +1656,8 @@ selectAuthTab(tab === 'signup' ? 'signup' : 'signin');
                 return;
             }
             const fullPhone = '+' + countryCode + localNum;
-            errorEl.innerHTML = '<span class="auth-spinner"></span>';
+            const originalBtnHTML = btn.innerHTML;
+            btn.innerHTML = '<span class="spinner-sm"></span> Sending...';
             btn.disabled = true;
             try {
 
@@ -1677,6 +1678,7 @@ selectAuthTab(tab === 'signup' ? 'signup' : 'signin');
                         } catch {}
                     }
                     errorEl.innerHTML = '❌ ' + errMsg;
+                    btn.innerHTML = originalBtnHTML;
                     btn.disabled = false;
                     return;
                 }
