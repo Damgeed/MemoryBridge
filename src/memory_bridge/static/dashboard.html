@@ -2186,7 +2186,7 @@
 
                 if (authMode === 'signin' && !checkData.exists) {
                     // No account — auto-switch to Create Account tab
-                    errorEl.innerHTML = '⚠️ No account found with this email. Redirecting to Create Account...';
+                    errorEl.innerHTML = '<span class="auth-notice">No account found with this email. Redirecting to Create Account...</span>';
                     btn.disabled = true;
                     document.getElementById('pl-email').disabled = true;
                     setTimeout(() => {
@@ -2199,7 +2199,7 @@
                 }
                 if (authMode === 'signup' && checkData.exists) {
                     // Account exists — auto-switch to Sign In tab
-                    errorEl.innerHTML = '✅ An account already exists with this email. Redirecting to Sign In...';
+                    errorEl.innerHTML = '<span class="auth-notice">An account already exists with this email. Redirecting to Sign In...</span>';
                     btn.disabled = true;
                     document.getElementById('pl-email').disabled = true;
                     setTimeout(() => {
