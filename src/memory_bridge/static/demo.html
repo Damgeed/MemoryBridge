@@ -7,6 +7,7 @@
 <link rel="icon" href="/playground/logo.svg" type="image/svg+xml">
 <link rel="stylesheet" href="/playground/style.css">
 <script src="/playground/i18n.js"></script>
+<script src="/playground/auth.js?v=1"></script>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
   :root {
@@ -1034,7 +1035,12 @@ document.addEventListener('DOMContentLoaded', () => {
         </button>
         <div class="auth-icon">🔑</div>
         <div class="auth-title" data-i18n="auth.title">Memory Bridge</div>
-        <div class="auth-subtitle" data-i18n="auth.subtitle">Sign in to manage your API keys and account.</div>
+            <!-- Sign In / Create Account tabs -->
+            <div class="auth-tabs" style="display:flex;gap:0;margin:0.5rem 0 1rem;border:1px solid var(--border-primary);border-radius:var(--radius-md);overflow:hidden;width:100%;">
+              <button class="auth-tab active" id="auth-tab-signin" onclick="selectAuthTab('signin')" style="flex:1;padding:0.5rem 0;border:none;background:var(--accent);color:#fff;font-size:0.88rem;font-weight:600;cursor:pointer;">Sign In</button>
+              <button class="auth-tab" id="auth-tab-signup" onclick="selectAuthTab('signup')" style="flex:1;padding:0.5rem 0;border:none;background:transparent;color:var(--text-muted);font-size:0.88rem;font-weight:600;cursor:pointer;">Create Account</button>
+            </div>
+            <div class="auth-subtitle" id="auth-subtitle" data-i18n="auth.subtitle">Sign in to access your account.</div>
 
         <!-- Step 1: Options (social + email) -->
         <div id="auth-options" class="auth-options">
@@ -1073,6 +1079,9 @@ document.addEventListener('DOMContentLoaded', () => {
           <input type="email" class="auth-email-field" id="pl-email" placeholder="you@example.com" autocomplete="email" onkeydown="if(event.key==='Enter')continueWithEmail()" data-i18n="auth.email_pl">
           <button class="auth-email-cta" onclick="continueWithEmail()" id="pl-email-btn" data-i18n="auth.continue">Continue →</button>
           <div class="auth-error" id="auth-error-main"></div>
+          <div style="margin-top: 0.75rem; text-align: center;">
+            <a href="#" onclick="showRecoveryForm(); return false;" style="color: var(--accent); text-decoration: none; font-size: 0.85rem; font-weight: 500; opacity: 0.85; transition: opacity 0.15s;" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0.85'">Lost your account? Recover it here →</a>
+          </div>
         </div>
 
         <!-- Step 2: Phone input -->
@@ -1304,6 +1313,24 @@ document.addEventListener('DOMContentLoaded', () => {
             Didn't get it? <a onclick="resendCode()" data-i18n="auth.resend_link">Send new code</a>
           </div>
         </div>
+
+        <!-- Step 4: Recovery -->
+        <div id="auth-recovery-step" class="auth-form" style="display:none;">
+          <button class="back-link" onclick="showAuthOptions()">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+            <span data-i18n="auth.back">Back</span>
+          </button>
+          <div class="auth-code-info">
+            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+            </svg>
+            <div class="auth-code-msg">Recover Your Account</div>
+            <div style="font-size:0.8rem;color:var(--text-muted);margin-top:0.25rem;">Enter your email to recover your API keys and subscription.</div>
+          </div>
+          <input type="email" class="auth-email-field" id="recovery-email" placeholder="you@example.com" autocomplete="email" style="margin-bottom:0.5rem;" onkeydown="if(event.key==='Enter')recoverAccount(document.getElementById('recovery-email')?.value)">
+          <button class="btn-primary auth-submit" onclick="recoverAccount(document.getElementById('recovery-email')?.value)" style="width:100%;">Recover Account →</button>
+          <div class="auth-error" id="auth-error-recovery" style="margin-top:0.5rem;"></div>
+        </div>
       </div>
     </div>
 
@@ -1314,14 +1341,39 @@ document.addEventListener('DOMContentLoaded', () => {
         let pendingPhone = '';
         let pendingMethod = 'email'; // 'email' or 'phone'
 
-        function openAuth() {
+        let authMode = 'signin'; // 'signin' or 'signup'
+
+        function openAuth(tab) {
             document.getElementById('auth-overlay').classList.add('open');
             document.body.style.overflow = 'hidden';
             showAuthOptions();
+            selectAuthTab(tab === 'signup' ? 'signup' : 'signin');
+        }
+
+        function selectAuthTab(mode) {
+            authMode = mode;
+            const signinTab = document.getElementById('auth-tab-signin');
+            const signupTab = document.getElementById('auth-tab-signup');
+            if (!signinTab || !signupTab) return;
+            const subtitle = document.getElementById('auth-subtitle');
+
+            if (mode === 'signin') {
+                signinTab.style.background = 'var(--accent)';
+                signinTab.style.color = '#fff';
+                signupTab.style.background = 'transparent';
+                signupTab.style.color = 'var(--text-muted)';
+                subtitle.textContent = 'Sign in to access your account.';
+            } else {
+                signupTab.style.background = 'var(--accent)';
+                signupTab.style.color = '#fff';
+                signinTab.style.background = 'transparent';
+                signinTab.style.color = 'var(--text-muted)';
+                subtitle.textContent = 'Create an account to get started.';
+            }
         }
 
         function socialLogin(connection) {
-            window.location.href = '/auth/auth0/login?connection=' + connection;
+            window.location.href = '/auth/auth0/login?connection=' + connection + (authMode === 'signup' ? '&screen_hint=signup' : '');
         }
 
         function closeAuth() {
@@ -1342,6 +1394,7 @@ document.addEventListener('DOMContentLoaded', () => {
             document.getElementById('pl-email').focus();
             document.getElementById('auth-code-step').classList.remove('active');
             document.getElementById('auth-phone-step').classList.remove('active');
+            document.getElementById('auth-recovery-step').style.display = 'none';
             // Clear all errors
             document.querySelectorAll('.auth-error').forEach(el => el.textContent = '');
             // Re-enable buttons
