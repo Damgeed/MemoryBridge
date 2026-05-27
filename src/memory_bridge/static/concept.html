@@ -215,9 +215,28 @@
                 </div>
                 <button class="btn-primary auth-submit" onclick="sendPhoneCode()">Send Code</button>
             </div>
+
+            <!-- Step 3: Recovery -->
+            <div id="auth-recovery-step" class="auth-form" style="display:none;">
+              <button class="back-link" onclick="document.getElementById('auth-recovery-step').style.display='none';document.getElementById('auth-options').style.display='';">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+                <span data-i18n="auth.back">Back</span>
+              </button>
+              <div class="auth-code-info">
+                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                </svg>
+                <div class="auth-code-msg">Recover Your Account</div>
+                <div style="font-size:0.8rem;color:var(--text-muted);margin-top:0.25rem;">Enter your email to recover your API keys and subscription.</div>
+              </div>
+              <input type="email" class="auth-input" id="recovery-email" placeholder="you@example.com" autocomplete="email" style="margin-bottom:0.5rem;" onkeydown="if(event.key==='Enter')recoverAccount(document.getElementById('recovery-email')?.value)">
+              <button class="btn-primary auth-submit" onclick="recoverAccount(document.getElementById('recovery-email')?.value)" style="width:100%;">Recover Account →</button>
+              <div class="auth-error" id="auth-error-recovery" style="margin-top:0.5rem;"></div>
+            </div>
+
             <div class="auth-terms">By continuing, you agree to our Terms of Service and Privacy Policy.</div>
-            <div style="margin-top: 0.6rem; text-align: center; font-size: 0.78rem;">
-                <a href="#" onclick="showRecoveryForm(); return false;" style="color: var(--text-faint); text-decoration: none; border-bottom: 1px dotted var(--border-primary);">Lost your account? Recover it here.</a>
+            <div style="margin-top: 0.75rem; text-align: center;">
+                <a href="#" onclick="showRecoveryForm(); return false;" style="color: var(--accent); text-decoration: none; font-size: 0.85rem; font-weight: 500; opacity: 0.85; transition: opacity 0.15s;" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0.85'">Lost your account? Recover it here →</a>
             </div>
         </div>
     </div>

@@ -307,68 +307,47 @@
 
   async function recoverAccount(email) {
     if (!email) {
-      if (typeof showError === 'function') showError('Email is required.');
+      const errEl = document.getElementById('auth-error-recovery');
+      if (errEl) errEl.textContent = 'Please enter your email address.';
       return;
     }
+    const errEl = document.getElementById('auth-error-recovery');
+    if (errEl) errEl.textContent = '';
     try {
-      const res = await fetch('/dashboard/recover?email=' + encodeURIComponent(email), {
-        method: 'POST',
-      });
+      const res = await fetch('/dashboard/recover?email=' + encodeURIComponent(email), { method: 'POST' });
       const data = await res.json();
-      if (!res.ok) {
-        if (typeof showError === 'function') showError(data.error || 'Recovery failed.');
-        return;
+      if (res.ok) {
+        if (data.key) localStorage.setItem(API_KEY, data.key);
+        if (data.token) localStorage.setItem(JWT_KEY, data.token);
+        if (typeof closeAuth === 'function') closeAuth();
+        if (typeof showToast === 'function') showToast('🔑 Account recovered!');
+        setTimeout(function() { window.location.href = '/dashboard'; }, 1000);
+      } else {
+        if (errEl) errEl.textContent = data.detail || data.error || 'Could not find an account with that email.';
       }
-      if (data.key) localStorage.setItem(API_KEY, data.key);
-      if (data.token) localStorage.setItem(JWT_KEY, data.token);
-      window.location.href = '/dashboard';
     } catch (e) {
-      if (typeof showError === 'function') showError('Network error during recovery.');
+      if (errEl) errEl.textContent = 'Network error. Please try again.';
     }
   }
 
   function showRecoveryForm() {
+    // Hide all auth steps
     const options = document.getElementById('auth-options');
     if (options) options.style.display = 'none';
+    const phoneStep = document.getElementById('auth-phone-step');
+    if (phoneStep) phoneStep.style.display = 'none';
+    const codeStep = document.getElementById('auth-code-step');
+    if (codeStep) codeStep.style.display = 'none';
 
-    let container = document.getElementById('recovery-form-container');
-    if (container) {
-      container.style.display = 'block';
-      return;
+    // Show recovery step
+    const recoveryStep = document.getElementById('auth-recovery-step');
+    if (recoveryStep) {
+      recoveryStep.style.display = 'block';
+      const emailInput = document.getElementById('recovery-email');
+      if (emailInput) setTimeout(function() { emailInput.focus(); }, 100);
     }
-
-    container = document.createElement('div');
-    container.id = 'recovery-form-container';
-    container.style.cssText = 'margin-top:16px;';
-
-    const emailInput = document.createElement('input');
-    emailInput.type = 'email';
-    emailInput.id = 'recovery-email';
-    emailInput.placeholder = 'Enter your email';
-    emailInput.style.cssText = 'width:100%;padding:10px;border:1px solid #ccc;border-radius:6px;font-size:14px;box-sizing:border-box;';
-
-    const recoverBtn = document.createElement('button');
-    recoverBtn.textContent = 'Recover';
-    recoverBtn.style.cssText = 'width:100%;padding:10px;margin-top:8px;background:#3b82f6;color:#fff;border:none;border-radius:6px;font-size:14px;cursor:pointer;';
-    recoverBtn.onclick = function () {
-      recoverAccount(document.getElementById('recovery-email')?.value);
-    };
-
-    const backLink = document.createElement('a');
-    backLink.href = '#';
-    backLink.textContent = '← Back';
-    backLink.style.cssText = 'display:inline-block;margin-top:8px;font-size:13px;color:#3b82f6;text-decoration:none;';
-    backLink.onclick = function (e) {
-      e.preventDefault();
-      container.style.display = 'none';
-      if (typeof showAuthOptions === 'function') showAuthOptions();
-    };
-
-    container.appendChild(emailInput);
-    container.appendChild(recoverBtn);
-    container.appendChild(backLink);
-    document.body.appendChild(container);
   }
+
 
   /* ── Password Setup ──────────────────────────────────── */
 
