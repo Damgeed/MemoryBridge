@@ -1721,6 +1721,7 @@
                 const tierLabel = data.tier === 'demo' ? 'Demo' : data.tier.charAt(0).toUpperCase() + data.tier.slice(1) + ' Plan';
                 document.getElementById('dash-status').textContent = `${tierIcon} ${tierLabel}`;
                 document.getElementById('user-dropdown-plan').textContent = tierLabel;
+                if (typeof updateAuthUI === 'function') updateAuthUI();
             } catch (e) {
                 const msg = e.message || '';
                 if (msg.includes('401') || msg.includes('Unauthorized') || msg.includes('Invalid API key') || msg.includes('Session expired')) {
@@ -1775,6 +1776,7 @@
             api('POST', '/dashboard/restore-subscription').then(data => {
                 if (data.restored && data.tier !== 'free') {
                     statusEl.textContent = '✅ Subscription restored! Reloading...';
+                    if (typeof updateAuthUI === 'function') updateAuthUI();
                     setTimeout(() => loadDashboard(), 500);
                 } else {
                     statusEl.textContent = fallback;
