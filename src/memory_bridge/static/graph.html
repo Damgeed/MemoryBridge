@@ -1060,7 +1060,7 @@
         font-family: var(--font-sans);
         cursor: pointer;
         outline: none;
-        min-width: 105px;
+        min-width: 175px;
         transition: all var(--transition-fast);
       }
       .phone-country-select select:focus {
@@ -1432,6 +1432,11 @@
 
         function updatePhoneFlag() {
             // Placeholder — the select handles display natively with emoji flags
+        }
+
+        function closeAuth() {
+            document.getElementById('auth-overlay').classList.remove('open');
+            document.body.style.overflow = '';
         }
 
         async function sendPhoneCode() {

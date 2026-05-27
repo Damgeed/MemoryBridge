@@ -1342,6 +1342,11 @@
         let pendingPhone = '';
         let pendingMethod = 'email'; // 'email' or 'phone'
 
+        function closeAuth() {
+            document.getElementById('auth-overlay').classList.remove('open');
+            document.body.style.overflow = '';
+        }
+
         function openAuth(tab) {
             document.getElementById('auth-overlay').classList.add('open');
             document.body.style.overflow = 'hidden';

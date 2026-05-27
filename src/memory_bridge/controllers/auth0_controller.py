@@ -266,7 +266,7 @@ async def passwordless_verify(
         logger.warning("Auth0 OTP verify failed: %s", error_desc)
         raise HTTPException(
             status_code=401,
-            detail=f"Auth0 error: {error_desc[:300]}"
+            detail=error_desc[:300]
         )
 
     id_token = tokens.get("id_token", "")
