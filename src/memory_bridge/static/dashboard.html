@@ -2140,7 +2140,8 @@
                 errorEl.innerHTML = '⚠️ Enter a valid email address';
                 return;
             }
-            errorEl.innerHTML = '<span class="auth-spinner"></span>';
+            const originalBtnHTML = btn.innerHTML;
+            btn.innerHTML = '<span class="spinner-sm"></span> Sending...';
             btn.disabled = true;
             try {
                 // Check if email exists — enforce sign-in vs sign-up distinction
@@ -2187,6 +2188,7 @@
                 if (!res.ok) {
                     const err = await res.json().catch(() => ({}));
                     errorEl.innerHTML = '❌ ' + (err.detail || 'Failed to send code');
+                    btn.innerHTML = originalBtnHTML;
                     btn.disabled = false;
                     return;
                 }
@@ -2208,6 +2210,7 @@
                 errorEl.innerHTML = isNetwork
                     ? '❌ Could not reach server. Check your connection.'
                     : '❌ ' + e.message;
+                btn.innerHTML = originalBtnHTML;
                 btn.disabled = false;
             }
         }
