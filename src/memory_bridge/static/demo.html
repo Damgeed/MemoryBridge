@@ -299,12 +299,13 @@
   }
   .auth-phone-input-row {
     display: flex;
+    flex-direction: column;
     gap: 0.5rem;
     margin: 1rem 0;
   }
   .phone-country-select {
     position: relative;
-    flex-shrink: 0;
+    width: 100%;
   }
   .phone-country-select select {
     appearance: none;
@@ -318,7 +319,7 @@
     font-family: var(--font-sans);
     cursor: pointer;
     outline: none;
-    min-width: 175px;
+    width: 100%;
     transition: all var(--transition-fast);
   }
   .phone-country-select select:focus {
