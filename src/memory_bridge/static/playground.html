@@ -1692,7 +1692,7 @@ selectAuthTab(tab === 'signup' ? 'signup' : 'signin');
                             if (text) errMsg = text.slice(0, 200);
                         } catch {}
                     }
-                    errorEl.innerHTML = '❌ ' + errMsg;
+                    errorEl.innerHTML = '' + errMsg;
                     btn.innerHTML = originalBtnHTML;
                     btn.disabled = false;
                     return;
@@ -1712,8 +1712,8 @@ selectAuthTab(tab === 'signup' ? 'signup' : 'signin');
             } catch (e) {
                                 const isNetwork = e.message === 'Failed to fetch' || e.name === 'TypeError' || e.message === 'NetworkError';
                 errorEl.innerHTML = isNetwork
-                    ? '❌ Could not reach server. Check your connection.'
-                    : '❌ ' + e.message;
+                    ? 'Could not reach server. Check your connection.'
+                    : '' + e.message;
                 btn.disabled = false;
             }
         }
@@ -1753,7 +1753,7 @@ selectAuthTab(tab === 'signup' ? 'signup' : 'signin');
                 });
                 if (!res.ok) {
                     const err = await res.json().catch(() => ({}));
-                    errorEl.innerHTML = '❌ ' + (err.detail || 'Failed to send code');
+                    errorEl.innerHTML = '' + (err.detail || 'Failed to send code');
                     btn.innerHTML = originalBtnHTML;
                     btn.disabled = false;
                     return;
@@ -1774,8 +1774,8 @@ selectAuthTab(tab === 'signup' ? 'signup' : 'signin');
             } catch (e) {
                                 const isNetwork = e.message === 'Failed to fetch' || e.name === 'TypeError' || e.message === 'NetworkError';
                 errorEl.innerHTML = isNetwork
-                    ? '❌ Could not reach server. Check your connection.'
-                    : '❌ ' + e.message;
+                    ? 'Could not reach server. Check your connection.'
+                    : '' + e.message;
                 btn.innerHTML = originalBtnHTML;
                 btn.disabled = false;
             }
@@ -1803,7 +1803,7 @@ selectAuthTab(tab === 'signup' ? 'signup' : 'signin');
                 });
                 if (!res.ok) {
                     const err = await res.json().catch(() => ({}));
-                    errorEl.innerHTML = '❌ ' + (err.detail || 'Verification failed');
+                    errorEl.innerHTML = '' + (err.detail || 'Verification failed');
                     btn.innerHTML = originalBtnHTML;
                     btn.disabled = false;
                     return;
@@ -1830,8 +1830,8 @@ selectAuthTab(tab === 'signup' ? 'signup' : 'signin');
             } catch (e) {
                                 const isNetwork = e.message === 'Failed to fetch' || e.name === 'TypeError' || e.message === 'NetworkError';
                 errorEl.innerHTML = isNetwork
-                    ? '❌ Could not reach server. Check your connection.'
-                    : '❌ ' + e.message;
+                    ? 'Could not reach server. Check your connection.'
+                    : '' + e.message;
                 btn.innerHTML = originalBtnHTML;
                 btn.disabled = false;
             }
@@ -1857,7 +1857,7 @@ selectAuthTab(tab === 'signup' ? 'signup' : 'signin');
                 });
                 if (!res.ok) {
                     const err = await res.json().catch(() => ({}));
-                    errorEl.innerHTML = '❌ ' + (err.detail || 'Failed to resend code');
+                    errorEl.innerHTML = '' + (err.detail || 'Failed to resend code');
                     btn.disabled = false;
                     return;
                 }
@@ -1868,8 +1868,8 @@ selectAuthTab(tab === 'signup' ? 'signup' : 'signin');
             } catch (e) {
                                 const isNetwork = e.message === 'Failed to fetch' || e.name === 'TypeError' || e.message === 'NetworkError';
                 errorEl.innerHTML = isNetwork
-                    ? '❌ Could not reach server. Check your connection.'
-                    : '❌ ' + e.message;
+                    ? 'Could not reach server. Check your connection.'
+                    : '' + e.message;
                 btn.disabled = false;
             }
         }

@@ -1,1733 +1,1734 @@
-<!DOCTYPE html>
-<html lang="en" data-theme="dark">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title data-i18n="demo.title">Memory Bridge — Demo</title>
-<link rel="icon" href="/playground/logo.svg" type="image/svg+xml">
-<link rel="stylesheet" href="/playground/style.css">
-<script src="/playground/i18n.js"></script>
-<script src="/playground/auth.js?v=1"></script>
-<style>
-  * { margin: 0; padding: 0; box-sizing: border-box; }
-  :root {
-    --bg: #0a0a0f;
-    --card: #13131a;
-    --border: #1e1e2a;
-    --text: #e2e2ee;
-    --muted: #6c7086;
-    --accent: #7c5cfc;
-    --accent2: #a78bfa;
-    --green: #4ade80;
-    --pink: #e879f9;
-    --orange: #fb923c;
-    --blue: #60a5fa;
-    --font: 'SF Mono', 'Menlo', 'Monaco', 'Courier New', monospace;
-    --log-bg: rgba(30, 30, 42, 0.5);
-  }
-  [data-theme="light"] {
-    --bg: #d4d4e6;
-    --card: #ffffff;
-    --border: #c8c8dc;
-    --text: #1a1a2e;
-    --muted: #6b6b80;
-    --accent: #6d4cf5;
-    --accent2: #8b6cf5;
-    --green: #22c55e;
-    --pink: #d946ef;
-    --orange: #ea580c;
-    --blue: #3b82f6;
-    --log-bg: rgba(200, 200, 220, 0.6);
-  }
-  body {
-    background: var(--bg);
-    color: var(--text);
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
-    overflow: hidden;
-    height: 100vh;
-    display: flex;
-    flex-direction: column;
-  }
-  /* Main area */
-  .main { display: flex; flex-direction: row; flex: 1; overflow: hidden; }
-
-  /* Left panel - terminal/logs */
-  .left {
-    flex: 1;
-    padding: 1.2rem;
-    overflow-y: auto;
-    display: flex;
-    flex-direction: column;
-    gap: 0.6rem;
-    min-width: 0;
-  }
-  .left::-webkit-scrollbar { width: 6px; }
-  .left::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
-
-  /* Right panel - diagram */
-  .right {
-    width: 45%;
-    min-width: 360px;
-    height: 100%;
-    border-left: 1px solid var(--border);
-    border-top: none;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    padding: 1.5rem;
-    position: relative;
-    flex-shrink: 0;
-  }
-
-  /* Terminal log entry */
-  .log {
-    font-family: var(--font);
-    font-size: 0.82rem;
-    line-height: 1.6;
-    padding: 0.5rem 0.7rem;
-    border-radius: 6px;
-    background: var(--log-bg);
-    border-left: 3px solid transparent;
-    opacity: 0;
-    transform: translateY(8px);
-    animation: logIn 0.4s ease forwards;
-  }
-  .log.henry { border-left-color: var(--blue); }
-  .log.nova { border-left-color: var(--pink); }
-  .log.rex { border-left-color: var(--orange); }
-  .log.fred { border-left-color: var(--green); }
-  .log.system { border-left-color: var(--accent); }
-  .log .agent {
-    display: inline-block;
-    font-weight: 700;
-    font-size: 0.72rem;
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
-    padding: 0.1rem 0.4rem;
-    border-radius: 3px;
-    margin-right: 0.4rem;
-  }
-  .log.henry .agent { background: rgba(29,78,216,0.2); color: var(--blue); }
-  .log.nova .agent { background: rgba(192,38,211,0.2); color: var(--pink); }
-  .log.rex .agent { background: rgba(217,119,6,0.2); color: var(--orange); }
-  .log.fred .agent { background: rgba(22,163,74,0.2); color: var(--green); }
-  .log.system .agent { background: rgba(91,33,182,0.2); color: var(--accent); }
-  .log .arrow { color: var(--muted); font-size: 0.7rem; }
-  .log .key { color: var(--accent2); }
-  .log .val { color: var(--text); }
-  .log .status-good { color: var(--green); }
-  .log .status-warn { color: var(--orange); }
-
-  @keyframes logIn {
-    to { opacity: 1; transform: translateY(0); }
-  }
-
-  /* Right panel - diagram elements */
-  .diagram {
-    position: relative;
-    width: 100%;
-    height: 100%;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-  }
-
-  .agent-node {
-    width: 82px;
-    height: 82px;
-    border-radius: 50%;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    font-weight: 700;
-    font-size: 0.72rem;
-    position: absolute;
-    transition: all 0.6s ease;
-    opacity: 0;
-    box-shadow: 0 0 20px rgba(0,0,0,0.3);
-  }
-  .agent-node.show { opacity: 1; }
-  .agent-node .emoji { font-size: 1.5rem; }
-  .agent-node.henry { background: linear-gradient(135deg, #1e3a5f, #2563eb); color: var(--blue); top: 5%; left: 10%; }
-  .agent-node.nova { background: linear-gradient(135deg, #4a1d6b, #a21caf); color: var(--pink); top: 5%; right: 10%; }
-  .agent-node.rex { background: linear-gradient(135deg, #5c3d1e, #d97706); color: var(--orange); bottom: 15%; left: 5%; }
-  .agent-node.fred { background: linear-gradient(135deg, #1a4731, #16a34a); color: var(--green); bottom: 15%; right: 5%; }
-
-  /* Center database */
-  .db-node {
-    width: 110px;
-    height: 110px;
-    border-radius: 50%;
-    background: linear-gradient(135deg, var(--accent), var(--pink));
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 2.2rem;
-    position: absolute;
-    box-shadow: 0 0 40px rgba(124,92,252,0.3);
-    animation: pulse 2s ease-in-out infinite;
-  }
-  @keyframes pulse {
-    0%, 100% { box-shadow: 0 0 30px rgba(124,92,252,0.2); }
-    50% { box-shadow: 0 0 60px rgba(124,92,252,0.5); }
-  }
-
-  /* Connection lines */
-  .conn {
-    position: absolute;
-    border: 1px dashed rgba(124,92,252,0.2);
-    opacity: 0;
-    transition: opacity 0.5s;
-  }
-  .conn.show { opacity: 1; }
-
-  /* Labels on connections */
-  .flow-label {
-    font-size: 0.65rem;
-    color: var(--muted);
-    position: absolute;
-    font-family: var(--font);
-    opacity: 0;
-    transition: opacity 0.3s;
-  }
-  .flow-label.show { opacity: 1; }
-
-  /* Step indicator */
-  .step-indicator {
-    position: absolute;
-    top: 1rem;
-    right: 1rem;
-    font-size: 0.72rem;
-    color: var(--muted);
-    font-family: var(--font);
-  }
-
-  /* Play / pause controls */
-  .controls {
-    position: absolute;
-    bottom: 1rem;
-    display: flex;
-    gap: 0.5rem;
-  }
-  .controls button {
-    background: var(--card);
-    border: 1px solid var(--border);
-    color: var(--text);
-    padding: 0.35rem 0.8rem;
-    border-radius: 6px;
-    cursor: pointer;
-    font-size: 0.72rem;
-    transition: all 0.2s;
-  }
-  .controls button:hover { border-color: var(--accent); color: var(--accent); }
-
-  /* Memory card floating from center */
-  .mem-card {
-    position: absolute;
-    background: var(--card);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 0.5rem 0.7rem;
-    font-size: 0.68rem;
-    font-family: var(--font);
-    max-width: 180px;
-    opacity: 0;
-    box-shadow: 0 4px 20px rgba(0,0,0,0.4);
-    z-index: 10;
-    pointer-events: none;
-    transition: opacity 0.3s;
-  }
-  .mem-card.show { opacity: 1; }
-
-  /* ── Auth Modal: Passwordless ────────────────────── */
-  .auth-email-field {
-    width: 100%;
-    padding: 0.7rem 1rem 0.7rem 2.5rem;
-    border-radius: var(--radius-sm);
-    border: 1px solid var(--border-primary);
-    background: var(--bg-glass);
-    color: var(--text-primary);
-    font-size: 0.88rem;
-    font-family: var(--font-sans);
-    transition: all var(--transition-fast);
-    outline: none;
-    box-sizing: border-box;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23888888' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='2' y='4' width='20' height='16' rx='2'/%3E%3Cpath d='M22 7l-10 7L2 7'/%3E%3C/svg%3E");
-    background-repeat: no-repeat;
-    background-position: 0.75rem center;
-    background-size: 16px;
-  }
-  .auth-email-field:focus {
-    border-color: var(--accent);
-    box-shadow: 0 0 0 2px var(--accent-glow);
-  }
-  .auth-email-field::placeholder {
-    color: var(--text-faint);
-  }
-  .auth-email-cta {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 100%;
-    padding: 0.7rem 1rem;
-    border-radius: var(--radius-sm);
-    border: none;
-    background: var(--accent-gradient);
-    color: #fff;
-    font-size: 0.88rem;
-    font-weight: 700;
-    font-family: var(--font-sans);
-    cursor: pointer;
-    transition: all var(--transition-fast);
-    gap: 0.4rem;
-  }
-  .auth-email-cta:hover {
-    opacity: 0.9;
-    transform: translateY(-1px);
-    box-shadow: var(--shadow-sm);
-  }
-  .auth-email-cta:active {
-    transform: translateY(0);
-  }
-  .auth-email-cta:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-    transform: none;
-  }
-  .auth-phone-input-row {
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
-    margin: 1rem 0;
-  }
-  .phone-country-select {
-    position: relative;
-    width: 100%;
-  }
-  .phone-country-select select {
-    appearance: none;
-    -webkit-appearance: none;
-    padding: 0.7rem 2rem 0.7rem 0.75rem;
-    border-radius: var(--radius-sm);
-    border: 1px solid var(--border-primary);
-    background: var(--bg-glass);
-    color: var(--text-primary);
-    font-size: 0.88rem;
-    font-family: var(--font-sans);
-    cursor: pointer;
-    outline: none;
-    width: 100%;
-    transition: all var(--transition-fast);
-  }
-  .phone-country-select select:focus {
-    border-color: var(--accent);
-    box-shadow: 0 0 0 2px var(--accent-glow);
-  }
-  .phone-country-select .phone-caret {
-    position: absolute;
-    right: 0.5rem;
-    top: 50%;
-    transform: translateY(-50%);
-    pointer-events: none;
-    color: var(--text-muted);
-    font-size: 0.6rem;
-  }
-  .auth-phone-input-row input {
-    flex: 1;
-    min-width: 0;
-    padding: 0.7rem 1rem;
-    border-radius: var(--radius-sm);
-    border: 1px solid var(--border-primary);
-    background: var(--bg-glass);
-    color: var(--text-primary);
-    font-size: 0.95rem;
-    font-family: var(--font-sans);
-    text-align: center;
-    outline: none;
-    box-sizing: border-box;
-    transition: all var(--transition-fast);
-  }
-  .auth-phone-input-row input:focus {
-    border-color: var(--accent);
-    box-shadow: 0 0 0 2px var(--accent-glow);
-  }
-  .auth-phone-input-row input::placeholder {
-    color: var(--text-faint);
-  }
-  .auth-code-info {
-    text-align: center;
-    padding: 1rem 0 0.75rem;
-  }
-  .auth-code-info svg {
-    margin-bottom: 0.75rem;
-  }
-  .auth-code-msg {
-    color: var(--text-secondary);
-    font-size: 0.9rem;
-  }
-  .auth-code-email {
-    font-weight: 700;
-    font-size: 1.05rem;
-    color: var(--text-primary);
-    margin-top: 0.2rem;
-  }
-  .auth-code-input-row {
-    margin: 1rem 0;
-  }
-  .auth-code-input-row input {
-    text-align: center;
-    font-size: 1.5rem;
-    font-family: var(--font-mono);
-    letter-spacing: 0.5em;
-    padding: 0.75rem 0.5rem;
-  }
-  .auth-code-resend {
-    text-align: center;
-    margin-top: 0.75rem;
-    font-size: 0.85rem;
-    color: var(--text-muted);
-  }
-  .auth-code-resend a {
-    color: var(--accent);
-    cursor: pointer;
-    text-decoration: underline;
-    text-underline-offset: 2px;
-  }
-  .auth-code-resend a:hover {
-    color: var(--accent-hover);
-  }
-
-  /* ── Q&A Grid ──────────────────────────────────────── */
-  .qa-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 1.25rem;
-  }
-  .qa-card {
-    background: var(--card);
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    padding: 1.5rem;
-    transition: all 0.2s;
-  }
-  .qa-card:hover {
-    border-color: var(--accent);
-    box-shadow: 0 4px 24px rgba(0,0,0,0.15);
-    transform: translateY(-2px);
-  }
-  .qa-card .q {
-    font-weight: 700;
-    font-size: 0.95rem;
-    margin-bottom: 0.65rem;
-    display: flex;
-    align-items: flex-start;
-    gap: 0.5rem;
-  }
-  .qa-card .q .q-icon { flex-shrink: 0; }
-  .qa-card .a {
-    color: var(--muted);
-    font-size: 0.88rem;
-    line-height: 1.65;
-  }
-  .qa-card .a code {
-    background: rgba(124,92,252,0.1);
-    padding: 0.1rem 0.35rem;
-    border-radius: 4px;
-    font-family: var(--font);
-    font-size: 0.78rem;
-    color: var(--accent);
-  }
-  .qa-card .a strong { color: var(--text); }
-
-  /* ── User Avatar + Dropdown ─────────────────────── */
-  .user-avatar-btn {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.5rem;
-    padding: 0.25rem 0.5rem 0.25rem 0.25rem;
-    border-radius: var(--radius-full);
-    border: 1px solid var(--border-primary);
-    background: transparent;
-    cursor: pointer;
-    transition: all var(--transition-fast);
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
-    color: var(--text-primary);
-  }
-  .user-avatar-btn:hover {
-    border-color: var(--accent);
-    background: rgba(124,92,252,0.1);
-  }
-  .user-avatar-circle {
-    width: 28px;
-    height: 28px;
-    border-radius: 50%;
-    background: linear-gradient(135deg, var(--accent), #e879f9);
-    color: #fff;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 0.75rem;
-    font-weight: 700;
-    flex-shrink: 0;
-    overflow: hidden;
-  }
-  .user-avatar-name {
-    font-size: 0.82rem;
-    font-weight: 600;
-    max-width: 110px;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-  .user-chevron {
-    color: var(--muted);
-    transition: transform 0.2s;
-  }
-  .user-menu.open .user-chevron {
-    transform: rotate(180deg);
-  }
-  .user-menu {
-    position: relative;
-    display: inline-flex;
-  }
-  .user-dropdown {
-    display: none;
-    position: absolute;
-    top: calc(100% + 6px);
-    right: 0;
-    min-width: 220px;
-    background: var(--card);
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    box-shadow: 0 8px 32px rgba(0,0,0,0.4);
-    z-index: 100;
-    overflow: hidden;
-    backdrop-filter: blur(16px);
-    animation: drop-in 0.15s ease;
-  }
-  @keyframes drop-in {
-    from { opacity: 0; transform: translateY(-6px); }
-    to { opacity: 1; transform: translateY(0); }
-  }
-  .user-menu.open .user-dropdown { display: block; }
-  .user-dropdown-header {
-    padding: 0.75rem 1rem;
-    display: flex;
-    flex-direction: column;
-    gap: 0.2rem;
-  }
-  .user-dropdown-email {
-    font-size: 0.85rem;
-    font-weight: 600;
-    color: var(--text);
-    word-break: break-all;
-  }
-  .user-dropdown-plan {
-    font-size: 0.72rem;
-    color: var(--muted);
-    font-weight: 500;
-  }
-  .user-dropdown-divider {
-    height: 1px;
-    background: var(--border);
-    margin: 0;
-  }
-  .user-dropdown-item {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    padding: 0.65rem 1rem;
-    font-size: 0.85rem;
-    color: var(--muted);
-    text-decoration: none;
-    transition: background var(--transition-fast);
-    cursor: pointer;
-  }
-  .user-dropdown-item svg {
-    flex-shrink: 0;
-    color: var(--muted);
-  }
-  .user-dropdown-item:hover {
-    background: rgba(30,30,42,0.5);
-    color: var(--text);
-  }
-  .user-dropdown-item:last-child:hover {
-    color: #ef4444;
-  }
-  .user-dropdown-item:last-child:hover svg {
-    color: #ef4444;
-  }
-
-  /* ── Logout Confirm Modal ────────────────────────── */
-  .logout-modal-overlay {
-    display: none;
-    position: fixed;
-    inset: 0;
-    background: rgba(0,0,0,0.6);
-    z-index: 1001;
-    backdrop-filter: blur(6px);
-  }
-  .logout-modal-overlay.open { display: block; }
-  .logout-modal {
-    display: none;
-    position: fixed;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%) scale(0.96);
-    z-index: 1002;
-    background: var(--card);
-    border: 1px solid var(--border);
-    border-radius: 16px;
-    padding: 2rem;
-    min-width: 360px;
-    max-width: 90vw;
-    box-shadow: 0 8px 32px rgba(0,0,0,0.4);
-    text-align: center;
-    opacity: 0;
-    transition: all 0.2s ease;
-  }
-  .logout-modal.open {
-    display: block;
-    opacity: 1;
-    transform: translate(-50%, -50%) scale(1);
-  }
-  .logout-modal .logout-icon {
-    width: 56px;
-    height: 56px;
-    border-radius: 50%;
-    background: rgba(239,68,68,0.12);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin: 0 auto 1rem;
-    font-size: 1.6rem;
-  }
-  .logout-modal .logout-title {
-    font-size: 1.15rem;
-    font-weight: 700;
-    margin-bottom: 0.5rem;
-    color: var(--text);
-  }
-  .logout-modal .logout-text {
-    font-size: 0.88rem;
-    color: var(--muted);
-    line-height: 1.55;
-    margin-bottom: 1.5rem;
-    max-width: 320px;
-    margin-left: auto;
-    margin-right: auto;
-  }
-  .logout-modal .logout-btns {
-    display: flex;
-    gap: 0.65rem;
-    justify-content: center;
-  }
-  .logout-modal .logout-btns .btn {
-    min-width: 120px;
-    padding: 0.6rem 1.2rem;
-    font-size: 0.9rem;
-  }
-  @media (max-width: 520px) {
-    .logout-modal {
-      min-width: unset;
-      width: 88vw;
-      padding: 1.5rem;
-    }
-    .logout-modal .logout-title { font-size: 1rem; }
-    .logout-modal .logout-text { font-size: 0.82rem; }
-    .logout-modal .logout-btns { flex-direction: column; align-items: stretch; }
-    .logout-modal .logout-btns .btn { width: 100%; text-align: center; justify-content: center; }
-    .user-dropdown { right: -40px; }
-  }
-
-  @media (max-width: 768px) {
-    .main { flex-direction: column; }
-    .left { max-height: 55vh; }
-    .right { width: 100%; min-width: unset; height: 45vh; border-left: none; border-top: 1px solid var(--border); }
-    .auth-btn-container { display: none !important; }
-    .nav-cta { display: none !important; }
-  }
-</style>
-</head>
-<body>
-<!-- Navbar (matches site theme) -->
-<nav class="navbar">
-  <a href="/" class="logo">
-    <img src="/playground/logo.svg" alt="Memory Bridge">
-    Memory <span class="logo-accent">Bridge</span>
-  </a>
-  <div class="nav-links">
-    <a href="/" data-i18n="nav.home">Home</a>
-    <a href="/playground/graph.html" data-i18n="nav.graph">Graph</a>
-    <a href="/dashboard/" data-i18n="nav.dashboard">Dashboard</a>
-    <a href="/pricing" data-i18n="nav.pricing">Pricing</a>
-  </div>
-  <div class="nav-right">
-    <div style="position:relative;display:inline-flex;">
-        <button class="nav-icon-btn lang-toggle" onclick="toggleLang()" title="Switch language" aria-label="Switch language">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <circle cx="12" cy="12" r="10"/>
-                <line x1="2" y1="12" x2="22" y2="12"/>
-                <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
-            </svg>
-        </button>
-        <div class="lang-dropdown" id="lang-dropdown">
-            <a href="javascript:void(0)" data-lang="en" class="lang-opt active" onclick="setLang('en')">🇬🇧 English</a>
-            <a href="javascript:void(0)" data-lang="zh" class="lang-opt" onclick="setLang('zh')">🇨🇳 中文</a>
-            <a href="javascript:void(0)" data-lang="ja" class="lang-opt" onclick="setLang('ja')">🇯🇵 日本語</a>
-            <a href="javascript:void(0)" data-lang="ko" class="lang-opt" onclick="setLang('ko')">🇰🇷 한국어</a>
-            <a href="javascript:void(0)" data-lang="es" class="lang-opt" onclick="setLang('es')">🇪🇸 Español</a>
-            <a href="javascript:void(0)" data-lang="fr" class="lang-opt" onclick="setLang('fr')">🇫🇷 Français</a>
-            <a href="javascript:void(0)" data-lang="de" class="lang-opt" onclick="setLang('de')">🇩🇪 Deutsch</a>
-        </div>
-    </div>
-    <button class="nav-icon-btn theme-toggle-btn" onclick="toggleDemoTheme()" title="Toggle theme" aria-label="Toggle theme">
-      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="theme-sun">
-        <circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/>
-        <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
-        <line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/>
-        <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
-      </svg>
-      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="theme-moon" style="display:none">
-        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
-      </svg>
-    </button>
-    <div class="auth-btn-container" id="auth-btn-container">
-        <button class="auth-btn" id="auth-nav-btn" onclick="openAuth()" title="Sign in / Sign up">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-            <span id="auth-btn-label" data-i18n="nav.sign_in">Sign in</span>
-        </button>
-        <div class="user-menu" id="user-menu" style="display:none;">
-            <button class="user-avatar-btn" id="user-btn" onclick="toggleUserDropdown()" title="Account menu">
-                <span class="user-avatar-circle" id="user-avatar-circle">👤</span>
-                <span class="session-dot" id="session-dot"></span>
-                <span class="user-avatar-name" id="user-avatar-name"></span>
-                <span class="user-plan-badge" id="user-plan-badge">Free</span>
-                <svg class="user-chevron" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
-            </button>
-            <div class="user-dropdown" id="user-dropdown">
-                <div class="user-dropdown-header">
-                    <span class="user-dropdown-email" id="user-dropdown-email"></span>
-                    <span class="user-dropdown-plan" id="user-dropdown-plan" data-i18n="dash.free_plan">Free Plan</span>
-                    <div class="user-dropdown-since" id="user-dropdown-since"></div>
-                </div>
-                <div class="user-dropdown-divider"></div>
-                <a href="/pricing" class="user-dropdown-item" data-i18n="dash.manage_billing">
-                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
-                    Manage Billing
-                </a>
-                <div class="user-dropdown-item sign-out" onclick="showLogoutConfirm()" style="cursor:pointer;" data-i18n="nav.sign_out">
-                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
-                    Sign Out
-                </div>
-            </div>
-        </div>
-    </div>
-    <a href="/playground/" class="nav-cta">
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-            <polygon points="5 3 19 12 5 21 5 3"/>
-        </svg>
-        <span data-i18n="nav.launch_playground">Launch Playground</span>
-    </a>
-    <button class="nav-hamburger" onclick="toggleMobileNav()" aria-label="Open menu">
-      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <line x1="4" y1="6" x2="20" y2="6"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="18" x2="20" y2="18"/>
-      </svg>
-    </button>
-  </div>
-</nav>
-
-<!-- Mobile Nav Panel -->
-<div class="nav-mobile-backdrop" id="nav-backdrop" onclick="closeMobileNav()"></div>
-<div class="nav-mobile-panel" id="nav-mobile">
-  <div class="nav-mobile-header">
-    <div class="logo">
-      <img src="/playground/logo.svg" alt="Memory Bridge">
-      Memory <span class="logo-accent">Bridge</span>
-    </div>
-    <button class="nav-mobile-close" onclick="closeMobileNav()" aria-label="Close menu">
-      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
-      </svg>
-    </button>
-  </div>
-  <a href="/" onclick="closeMobileNav()" data-i18n="nav.home">
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
-    Home
-  </a>
-  <a href="/playground/graph.html" onclick="closeMobileNav()" data-i18n="nav.graph">
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="5" cy="5" r="3"/><circle cx="19" cy="5" r="3"/><circle cx="12" cy="19" r="3"/><line x1="5" y1="5" x2="19" y2="5"/><line x1="5" y1="5" x2="12" y2="19"/><line x1="19" y1="5" x2="12" y2="19"/></svg>
-    Graph
-  </a>
-  <a href="/dashboard/" onclick="closeMobileNav()" data-i18n="nav.dashboard">
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
-    Dashboard
-  </a>
-  <a href="/pricing" onclick="closeMobileNav()" data-i18n="nav.pricing">
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
-    Pricing
-  </a>
-  <a href="javascript:void(0)" id="auth-mobile-btn" onclick="closeMobileNav();openAuth()" style="display:flex;align-items:center;gap:0.45rem;padding:0.7rem 1.25rem;border-radius:var(--radius-sm);font-size:0.88rem;font-weight:600;color:var(--accent);text-decoration:none;">
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-    <span id="auth-mobile-label" data-i18n="nav.sign_in">Sign in</span>
-  </a>
-  <div class="nav-mobile-divider"></div>
-    <a href="/playground/" class="nav-mobile-cta" onclick="closeMobileNav()" data-i18n="nav.launch_playground">
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
-    Launch Playground
-  </a>
-
-</div>
-
-<!-- Logout Confirm Modal -->
-<div class="logout-modal-overlay" id="logout-overlay" onclick="closeLogoutConfirm()"></div>
-<div class="logout-modal" id="logout-modal">
-    <div class="logout-icon">🚪</div>
-    <div class="logout-title" data-i18n="logout.title">Sign out of Memory Bridge?</div>
-    <div class="logout-text" data-i18n="logout.text">
-        You'll need to sign in again to manage API keys, view subscription details, or access your dashboard.
-    </div>
-    <div class="logout-btns">
-        <button class="btn btn-secondary" onclick="closeLogoutConfirm()" style="display:inline-flex;align-items:center;justify-content:center;gap:0.4rem;padding:0.6rem 1.2rem;font-size:0.9rem;font-weight:600;border:1px solid var(--border);border-radius:8px;cursor:pointer;font-family:inherit;background:var(--card);color:var(--text);transition:all 0.2s;" data-i18n="logout.cancel">Cancel</button>
-        <button class="btn btn-danger" id="logout-confirm-btn" onclick="logout()" style="display:inline-flex;align-items:center;justify-content:center;gap:0.4rem;padding:0.6rem 1.2rem;font-size:0.9rem;font-weight:700;border:none;border-radius:8px;cursor:pointer;font-family:inherit;background:#ef4444;color:#fff;transition:all 0.2s;" data-i18n="logout.sign_out">Sign Out</button>
-    </div>
-</div>
-
-<div class="main">
-  <div class="left" id="log-panel"></div>
-  <div class="right">
-    <svg class="conn" id="conn-h-d" style="
-      position:absolute; top:0; left:0; width:100%; height:100%;
-      pointer-events:none; z-index:0;">
-      <line id="line-hd" x1="0" y1="0" x2="0" y2="0" stroke="rgba(124,92,252,0.3)" stroke-width="1.5" stroke-dasharray="6,4"/>
-      <line id="line-nd" x1="0" y1="0" x2="0" y2="0" stroke="rgba(124,92,252,0.3)" stroke-width="1.5" stroke-dasharray="6,4"/>
-      <line id="line-rd" x1="0" y1="0" x2="0" y2="0" stroke="rgba(124,92,252,0.3)" stroke-width="1.5" stroke-dasharray="6,4"/>
-      <line id="line-fd" x1="0" y1="0" x2="0" y2="0" stroke="rgba(124,92,252,0.3)" stroke-width="1.5" stroke-dasharray="6,4"/>
-    </svg>
-
-    <div class="diagram" id="diagram">
-      <div class="db-node" id="db-node">🧠</div>
-      <div class="agent-node henry" id="agent-henry"><span class="emoji">🔬</span>HENRY</div>
-      <div class="agent-node nova" id="agent-nova"><span class="emoji">🎨</span>NOVA</div>
-      <div class="agent-node rex" id="agent-rex"><span class="emoji">🔍</span>REX</div>
-      <div class="agent-node fred" id="agent-fred"><span class="emoji">⚡</span>FRED</div>
-    </div>
-
-    <div class="step-indicator" id="step-indicator" data-i18n="demo.step_ready">Ready</div>
-    <div class="controls">
-      <button onclick="resetDemo()" data-i18n="demo.restart_btn">⟳ Restart</button>
-      <button onclick="togglePause()" id="pause-btn" data-i18n="demo.pause_btn">⏸ Pause</button>
-    </div>
-  </div>
-</div>
-
-<script>
-// ── Theme ──────────────────────────────────────────────
-(function initDemoTheme() {
-  const saved = localStorage.getItem('mb-theme');
-  const html = document.documentElement;
-  if (saved) html.setAttribute('data-theme', saved);
-  else {
-    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-    html.setAttribute('data-theme', prefersDark ? 'dark' : 'light');
-  }
-})();
-function toggleDemoTheme() {
-  const html = document.documentElement;
-  const next = html.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
-  html.setAttribute('data-theme', next);
-  localStorage.setItem('mb-theme', next);
-}
-
-// ── Mobile Nav ─────────────────────────────────────────
-function toggleMobileNav() {
-  document.getElementById('nav-backdrop').classList.toggle('open');
-  document.getElementById('nav-mobile').classList.toggle('open');
-  document.body.style.overflow = document.getElementById('nav-mobile').classList.contains('open') ? 'hidden' : '';
-}
-function closeMobileNav() {
-  document.getElementById('nav-backdrop').classList.remove('open');
-  document.getElementById('nav-mobile').classList.remove('open');
-  document.body.style.overflow = '';
-}
-
-// ── Demo script ─────────────────────────────────────────
-let paused = false;
-let timeoutId = null;
-
-function sleep(ms) {
-  return new Promise(r => { timeoutId = setTimeout(r, ms); });
-}
-
-function log(agent, msg, style = 'system') {
-  const panel = document.getElementById('log-panel');
-  const el = document.createElement('div');
-  el.className = `log ${style}`;
-  el.innerHTML = `<span class="agent">${agent}</span> ${msg}`;
-  panel.appendChild(el);
-  el.scrollIntoView({ behavior: 'smooth', block: 'end' });
-  return el;
-}
-
-function updateStep(text) {
-  document.getElementById('step-indicator').textContent = '⏳ ' + text;
-}
-
-function showAgent(id) {
-  document.getElementById(id).classList.add('show');
-}
-
-async function animateLine(fromId, toId, duration = 600) {
-  const from = document.getElementById(fromId);
-  const to = document.getElementById(toId);
-  const fromRect = from.getBoundingClientRect();
-  const toRect = to.getBoundingClientRect();
-  const diagram = document.getElementById('diagram');
-  const dRect = diagram.getBoundingClientRect();
-
-  const x1 = fromRect.left - dRect.left + fromRect.width/2;
-  const y1 = fromRect.top - dRect.top + fromRect.height/2;
-  const x2 = toRect.left - dRect.left + toRect.width/2;
-  const y2 = toRect.top - dRect.top + toRect.height/2;
-
-  const lineId = { 'agent-henry': 'line-hd', 'agent-nova': 'line-nd', 'agent-rex': 'line-rd', 'agent-fred': 'line-fd' }[fromId];
-  const line = document.getElementById(lineId);
-  if (line) {
-    line.setAttribute('x1', x1);
-    line.setAttribute('y1', y1);
-    line.setAttribute('x2', x2);
-    line.setAttribute('y2', y2);
-    line.style.opacity = 1;
-  }
-}
-
-async function runDemo() {
-  // Phase 1: System startup
-  updateStep('Initializing agent network...');
-  log('SYSTEM', 'Memory Bridge <span class="status-good">v0.2.0</span> — API for cross-agent memory', 'system');
-  await sleep(600);
-  showAgent('agent-henry');
-  log('HENRY', '<span class="status-good">online</span> · Researcher agent', 'henry');
-  await sleep(400);
-  showAgent('agent-nova');
-  log('NOVA', '<span class="status-good">online</span> · Architect / Designer agent', 'nova');
-  await sleep(400);
-  showAgent('agent-rex');
-  log('REX', '<span class="status-good">online</span> · Reviewer / Security agent', 'rex');
-  await sleep(400);
-  showAgent('agent-fred');
-  log('FRED', '<span class="status-good">online</span> · Builder / Execution agent', 'fred');
-  await sleep(600);
-
-  // Phase 2: Henry stores knowledge
-  updateStep('Henry stores user preferences...');
-  await animateLine('agent-henry', 'db-node');
-  log('HENRY', '→ <span class="key">POST /memories</span> { session_id, agent_id: "henry", key: "user_pref_language" }', 'henry');
-  await sleep(500);
-  log('HENRY', '  <span class="arrow">└─</span> <span class="val">"User prefers English, concise replies, bullet points."</span>', 'henry');
-  await sleep(300);
-  log('HENRY', '→ <span class="key">POST /memories</span> { key: "user_pref_tech_stack", value: "..." }', 'henry');
-  await sleep(300);
-  log('HENRY', '  <span class="arrow">└─</span> <span class="val">"FastAPI + PostgreSQL + Redis. Python 3.12, dark mode."</span>', 'henry');
-  await sleep(300);
-  log('MEMORY', '<span class="status-good">✓ 2 memories stored</span> · Agent: henry · Session: demo-session', 'system');
-  await sleep(800);
-
-  // Phase 3: Nova designs architecture
-  updateStep('Nova designs architecture...');
-  await animateLine('agent-nova', 'db-node');
-  log('NOVA', '→ <span class="key">POST /memories</span> { key: "arch_memory_bridge" }', 'nova');
-  await sleep(600);
-  log('NOVA', '  <span class="arrow">└─</span> <span class="val">"FastAPI backend, asyncpg PG, Redis rate limiting. Schema-per-tenant for Pro."</span>', 'nova');
-  await sleep(300);
-  log('MEMORY', '<span class="status-good">✓ Architecture stored</span> · Agent: nova', 'system');
-  await sleep(800);
-
-  // Phase 4: Rex reviews Nova's work
-  updateStep('Rex reviews architecture...');
-  await animateLine('agent-rex', 'db-node');
-  log('REX', '→ <span class="key">POST /memories/query</span> { key: "arch_memory_bridge" }', 'rex');
-  await sleep(500);
-  log('REX', '  <span class="arrow">└─</span> <span class="val">Found Nova\'s architecture plan</span>', 'rex');
-  await sleep(400);
-  log('REX', '→ <span class="key">POST /memories</span> { key: "review_arch" }', 'rex');
-  await sleep(500);
-  log('REX', '  <span class="arrow">└─</span> <span class="val">"Review: Solid. Add connection pooling, rate limit headers, Prometheus metrics."</span>', 'rex');
-  await sleep(300);
-  log('MEMORY', '<span class="status-good">✓ Review stored</span> · Rex reviewed what Nova designed — without being told', 'system');
-  await sleep(1000);
-
-  // Phase 5: Fred synthesizes
-  updateStep('Fred reads everything and builds...');
-  await animateLine('agent-fred', 'db-node');
-  log('FRED', '→ <span class="key">POST /memories/query</span> { session_id: "demo-session" }', 'fred');
-  await sleep(500);
-  log('FRED', '  <span class="arrow">└─</span> <span class="val">Found 4 memories from Henry, Nova, Rex</span>', 'fred');
-  await sleep(400);
-  log('FRED', '<span class="status-good">∘</span> Henry\'s research: language pref, tech stack', 'fred');
-  await sleep(200);
-  log('FRED', '<span class="status-good">∘</span> Nova\'s design: architecture plan', 'fred');
-  await sleep(200);
-  log('FRED', '<span class="status-good">∘</span> Rex\'s review: security recommendations', 'fred');
-  await sleep(500);
-  log('FRED', '<span class="status-good">✓ Complete picture synthesized.</span> Building execution plan...', 'fred');
-  await sleep(300);
-  log('FRED', '→ <span class="key">POST /memories</span> { key: "execution_plan" }', 'fred');
-  await sleep(300);
-  log('FRED', '  <span class="arrow">└─</span> <span class="val">"Phase 1: Auth. Phase 2: API. Phase 3: Deploy. Dependencies from Henry\'s research."</span>', 'fred');
-  await sleep(600);
-
-  // Phase 6: Summary
-  updateStep('✅ Demo complete');
-  log('SYSTEM', '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━', 'system');
-  log('SYSTEM', '<span class="status-good">✅ 4 agents · 6 memories · 1 shared database</span>', 'system');
-  log('SYSTEM', 'Henry researched → Nova designed → Rex reviewed → Fred built', 'system');
-  log('SYSTEM', 'All communicated through Memory Bridge. <span class="status-good">No meetings needed.</span>', 'system');
-  log('SYSTEM', '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━', 'system');
-  await sleep(500);
-
-  document.getElementById('step-indicator').textContent = '✅ Complete';
-}
-
-function togglePause() {
-  paused = !paused;
-  document.getElementById('pause-btn').textContent = paused ? '▶ Resume' : '⏸ Pause';
-}
-
-function resetDemo() {
-  if (timeoutId) clearTimeout(timeoutId);
-  document.getElementById('log-panel').innerHTML = '';
-  document.querySelectorAll('.agent-node').forEach(n => n.classList.remove('show'));
-  document.querySelectorAll('.conn').forEach(c => c.style.opacity = 0);
-  document.getElementById('step-indicator').textContent = 'Ready';
-  paused = false;
-  document.getElementById('pause-btn').textContent = '⏸ Pause';
-  setTimeout(runDemo, 300);
-}
-
-// Override sleep to handle pause
-const origSleep = sleep;
-async function sleep(ms) {
-  return new Promise(r => {
-    const check = () => {
-      if (!paused) {
-        timeoutId = setTimeout(r, ms);
-      } else {
-        setTimeout(check, 100);
-      }
-    };
-    check();
-  });
-}
-
-document.addEventListener('DOMContentLoaded', runDemo);
-
-// ── Language init ────────────────────────────────────────
-document.addEventListener('DOMContentLoaded', () => {
-    if (typeof initLanguage === 'function') initLanguage();
-});
-</script>
-
-<!-- Auth Modal -->
-    <div class="auth-overlay" id="auth-overlay">
-      <div class="auth-modal">
-        <button class="auth-close" onclick="closeAuth()" aria-label="Close" >
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-        </button>
-        <div class="auth-icon">🔑</div>
-        <div class="auth-title" data-i18n="auth.title">Memory Bridge</div>
-            <!-- Sign In / Create Account tabs -->
-            <div class="auth-tabs" style="display:flex;gap:0;margin:0.5rem 0 1rem;border:1px solid var(--border-primary);border-radius:var(--radius-md);overflow:hidden;width:100%;">
-              <button class="auth-tab active" id="auth-tab-signin" onclick="selectAuthTab('signin')" style="flex:1;padding:0.5rem 0;border:none;background:var(--accent);color:#fff;font-size:0.88rem;font-weight:600;cursor:pointer;">Sign In</button>
-              <button class="auth-tab" id="auth-tab-signup" onclick="selectAuthTab('signup')" style="flex:1;padding:0.5rem 0;border:none;background:transparent;color:var(--text-muted);font-size:0.88rem;font-weight:600;cursor:pointer;">Create Account</button>
-            </div>
-            <div class="auth-subtitle" id="auth-subtitle" data-i18n="auth.subtitle">Sign in to access your account.</div>
-
-        <!-- Step 1: Options (social + email) -->
-        <div id="auth-options" class="auth-options">
-          <button class="auth-social-btn" onclick="socialLogin('google-oauth2')">
-            <span class="s-icon google">
-              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 48 48">
-                <path fill="#FFC107" d="M43.611,20.083H42V20H24v8h11.303c-1.649,4.657-6.08,8-11.303,8c-6.627,0-12-5.373-12-12c0-6.627,5.373-12,12-12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C12.955,4,4,12.955,4,24c0,11.045,8.955,20,20,20c11.045,0,20-8.955,20-20C44,22.659,43.862,21.35,43.611,20.083z"/>
-                <path fill="#FF3D00" d="M6.306,14.691l6.571,4.819C14.655,15.108,18.961,12,24,12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C16.318,4,9.656,8.337,6.306,14.691z"/>
-                <path fill="#4CAF50" d="M24,44c5.166,0,9.86-1.977,13.409-5.192l-6.19-5.238C29.211,35.091,26.715,36,24,36c-5.202,0-9.619-3.317-11.283-7.946l-6.522,5.025C9.505,39.556,16.227,44,24,44z"/>
-                <path fill="#1976D2" d="M43.611,20.083H42V20H24v8h11.303c-0.792,2.237-2.231,4.166-4.087,5.571c0.001-0.001,0.002-0.001,0.003-0.002l6.19,5.238C36.971,39.205,44,34,44,24C44,22.659,43.862,21.35,43.611,20.083z"/>
-              </svg>
-            </span>
-            <span data-i18n="auth.continue_google">Continue with Google</span>
-          </button>
-          <button class="auth-social-btn" onclick="socialLogin('apple')">
-            <span class="s-icon apple">
-              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="#000">
-                <path d="M17.05 20.28c-.98.95-2.05.8-3.08.35-1.09-.46-2.09-.48-3.24 0-1.44.62-2.2.44-3.06-.35C2.79 15.25 3.51 7.59 9.05 7.31c1.35.07 2.29.74 3.08.8 1.18-.24 2.31-.93 3.57-.84 1.51.12 2.65.72 3.4 1.8-3.12 1.87-2.38 5.98.48 7.13-.57 1.5-1.31 2.99-2.54 4.09zM12.03 7.25c-.15-2.23 1.66-4.07 3.74-4.25.29 2.58-2.34 4.5-3.74 4.25z"/>
-              </svg>
-            </span>
-            <span data-i18n="auth.continue_apple">Continue with Apple</span>
-          </button>
-          <button class="auth-social-btn" onclick="phoneLogin()">
-            <span class="s-icon phone">
-              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
-              </svg>
-            </span>
-            <span data-i18n="auth.continue_phone">Continue with Phone</span>
-          </button>
-          <div class="auth-divider">
-            <hr>
-            <span data-i18n="auth.divider">or continue with email</span>
-            <hr>
-          </div>
-          <input type="email" class="auth-email-field" id="pl-email" placeholder="you@example.com" autocomplete="email" onkeydown="if(event.key==='Enter')continueWithEmail()" data-i18n="auth.email_pl">
-          <button class="auth-email-cta" onclick="continueWithEmail()" id="pl-email-btn" data-i18n="auth.continue">Continue →</button>
-          <div class="auth-error" id="auth-error-main"></div>
-          <div style="margin-top: 0.75rem; text-align: center;">
-            <a href="#" onclick="showRecoveryForm(); return false;" style="color: var(--accent); text-decoration: none; font-size: 0.85rem; font-weight: 500; opacity: 0.85; transition: opacity 0.15s;" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0.85'">Lost your account? Recover it here →</a>
-          </div>
-        </div>
-
-        <!-- Step 2: Phone input -->
-        <div id="auth-phone-step" class="auth-form">
-          <button class="back-link" onclick="showAuthOptions()" data-i18n="auth.back">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
-            Back
-          </button>
-          <div class="auth-code-info">
-            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
-            </svg>
-            <div class="auth-code-msg" data-i18n="auth.phone_title">Enter your phone number</div>
-            <div style="font-size:0.8rem;color:var(--text-muted);margin-top:0.25rem;" data-i18n="auth.phone_sms">We'll send a 6-digit code via SMS</div>
-          </div>
-          <div class="auth-phone-input-row">
-            <div class="phone-country-select">
-              <select id="pl-country-code" onchange="updatePhoneFlag()">
-                <option value="93">🇦🇫 Afghanistan +93</option>
-                <option value="355">🇦🇱 Albania +355</option>
-                <option value="213">🇩🇿 Algeria +213</option>
-                <option value="376">🇦🇩 Andorra +376</option>
-                <option value="244">🇦🇴 Angola +244</option>
-                <option value="54">🇦🇷 Argentina +54</option>
-                <option value="374">🇦🇲 Armenia +374</option>
-                <option value="297">🇦🇼 Aruba +297</option>
-                <option value="61">🇦🇺 Australia +61</option>
-                <option value="43">🇦🇹 Austria +43</option>
-                <option value="994">🇦🇿 Azerbaijan +994</option>
-                <option value="973">🇧🇭 Bahrain +973</option>
-                <option value="880">🇧🇩 Bangladesh +880</option>
-                <option value="375">🇧🇾 Belarus +375</option>
-                <option value="32">🇧🇪 Belgium +32</option>
-                <option value="501">🇧🇿 Belize +501</option>
-                <option value="229">🇧🇯 Benin +229</option>
-                <option value="975">🇧🇹 Bhutan +975</option>
-                <option value="591">🇧🇴 Bolivia +591</option>
-                <option value="387">🇧🇦 Bosnia +387</option>
-                <option value="267">🇧🇼 Botswana +267</option>
-                <option value="55">🇧🇷 Brazil +55</option>
-                <option value="673">🇧🇳 Brunei +673</option>
-                <option value="359">🇧🇬 Bulgaria +359</option>
-                <option value="226">🇧🇫 Burkina Faso +226</option>
-                <option value="257">🇧🇮 Burundi +257</option>
-                <option value="855">🇰🇭 Cambodia +855</option>
-                <option value="237">🇨🇲 Cameroon +237</option>
-                <option value="1">🇨🇦 Canada +1</option>
-                <option value="238">🇨🇻 Cape Verde +238</option>
-                <option value="236">🇨🇫 CAR +236</option>
-                <option value="235">🇹🇩 Chad +235</option>
-                <option value="56">🇨🇱 Chile +56</option>
-                <option value="86">🇨🇳 China +86</option>
-                <option value="57">🇨🇴 Colombia +57</option>
-                <option value="269">🇰🇲 Comoros +269</option>
-                <option value="243">🇨🇩 Congo (DRC) +243</option>
-                <option value="242">🇨🇬 Congo +242</option>
-                <option value="506">🇨🇷 Costa Rica +506</option>
-                <option value="385">🇭🇷 Croatia +385</option>
-                <option value="53">🇨🇺 Cuba +53</option>
-                <option value="357">🇨🇾 Cyprus +357</option>
-                <option value="420">🇨🇿 Czechia +420</option>
-                <option value="45">🇩🇰 Denmark +45</option>
-                <option value="253">🇩🇯 Djibouti +253</option>
-                <option value="593">🇪🇨 Ecuador +593</option>
-                <option value="20">🇪🇬 Egypt +20</option>
-                <option value="503">🇸🇻 El Salvador +503</option>
-                <option value="372">🇪🇪 Estonia +372</option>
-                <option value="251">🇪🇹 Ethiopia +251</option>
-                <option value="679">🇫🇯 Fiji +679</option>
-                <option value="358">🇫🇮 Finland +358</option>
-                <option value="33">🇫🇷 France +33</option>
-                <option value="241">🇬🇦 Gabon +241</option>
-                <option value="220">🇬🇲 Gambia +220</option>
-                <option value="995">🇬🇪 Georgia +995</option>
-                <option value="49">🇩🇪 Germany +49</option>
-                <option value="233">🇬🇭 Ghana +233</option>
-                <option value="30">🇬🇷 Greece +30</option>
-                <option value="299">🇬🇱 Greenland +299</option>
-                <option value="502">🇬🇹 Guatemala +502</option>
-                <option value="224">🇬🇳 Guinea +224</option>
-                <option value="245">🇬🇼 Guinea-Bissau +245</option>
-                <option value="592">🇬🇾 Guyana +592</option>
-                <option value="509">🇭🇹 Haiti +509</option>
-                <option value="504">🇭🇳 Honduras +504</option>
-                <option value="852">🇭🇰 Hong Kong +852</option>
-                <option value="36">🇭🇺 Hungary +36</option>
-                <option value="354">🇮🇸 Iceland +354</option>
-                <option value="91">🇮🇳 India +91</option>
-                <option value="62">🇮🇩 Indonesia +62</option>
-                <option value="98">🇮🇷 Iran +98</option>
-                <option value="964">🇮🇶 Iraq +964</option>
-                <option value="353">🇮🇪 Ireland +353</option>
-                <option value="972">🇮🇱 Israel +972</option>
-                <option value="39">🇮🇹 Italy +39</option>
-                <option value="225">🇨🇮 Ivory Coast +225</option>
-                <option value="81">🇯🇵 Japan +81</option>
-                <option value="962">🇯🇴 Jordan +962</option>
-                <option value="7">🇰🇿 Kazakhstan +7</option>
-                <option value="254">🇰🇪 Kenya +254</option>
-                <option value="383">🇽🇰 Kosovo +383</option>
-                <option value="965">🇰🇼 Kuwait +965</option>
-                <option value="996">🇰🇬 Kyrgyzstan +996</option>
-                <option value="856">🇱🇦 Laos +856</option>
-                <option value="371">🇱🇻 Latvia +371</option>
-                <option value="961">🇱🇧 Lebanon +961</option>
-                <option value="266">🇱🇸 Lesotho +266</option>
-                <option value="231">🇱🇷 Liberia +231</option>
-                <option value="218">🇱🇾 Libya +218</option>
-                <option value="423">🇱🇮 Liechtenstein +423</option>
-                <option value="370">🇱🇹 Lithuania +370</option>
-                <option value="352">🇱🇺 Luxembourg +352</option>
-                <option value="853">🇲🇴 Macau +853</option>
-                <option value="389">🇲🇰 North Macedonia +389</option>
-                <option value="261">🇲🇬 Madagascar +261</option>
-                <option value="265">🇲🇼 Malawi +265</option>
-                <option value="60">🇲🇾 Malaysia +60</option>
-                <option value="960">🇲🇻 Maldives +960</option>
-                <option value="223">🇲🇱 Mali +223</option>
-                <option value="356">🇲🇹 Malta +356</option>
-                <option value="222">🇲🇷 Mauritania +222</option>
-                <option value="230">🇲🇺 Mauritius +230</option>
-                <option value="52">🇲🇽 Mexico +52</option>
-                <option value="373">🇲🇩 Moldova +373</option>
-                <option value="377">🇲🇨 Monaco +377</option>
-                <option value="976">🇲🇳 Mongolia +976</option>
-                <option value="382">🇲🇪 Montenegro +382</option>
-                <option value="212">🇲🇦 Morocco +212</option>
-                <option value="258">🇲🇿 Mozambique +258</option>
-                <option value="95">🇲🇲 Myanmar +95</option>
-                <option value="264">🇳🇦 Namibia +264</option>
-                <option value="977">🇳🇵 Nepal +977</option>
-                <option value="31">🇳🇱 Netherlands +31</option>
-                <option value="64">🇳🇿 New Zealand +64</option>
-                <option value="505">🇳🇮 Nicaragua +505</option>
-                <option value="227">🇳🇪 Niger +227</option>
-                <option value="234">🇳🇬 Nigeria +234</option>
-                <option value="47">🇳🇴 Norway +47</option>
-                <option value="968">🇴🇲 Oman +968</option>
-                <option value="92">🇵🇰 Pakistan +92</option>
-                <option value="680">🇵🇼 Palau +680</option>
-                <option value="970">🇵🇸 Palestine +970</option>
-                <option value="507">🇵🇦 Panama +507</option>
-                <option value="675">🇵🇬 Papua New Guinea +675</option>
-                <option value="595">🇵🇾 Paraguay +595</option>
-                <option value="51">🇵🇪 Peru +51</option>
-                <option value="63">🇵🇭 Philippines +63</option>
-                <option value="48">🇵🇱 Poland +48</option>
-                <option value="351">🇵🇹 Portugal +351</option>
-                <option value="974">🇶🇦 Qatar +974</option>
-                <option value="40">🇷🇴 Romania +40</option>
-                <option value="7">🇷🇺 Russia +7</option>
-                <option value="250">🇷🇼 Rwanda +250</option>
-                <option value="685">🇼🇸 Samoa +685</option>
-                <option value="378">🇸🇲 San Marino +378</option>
-                <option value="239">🇸🇹 São Tomé +239</option>
-                <option value="966">🇸🇦 Saudi Arabia +966</option>
-                <option value="221">🇸🇳 Senegal +221</option>
-                <option value="381">🇷🇸 Serbia +381</option>
-                <option value="248">🇸🇨 Seychelles +248</option>
-                <option value="232">🇸🇱 Sierra Leone +232</option>
-                <option value="65" selected>🇸🇬 Singapore +65</option>
-                <option value="421">🇸🇰 Slovakia +421</option>
-                <option value="386">🇸🇮 Slovenia +386</option>
-                <option value="677">🇸🇧 Solomon Islands +677</option>
-                <option value="252">🇸🇴 Somalia +252</option>
-                <option value="27">🇿🇦 South Africa +27</option>
-                <option value="82">🇰🇷 South Korea +82</option>
-                <option value="34">🇪🇸 Spain +34</option>
-                <option value="94">🇱🇰 Sri Lanka +94</option>
-                <option value="249">🇸🇩 Sudan +249</option>
-                <option value="597">🇸🇷 Suriname +597</option>
-                <option value="268">🇸🇿 Eswatini +268</option>
-                <option value="46">🇸🇪 Sweden +46</option>
-                <option value="41">🇨🇭 Switzerland +41</option>
-                <option value="963">🇸🇾 Syria +963</option>
-                <option value="886">🇹🇼 Taiwan +886</option>
-                <option value="992">🇹🇯 Tajikistan +992</option>
-                <option value="255">🇹🇿 Tanzania +255</option>
-                <option value="66">🇹🇭 Thailand +66</option>
-                <option value="670">🇹🇱 Timor-Leste +670</option>
-                <option value="228">🇹🇬 Togo +228</option>
-                <option value="676">🇹🇴 Tonga +676</option>
-                <option value="216">🇹🇳 Tunisia +216</option>
-                <option value="90">🇹🇷 Turkey +90</option>
-                <option value="993">🇹🇲 Turkmenistan +993</option>
-                <option value="256">🇺🇬 Uganda +256</option>
-                <option value="380">🇺🇦 Ukraine +380</option>
-                <option value="971">🇦🇪 UAE +971</option>
-                <option value="44">🇬🇧 UK +44</option>
-                <option value="1">🇺🇸 US +1</option>
-                <option value="598">🇺🇾 Uruguay +598</option>
-                <option value="998">🇺🇿 Uzbekistan +998</option>
-                <option value="678">🇻🇺 Vanuatu +678</option>
-                <option value="379">🇻🇦 Vatican +379</option>
-                <option value="58">🇻🇪 Venezuela +58</option>
-                <option value="84">🇻🇳 Vietnam +84</option>
-                <option value="967">🇾🇪 Yemen +967</option>
-                <option value="260">🇿🇲 Zambia +260</option>
-                <option value="263">🇿🇼 Zimbabwe +263</option>
-              </select>
-              <span class="phone-caret">▼</span>
-            </div>
-            <input type="tel" id="pl-phone" placeholder="8123 4567" autocomplete="tel" onkeydown="if(event.key==='Enter')sendPhoneCode()" data-i18n="auth.phone_pl">
-          </div>
-          <button class="auth-email-cta" onclick="sendPhoneCode()" id="pl-phone-btn" data-i18n="auth.send_code">Send Code →</button>
-          <div class="auth-error" id="auth-error-phone"></div>
-        </div>
-
-        <!-- Step 3: Code verification -->
-        <div id="auth-code-step" class="auth-form">
-          <button class="back-link" onclick="showAuthOptions()">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
-            <span id="code-back-label" data-i18n="auth.change_email">Change email</span>
-          </button>
-          <div class="auth-code-info">
-            <svg id="code-step-icon" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-              <rect x="2" y="4" width="20" height="16" rx="2"/>
-              <path d="M22 7l-10 7L2 7"/>
-            </svg>
-            <div class="auth-code-msg" data-i18n="auth.we_sent">We sent a code to</div>
-            <div class="auth-code-email" id="code-email-display">j***@example.com</div>
-          </div>
-          <div class="auth-code-input-row">
-            <input type="text" id="pl-code" placeholder="Enter 6-digit code" maxlength="6" inputmode="numeric" autocomplete="one-time-code" onkeydown="if(event.key==='Enter')verifyCode()" data-i18n="auth.code_pl">
-          </div>
-          <button class="btn btn-primary" onclick="verifyCode()" id="pl-code-btn" data-i18n="auth.verify">Verify Code →</button>
-          <div class="auth-error" id="auth-error-code"></div>
-          <div class="auth-code-resend" data-i18n="auth.resend_text">
-            Didn't get it? <a onclick="resendCode()" data-i18n="auth.resend_link">Send new code</a>
-          </div>
-        </div>
-
-        <!-- Step 4: Recovery -->
-        <div id="auth-recovery-step" class="auth-form" style="display:none;">
-          <button class="back-link" onclick="showAuthOptions()">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
-            <span data-i18n="auth.back">Back</span>
-          </button>
-          <div class="auth-code-info">
-            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
-            </svg>
-            <div class="auth-code-msg">Recover Your Account</div>
-            <div class="recovery-subtitle" style="font-size:0.8rem;color:var(--text-muted);margin-top:0.25rem;">Enter your email to recover your API keys and subscription.</div>
-          </div>
-          <div id="recovery-email-row">
-            <input type="email" class="auth-email-field" id="recovery-email" placeholder="you@example.com" autocomplete="email" style="margin-bottom:0.5rem;" onkeydown="if(event.key==='Enter')recoverAccount(document.getElementById('recovery-email')?.value)">
-            <button class="auth-email-cta" id="recovery-btn" onclick="recoverAccount(document.getElementById('recovery-email')?.value)">Recover Account →</button>
-          </div>
-          <div id="recovery-code-section" style="display:none;">
-            <div class="auth-code-input-row">
-
-              <input type="text" id="recovery-code" placeholder="Enter 6-digit code" data-i18n="auth.code_placeholder" maxlength="6" inputmode="numeric" autocomplete="one-time-code" onkeydown="if(event.key==='Enter')recoverVerifyCode()">
-
-            </div>
-
-            <button class="btn btn-primary" id="recovery-verify-btn" onclick="recoverVerifyCode()" data-i18n="auth.verify_btn">Verify Code →</button>
-            <div style="margin-top:0.5rem;text-align:center;font-size:0.78rem;color:var(--text-muted);">
-              Didn't get it? <a href="#" onclick="recoverAccount(document.getElementById('recovery-email')?.value); return false;" style="color:var(--accent);text-decoration:none;">Send new code</a>
-            </div>
-          </div>
-          <div class="auth-error" id="auth-error-recovery" style="margin-top:0.5rem;"></div>
-        </div>
-      </div>
-    </div>
-
-    <script>
-        // ── Shared Auth ──────────────────────────────────────────────
-        let currentApiKey = '';
-        let pendingEmail = '';
-        let pendingPhone = '';
-        let pendingMethod = 'email'; // 'email' or 'phone'
-
-        let authMode = 'signin'; // 'signin' or 'signup'
-
-        function openAuth(tab) {
-            document.getElementById('auth-overlay').classList.add('open');
-            document.body.style.overflow = 'hidden';
-            showAuthOptions();
-            selectAuthTab(tab === 'signup' ? 'signup' : 'signin');
-        }
-
-        function selectAuthTab(mode) {
-            authMode = mode;
-            const signinTab = document.getElementById('auth-tab-signin');
-            const signupTab = document.getElementById('auth-tab-signup');
-            if (!signinTab || !signupTab) return;
-            const subtitle = document.getElementById('auth-subtitle');
-
-            if (mode === 'signin') {
-                signinTab.style.background = 'var(--accent)';
-                signinTab.style.color = '#fff';
-                signupTab.style.background = 'transparent';
-                signupTab.style.color = 'var(--text-muted)';
-                subtitle.textContent = 'Sign in to access your account.';
-            } else {
-                signupTab.style.background = 'var(--accent)';
-                signupTab.style.color = '#fff';
-                signinTab.style.background = 'transparent';
-                signinTab.style.color = 'var(--text-muted)';
-                subtitle.textContent = 'Create an account to get started.';
-            }
-        }
-
-        function socialLogin(connection) {
-            window.location.href = '/auth/auth0/login?connection=' + connection + (authMode === 'signup' ? '&screen_hint=signup' : '');
-        }
-
-        function closeAuth() {
-            document.getElementById('auth-overlay').classList.remove('open');
-            document.body.style.overflow = '';
-            pendingEmail = '';
-        }
-
-        function showAuthOptions() {
-            document.querySelectorAll('.auth-form').forEach(el => el.classList.remove('active'));
-            const opts = document.getElementById('auth-options');
-            opts.style.display = '';
-            // Reset code step
-            document.getElementById('pl-code').value = '';
-            document.getElementById('pl-email').value = '';
-            document.getElementById('pl-phone').value = '';
-            document.getElementById('pl-country-code').value = '65';
-            document.getElementById('pl-email').focus();
-            document.getElementById('auth-code-step').classList.remove('active');
-            document.getElementById('auth-phone-step').classList.remove('active');
-            document.getElementById('auth-recovery-step').style.display = 'none';
-            // Clear all errors
-            document.querySelectorAll('.auth-error').forEach(el => el.textContent = '');
-            // Re-enable buttons
-            document.getElementById('pl-email-btn').disabled = false;
-            document.getElementById('pl-code-btn').disabled = false;
-            document.getElementById('pl-phone-btn').disabled = false;
-            pendingMethod = 'email';
-            pendingPhone = '';
-            // Reset recovery code section
-            const recoveryCodeSection = document.getElementById('recovery-code-section');
-            if (recoveryCodeSection) recoveryCodeSection.style.display = 'none';
-            const recoveryEmailRow = document.getElementById('recovery-email-row');
-            if (recoveryEmailRow) recoveryEmailRow.style.display = '';
-            const recoveryBtn = document.getElementById('recovery-btn');
-            if (recoveryBtn) recoveryBtn.style.display = '';
-            // Reset buttons
-            const continueBtn = document.getElementById('pl-email-btn');
-            if (continueBtn) { continueBtn.innerHTML = 'Continue →'; continueBtn.disabled = false; }
-            const recoveryResetBtn = document.getElementById('recovery-btn');
-            if (recoveryResetBtn) { recoveryResetBtn.innerHTML = 'Recover Account →'; recoveryResetBtn.disabled = false; }
-            const recoveryVerifyBtn = document.getElementById('recovery-verify-btn');
-            if (recoveryVerifyBtn) { recoveryVerifyBtn.innerHTML = 'Verify Code →'; recoveryVerifyBtn.disabled = false; }
-        }
-
-        function phoneLogin() {
-            pendingMethod = 'phone';
-            document.getElementById('auth-options').style.display = 'none';
-            document.querySelectorAll('.auth-form').forEach(el => el.classList.remove('active'));
-            document.getElementById('auth-phone-step').classList.add('active');
-            document.getElementById('pl-phone').value = '';
-            document.getElementById('pl-country-code').value = '65';
-            document.getElementById('auth-error-phone').textContent = '';
-            document.getElementById('pl-phone-btn').disabled = false;
-            setTimeout(() => document.getElementById('pl-phone').focus(), 150);
-        }
-
-        async function sendPhoneCode() {
-            const countryCode = document.getElementById('pl-country-code').value;
-            const localNum = document.getElementById('pl-phone').value.trim().replace(/\s/g, '');
-            const errorEl = document.getElementById('auth-error-phone');
-            const btn = document.getElementById('pl-phone-btn');
-            if (!localNum) {
-                errorEl.innerHTML = '⚠️ Enter your phone number';
-                return;
-            }
-            const fullPhone = '+' + countryCode + localNum;
-            const originalBtnHTML = btn.innerHTML;
-            btn.innerHTML = '<span class="spinner-sm"></span> Sending...';
-            btn.disabled = true;
-            try {
-                const res = await fetch('/auth/auth0/passwordless/start-sms', {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({phone: fullPhone}),
-                });
-                if (!res.ok) {
-                    const err = await res.json().catch(() => ({}));
-                    errorEl.innerHTML = '❌ ' + (err.detail || 'Failed to send code');
-                    btn.disabled = false;
-                    return;
-                }
-                const data = await res.json();
-                pendingPhone = fullPhone;
-                // Show code verification step with phone icon
-                document.getElementById('code-back-label').textContent = 'Change phone';
-                document.getElementById('code-step-icon').innerHTML = '<path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>';
-                document.getElementById('code-email-display').textContent = data.phone || '*******' + fullPhone.slice(-4);
-                document.getElementById('auth-phone-step').classList.remove('active');
-                document.getElementById('auth-code-step').classList.add('active');
-                document.getElementById('pl-code').value = '';
-                document.getElementById('auth-error-code').textContent = '';
-                setTimeout(() => document.getElementById('pl-code').focus(), 150);
-                btn.disabled = false;
-            } catch (e) {
-    const isNetwork = e.message === 'Failed to fetch' || e.name === 'TypeError' || e.message === 'NetworkError';
-    errorEl.innerHTML = isNetwork
-        ? '❌ Could not reach server. Check your connection.'
-        : '❌ ' + e.message;
-  btn.disabled = false;
-        function updatePhoneFlag() {
-            // Placeholder — the select handles display natively with emoji flags
-        }
-
-        async function continueWithEmail() {
-            const email = document.getElementById('pl-email').value.trim();
-            const errorEl = document.getElementById('auth-error-main');
-            const btn = document.getElementById('pl-email-btn');
-            if (!email || !email.includes('@')) {
-                errorEl.innerHTML = '⚠️ Enter a valid email address';
-                return;
-            }
-            const originalBtnHTML = btn.innerHTML;
-            btn.innerHTML = '<span class=\"spinner-sm\"></span> Sending...';
-            btn.disabled = true;
-            try {
-                // Check if email exists before sending a code
-                const checkRes = await fetch('/auth/check-email', {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({email}),
-                });
-                const checkData = checkRes.ok ? await checkRes.json() : {exists: false};
-                if (!checkData.exists) {
-                    if (authMode === 'signin') {
-                        errorEl.innerHTML = '<span class="auth-notice">No account found. Try the Create Account tab.</span>';
-                        btn.innerHTML = originalBtnHTML;
-                        btn.disabled = false;
-                        return;
-                    }
-                    // authMode === 'signup' — allow through, new user registering
-                }
-                const res = await fetch('/auth/auth0/passwordless/start', {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({email}),
-                });
-                if (!res.ok) {
-                    const err = await res.json().catch(() => ({}));
-                    errorEl.innerHTML = '❌ ' + (err.detail || 'Failed to send code');
-                    btn.innerHTML = originalBtnHTML;
-                    btn.disabled = false;
-                    return;
-                }
-                const data = await res.json();
-                pendingEmail = email;
-                pendingMethod = 'email';
-                document.getElementById('code-back-label').textContent = 'Change email';
-                document.getElementById('code-step-icon').innerHTML = '<rect x=\"2\" y=\"4\" width=\"20\" height=\"16\" rx=\"2\"/><path d=\"M22 7l-10 7L2 7\"/>';
-                document.getElementById('code-email-display').textContent = data.email || email[0] + '***' + email.substring(email.indexOf('@'));
-                // Show code verification step
-                document.getElementById('auth-options').style.display = 'none';
-                document.getElementById('auth-code-step').classList.add('active');
-                document.getElementById('pl-code').value = '';
-                document.getElementById('auth-error-code').textContent = '';
-                setTimeout(() => document.getElementById('pl-code').focus(), 150);
-                btn.disabled = false;
-            } catch (e) {
-    const isNetwork = e.message === 'Failed to fetch' || e.name === 'TypeError' || e.message === 'NetworkError';
-    errorEl.innerHTML = isNetwork
-        ? '❌ Could not reach server. Check your connection.'
-        : '❌ ' + e.message;
-  btn.innerHTML = originalBtnHTML;
-  btn.disabled = false;
-        async function verifyCode() {
-            const code = document.getElementById('pl-code').value.trim();
-            const errorEl = document.getElementById('auth-error-code');
-            const btn = document.getElementById('pl-code-btn');
-            if (!code || code.length < 4) {
-                errorEl.innerHTML = '⚠️ Enter your 6-digit verification code';
-                return;
-            }
-            const originalBtnHTML = btn.innerHTML;
-            btn.innerHTML = '<span class=\"spinner-sm\"></span> Verifying...';
-            btn.disabled = true;
-            try {
-                const body = pendingMethod === 'phone'
-                    ? {phone: pendingPhone, code}
-                    : {email: pendingEmail, code};
-                const res = await fetch('/auth/auth0/passwordless/verify', {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify(body),
-                });
-                if (!res.ok) {
-                    const err = await res.json().catch(() => ({}));
-                    errorEl.innerHTML = '❌ ' + (err.detail || 'Verification failed');
-                    btn.innerHTML = originalBtnHTML;
-                    btn.disabled = false;
-                    return;
-                }
-                const data = await res.json();
-                localStorage.setItem('mb_jwt', data.token);
-                if (data.api_key) {
-                    localStorage.setItem('mb_api_key', data.api_key);
-                    currentApiKey = data.api_key;
-                }
-                updateAuthUI();
-                closeAuth();
-                window.location.reload();
-            } catch (e) {
-    const isNetwork = e.message === 'Failed to fetch' || e.name === 'TypeError' || e.message === 'NetworkError';
-    errorEl.innerHTML = isNetwork
-        ? '❌ Could not reach server. Check your connection.'
-        : '❌ ' + e.message;
-  btn.innerHTML = originalBtnHTML;
-  btn.disabled = false;
-        async function resendCode() {
-            const errorEl = document.getElementById('auth-error-code');
-            const btn = document.getElementById('pl-code-btn');
-            if (!pendingEmail && !pendingPhone) return;
-            errorEl.innerHTML = '<span class=\"auth-spinner\"></span>';
-            btn.disabled = true;
-            try {
-                const url = pendingMethod === 'phone'
-                    ? '/auth/auth0/passwordless/start-sms'
-                    : '/auth/auth0/passwordless/start';
-                const body = pendingMethod === 'phone'
-                    ? JSON.stringify({phone: pendingPhone})
-                    : JSON.stringify({email: pendingEmail});
-                const res = await fetch(url, {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body,
-                });
-                if (!res.ok) {
-                    const err = await res.json().catch(() => ({}));
-                    errorEl.innerHTML = '❌ ' + (err.detail || 'Failed to resend code');
-                    btn.disabled = false;
-                    return;
-                }
-                errorEl.innerHTML = '✅ New code sent!';
-                document.getElementById('pl-code').value = '';
-                setTimeout(() => document.getElementById('pl-code').focus(), 150);
-                btn.disabled = false;
-            } catch (e) {
-    const isNetwork = e.message === 'Failed to fetch' || e.name === 'TypeError' || e.message === 'NetworkError';
-    errorEl.innerHTML = isNetwork
-        ? '❌ Could not reach server. Check your connection.'
-        : '❌ ' + e.message;
-  btn.disabled = false;
-        function escapeHtml(str) {
-            const div = document.createElement('div');
-            div.textContent = str;
-            return div.innerHTML;
-        }
-
-        function decodeJWT(token) {
-            try {
-                const payload = token.split('.')[1];
-                return JSON.parse(atob(payload.replace(/-/g, '+').replace(/_/g, '/')));
-            } catch { return null; }
-        }
-
-        function updateAuthUI() {
-            const jwt = localStorage.getItem('mb_jwt');
-            const key = localStorage.getItem('mb_api_key');
-            const signInBtn = document.getElementById('auth-nav-btn');
-            const userMenu = document.getElementById('user-menu');
-            const mobileLabel = document.getElementById('auth-mobile-label');
-            const avatarName = document.getElementById('user-avatar-name');
-            const avatarCircle = document.getElementById('user-avatar-circle');
-            const dropdownEmail = document.getElementById('user-dropdown-email');
-
-            if (jwt && userMenu && signInBtn) {
-                signInBtn.style.display = 'none';
-                userMenu.style.display = 'inline-flex';
-
-                const claims = decodeJWT(jwt);
-                const displayName = claims?.email || claims?.name || claims?.sub || '';
-                const initial = (displayName && displayName.length > 0) ? displayName[0].toUpperCase() : '?';
-
-                if (avatarName) avatarName.textContent = displayName.length > 16 ? displayName.slice(0, 14) + '…' : displayName;
-                if (avatarCircle) avatarCircle.textContent = initial;
-                if (dropdownEmail) dropdownEmail.textContent = displayName;
-
-                if (mobileLabel) mobileLabel.textContent = 'Sign out';
-                const mobileBtn = document.getElementById('auth-mobile-btn');
-                if (mobileBtn) mobileBtn.onclick = function() { closeMobileNav(); showLogoutConfirm(); };
-            } else if (userMenu && signInBtn) {
-                signInBtn.style.display = 'inline-flex';
-                userMenu.style.display = 'none';
-                if (mobileLabel) mobileLabel.textContent = 'Sign in';
-                const mobileBtn = document.getElementById('auth-mobile-btn');
-                if (mobileBtn) mobileBtn.onclick = function() { closeMobileNav(); openAuth(); };
-            }
-        }
-
-        function toggleUserDropdown() {
-            const menu = document.getElementById('user-menu');
-            menu.classList.toggle('open');
-        }
-        // Close user dropdown on outside click
-        document.addEventListener('click', (e) => {
-            const menu = document.getElementById('user-menu');
-            if (menu && menu.classList.contains('open') && !e.target.closest('#user-menu')) {
-                menu.classList.remove('open');
-            }
-        });
-
-        function showLogoutConfirm() {
-            document.getElementById('user-menu')?.classList.remove('open');
-            document.getElementById('logout-overlay').classList.add('open');
-            document.getElementById('logout-modal').classList.add('open');
-        }
-        function closeLogoutConfirm() {
-            document.getElementById('logout-overlay').classList.remove('open');
-            document.getElementById('logout-modal').classList.remove('open');
-        }
-
-        function logout() {
-            closeLogoutConfirm();
-            localStorage.removeItem('mb_jwt');
-            localStorage.removeItem('mb_api_key');
-            currentApiKey = '';
-            updateAuthUI();
-        }
-
-        // ── Init ──────────────────────────────────────────────────
-        document.addEventListener('DOMContentLoaded', () => {
-            currentApiKey = localStorage.getItem('mb_api_key') || '';
-            const jwt = localStorage.getItem('mb_jwt');
-            if (jwt && !currentApiKey) {
-                (async () => {
-                    try {
-                        const kvRes = await fetch('/auth/my-key-value', { headers: {'Authorization': 'Bearer ' + jwt, 'Content-Type': 'application/json'} });
-                        if (kvRes.ok) { const data = await kvRes.json(); localStorage.setItem('mb_api_key', data.key); currentApiKey = data.key; }
-                    } catch (e) { localStorage.removeItem('mb_jwt'); }
-                    updateAuthUI();
-                })();
-            } else {
-                updateAuthUI();
-            }
-        });
-    </script>
-
-    <footer class="footer" data-i18n="footer.text">© 2026 Memory Bridge — API for cross-agent memory</footer>
-</body>
-</html>
+     1|<!DOCTYPE html>
+     2|<html lang="en" data-theme="dark">
+     3|<head>
+     4|<meta charset="UTF-8">
+     5|<meta name="viewport" content="width=device-width, initial-scale=1.0">
+     6|<title data-i18n="demo.title">Memory Bridge — Demo</title>
+     7|<link rel="icon" href="/playground/logo.svg" type="image/svg+xml">
+     8|<link rel="stylesheet" href="/playground/style.css">
+     9|<script src="/playground/i18n.js"></script>
+    10|<script src="/playground/auth.js?v=1"></script>
+    11|<style>
+    12|  * { margin: 0; padding: 0; box-sizing: border-box; }
+    13|  :root {
+    14|    --bg: #0a0a0f;
+    15|    --card: #13131a;
+    16|    --border: #1e1e2a;
+    17|    --text: #e2e2ee;
+    18|    --muted: #6c7086;
+    19|    --accent: #7c5cfc;
+    20|    --accent2: #a78bfa;
+    21|    --green: #4ade80;
+    22|    --pink: #e879f9;
+    23|    --orange: #fb923c;
+    24|    --blue: #60a5fa;
+    25|    --font: 'SF Mono', 'Menlo', 'Monaco', 'Courier New', monospace;
+    26|    --log-bg: rgba(30, 30, 42, 0.5);
+    27|  }
+    28|  [data-theme="light"] {
+    29|    --bg: #d4d4e6;
+    30|    --card: #ffffff;
+    31|    --border: #c8c8dc;
+    32|    --text: #1a1a2e;
+    33|    --muted: #6b6b80;
+    34|    --accent: #6d4cf5;
+    35|    --accent2: #8b6cf5;
+    36|    --green: #22c55e;
+    37|    --pink: #d946ef;
+    38|    --orange: #ea580c;
+    39|    --blue: #3b82f6;
+    40|    --log-bg: rgba(200, 200, 220, 0.6);
+    41|  }
+    42|  body {
+    43|    background: var(--bg);
+    44|    color: var(--text);
+    45|    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+    46|    overflow: hidden;
+    47|    height: 100vh;
+    48|    display: flex;
+    49|    flex-direction: column;
+    50|  }
+    51|  /* Main area */
+    52|  .main { display: flex; flex-direction: row; flex: 1; overflow: hidden; }
+    53|
+    54|  /* Left panel - terminal/logs */
+    55|  .left {
+    56|    flex: 1;
+    57|    padding: 1.2rem;
+    58|    overflow-y: auto;
+    59|    display: flex;
+    60|    flex-direction: column;
+    61|    gap: 0.6rem;
+    62|    min-width: 0;
+    63|  }
+    64|  .left::-webkit-scrollbar { width: 6px; }
+    65|  .left::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+    66|
+    67|  /* Right panel - diagram */
+    68|  .right {
+    69|    width: 45%;
+    70|    min-width: 360px;
+    71|    height: 100%;
+    72|    border-left: 1px solid var(--border);
+    73|    border-top: none;
+    74|    display: flex;
+    75|    flex-direction: column;
+    76|    align-items: center;
+    77|    justify-content: center;
+    78|    padding: 1.5rem;
+    79|    position: relative;
+    80|    flex-shrink: 0;
+    81|  }
+    82|
+    83|  /* Terminal log entry */
+    84|  .log {
+    85|    font-family: var(--font);
+    86|    font-size: 0.82rem;
+    87|    line-height: 1.6;
+    88|    padding: 0.5rem 0.7rem;
+    89|    border-radius: 6px;
+    90|    background: var(--log-bg);
+    91|    border-left: 3px solid transparent;
+    92|    opacity: 0;
+    93|    transform: translateY(8px);
+    94|    animation: logIn 0.4s ease forwards;
+    95|  }
+    96|  .log.henry { border-left-color: var(--blue); }
+    97|  .log.nova { border-left-color: var(--pink); }
+    98|  .log.rex { border-left-color: var(--orange); }
+    99|  .log.fred { border-left-color: var(--green); }
+   100|  .log.system { border-left-color: var(--accent); }
+   101|  .log .agent {
+   102|    display: inline-block;
+   103|    font-weight: 700;
+   104|    font-size: 0.72rem;
+   105|    text-transform: uppercase;
+   106|    letter-spacing: 0.04em;
+   107|    padding: 0.1rem 0.4rem;
+   108|    border-radius: 3px;
+   109|    margin-right: 0.4rem;
+   110|  }
+   111|  .log.henry .agent { background: rgba(29,78,216,0.2); color: var(--blue); }
+   112|  .log.nova .agent { background: rgba(192,38,211,0.2); color: var(--pink); }
+   113|  .log.rex .agent { background: rgba(217,119,6,0.2); color: var(--orange); }
+   114|  .log.fred .agent { background: rgba(22,163,74,0.2); color: var(--green); }
+   115|  .log.system .agent { background: rgba(91,33,182,0.2); color: var(--accent); }
+   116|  .log .arrow { color: var(--muted); font-size: 0.7rem; }
+   117|  .log .key { color: var(--accent2); }
+   118|  .log .val { color: var(--text); }
+   119|  .log .status-good { color: var(--green); }
+   120|  .log .status-warn { color: var(--orange); }
+   121|
+   122|  @keyframes logIn {
+   123|    to { opacity: 1; transform: translateY(0); }
+   124|  }
+   125|
+   126|  /* Right panel - diagram elements */
+   127|  .diagram {
+   128|    position: relative;
+   129|    width: 100%;
+   130|    height: 100%;
+   131|    display: flex;
+   132|    flex-direction: column;
+   133|    align-items: center;
+   134|    justify-content: center;
+   135|  }
+   136|
+   137|  .agent-node {
+   138|    width: 82px;
+   139|    height: 82px;
+   140|    border-radius: 50%;
+   141|    display: flex;
+   142|    flex-direction: column;
+   143|    align-items: center;
+   144|    justify-content: center;
+   145|    font-weight: 700;
+   146|    font-size: 0.72rem;
+   147|    position: absolute;
+   148|    transition: all 0.6s ease;
+   149|    opacity: 0;
+   150|    box-shadow: 0 0 20px rgba(0,0,0,0.3);
+   151|  }
+   152|  .agent-node.show { opacity: 1; }
+   153|  .agent-node .emoji { font-size: 1.5rem; }
+   154|  .agent-node.henry { background: linear-gradient(135deg, #1e3a5f, #2563eb); color: var(--blue); top: 5%; left: 10%; }
+   155|  .agent-node.nova { background: linear-gradient(135deg, #4a1d6b, #a21caf); color: var(--pink); top: 5%; right: 10%; }
+   156|  .agent-node.rex { background: linear-gradient(135deg, #5c3d1e, #d97706); color: var(--orange); bottom: 15%; left: 5%; }
+   157|  .agent-node.fred { background: linear-gradient(135deg, #1a4731, #16a34a); color: var(--green); bottom: 15%; right: 5%; }
+   158|
+   159|  /* Center database */
+   160|  .db-node {
+   161|    width: 110px;
+   162|    height: 110px;
+   163|    border-radius: 50%;
+   164|    background: linear-gradient(135deg, var(--accent), var(--pink));
+   165|    display: flex;
+   166|    align-items: center;
+   167|    justify-content: center;
+   168|    font-size: 2.2rem;
+   169|    position: absolute;
+   170|    box-shadow: 0 0 40px rgba(124,92,252,0.3);
+   171|    animation: pulse 2s ease-in-out infinite;
+   172|  }
+   173|  @keyframes pulse {
+   174|    0%, 100% { box-shadow: 0 0 30px rgba(124,92,252,0.2); }
+   175|    50% { box-shadow: 0 0 60px rgba(124,92,252,0.5); }
+   176|  }
+   177|
+   178|  /* Connection lines */
+   179|  .conn {
+   180|    position: absolute;
+   181|    border: 1px dashed rgba(124,92,252,0.2);
+   182|    opacity: 0;
+   183|    transition: opacity 0.5s;
+   184|  }
+   185|  .conn.show { opacity: 1; }
+   186|
+   187|  /* Labels on connections */
+   188|  .flow-label {
+   189|    font-size: 0.65rem;
+   190|    color: var(--muted);
+   191|    position: absolute;
+   192|    font-family: var(--font);
+   193|    opacity: 0;
+   194|    transition: opacity 0.3s;
+   195|  }
+   196|  .flow-label.show { opacity: 1; }
+   197|
+   198|  /* Step indicator */
+   199|  .step-indicator {
+   200|    position: absolute;
+   201|    top: 1rem;
+   202|    right: 1rem;
+   203|    font-size: 0.72rem;
+   204|    color: var(--muted);
+   205|    font-family: var(--font);
+   206|  }
+   207|
+   208|  /* Play / pause controls */
+   209|  .controls {
+   210|    position: absolute;
+   211|    bottom: 1rem;
+   212|    display: flex;
+   213|    gap: 0.5rem;
+   214|  }
+   215|  .controls button {
+   216|    background: var(--card);
+   217|    border: 1px solid var(--border);
+   218|    color: var(--text);
+   219|    padding: 0.35rem 0.8rem;
+   220|    border-radius: 6px;
+   221|    cursor: pointer;
+   222|    font-size: 0.72rem;
+   223|    transition: all 0.2s;
+   224|  }
+   225|  .controls button:hover { border-color: var(--accent); color: var(--accent); }
+   226|
+   227|  /* Memory card floating from center */
+   228|  .mem-card {
+   229|    position: absolute;
+   230|    background: var(--card);
+   231|    border: 1px solid var(--border);
+   232|    border-radius: 8px;
+   233|    padding: 0.5rem 0.7rem;
+   234|    font-size: 0.68rem;
+   235|    font-family: var(--font);
+   236|    max-width: 180px;
+   237|    opacity: 0;
+   238|    box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+   239|    z-index: 10;
+   240|    pointer-events: none;
+   241|    transition: opacity 0.3s;
+   242|  }
+   243|  .mem-card.show { opacity: 1; }
+   244|
+   245|  /* ── Auth Modal: Passwordless ────────────────────── */
+   246|  .auth-email-field {
+   247|    width: 100%;
+   248|    padding: 0.7rem 1rem 0.7rem 2.5rem;
+   249|    border-radius: var(--radius-sm);
+   250|    border: 1px solid var(--border-primary);
+   251|    background: var(--bg-glass);
+   252|    color: var(--text-primary);
+   253|    font-size: 0.88rem;
+   254|    font-family: var(--font-sans);
+   255|    transition: all var(--transition-fast);
+   256|    outline: none;
+   257|    box-sizing: border-box;
+   258|    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23888888' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='2' y='4' width='20' height='16' rx='2'/%3E%3Cpath d='M22 7l-10 7L2 7'/%3E%3C/svg%3E");
+   259|    background-repeat: no-repeat;
+   260|    background-position: 0.75rem center;
+   261|    background-size: 16px;
+   262|  }
+   263|  .auth-email-field:focus {
+   264|    border-color: var(--accent);
+   265|    box-shadow: 0 0 0 2px var(--accent-glow);
+   266|  }
+   267|  .auth-email-field::placeholder {
+   268|    color: var(--text-faint);
+   269|  }
+   270|  .auth-email-cta {
+   271|    display: flex;
+   272|    align-items: center;
+   273|    justify-content: center;
+   274|    width: 100%;
+   275|    padding: 0.7rem 1rem;
+   276|    border-radius: var(--radius-sm);
+   277|    border: none;
+   278|    background: var(--accent-gradient);
+   279|    color: #fff;
+   280|    font-size: 0.88rem;
+   281|    font-weight: 700;
+   282|    font-family: var(--font-sans);
+   283|    cursor: pointer;
+   284|    transition: all var(--transition-fast);
+   285|    gap: 0.4rem;
+   286|  }
+   287|  .auth-email-cta:hover {
+   288|    opacity: 0.9;
+   289|    transform: translateY(-1px);
+   290|    box-shadow: var(--shadow-sm);
+   291|  }
+   292|  .auth-email-cta:active {
+   293|    transform: translateY(0);
+   294|  }
+   295|  .auth-email-cta:disabled {
+   296|    opacity: 0.5;
+   297|    cursor: not-allowed;
+   298|    transform: none;
+   299|  }
+   300|  .auth-phone-input-row {
+   301|    display: flex;
+   302|    flex-direction: column;
+   303|    gap: 0.5rem;
+   304|    margin: 1rem 0;
+   305|  }
+   306|  .phone-country-select {
+   307|    position: relative;
+   308|    width: 100%;
+   309|  }
+   310|  .phone-country-select select {
+   311|    appearance: none;
+   312|    -webkit-appearance: none;
+   313|    padding: 0.7rem 2rem 0.7rem 0.75rem;
+   314|    border-radius: var(--radius-sm);
+   315|    border: 1px solid var(--border-primary);
+   316|    background: var(--bg-glass);
+   317|    color: var(--text-primary);
+   318|    font-size: 0.88rem;
+   319|    font-family: var(--font-sans);
+   320|    cursor: pointer;
+   321|    outline: none;
+   322|    width: 100%;
+   323|    transition: all var(--transition-fast);
+   324|  }
+   325|  .phone-country-select select:focus {
+   326|    border-color: var(--accent);
+   327|    box-shadow: 0 0 0 2px var(--accent-glow);
+   328|  }
+   329|  .phone-country-select .phone-caret {
+   330|    position: absolute;
+   331|    right: 0.5rem;
+   332|    top: 50%;
+   333|    transform: translateY(-50%);
+   334|    pointer-events: none;
+   335|    color: var(--text-muted);
+   336|    font-size: 0.6rem;
+   337|  }
+   338|  .auth-phone-input-row input {
+   339|    flex: 1;
+   340|    min-width: 0;
+   341|    padding: 0.7rem 1rem;
+   342|    border-radius: var(--radius-sm);
+   343|    border: 1px solid var(--border-primary);
+   344|    background: var(--bg-glass);
+   345|    color: var(--text-primary);
+   346|    font-size: 0.95rem;
+   347|    font-family: var(--font-sans);
+   348|    text-align: center;
+   349|    outline: none;
+   350|    box-sizing: border-box;
+   351|    transition: all var(--transition-fast);
+   352|  }
+   353|  .auth-phone-input-row input:focus {
+   354|    border-color: var(--accent);
+   355|    box-shadow: 0 0 0 2px var(--accent-glow);
+   356|  }
+   357|  .auth-phone-input-row input::placeholder {
+   358|    color: var(--text-faint);
+   359|  }
+   360|  .auth-code-info {
+   361|    text-align: center;
+   362|    padding: 1rem 0 0.75rem;
+   363|  }
+   364|  .auth-code-info svg {
+   365|    margin-bottom: 0.75rem;
+   366|  }
+   367|  .auth-code-msg {
+   368|    color: var(--text-secondary);
+   369|    font-size: 0.9rem;
+   370|  }
+   371|  .auth-code-email {
+   372|    font-weight: 700;
+   373|    font-size: 1.05rem;
+   374|    color: var(--text-primary);
+   375|    margin-top: 0.2rem;
+   376|  }
+   377|  .auth-code-input-row {
+   378|    margin: 1rem 0;
+   379|  }
+   380|  .auth-code-input-row input {
+   381|    text-align: center;
+   382|    font-size: 1.5rem;
+   383|    font-family: var(--font-mono);
+   384|    letter-spacing: 0.5em;
+   385|    padding: 0.75rem 0.5rem;
+   386|  }
+   387|  .auth-code-resend {
+   388|    text-align: center;
+   389|    margin-top: 0.75rem;
+   390|    font-size: 0.85rem;
+   391|    color: var(--text-muted);
+   392|  }
+   393|  .auth-code-resend a {
+   394|    color: var(--accent);
+   395|    cursor: pointer;
+   396|    text-decoration: underline;
+   397|    text-underline-offset: 2px;
+   398|  }
+   399|  .auth-code-resend a:hover {
+   400|    color: var(--accent-hover);
+   401|  }
+   402|
+   403|  /* ── Q&A Grid ──────────────────────────────────────── */
+   404|  .qa-grid {
+   405|    display: grid;
+   406|    grid-template-columns: 1fr 1fr;
+   407|    gap: 1.25rem;
+   408|  }
+   409|  .qa-card {
+   410|    background: var(--card);
+   411|    border: 1px solid var(--border);
+   412|    border-radius: 12px;
+   413|    padding: 1.5rem;
+   414|    transition: all 0.2s;
+   415|  }
+   416|  .qa-card:hover {
+   417|    border-color: var(--accent);
+   418|    box-shadow: 0 4px 24px rgba(0,0,0,0.15);
+   419|    transform: translateY(-2px);
+   420|  }
+   421|  .qa-card .q {
+   422|    font-weight: 700;
+   423|    font-size: 0.95rem;
+   424|    margin-bottom: 0.65rem;
+   425|    display: flex;
+   426|    align-items: flex-start;
+   427|    gap: 0.5rem;
+   428|  }
+   429|  .qa-card .q .q-icon { flex-shrink: 0; }
+   430|  .qa-card .a {
+   431|    color: var(--muted);
+   432|    font-size: 0.88rem;
+   433|    line-height: 1.65;
+   434|  }
+   435|  .qa-card .a code {
+   436|    background: rgba(124,92,252,0.1);
+   437|    padding: 0.1rem 0.35rem;
+   438|    border-radius: 4px;
+   439|    font-family: var(--font);
+   440|    font-size: 0.78rem;
+   441|    color: var(--accent);
+   442|  }
+   443|  .qa-card .a strong { color: var(--text); }
+   444|
+   445|  /* ── User Avatar + Dropdown ─────────────────────── */
+   446|  .user-avatar-btn {
+   447|    display: inline-flex;
+   448|    align-items: center;
+   449|    gap: 0.5rem;
+   450|    padding: 0.25rem 0.5rem 0.25rem 0.25rem;
+   451|    border-radius: var(--radius-full);
+   452|    border: 1px solid var(--border-primary);
+   453|    background: transparent;
+   454|    cursor: pointer;
+   455|    transition: all var(--transition-fast);
+   456|    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+   457|    color: var(--text-primary);
+   458|  }
+   459|  .user-avatar-btn:hover {
+   460|    border-color: var(--accent);
+   461|    background: rgba(124,92,252,0.1);
+   462|  }
+   463|  .user-avatar-circle {
+   464|    width: 28px;
+   465|    height: 28px;
+   466|    border-radius: 50%;
+   467|    background: linear-gradient(135deg, var(--accent), #e879f9);
+   468|    color: #fff;
+   469|    display: flex;
+   470|    align-items: center;
+   471|    justify-content: center;
+   472|    font-size: 0.75rem;
+   473|    font-weight: 700;
+   474|    flex-shrink: 0;
+   475|    overflow: hidden;
+   476|  }
+   477|  .user-avatar-name {
+   478|    font-size: 0.82rem;
+   479|    font-weight: 600;
+   480|    max-width: 110px;
+   481|    overflow: hidden;
+   482|    text-overflow: ellipsis;
+   483|    white-space: nowrap;
+   484|  }
+   485|  .user-chevron {
+   486|    color: var(--muted);
+   487|    transition: transform 0.2s;
+   488|  }
+   489|  .user-menu.open .user-chevron {
+   490|    transform: rotate(180deg);
+   491|  }
+   492|  .user-menu {
+   493|    position: relative;
+   494|    display: inline-flex;
+   495|  }
+   496|  .user-dropdown {
+   497|    display: none;
+   498|    position: absolute;
+   499|    top: calc(100% + 6px);
+   500|    right: 0;
+   501|    min-width: 220px;
+   502|    background: var(--card);
+   503|    border: 1px solid var(--border);
+   504|    border-radius: 12px;
+   505|    box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+   506|    z-index: 100;
+   507|    overflow: hidden;
+   508|    backdrop-filter: blur(16px);
+   509|    animation: drop-in 0.15s ease;
+   510|  }
+   511|  @keyframes drop-in {
+   512|    from { opacity: 0; transform: translateY(-6px); }
+   513|    to { opacity: 1; transform: translateY(0); }
+   514|  }
+   515|  .user-menu.open .user-dropdown { display: block; }
+   516|  .user-dropdown-header {
+   517|    padding: 0.75rem 1rem;
+   518|    display: flex;
+   519|    flex-direction: column;
+   520|    gap: 0.2rem;
+   521|  }
+   522|  .user-dropdown-email {
+   523|    font-size: 0.85rem;
+   524|    font-weight: 600;
+   525|    color: var(--text);
+   526|    word-break: break-all;
+   527|  }
+   528|  .user-dropdown-plan {
+   529|    font-size: 0.72rem;
+   530|    color: var(--muted);
+   531|    font-weight: 500;
+   532|  }
+   533|  .user-dropdown-divider {
+   534|    height: 1px;
+   535|    background: var(--border);
+   536|    margin: 0;
+   537|  }
+   538|  .user-dropdown-item {
+   539|    display: flex;
+   540|    align-items: center;
+   541|    gap: 0.5rem;
+   542|    padding: 0.65rem 1rem;
+   543|    font-size: 0.85rem;
+   544|    color: var(--muted);
+   545|    text-decoration: none;
+   546|    transition: background var(--transition-fast);
+   547|    cursor: pointer;
+   548|  }
+   549|  .user-dropdown-item svg {
+   550|    flex-shrink: 0;
+   551|    color: var(--muted);
+   552|  }
+   553|  .user-dropdown-item:hover {
+   554|    background: rgba(30,30,42,0.5);
+   555|    color: var(--text);
+   556|  }
+   557|  .user-dropdown-item:last-child:hover {
+   558|    color: #ef4444;
+   559|  }
+   560|  .user-dropdown-item:last-child:hover svg {
+   561|    color: #ef4444;
+   562|  }
+   563|
+   564|  /* ── Logout Confirm Modal ────────────────────────── */
+   565|  .logout-modal-overlay {
+   566|    display: none;
+   567|    position: fixed;
+   568|    inset: 0;
+   569|    background: rgba(0,0,0,0.6);
+   570|    z-index: 1001;
+   571|    backdrop-filter: blur(6px);
+   572|  }
+   573|  .logout-modal-overlay.open { display: block; }
+   574|  .logout-modal {
+   575|    display: none;
+   576|    position: fixed;
+   577|    top: 50%;
+   578|    left: 50%;
+   579|    transform: translate(-50%, -50%) scale(0.96);
+   580|    z-index: 1002;
+   581|    background: var(--card);
+   582|    border: 1px solid var(--border);
+   583|    border-radius: 16px;
+   584|    padding: 2rem;
+   585|    min-width: 360px;
+   586|    max-width: 90vw;
+   587|    box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+   588|    text-align: center;
+   589|    opacity: 0;
+   590|    transition: all 0.2s ease;
+   591|  }
+   592|  .logout-modal.open {
+   593|    display: block;
+   594|    opacity: 1;
+   595|    transform: translate(-50%, -50%) scale(1);
+   596|  }
+   597|  .logout-modal .logout-icon {
+   598|    width: 56px;
+   599|    height: 56px;
+   600|    border-radius: 50%;
+   601|    background: rgba(239,68,68,0.12);
+   602|    display: flex;
+   603|    align-items: center;
+   604|    justify-content: center;
+   605|    margin: 0 auto 1rem;
+   606|    font-size: 1.6rem;
+   607|  }
+   608|  .logout-modal .logout-title {
+   609|    font-size: 1.15rem;
+   610|    font-weight: 700;
+   611|    margin-bottom: 0.5rem;
+   612|    color: var(--text);
+   613|  }
+   614|  .logout-modal .logout-text {
+   615|    font-size: 0.88rem;
+   616|    color: var(--muted);
+   617|    line-height: 1.55;
+   618|    margin-bottom: 1.5rem;
+   619|    max-width: 320px;
+   620|    margin-left: auto;
+   621|    margin-right: auto;
+   622|  }
+   623|  .logout-modal .logout-btns {
+   624|    display: flex;
+   625|    gap: 0.65rem;
+   626|    justify-content: center;
+   627|  }
+   628|  .logout-modal .logout-btns .btn {
+   629|    min-width: 120px;
+   630|    padding: 0.6rem 1.2rem;
+   631|    font-size: 0.9rem;
+   632|  }
+   633|  @media (max-width: 520px) {
+   634|    .logout-modal {
+   635|      min-width: unset;
+   636|      width: 88vw;
+   637|      padding: 1.5rem;
+   638|    }
+   639|    .logout-modal .logout-title { font-size: 1rem; }
+   640|    .logout-modal .logout-text { font-size: 0.82rem; }
+   641|    .logout-modal .logout-btns { flex-direction: column; align-items: stretch; }
+   642|    .logout-modal .logout-btns .btn { width: 100%; text-align: center; justify-content: center; }
+   643|    .user-dropdown { right: -40px; }
+   644|  }
+   645|
+   646|  @media (max-width: 768px) {
+   647|    .main { flex-direction: column; }
+   648|    .left { max-height: 55vh; }
+   649|    .right { width: 100%; min-width: unset; height: 45vh; border-left: none; border-top: 1px solid var(--border); }
+   650|    .auth-btn-container { display: none !important; }
+   651|    .nav-cta { display: none !important; }
+   652|  }
+   653|</style>
+   654|</head>
+   655|<body>
+   656|<!-- Navbar (matches site theme) -->
+   657|<nav class="navbar">
+   658|  <a href="/" class="logo">
+   659|    <img src="/playground/logo.svg" alt="Memory Bridge">
+   660|    Memory <span class="logo-accent">Bridge</span>
+   661|  </a>
+   662|  <div class="nav-links">
+   663|    <a href="/" data-i18n="nav.home">Home</a>
+   664|    <a href="/playground/graph.html" data-i18n="nav.graph">Graph</a>
+   665|    <a href="/dashboard/" data-i18n="nav.dashboard">Dashboard</a>
+   666|    <a href="/pricing" data-i18n="nav.pricing">Pricing</a>
+   667|  </div>
+   668|  <div class="nav-right">
+   669|    <div style="position:relative;display:inline-flex;">
+   670|        <button class="nav-icon-btn lang-toggle" onclick="toggleLang()" title="Switch language" aria-label="Switch language">
+   671|            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+   672|                <circle cx="12" cy="12" r="10"/>
+   673|                <line x1="2" y1="12" x2="22" y2="12"/>
+   674|                <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+   675|            </svg>
+   676|        </button>
+   677|        <div class="lang-dropdown" id="lang-dropdown">
+   678|            <a href="javascript:void(0)" data-lang="en" class="lang-opt active" onclick="setLang('en')">🇬🇧 English</a>
+   679|            <a href="javascript:void(0)" data-lang="zh" class="lang-opt" onclick="setLang('zh')">🇨🇳 中文</a>
+   680|            <a href="javascript:void(0)" data-lang="ja" class="lang-opt" onclick="setLang('ja')">🇯🇵 日本語</a>
+   681|            <a href="javascript:void(0)" data-lang="ko" class="lang-opt" onclick="setLang('ko')">🇰🇷 한국어</a>
+   682|            <a href="javascript:void(0)" data-lang="es" class="lang-opt" onclick="setLang('es')">🇪🇸 Español</a>
+   683|            <a href="javascript:void(0)" data-lang="fr" class="lang-opt" onclick="setLang('fr')">🇫🇷 Français</a>
+   684|            <a href="javascript:void(0)" data-lang="de" class="lang-opt" onclick="setLang('de')">🇩🇪 Deutsch</a>
+   685|        </div>
+   686|    </div>
+   687|    <button class="nav-icon-btn theme-toggle-btn" onclick="toggleDemoTheme()" title="Toggle theme" aria-label="Toggle theme">
+   688|      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="theme-sun">
+   689|        <circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/>
+   690|        <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+   691|        <line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/>
+   692|        <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+   693|      </svg>
+   694|      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="theme-moon" style="display:none">
+   695|        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+   696|      </svg>
+   697|    </button>
+   698|    <div class="auth-btn-container" id="auth-btn-container">
+   699|        <button class="auth-btn" id="auth-nav-btn" onclick="openAuth()" title="Sign in / Sign up">
+   700|            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+   701|            <span id="auth-btn-label" data-i18n="nav.sign_in">Sign in</span>
+   702|        </button>
+   703|        <div class="user-menu" id="user-menu" style="display:none;">
+   704|            <button class="user-avatar-btn" id="user-btn" onclick="toggleUserDropdown()" title="Account menu">
+   705|                <span class="user-avatar-circle" id="user-avatar-circle">👤</span>
+   706|                <span class="session-dot" id="session-dot"></span>
+   707|                <span class="user-avatar-name" id="user-avatar-name"></span>
+   708|                <span class="user-plan-badge" id="user-plan-badge">Free</span>
+   709|                <svg class="user-chevron" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+   710|            </button>
+   711|            <div class="user-dropdown" id="user-dropdown">
+   712|                <div class="user-dropdown-header">
+   713|                    <span class="user-dropdown-email" id="user-dropdown-email"></span>
+   714|                    <span class="user-dropdown-plan" id="user-dropdown-plan" data-i18n="dash.free_plan">Free Plan</span>
+   715|                    <div class="user-dropdown-since" id="user-dropdown-since"></div>
+   716|                </div>
+   717|                <div class="user-dropdown-divider"></div>
+   718|                <a href="/pricing" class="user-dropdown-item" data-i18n="dash.manage_billing">
+   719|                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+   720|                    Manage Billing
+   721|                </a>
+   722|                <div class="user-dropdown-item sign-out" onclick="showLogoutConfirm()" style="cursor:pointer;" data-i18n="nav.sign_out">
+   723|                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+   724|                    Sign Out
+   725|                </div>
+   726|            </div>
+   727|        </div>
+   728|    </div>
+   729|    <a href="/playground/" class="nav-cta">
+   730|        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+   731|            <polygon points="5 3 19 12 5 21 5 3"/>
+   732|        </svg>
+   733|        <span data-i18n="nav.launch_playground">Launch Playground</span>
+   734|    </a>
+   735|    <button class="nav-hamburger" onclick="toggleMobileNav()" aria-label="Open menu">
+   736|      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+   737|        <line x1="4" y1="6" x2="20" y2="6"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="18" x2="20" y2="18"/>
+   738|      </svg>
+   739|    </button>
+   740|  </div>
+   741|</nav>
+   742|
+   743|<!-- Mobile Nav Panel -->
+   744|<div class="nav-mobile-backdrop" id="nav-backdrop" onclick="closeMobileNav()"></div>
+   745|<div class="nav-mobile-panel" id="nav-mobile">
+   746|  <div class="nav-mobile-header">
+   747|    <div class="logo">
+   748|      <img src="/playground/logo.svg" alt="Memory Bridge">
+   749|      Memory <span class="logo-accent">Bridge</span>
+   750|    </div>
+   751|    <button class="nav-mobile-close" onclick="closeMobileNav()" aria-label="Close menu">
+   752|      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+   753|        <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+   754|      </svg>
+   755|    </button>
+   756|  </div>
+   757|  <a href="/" onclick="closeMobileNav()" data-i18n="nav.home">
+   758|    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+   759|    Home
+   760|  </a>
+   761|  <a href="/playground/graph.html" onclick="closeMobileNav()" data-i18n="nav.graph">
+   762|    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="5" cy="5" r="3"/><circle cx="19" cy="5" r="3"/><circle cx="12" cy="19" r="3"/><line x1="5" y1="5" x2="19" y2="5"/><line x1="5" y1="5" x2="12" y2="19"/><line x1="19" y1="5" x2="12" y2="19"/></svg>
+   763|    Graph
+   764|  </a>
+   765|  <a href="/dashboard/" onclick="closeMobileNav()" data-i18n="nav.dashboard">
+   766|    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+   767|    Dashboard
+   768|  </a>
+   769|  <a href="/pricing" onclick="closeMobileNav()" data-i18n="nav.pricing">
+   770|    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+   771|    Pricing
+   772|  </a>
+   773|  <a href="javascript:void(0)" id="auth-mobile-btn" onclick="closeMobileNav();openAuth()" style="display:flex;align-items:center;gap:0.45rem;padding:0.7rem 1.25rem;border-radius:var(--radius-sm);font-size:0.88rem;font-weight:600;color:var(--accent);text-decoration:none;">
+   774|    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+   775|    <span id="auth-mobile-label" data-i18n="nav.sign_in">Sign in</span>
+   776|  </a>
+   777|  <div class="nav-mobile-divider"></div>
+   778|    <a href="/playground/" class="nav-mobile-cta" onclick="closeMobileNav()" data-i18n="nav.launch_playground">
+   779|    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+   780|    Launch Playground
+   781|  </a>
+   782|
+   783|</div>
+   784|
+   785|<!-- Logout Confirm Modal -->
+   786|<div class="logout-modal-overlay" id="logout-overlay" onclick="closeLogoutConfirm()"></div>
+   787|<div class="logout-modal" id="logout-modal">
+   788|    <div class="logout-icon">🚪</div>
+   789|    <div class="logout-title" data-i18n="logout.title">Sign out of Memory Bridge?</div>
+   790|    <div class="logout-text" data-i18n="logout.text">
+   791|        You'll need to sign in again to manage API keys, view subscription details, or access your dashboard.
+   792|    </div>
+   793|    <div class="logout-btns">
+   794|        <button class="btn btn-secondary" onclick="closeLogoutConfirm()" style="display:inline-flex;align-items:center;justify-content:center;gap:0.4rem;padding:0.6rem 1.2rem;font-size:0.9rem;font-weight:600;border:1px solid var(--border);border-radius:8px;cursor:pointer;font-family:inherit;background:var(--card);color:var(--text);transition:all 0.2s;" data-i18n="logout.cancel">Cancel</button>
+   795|        <button class="btn btn-danger" id="logout-confirm-btn" onclick="logout()" style="display:inline-flex;align-items:center;justify-content:center;gap:0.4rem;padding:0.6rem 1.2rem;font-size:0.9rem;font-weight:700;border:none;border-radius:8px;cursor:pointer;font-family:inherit;background:#ef4444;color:#fff;transition:all 0.2s;" data-i18n="logout.sign_out">Sign Out</button>
+   796|    </div>
+   797|</div>
+   798|
+   799|<div class="main">
+   800|  <div class="left" id="log-panel"></div>
+   801|  <div class="right">
+   802|    <svg class="conn" id="conn-h-d" style="
+   803|      position:absolute; top:0; left:0; width:100%; height:100%;
+   804|      pointer-events:none; z-index:0;">
+   805|      <line id="line-hd" x1="0" y1="0" x2="0" y2="0" stroke="rgba(124,92,252,0.3)" stroke-width="1.5" stroke-dasharray="6,4"/>
+   806|      <line id="line-nd" x1="0" y1="0" x2="0" y2="0" stroke="rgba(124,92,252,0.3)" stroke-width="1.5" stroke-dasharray="6,4"/>
+   807|      <line id="line-rd" x1="0" y1="0" x2="0" y2="0" stroke="rgba(124,92,252,0.3)" stroke-width="1.5" stroke-dasharray="6,4"/>
+   808|      <line id="line-fd" x1="0" y1="0" x2="0" y2="0" stroke="rgba(124,92,252,0.3)" stroke-width="1.5" stroke-dasharray="6,4"/>
+   809|    </svg>
+   810|
+   811|    <div class="diagram" id="diagram">
+   812|      <div class="db-node" id="db-node">🧠</div>
+   813|      <div class="agent-node henry" id="agent-henry"><span class="emoji">🔬</span>HENRY</div>
+   814|      <div class="agent-node nova" id="agent-nova"><span class="emoji">🎨</span>NOVA</div>
+   815|      <div class="agent-node rex" id="agent-rex"><span class="emoji">🔍</span>REX</div>
+   816|      <div class="agent-node fred" id="agent-fred"><span class="emoji">⚡</span>FRED</div>
+   817|    </div>
+   818|
+   819|    <div class="step-indicator" id="step-indicator" data-i18n="demo.step_ready">Ready</div>
+   820|    <div class="controls">
+   821|      <button onclick="resetDemo()" data-i18n="demo.restart_btn">⟳ Restart</button>
+   822|      <button onclick="togglePause()" id="pause-btn" data-i18n="demo.pause_btn">⏸ Pause</button>
+   823|    </div>
+   824|  </div>
+   825|</div>
+   826|
+   827|<script>
+   828|// ── Theme ──────────────────────────────────────────────
+   829|(function initDemoTheme() {
+   830|  const saved = localStorage.getItem('mb-theme');
+   831|  const html = document.documentElement;
+   832|  if (saved) html.setAttribute('data-theme', saved);
+   833|  else {
+   834|    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+   835|    html.setAttribute('data-theme', prefersDark ? 'dark' : 'light');
+   836|  }
+   837|})();
+   838|function toggleDemoTheme() {
+   839|  const html = document.documentElement;
+   840|  const next = html.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+   841|  html.setAttribute('data-theme', next);
+   842|  localStorage.setItem('mb-theme', next);
+   843|}
+   844|
+   845|// ── Mobile Nav ─────────────────────────────────────────
+   846|function toggleMobileNav() {
+   847|  document.getElementById('nav-backdrop').classList.toggle('open');
+   848|  document.getElementById('nav-mobile').classList.toggle('open');
+   849|  document.body.style.overflow = document.getElementById('nav-mobile').classList.contains('open') ? 'hidden' : '';
+   850|}
+   851|function closeMobileNav() {
+   852|  document.getElementById('nav-backdrop').classList.remove('open');
+   853|  document.getElementById('nav-mobile').classList.remove('open');
+   854|  document.body.style.overflow = '';
+   855|}
+   856|
+   857|// ── Demo script ─────────────────────────────────────────
+   858|let paused = false;
+   859|let timeoutId = null;
+   860|
+   861|function sleep(ms) {
+   862|  return new Promise(r => { timeoutId = setTimeout(r, ms); });
+   863|}
+   864|
+   865|function log(agent, msg, style = 'system') {
+   866|  const panel = document.getElementById('log-panel');
+   867|  const el = document.createElement('div');
+   868|  el.className = `log ${style}`;
+   869|  el.innerHTML = `<span class="agent">${agent}</span> ${msg}`;
+   870|  panel.appendChild(el);
+   871|  el.scrollIntoView({ behavior: 'smooth', block: 'end' });
+   872|  return el;
+   873|}
+   874|
+   875|function updateStep(text) {
+   876|  document.getElementById('step-indicator').textContent = '⏳ ' + text;
+   877|}
+   878|
+   879|function showAgent(id) {
+   880|  document.getElementById(id).classList.add('show');
+   881|}
+   882|
+   883|async function animateLine(fromId, toId, duration = 600) {
+   884|  const from = document.getElementById(fromId);
+   885|  const to = document.getElementById(toId);
+   886|  const fromRect = from.getBoundingClientRect();
+   887|  const toRect = to.getBoundingClientRect();
+   888|  const diagram = document.getElementById('diagram');
+   889|  const dRect = diagram.getBoundingClientRect();
+   890|
+   891|  const x1 = fromRect.left - dRect.left + fromRect.width/2;
+   892|  const y1 = fromRect.top - dRect.top + fromRect.height/2;
+   893|  const x2 = toRect.left - dRect.left + toRect.width/2;
+   894|  const y2 = toRect.top - dRect.top + toRect.height/2;
+   895|
+   896|  const lineId = { 'agent-henry': 'line-hd', 'agent-nova': 'line-nd', 'agent-rex': 'line-rd', 'agent-fred': 'line-fd' }[fromId];
+   897|  const line = document.getElementById(lineId);
+   898|  if (line) {
+   899|    line.setAttribute('x1', x1);
+   900|    line.setAttribute('y1', y1);
+   901|    line.setAttribute('x2', x2);
+   902|    line.setAttribute('y2', y2);
+   903|    line.style.opacity = 1;
+   904|  }
+   905|}
+   906|
+   907|async function runDemo() {
+   908|  // Phase 1: System startup
+   909|  updateStep('Initializing agent network...');
+   910|  log('SYSTEM', 'Memory Bridge <span class="status-good">v0.2.0</span> — API for cross-agent memory', 'system');
+   911|  await sleep(600);
+   912|  showAgent('agent-henry');
+   913|  log('HENRY', '<span class="status-good">online</span> · Researcher agent', 'henry');
+   914|  await sleep(400);
+   915|  showAgent('agent-nova');
+   916|  log('NOVA', '<span class="status-good">online</span> · Architect / Designer agent', 'nova');
+   917|  await sleep(400);
+   918|  showAgent('agent-rex');
+   919|  log('REX', '<span class="status-good">online</span> · Reviewer / Security agent', 'rex');
+   920|  await sleep(400);
+   921|  showAgent('agent-fred');
+   922|  log('FRED', '<span class="status-good">online</span> · Builder / Execution agent', 'fred');
+   923|  await sleep(600);
+   924|
+   925|  // Phase 2: Henry stores knowledge
+   926|  updateStep('Henry stores user preferences...');
+   927|  await animateLine('agent-henry', 'db-node');
+   928|  log('HENRY', '→ <span class="key">POST /memories</span> { session_id, agent_id: "henry", key: "user_pref_language" }', 'henry');
+   929|  await sleep(500);
+   930|  log('HENRY', '  <span class="arrow">└─</span> <span class="val">"User prefers English, concise replies, bullet points."</span>', 'henry');
+   931|  await sleep(300);
+   932|  log('HENRY', '→ <span class="key">POST /memories</span> { key: "user_pref_tech_stack", value: "..." }', 'henry');
+   933|  await sleep(300);
+   934|  log('HENRY', '  <span class="arrow">└─</span> <span class="val">"FastAPI + PostgreSQL + Redis. Python 3.12, dark mode."</span>', 'henry');
+   935|  await sleep(300);
+   936|  log('MEMORY', '<span class="status-good">✓ 2 memories stored</span> · Agent: henry · Session: demo-session', 'system');
+   937|  await sleep(800);
+   938|
+   939|  // Phase 3: Nova designs architecture
+   940|  updateStep('Nova designs architecture...');
+   941|  await animateLine('agent-nova', 'db-node');
+   942|  log('NOVA', '→ <span class="key">POST /memories</span> { key: "arch_memory_bridge" }', 'nova');
+   943|  await sleep(600);
+   944|  log('NOVA', '  <span class="arrow">└─</span> <span class="val">"FastAPI backend, asyncpg PG, Redis rate limiting. Schema-per-tenant for Pro."</span>', 'nova');
+   945|  await sleep(300);
+   946|  log('MEMORY', '<span class="status-good">✓ Architecture stored</span> · Agent: nova', 'system');
+   947|  await sleep(800);
+   948|
+   949|  // Phase 4: Rex reviews Nova's work
+   950|  updateStep('Rex reviews architecture...');
+   951|  await animateLine('agent-rex', 'db-node');
+   952|  log('REX', '→ <span class="key">POST /memories/query</span> { key: "arch_memory_bridge" }', 'rex');
+   953|  await sleep(500);
+   954|  log('REX', '  <span class="arrow">└─</span> <span class="val">Found Nova\'s architecture plan</span>', 'rex');
+   955|  await sleep(400);
+   956|  log('REX', '→ <span class="key">POST /memories</span> { key: "review_arch" }', 'rex');
+   957|  await sleep(500);
+   958|  log('REX', '  <span class="arrow">└─</span> <span class="val">"Review: Solid. Add connection pooling, rate limit headers, Prometheus metrics."</span>', 'rex');
+   959|  await sleep(300);
+   960|  log('MEMORY', '<span class="status-good">✓ Review stored</span> · Rex reviewed what Nova designed — without being told', 'system');
+   961|  await sleep(1000);
+   962|
+   963|  // Phase 5: Fred synthesizes
+   964|  updateStep('Fred reads everything and builds...');
+   965|  await animateLine('agent-fred', 'db-node');
+   966|  log('FRED', '→ <span class="key">POST /memories/query</span> { session_id: "demo-session" }', 'fred');
+   967|  await sleep(500);
+   968|  log('FRED', '  <span class="arrow">└─</span> <span class="val">Found 4 memories from Henry, Nova, Rex</span>', 'fred');
+   969|  await sleep(400);
+   970|  log('FRED', '<span class="status-good">∘</span> Henry\'s research: language pref, tech stack', 'fred');
+   971|  await sleep(200);
+   972|  log('FRED', '<span class="status-good">∘</span> Nova\'s design: architecture plan', 'fred');
+   973|  await sleep(200);
+   974|  log('FRED', '<span class="status-good">∘</span> Rex\'s review: security recommendations', 'fred');
+   975|  await sleep(500);
+   976|  log('FRED', '<span class="status-good">✓ Complete picture synthesized.</span> Building execution plan...', 'fred');
+   977|  await sleep(300);
+   978|  log('FRED', '→ <span class="key">POST /memories</span> { key: "execution_plan" }', 'fred');
+   979|  await sleep(300);
+   980|  log('FRED', '  <span class="arrow">└─</span> <span class="val">"Phase 1: Auth. Phase 2: API. Phase 3: Deploy. Dependencies from Henry\'s research."</span>', 'fred');
+   981|  await sleep(600);
+   982|
+   983|  // Phase 6: Summary
+   984|  updateStep('✅ Demo complete');
+   985|  log('SYSTEM', '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━', 'system');
+   986|  log('SYSTEM', '<span class="status-good">✅ 4 agents · 6 memories · 1 shared database</span>', 'system');
+   987|  log('SYSTEM', 'Henry researched → Nova designed → Rex reviewed → Fred built', 'system');
+   988|  log('SYSTEM', 'All communicated through Memory Bridge. <span class="status-good">No meetings needed.</span>', 'system');
+   989|  log('SYSTEM', '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━', 'system');
+   990|  await sleep(500);
+   991|
+   992|  document.getElementById('step-indicator').textContent = '✅ Complete';
+   993|}
+   994|
+   995|function togglePause() {
+   996|  paused = !paused;
+   997|  document.getElementById('pause-btn').textContent = paused ? '▶ Resume' : '⏸ Pause';
+   998|}
+   999|
+  1000|function resetDemo() {
+  1001|  if (timeoutId) clearTimeout(timeoutId);
+  1002|  document.getElementById('log-panel').innerHTML = '';
+  1003|  document.querySelectorAll('.agent-node').forEach(n => n.classList.remove('show'));
+  1004|  document.querySelectorAll('.conn').forEach(c => c.style.opacity = 0);
+  1005|  document.getElementById('step-indicator').textContent = 'Ready';
+  1006|  paused = false;
+  1007|  document.getElementById('pause-btn').textContent = '⏸ Pause';
+  1008|  setTimeout(runDemo, 300);
+  1009|}
+  1010|
+  1011|// Override sleep to handle pause
+  1012|const origSleep = sleep;
+  1013|async function sleep(ms) {
+  1014|  return new Promise(r => {
+  1015|    const check = () => {
+  1016|      if (!paused) {
+  1017|        timeoutId = setTimeout(r, ms);
+  1018|      } else {
+  1019|        setTimeout(check, 100);
+  1020|      }
+  1021|    };
+  1022|    check();
+  1023|  });
+  1024|}
+  1025|
+  1026|document.addEventListener('DOMContentLoaded', runDemo);
+  1027|
+  1028|// ── Language init ────────────────────────────────────────
+  1029|document.addEventListener('DOMContentLoaded', () => {
+  1030|    if (typeof initLanguage === 'function') initLanguage();
+  1031|});
+  1032|</script>
+  1033|
+  1034|<!-- Auth Modal -->
+  1035|    <div class="auth-overlay" id="auth-overlay">
+  1036|      <div class="auth-modal">
+  1037|        <button class="auth-close" onclick="closeAuth()" aria-label="Close" >
+  1038|          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+  1039|        </button>
+  1040|        <div class="auth-icon">🔑</div>
+  1041|        <div class="auth-title" data-i18n="auth.title">Memory Bridge</div>
+  1042|            <!-- Sign In / Create Account tabs -->
+  1043|            <div class="auth-tabs" style="display:flex;gap:0;margin:0.5rem 0 1rem;border:1px solid var(--border-primary);border-radius:var(--radius-md);overflow:hidden;width:100%;">
+  1044|              <button class="auth-tab active" id="auth-tab-signin" onclick="selectAuthTab('signin')" style="flex:1;padding:0.5rem 0;border:none;background:var(--accent);color:#fff;font-size:0.88rem;font-weight:600;cursor:pointer;">Sign In</button>
+  1045|              <button class="auth-tab" id="auth-tab-signup" onclick="selectAuthTab('signup')" style="flex:1;padding:0.5rem 0;border:none;background:transparent;color:var(--text-muted);font-size:0.88rem;font-weight:600;cursor:pointer;">Create Account</button>
+  1046|            </div>
+  1047|            <div class="auth-subtitle" id="auth-subtitle" data-i18n="auth.subtitle">Sign in to access your account.</div>
+  1048|
+  1049|        <!-- Step 1: Options (social + email) -->
+  1050|        <div id="auth-options" class="auth-options">
+  1051|          <button class="auth-social-btn" onclick="socialLogin('google-oauth2')">
+  1052|            <span class="s-icon google">
+  1053|              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 48 48">
+  1054|                <path fill="#FFC107" d="M43.611,20.083H42V20H24v8h11.303c-1.649,4.657-6.08,8-11.303,8c-6.627,0-12-5.373-12-12c0-6.627,5.373-12,12-12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C12.955,4,4,12.955,4,24c0,11.045,8.955,20,20,20c11.045,0,20-8.955,20-20C44,22.659,43.862,21.35,43.611,20.083z"/>
+  1055|                <path fill="#FF3D00" d="M6.306,14.691l6.571,4.819C14.655,15.108,18.961,12,24,12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C16.318,4,9.656,8.337,6.306,14.691z"/>
+  1056|                <path fill="#4CAF50" d="M24,44c5.166,0,9.86-1.977,13.409-5.192l-6.19-5.238C29.211,35.091,26.715,36,24,36c-5.202,0-9.619-3.317-11.283-7.946l-6.522,5.025C9.505,39.556,16.227,44,24,44z"/>
+  1057|                <path fill="#1976D2" d="M43.611,20.083H42V20H24v8h11.303c-0.792,2.237-2.231,4.166-4.087,5.571c0.001-0.001,0.002-0.001,0.003-0.002l6.19,5.238C36.971,39.205,44,34,44,24C44,22.659,43.862,21.35,43.611,20.083z"/>
+  1058|              </svg>
+  1059|            </span>
+  1060|            <span data-i18n="auth.continue_google">Continue with Google</span>
+  1061|          </button>
+  1062|          <button class="auth-social-btn" onclick="socialLogin('apple')">
+  1063|            <span class="s-icon apple">
+  1064|              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="#000">
+  1065|                <path d="M17.05 20.28c-.98.95-2.05.8-3.08.35-1.09-.46-2.09-.48-3.24 0-1.44.62-2.2.44-3.06-.35C2.79 15.25 3.51 7.59 9.05 7.31c1.35.07 2.29.74 3.08.8 1.18-.24 2.31-.93 3.57-.84 1.51.12 2.65.72 3.4 1.8-3.12 1.87-2.38 5.98.48 7.13-.57 1.5-1.31 2.99-2.54 4.09zM12.03 7.25c-.15-2.23 1.66-4.07 3.74-4.25.29 2.58-2.34 4.5-3.74 4.25z"/>
+  1066|              </svg>
+  1067|            </span>
+  1068|            <span data-i18n="auth.continue_apple">Continue with Apple</span>
+  1069|          </button>
+  1070|          <button class="auth-social-btn" onclick="phoneLogin()">
+  1071|            <span class="s-icon phone">
+  1072|              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+  1073|                <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
+  1074|              </svg>
+  1075|            </span>
+  1076|            <span data-i18n="auth.continue_phone">Continue with Phone</span>
+  1077|          </button>
+  1078|          <div class="auth-divider">
+  1079|            <hr>
+  1080|            <span data-i18n="auth.divider">or continue with email</span>
+  1081|            <hr>
+  1082|          </div>
+  1083|          <input type="email" class="auth-email-field" id="pl-email" placeholder="you@example.com" autocomplete="email" onkeydown="if(event.key==='Enter')continueWithEmail()" data-i18n="auth.email_pl">
+  1084|          <button class="auth-email-cta" onclick="continueWithEmail()" id="pl-email-btn" data-i18n="auth.continue">Continue →</button>
+  1085|          <div class="auth-error" id="auth-error-main"></div>
+  1086|          <div style="margin-top: 0.75rem; text-align: center;">
+  1087|            <a href="#" onclick="showRecoveryForm(); return false;" style="color: var(--accent); text-decoration: none; font-size: 0.85rem; font-weight: 500; opacity: 0.85; transition: opacity 0.15s;" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0.85'">Lost your account? Recover it here →</a>
+  1088|          </div>
+  1089|        </div>
+  1090|
+  1091|        <!-- Step 2: Phone input -->
+  1092|        <div id="auth-phone-step" class="auth-form">
+  1093|          <button class="back-link" onclick="showAuthOptions()" data-i18n="auth.back">
+  1094|            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+  1095|            Back
+  1096|          </button>
+  1097|          <div class="auth-code-info">
+  1098|            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+  1099|              <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
+  1100|            </svg>
+  1101|            <div class="auth-code-msg" data-i18n="auth.phone_title">Enter your phone number</div>
+  1102|            <div style="font-size:0.8rem;color:var(--text-muted);margin-top:0.25rem;" data-i18n="auth.phone_sms">We'll send a 6-digit code via SMS</div>
+  1103|          </div>
+  1104|          <div class="auth-phone-input-row">
+  1105|            <div class="phone-country-select">
+  1106|              <select id="pl-country-code" onchange="updatePhoneFlag()">
+  1107|                <option value="93">🇦🇫 Afghanistan +93</option>
+  1108|                <option value="355">🇦🇱 Albania +355</option>
+  1109|                <option value="213">🇩🇿 Algeria +213</option>
+  1110|                <option value="376">🇦🇩 Andorra +376</option>
+  1111|                <option value="244">🇦🇴 Angola +244</option>
+  1112|                <option value="54">🇦🇷 Argentina +54</option>
+  1113|                <option value="374">🇦🇲 Armenia +374</option>
+  1114|                <option value="297">🇦🇼 Aruba +297</option>
+  1115|                <option value="61">🇦🇺 Australia +61</option>
+  1116|                <option value="43">🇦🇹 Austria +43</option>
+  1117|                <option value="994">🇦🇿 Azerbaijan +994</option>
+  1118|                <option value="973">🇧🇭 Bahrain +973</option>
+  1119|                <option value="880">🇧🇩 Bangladesh +880</option>
+  1120|                <option value="375">🇧🇾 Belarus +375</option>
+  1121|                <option value="32">🇧🇪 Belgium +32</option>
+  1122|                <option value="501">🇧🇿 Belize +501</option>
+  1123|                <option value="229">🇧🇯 Benin +229</option>
+  1124|                <option value="975">🇧🇹 Bhutan +975</option>
+  1125|                <option value="591">🇧🇴 Bolivia +591</option>
+  1126|                <option value="387">🇧🇦 Bosnia +387</option>
+  1127|                <option value="267">🇧🇼 Botswana +267</option>
+  1128|                <option value="55">🇧🇷 Brazil +55</option>
+  1129|                <option value="673">🇧🇳 Brunei +673</option>
+  1130|                <option value="359">🇧🇬 Bulgaria +359</option>
+  1131|                <option value="226">🇧🇫 Burkina Faso +226</option>
+  1132|                <option value="257">🇧🇮 Burundi +257</option>
+  1133|                <option value="855">🇰🇭 Cambodia +855</option>
+  1134|                <option value="237">🇨🇲 Cameroon +237</option>
+  1135|                <option value="1">🇨🇦 Canada +1</option>
+  1136|                <option value="238">🇨🇻 Cape Verde +238</option>
+  1137|                <option value="236">🇨🇫 CAR +236</option>
+  1138|                <option value="235">🇹🇩 Chad +235</option>
+  1139|                <option value="56">🇨🇱 Chile +56</option>
+  1140|                <option value="86">🇨🇳 China +86</option>
+  1141|                <option value="57">🇨🇴 Colombia +57</option>
+  1142|                <option value="269">🇰🇲 Comoros +269</option>
+  1143|                <option value="243">🇨🇩 Congo (DRC) +243</option>
+  1144|                <option value="242">🇨🇬 Congo +242</option>
+  1145|                <option value="506">🇨🇷 Costa Rica +506</option>
+  1146|                <option value="385">🇭🇷 Croatia +385</option>
+  1147|                <option value="53">🇨🇺 Cuba +53</option>
+  1148|                <option value="357">🇨🇾 Cyprus +357</option>
+  1149|                <option value="420">🇨🇿 Czechia +420</option>
+  1150|                <option value="45">🇩🇰 Denmark +45</option>
+  1151|                <option value="253">🇩🇯 Djibouti +253</option>
+  1152|                <option value="593">🇪🇨 Ecuador +593</option>
+  1153|                <option value="20">🇪🇬 Egypt +20</option>
+  1154|                <option value="503">🇸🇻 El Salvador +503</option>
+  1155|                <option value="372">🇪🇪 Estonia +372</option>
+  1156|                <option value="251">🇪🇹 Ethiopia +251</option>
+  1157|                <option value="679">🇫🇯 Fiji +679</option>
+  1158|                <option value="358">🇫🇮 Finland +358</option>
+  1159|                <option value="33">🇫🇷 France +33</option>
+  1160|                <option value="241">🇬🇦 Gabon +241</option>
+  1161|                <option value="220">🇬🇲 Gambia +220</option>
+  1162|                <option value="995">🇬🇪 Georgia +995</option>
+  1163|                <option value="49">🇩🇪 Germany +49</option>
+  1164|                <option value="233">🇬🇭 Ghana +233</option>
+  1165|                <option value="30">🇬🇷 Greece +30</option>
+  1166|                <option value="299">🇬🇱 Greenland +299</option>
+  1167|                <option value="502">🇬🇹 Guatemala +502</option>
+  1168|                <option value="224">🇬🇳 Guinea +224</option>
+  1169|                <option value="245">🇬🇼 Guinea-Bissau +245</option>
+  1170|                <option value="592">🇬🇾 Guyana +592</option>
+  1171|                <option value="509">🇭🇹 Haiti +509</option>
+  1172|                <option value="504">🇭🇳 Honduras +504</option>
+  1173|                <option value="852">🇭🇰 Hong Kong +852</option>
+  1174|                <option value="36">🇭🇺 Hungary +36</option>
+  1175|                <option value="354">🇮🇸 Iceland +354</option>
+  1176|                <option value="91">🇮🇳 India +91</option>
+  1177|                <option value="62">🇮🇩 Indonesia +62</option>
+  1178|                <option value="98">🇮🇷 Iran +98</option>
+  1179|                <option value="964">🇮🇶 Iraq +964</option>
+  1180|                <option value="353">🇮🇪 Ireland +353</option>
+  1181|                <option value="972">🇮🇱 Israel +972</option>
+  1182|                <option value="39">🇮🇹 Italy +39</option>
+  1183|                <option value="225">🇨🇮 Ivory Coast +225</option>
+  1184|                <option value="81">🇯🇵 Japan +81</option>
+  1185|                <option value="962">🇯🇴 Jordan +962</option>
+  1186|                <option value="7">🇰🇿 Kazakhstan +7</option>
+  1187|                <option value="254">🇰🇪 Kenya +254</option>
+  1188|                <option value="383">🇽🇰 Kosovo +383</option>
+  1189|                <option value="965">🇰🇼 Kuwait +965</option>
+  1190|                <option value="996">🇰🇬 Kyrgyzstan +996</option>
+  1191|                <option value="856">🇱🇦 Laos +856</option>
+  1192|                <option value="371">🇱🇻 Latvia +371</option>
+  1193|                <option value="961">🇱🇧 Lebanon +961</option>
+  1194|                <option value="266">🇱🇸 Lesotho +266</option>
+  1195|                <option value="231">🇱🇷 Liberia +231</option>
+  1196|                <option value="218">🇱🇾 Libya +218</option>
+  1197|                <option value="423">🇱🇮 Liechtenstein +423</option>
+  1198|                <option value="370">🇱🇹 Lithuania +370</option>
+  1199|                <option value="352">🇱🇺 Luxembourg +352</option>
+  1200|                <option value="853">🇲🇴 Macau +853</option>
+  1201|                <option value="389">🇲🇰 North Macedonia +389</option>
+  1202|                <option value="261">🇲🇬 Madagascar +261</option>
+  1203|                <option value="265">🇲🇼 Malawi +265</option>
+  1204|                <option value="60">🇲🇾 Malaysia +60</option>
+  1205|                <option value="960">🇲🇻 Maldives +960</option>
+  1206|                <option value="223">🇲🇱 Mali +223</option>
+  1207|                <option value="356">🇲🇹 Malta +356</option>
+  1208|                <option value="222">🇲🇷 Mauritania +222</option>
+  1209|                <option value="230">🇲🇺 Mauritius +230</option>
+  1210|                <option value="52">🇲🇽 Mexico +52</option>
+  1211|                <option value="373">🇲🇩 Moldova +373</option>
+  1212|                <option value="377">🇲🇨 Monaco +377</option>
+  1213|                <option value="976">🇲🇳 Mongolia +976</option>
+  1214|                <option value="382">🇲🇪 Montenegro +382</option>
+  1215|                <option value="212">🇲🇦 Morocco +212</option>
+  1216|                <option value="258">🇲🇿 Mozambique +258</option>
+  1217|                <option value="95">🇲🇲 Myanmar +95</option>
+  1218|                <option value="264">🇳🇦 Namibia +264</option>
+  1219|                <option value="977">🇳🇵 Nepal +977</option>
+  1220|                <option value="31">🇳🇱 Netherlands +31</option>
+  1221|                <option value="64">🇳🇿 New Zealand +64</option>
+  1222|                <option value="505">🇳🇮 Nicaragua +505</option>
+  1223|                <option value="227">🇳🇪 Niger +227</option>
+  1224|                <option value="234">🇳🇬 Nigeria +234</option>
+  1225|                <option value="47">🇳🇴 Norway +47</option>
+  1226|                <option value="968">🇴🇲 Oman +968</option>
+  1227|                <option value="92">🇵🇰 Pakistan +92</option>
+  1228|                <option value="680">🇵🇼 Palau +680</option>
+  1229|                <option value="970">🇵🇸 Palestine +970</option>
+  1230|                <option value="507">🇵🇦 Panama +507</option>
+  1231|                <option value="675">🇵🇬 Papua New Guinea +675</option>
+  1232|                <option value="595">🇵🇾 Paraguay +595</option>
+  1233|                <option value="51">🇵🇪 Peru +51</option>
+  1234|                <option value="63">🇵🇭 Philippines +63</option>
+  1235|                <option value="48">🇵🇱 Poland +48</option>
+  1236|                <option value="351">🇵🇹 Portugal +351</option>
+  1237|                <option value="974">🇶🇦 Qatar +974</option>
+  1238|                <option value="40">🇷🇴 Romania +40</option>
+  1239|                <option value="7">🇷🇺 Russia +7</option>
+  1240|                <option value="250">🇷🇼 Rwanda +250</option>
+  1241|                <option value="685">🇼🇸 Samoa +685</option>
+  1242|                <option value="378">🇸🇲 San Marino +378</option>
+  1243|                <option value="239">🇸🇹 São Tomé +239</option>
+  1244|                <option value="966">🇸🇦 Saudi Arabia +966</option>
+  1245|                <option value="221">🇸🇳 Senegal +221</option>
+  1246|                <option value="381">🇷🇸 Serbia +381</option>
+  1247|                <option value="248">🇸🇨 Seychelles +248</option>
+  1248|                <option value="232">🇸🇱 Sierra Leone +232</option>
+  1249|                <option value="65" selected>🇸🇬 Singapore +65</option>
+  1250|                <option value="421">🇸🇰 Slovakia +421</option>
+  1251|                <option value="386">🇸🇮 Slovenia +386</option>
+  1252|                <option value="677">🇸🇧 Solomon Islands +677</option>
+  1253|                <option value="252">🇸🇴 Somalia +252</option>
+  1254|                <option value="27">🇿🇦 South Africa +27</option>
+  1255|                <option value="82">🇰🇷 South Korea +82</option>
+  1256|                <option value="34">🇪🇸 Spain +34</option>
+  1257|                <option value="94">🇱🇰 Sri Lanka +94</option>
+  1258|                <option value="249">🇸🇩 Sudan +249</option>
+  1259|                <option value="597">🇸🇷 Suriname +597</option>
+  1260|                <option value="268">🇸🇿 Eswatini +268</option>
+  1261|                <option value="46">🇸🇪 Sweden +46</option>
+  1262|                <option value="41">🇨🇭 Switzerland +41</option>
+  1263|                <option value="963">🇸🇾 Syria +963</option>
+  1264|                <option value="886">🇹🇼 Taiwan +886</option>
+  1265|                <option value="992">🇹🇯 Tajikistan +992</option>
+  1266|                <option value="255">🇹🇿 Tanzania +255</option>
+  1267|                <option value="66">🇹🇭 Thailand +66</option>
+  1268|                <option value="670">🇹🇱 Timor-Leste +670</option>
+  1269|                <option value="228">🇹🇬 Togo +228</option>
+  1270|                <option value="676">🇹🇴 Tonga +676</option>
+  1271|                <option value="216">🇹🇳 Tunisia +216</option>
+  1272|                <option value="90">🇹🇷 Turkey +90</option>
+  1273|                <option value="993">🇹🇲 Turkmenistan +993</option>
+  1274|                <option value="256">🇺🇬 Uganda +256</option>
+  1275|                <option value="380">🇺🇦 Ukraine +380</option>
+  1276|                <option value="971">🇦🇪 UAE +971</option>
+  1277|                <option value="44">🇬🇧 UK +44</option>
+  1278|                <option value="1">🇺🇸 US +1</option>
+  1279|                <option value="598">🇺🇾 Uruguay +598</option>
+  1280|                <option value="998">🇺🇿 Uzbekistan +998</option>
+  1281|                <option value="678">🇻🇺 Vanuatu +678</option>
+  1282|                <option value="379">🇻🇦 Vatican +379</option>
+  1283|                <option value="58">🇻🇪 Venezuela +58</option>
+  1284|                <option value="84">🇻🇳 Vietnam +84</option>
+  1285|                <option value="967">🇾🇪 Yemen +967</option>
+  1286|                <option value="260">🇿🇲 Zambia +260</option>
+  1287|                <option value="263">🇿🇼 Zimbabwe +263</option>
+  1288|              </select>
+  1289|              <span class="phone-caret">▼</span>
+  1290|            </div>
+  1291|            <input type="tel" id="pl-phone" placeholder="8123 4567" autocomplete="tel" onkeydown="if(event.key==='Enter')sendPhoneCode()" data-i18n="auth.phone_pl">
+  1292|          </div>
+  1293|          <button class="auth-email-cta" onclick="sendPhoneCode()" id="pl-phone-btn" data-i18n="auth.send_code">Send Code →</button>
+  1294|          <div class="auth-error" id="auth-error-phone"></div>
+  1295|        </div>
+  1296|
+  1297|        <!-- Step 3: Code verification -->
+  1298|        <div id="auth-code-step" class="auth-form">
+  1299|          <button class="back-link" onclick="showAuthOptions()">
+  1300|            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+  1301|            <span id="code-back-label" data-i18n="auth.change_email">Change email</span>
+  1302|          </button>
+  1303|          <div class="auth-code-info">
+  1304|            <svg id="code-step-icon" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+  1305|              <rect x="2" y="4" width="20" height="16" rx="2"/>
+  1306|              <path d="M22 7l-10 7L2 7"/>
+  1307|            </svg>
+  1308|            <div class="auth-code-msg" data-i18n="auth.we_sent">We sent a code to</div>
+  1309|            <div class="auth-code-email" id="code-email-display">j***@example.com</div>
+  1310|          </div>
+  1311|          <div class="auth-code-input-row">
+  1312|            <input type="text" id="pl-code" placeholder="Enter 6-digit code" maxlength="6" inputmode="numeric" autocomplete="one-time-code" onkeydown="if(event.key==='Enter')verifyCode()" data-i18n="auth.code_pl">
+  1313|          </div>
+  1314|          <button class="btn btn-primary" onclick="verifyCode()" id="pl-code-btn" data-i18n="auth.verify">Verify Code →</button>
+  1315|          <div class="auth-error" id="auth-error-code"></div>
+  1316|          <div class="auth-code-resend" data-i18n="auth.resend_text">
+  1317|            Didn't get it? <a onclick="resendCode()" data-i18n="auth.resend_link">Send new code</a>
+  1318|          </div>
+  1319|        </div>
+  1320|
+  1321|        <!-- Step 4: Recovery -->
+  1322|        <div id="auth-recovery-step" class="auth-form" style="display:none;">
+  1323|          <button class="back-link" onclick="showAuthOptions()">
+  1324|            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+  1325|            <span data-i18n="auth.back">Back</span>
+  1326|          </button>
+  1327|          <div class="auth-code-info">
+  1328|            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+  1329|              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+  1330|            </svg>
+  1331|            <div class="auth-code-msg">Recover Your Account</div>
+  1332|            <div class="recovery-subtitle" style="font-size:0.8rem;color:var(--text-muted);margin-top:0.25rem;">Enter your email to recover your API keys and subscription.</div>
+  1333|          </div>
+  1334|          <div id="recovery-email-row">
+  1335|            <input type="email" class="auth-email-field" id="recovery-email" placeholder="you@example.com" autocomplete="email" style="margin-bottom:0.5rem;" onkeydown="if(event.key==='Enter')recoverAccount(document.getElementById('recovery-email')?.value)">
+  1336|            <button class="auth-email-cta" id="recovery-btn" onclick="recoverAccount(document.getElementById('recovery-email')?.value)">Recover Account →</button>
+  1337|          </div>
+  1338|          <div id="recovery-code-section" style="display:none;">
+  1339|            <div class="auth-code-input-row">
+  1340|
+  1341|              <input type="text" id="recovery-code" placeholder="Enter 6-digit code" data-i18n="auth.code_placeholder" maxlength="6" inputmode="numeric" autocomplete="one-time-code" onkeydown="if(event.key==='Enter')recoverVerifyCode()">
+  1342|
+  1343|            </div>
+  1344|
+  1345|            <button class="btn btn-primary" id="recovery-verify-btn" onclick="recoverVerifyCode()" data-i18n="auth.verify_btn">Verify Code →</button>
+  1346|            <div style="margin-top:0.5rem;text-align:center;font-size:0.78rem;color:var(--text-muted);">
+  1347|              Didn't get it? <a href="#" onclick="recoverAccount(document.getElementById('recovery-email')?.value); return false;" style="color:var(--accent);text-decoration:none;">Send new code</a>
+  1348|            </div>
+  1349|          </div>
+  1350|          <div class="auth-error" id="auth-error-recovery" style="margin-top:0.5rem;"></div>
+  1351|        </div>
+  1352|      </div>
+  1353|    </div>
+  1354|
+  1355|    <script>
+  1356|        // ── Shared Auth ──────────────────────────────────────────────
+  1357|        let currentApiKey = '';
+  1358|        let pendingEmail = '';
+  1359|        let pendingPhone = '';
+  1360|        let pendingMethod = 'email'; // 'email' or 'phone'
+  1361|
+  1362|        let authMode = 'signin'; // 'signin' or 'signup'
+  1363|
+  1364|        function openAuth(tab) {
+  1365|            document.getElementById('auth-overlay').classList.add('open');
+  1366|            document.body.style.overflow = 'hidden';
+  1367|            showAuthOptions();
+  1368|            selectAuthTab(tab === 'signup' ? 'signup' : 'signin');
+  1369|        }
+  1370|
+  1371|        function selectAuthTab(mode) {
+  1372|            authMode = mode;
+  1373|            const signinTab = document.getElementById('auth-tab-signin');
+  1374|            const signupTab = document.getElementById('auth-tab-signup');
+  1375|            if (!signinTab || !signupTab) return;
+  1376|            const subtitle = document.getElementById('auth-subtitle');
+  1377|
+  1378|            if (mode === 'signin') {
+  1379|                signinTab.style.background = 'var(--accent)';
+  1380|                signinTab.style.color = '#fff';
+  1381|                signupTab.style.background = 'transparent';
+  1382|                signupTab.style.color = 'var(--text-muted)';
+  1383|                subtitle.textContent = 'Sign in to access your account.';
+  1384|            } else {
+  1385|                signupTab.style.background = 'var(--accent)';
+  1386|                signupTab.style.color = '#fff';
+  1387|                signinTab.style.background = 'transparent';
+  1388|                signinTab.style.color = 'var(--text-muted)';
+  1389|                subtitle.textContent = 'Create an account to get started.';
+  1390|            }
+  1391|        }
+  1392|
+  1393|        function socialLogin(connection) {
+  1394|            window.location.href = '/auth/auth0/login?connection=' + connection + (authMode === 'signup' ? '&screen_hint=signup' : '');
+  1395|        }
+  1396|
+  1397|        function closeAuth() {
+  1398|            document.getElementById('auth-overlay').classList.remove('open');
+  1399|            document.body.style.overflow = '';
+  1400|            pendingEmail = '';
+  1401|        }
+  1402|
+  1403|        function showAuthOptions() {
+  1404|            document.querySelectorAll('.auth-form').forEach(el => el.classList.remove('active'));
+  1405|            const opts = document.getElementById('auth-options');
+  1406|            opts.style.display = '';
+  1407|            // Reset code step
+  1408|            document.getElementById('pl-code').value = '';
+  1409|            document.getElementById('pl-email').value = '';
+  1410|            document.getElementById('pl-phone').value = '';
+  1411|            document.getElementById('pl-country-code').value = '65';
+  1412|            document.getElementById('pl-email').focus();
+  1413|            document.getElementById('auth-code-step').classList.remove('active');
+  1414|            document.getElementById('auth-phone-step').classList.remove('active');
+  1415|            document.getElementById('auth-recovery-step').style.display = 'none';
+  1416|            // Clear all errors
+  1417|            document.querySelectorAll('.auth-error').forEach(el => el.textContent = '');
+  1418|            // Re-enable buttons
+  1419|            document.getElementById('pl-email-btn').disabled = false;
+  1420|            document.getElementById('pl-code-btn').disabled = false;
+  1421|            document.getElementById('pl-phone-btn').disabled = false;
+  1422|            pendingMethod = 'email';
+  1423|            pendingPhone = '';
+  1424|            // Reset recovery code section
+  1425|            const recoveryCodeSection = document.getElementById('recovery-code-section');
+  1426|            if (recoveryCodeSection) recoveryCodeSection.style.display = 'none';
+  1427|            const recoveryEmailRow = document.getElementById('recovery-email-row');
+  1428|            if (recoveryEmailRow) recoveryEmailRow.style.display = '';
+  1429|            const recoveryBtn = document.getElementById('recovery-btn');
+  1430|            if (recoveryBtn) recoveryBtn.style.display = '';
+  1431|            // Reset buttons
+  1432|            const continueBtn = document.getElementById('pl-email-btn');
+  1433|            if (continueBtn) { continueBtn.innerHTML = 'Continue →'; continueBtn.disabled = false; }
+  1434|            const recoveryResetBtn = document.getElementById('recovery-btn');
+  1435|            if (recoveryResetBtn) { recoveryResetBtn.innerHTML = 'Recover Account →'; recoveryResetBtn.disabled = false; }
+  1436|            const recoveryVerifyBtn = document.getElementById('recovery-verify-btn');
+  1437|            if (recoveryVerifyBtn) { recoveryVerifyBtn.innerHTML = 'Verify Code →'; recoveryVerifyBtn.disabled = false; }
+  1438|        }
+  1439|
+  1440|        function phoneLogin() {
+  1441|            pendingMethod = 'phone';
+  1442|            document.getElementById('auth-options').style.display = 'none';
+  1443|            document.querySelectorAll('.auth-form').forEach(el => el.classList.remove('active'));
+  1444|            document.getElementById('auth-phone-step').classList.add('active');
+  1445|            document.getElementById('pl-phone').value = '';
+  1446|            document.getElementById('pl-country-code').value = '65';
+  1447|            document.getElementById('auth-error-phone').textContent = '';
+  1448|            document.getElementById('pl-phone-btn').disabled = false;
+  1449|            setTimeout(() => document.getElementById('pl-phone').focus(), 150);
+  1450|        }
+  1451|
+  1452|        async function sendPhoneCode() {
+  1453|            const countryCode = document.getElementById('pl-country-code').value;
+  1454|            const localNum = document.getElementById('pl-phone').value.trim().replace(/\s/g, '');
+  1455|            const errorEl = document.getElementById('auth-error-phone');
+  1456|            const btn = document.getElementById('pl-phone-btn');
+  1457|            if (!localNum) {
+  1458|                errorEl.innerHTML = '⚠️ Enter your phone number';
+  1459|                return;
+  1460|            }
+  1461|            const fullPhone = '+' + countryCode + localNum;
+  1462|            const originalBtnHTML = btn.innerHTML;
+  1463|            btn.innerHTML = '<span class="spinner-sm"></span> Sending...';
+  1464|            btn.disabled = true;
+  1465|            try {
+  1466|                const res = await fetch('/auth/auth0/passwordless/start-sms', {
+  1467|                    method: 'POST',
+  1468|                    headers: {'Content-Type': 'application/json'},
+  1469|                    body: JSON.stringify({phone: fullPhone}),
+  1470|                });
+  1471|                if (!res.ok) {
+  1472|                    const err = await res.json().catch(() => ({}));
+  1473|                    errorEl.innerHTML = '' + (err.detail || 'Failed to send code');
+  1474|                    btn.disabled = false;
+  1475|                    return;
+  1476|                }
+  1477|                const data = await res.json();
+  1478|                pendingPhone = fullPhone;
+  1479|                // Show code verification step with phone icon
+  1480|                document.getElementById('code-back-label').textContent = 'Change phone';
+  1481|                document.getElementById('code-step-icon').innerHTML = '<path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>';
+  1482|                document.getElementById('code-email-display').textContent = data.phone || '*******' + fullPhone.slice(-4);
+  1483|                document.getElementById('auth-phone-step').classList.remove('active');
+  1484|                document.getElementById('auth-code-step').classList.add('active');
+  1485|                document.getElementById('pl-code').value = '';
+  1486|                document.getElementById('auth-error-code').textContent = '';
+  1487|                setTimeout(() => document.getElementById('pl-code').focus(), 150);
+  1488|                btn.disabled = false;
+  1489|            } catch (e) {
+  1490|    const isNetwork = e.message === 'Failed to fetch' || e.name === 'TypeError' || e.message === 'NetworkError';
+  1491|    errorEl.innerHTML = isNetwork
+  1492|        ? 'Could not reach server. Check your connection.'
+  1493|        : '' + e.message;
+  1494|  btn.disabled = false;
+  1495|        function updatePhoneFlag() {
+  1496|            // Placeholder — the select handles display natively with emoji flags
+  1497|        }
+  1498|
+  1499|        async function continueWithEmail() {
+  1500|            const email = document.getElementById('pl-email').value.trim();
+  1501|            const errorEl = document.getElementById('auth-error-main');
+  1502|            const btn = document.getElementById('pl-email-btn');
+  1503|            if (!email || !email.includes('@')) {
+  1504|                errorEl.innerHTML = '⚠️ Enter a valid email address';
+  1505|                return;
+  1506|            }
+  1507|            const originalBtnHTML = btn.innerHTML;
+  1508|            btn.innerHTML = '<span class=\"spinner-sm\"></span> Sending...';
+  1509|            btn.disabled = true;
+  1510|            try {
+  1511|                // Check if email exists before sending a code
+  1512|                const checkRes = await fetch('/auth/check-email', {
+  1513|                    method: 'POST',
+  1514|                    headers: {'Content-Type': 'application/json'},
+  1515|                    body: JSON.stringify({email}),
+  1516|                });
+  1517|                const checkData = checkRes.ok ? await checkRes.json() : {exists: false};
+  1518|                if (!checkData.exists) {
+  1519|                    if (authMode === 'signin') {
+  1520|                        errorEl.innerHTML = '<span class="auth-notice">No account found. Try the Create Account tab.</span>';
+  1521|                        btn.innerHTML = originalBtnHTML;
+  1522|                        btn.disabled = false;
+  1523|                        return;
+  1524|                    }
+  1525|                    // authMode === 'signup' — allow through, new user registering
+  1526|                }
+  1527|                const res = await fetch('/auth/auth0/passwordless/start', {
+  1528|                    method: 'POST',
+  1529|                    headers: {'Content-Type': 'application/json'},
+  1530|                    body: JSON.stringify({email}),
+  1531|                });
+  1532|                if (!res.ok) {
+  1533|                    const err = await res.json().catch(() => ({}));
+  1534|                    errorEl.innerHTML = '' + (err.detail || 'Failed to send code');
+  1535|                    btn.innerHTML = originalBtnHTML;
+  1536|                    btn.disabled = false;
+  1537|                    return;
+  1538|                }
+  1539|                const data = await res.json();
+  1540|                pendingEmail = email;
+  1541|                pendingMethod = 'email';
+  1542|                document.getElementById('code-back-label').textContent = 'Change email';
+  1543|                document.getElementById('code-step-icon').innerHTML = '<rect x=\"2\" y=\"4\" width=\"20\" height=\"16\" rx=\"2\"/><path d=\"M22 7l-10 7L2 7\"/>';
+  1544|                document.getElementById('code-email-display').textContent = data.email || email[0] + '***' + email.substring(email.indexOf('@'));
+  1545|                // Show code verification step
+  1546|                document.getElementById('auth-options').style.display = 'none';
+  1547|                document.getElementById('auth-code-step').classList.add('active');
+  1548|                document.getElementById('pl-code').value = '';
+  1549|                document.getElementById('auth-error-code').textContent = '';
+  1550|                setTimeout(() => document.getElementById('pl-code').focus(), 150);
+  1551|                btn.disabled = false;
+  1552|            } catch (e) {
+  1553|    const isNetwork = e.message === 'Failed to fetch' || e.name === 'TypeError' || e.message === 'NetworkError';
+  1554|    errorEl.innerHTML = isNetwork
+  1555|        ? 'Could not reach server. Check your connection.'
+  1556|        : '' + e.message;
+  1557|  btn.innerHTML = originalBtnHTML;
+  1558|  btn.disabled = false;
+  1559|        async function verifyCode() {
+  1560|            const code = document.getElementById('pl-code').value.trim();
+  1561|            const errorEl = document.getElementById('auth-error-code');
+  1562|            const btn = document.getElementById('pl-code-btn');
+  1563|            if (!code || code.length < 4) {
+  1564|                errorEl.innerHTML = '⚠️ Enter your 6-digit verification code';
+  1565|                return;
+  1566|            }
+  1567|            const originalBtnHTML = btn.innerHTML;
+  1568|            btn.innerHTML = '<span class=\"spinner-sm\"></span> Verifying...';
+  1569|            btn.disabled = true;
+  1570|            try {
+  1571|                const body = pendingMethod === 'phone'
+  1572|                    ? {phone: pendingPhone, code}
+  1573|                    : {email: pendingEmail, code};
+  1574|                const res = await fetch('/auth/auth0/passwordless/verify', {
+  1575|                    method: 'POST',
+  1576|                    headers: {'Content-Type': 'application/json'},
+  1577|                    body: JSON.stringify(body),
+  1578|                });
+  1579|                if (!res.ok) {
+  1580|                    const err = await res.json().catch(() => ({}));
+  1581|                    errorEl.innerHTML = '' + (err.detail || 'Verification failed');
+  1582|                    btn.innerHTML = originalBtnHTML;
+  1583|                    btn.disabled = false;
+  1584|                    return;
+  1585|                }
+  1586|                const data = await res.json();
+  1587|                localStorage.setItem('mb_jwt', data.token);
+  1588|                if (data.api_key) {
+  1589|                    localStorage.setItem('mb_api_key', data.api_key);
+  1590|                    currentApiKey = data.api_key;
+  1591|                }
+  1592|                updateAuthUI();
+  1593|                closeAuth();
+  1594|                window.location.reload();
+  1595|            } catch (e) {
+  1596|    const isNetwork = e.message === 'Failed to fetch' || e.name === 'TypeError' || e.message === 'NetworkError';
+  1597|    errorEl.innerHTML = isNetwork
+  1598|        ? 'Could not reach server. Check your connection.'
+  1599|        : '' + e.message;
+  1600|  btn.innerHTML = originalBtnHTML;
+  1601|  btn.disabled = false;
+  1602|        async function resendCode() {
+  1603|            const errorEl = document.getElementById('auth-error-code');
+  1604|            const btn = document.getElementById('pl-code-btn');
+  1605|            if (!pendingEmail && !pendingPhone) return;
+  1606|            errorEl.innerHTML = '<span class=\"auth-spinner\"></span>';
+  1607|            btn.disabled = true;
+  1608|            try {
+  1609|                const url = pendingMethod === 'phone'
+  1610|                    ? '/auth/auth0/passwordless/start-sms'
+  1611|                    : '/auth/auth0/passwordless/start';
+  1612|                const body = pendingMethod === 'phone'
+  1613|                    ? JSON.stringify({phone: pendingPhone})
+  1614|                    : JSON.stringify({email: pendingEmail});
+  1615|                const res = await fetch(url, {
+  1616|                    method: 'POST',
+  1617|                    headers: {'Content-Type': 'application/json'},
+  1618|                    body,
+  1619|                });
+  1620|                if (!res.ok) {
+  1621|                    const err = await res.json().catch(() => ({}));
+  1622|                    errorEl.innerHTML = '' + (err.detail || 'Failed to resend code');
+  1623|                    btn.disabled = false;
+  1624|                    return;
+  1625|                }
+  1626|                errorEl.innerHTML = '✅ New code sent!';
+  1627|                document.getElementById('pl-code').value = '';
+  1628|                setTimeout(() => document.getElementById('pl-code').focus(), 150);
+  1629|                btn.disabled = false;
+  1630|            } catch (e) {
+  1631|    const isNetwork = e.message === 'Failed to fetch' || e.name === 'TypeError' || e.message === 'NetworkError';
+  1632|    errorEl.innerHTML = isNetwork
+  1633|        ? 'Could not reach server. Check your connection.'
+  1634|        : '' + e.message;
+  1635|  btn.disabled = false;
+  1636|        function escapeHtml(str) {
+  1637|            const div = document.createElement('div');
+  1638|            div.textContent = str;
+  1639|            return div.innerHTML;
+  1640|        }
+  1641|
+  1642|        function decodeJWT(token) {
+  1643|            try {
+  1644|                const payload = token.split('.')[1];
+  1645|                return JSON.parse(atob(payload.replace(/-/g, '+').replace(/_/g, '/')));
+  1646|            } catch { return null; }
+  1647|        }
+  1648|
+  1649|        function updateAuthUI() {
+  1650|            const jwt = localStorage.getItem('mb_jwt');
+  1651|            const key = localStorage.getItem('mb_api_key');
+  1652|            const signInBtn = document.getElementById('auth-nav-btn');
+  1653|            const userMenu = document.getElementById('user-menu');
+  1654|            const mobileLabel = document.getElementById('auth-mobile-label');
+  1655|            const avatarName = document.getElementById('user-avatar-name');
+  1656|            const avatarCircle = document.getElementById('user-avatar-circle');
+  1657|            const dropdownEmail = document.getElementById('user-dropdown-email');
+  1658|
+  1659|            if (jwt && userMenu && signInBtn) {
+  1660|                signInBtn.style.display = 'none';
+  1661|                userMenu.style.display = 'inline-flex';
+  1662|
+  1663|                const claims = decodeJWT(jwt);
+  1664|                const displayName = claims?.email || claims?.name || claims?.sub || '';
+  1665|                const initial = (displayName && displayName.length > 0) ? displayName[0].toUpperCase() : '?';
+  1666|
+  1667|                if (avatarName) avatarName.textContent = displayName.length > 16 ? displayName.slice(0, 14) + '…' : displayName;
+  1668|                if (avatarCircle) avatarCircle.textContent = initial;
+  1669|                if (dropdownEmail) dropdownEmail.textContent = displayName;
+  1670|
+  1671|                if (mobileLabel) mobileLabel.textContent = 'Sign out';
+  1672|                const mobileBtn = document.getElementById('auth-mobile-btn');
+  1673|                if (mobileBtn) mobileBtn.onclick = function() { closeMobileNav(); showLogoutConfirm(); };
+  1674|            } else if (userMenu && signInBtn) {
+  1675|                signInBtn.style.display = 'inline-flex';
+  1676|                userMenu.style.display = 'none';
+  1677|                if (mobileLabel) mobileLabel.textContent = 'Sign in';
+  1678|                const mobileBtn = document.getElementById('auth-mobile-btn');
+  1679|                if (mobileBtn) mobileBtn.onclick = function() { closeMobileNav(); openAuth(); };
+  1680|            }
+  1681|        }
+  1682|
+  1683|        function toggleUserDropdown() {
+  1684|            const menu = document.getElementById('user-menu');
+  1685|            menu.classList.toggle('open');
+  1686|        }
+  1687|        // Close user dropdown on outside click
+  1688|        document.addEventListener('click', (e) => {
+  1689|            const menu = document.getElementById('user-menu');
+  1690|            if (menu && menu.classList.contains('open') && !e.target.closest('#user-menu')) {
+  1691|                menu.classList.remove('open');
+  1692|            }
+  1693|        });
+  1694|
+  1695|        function showLogoutConfirm() {
+  1696|            document.getElementById('user-menu')?.classList.remove('open');
+  1697|            document.getElementById('logout-overlay').classList.add('open');
+  1698|            document.getElementById('logout-modal').classList.add('open');
+  1699|        }
+  1700|        function closeLogoutConfirm() {
+  1701|            document.getElementById('logout-overlay').classList.remove('open');
+  1702|            document.getElementById('logout-modal').classList.remove('open');
+  1703|        }
+  1704|
+  1705|        function logout() {
+  1706|            closeLogoutConfirm();
+  1707|            localStorage.removeItem('mb_jwt');
+  1708|            localStorage.removeItem('mb_api_key');
+  1709|            currentApiKey = '';
+  1710|            updateAuthUI();
+  1711|        }
+  1712|
+  1713|        // ── Init ──────────────────────────────────────────────────
+  1714|        document.addEventListener('DOMContentLoaded', () => {
+  1715|            currentApiKey = localStorage.getItem('mb_api_key') || '';
+  1716|            const jwt = localStorage.getItem('mb_jwt');
+  1717|            if (jwt && !currentApiKey) {
+  1718|                (async () => {
+  1719|                    try {
+  1720|                        const kvRes = await fetch('/auth/my-key-value', { headers: {'Authorization': 'Bearer ' + jwt, 'Content-Type': 'application/json'} });
+  1721|                        if (kvRes.ok) { const data = await kvRes.json(); localStorage.setItem('mb_api_key', data.key); currentApiKey = data.key; }
+  1722|                    } catch (e) { localStorage.removeItem('mb_jwt'); }
+  1723|                    updateAuthUI();
+  1724|                })();
+  1725|            } else {
+  1726|                updateAuthUI();
+  1727|            }
+  1728|        });
+  1729|    </script>
+  1730|
+  1731|    <footer class="footer" data-i18n="footer.text">© 2026 Memory Bridge — API for cross-agent memory</footer>
+  1732|</body>
+  1733|</html>
+  1734|

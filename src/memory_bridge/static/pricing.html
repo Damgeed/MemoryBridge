@@ -752,7 +752,7 @@
             } catch (e) {
                 const statusEl = document.getElementById('dash-status') || document.querySelector('.section-subtitle');
                 if (statusEl) {
-                    statusEl.textContent = '❌ ' + (e.message || 'Please try again.');
+                    statusEl.textContent = '' + (e.message || 'Please try again.');
                     statusEl.style.color = 'var(--red)';
                     setTimeout(() => { statusEl.style.color = ''; }, 5000);
                 } else {
@@ -1628,7 +1628,7 @@
                             if (text) errMsg = text.slice(0, 200);
                         } catch {}
                     }
-                    errorEl.innerHTML = '❌ ' + errMsg;
+                    errorEl.innerHTML = '' + errMsg;
                     btn.innerHTML = originalBtnHTML;
                     btn.disabled = false;
                     return;
@@ -1648,8 +1648,8 @@
             } catch (e) {
                                 const isNetwork = e.message === 'Failed to fetch' || e.name === 'TypeError' || e.message === 'NetworkError';
                 errorEl.innerHTML = isNetwork
-                    ? '❌ Could not reach server. Check your connection.'
-                    : '❌ ' + e.message;
+                    ? 'Could not reach server. Check your connection.'
+                    : '' + e.message;
                 btn.disabled = false;
             }
         }
@@ -1689,7 +1689,7 @@
                 });
                 if (!res.ok) {
                     const err = await res.json().catch(() => ({}));
-                    errorEl.innerHTML = '❌ ' + (err.detail || 'Failed to send code');
+                    errorEl.innerHTML = '' + (err.detail || 'Failed to send code');
                     btn.innerHTML = originalBtnHTML;
                     btn.disabled = false;
                     return;
@@ -1710,8 +1710,8 @@
             } catch (e) {
                                 const isNetwork = e.message === 'Failed to fetch' || e.name === 'TypeError' || e.message === 'NetworkError';
                 errorEl.innerHTML = isNetwork
-                    ? '❌ Could not reach server. Check your connection.'
-                    : '❌ ' + e.message;
+                    ? 'Could not reach server. Check your connection.'
+                    : '' + e.message;
                 btn.innerHTML = originalBtnHTML;
                 btn.disabled = false;
             }
@@ -1739,7 +1739,7 @@
                 });
                 if (!res.ok) {
                     const err = await res.json().catch(() => ({}));
-                    errorEl.innerHTML = '❌ ' + (err.detail || 'Verification failed');
+                    errorEl.innerHTML = '' + (err.detail || 'Verification failed');
                     btn.innerHTML = originalBtnHTML;
                     btn.disabled = false;
                     return;
@@ -1766,8 +1766,8 @@
             } catch (e) {
                                 const isNetwork = e.message === 'Failed to fetch' || e.name === 'TypeError' || e.message === 'NetworkError';
                 errorEl.innerHTML = isNetwork
-                    ? '❌ Could not reach server. Check your connection.'
-                    : '❌ ' + e.message;
+                    ? 'Could not reach server. Check your connection.'
+                    : '' + e.message;
                 btn.innerHTML = originalBtnHTML;
                 btn.disabled = false;
             }
@@ -1793,7 +1793,7 @@
                 });
                 if (!res.ok) {
                     const err = await res.json().catch(() => ({}));
-                    errorEl.innerHTML = '❌ ' + (err.detail || 'Failed to resend code');
+                    errorEl.innerHTML = '' + (err.detail || 'Failed to resend code');
                     btn.disabled = false;
                     return;
                 }
@@ -1804,8 +1804,8 @@
             } catch (e) {
                                 const isNetwork = e.message === 'Failed to fetch' || e.name === 'TypeError' || e.message === 'NetworkError';
                 errorEl.innerHTML = isNetwork
-                    ? '❌ Could not reach server. Check your connection.'
-                    : '❌ ' + e.message;
+                    ? 'Could not reach server. Check your connection.'
+                    : '' + e.message;
                 btn.disabled = false;
             }
         }
