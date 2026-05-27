@@ -1040,7 +1040,7 @@ async function continueWithEmail() {
         });
         const checkData = checkRes.ok ? await checkRes.json() : {exists: false};
         if (!checkData.exists) {
-            errorEl.innerHTML = '❌ No account found with this email. Create an account to get started.';
+            errorEl.innerHTML = 'No account found with this email. Create an account to get started.';
             btn.innerHTML = originalBtnHTML;
             btn.disabled = false;
             return;

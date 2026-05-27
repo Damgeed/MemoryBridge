@@ -282,7 +282,9 @@
       }
       const checkData = await checkRes.json();
       if (!checkData.exists) {
-        throw new Error('No account found with this email. Create an account to get started.');
+        if (errEl) errEl.textContent = 'No account found with this email. Create an account to get started.';
+        if (btn) { btn.innerHTML = 'Recover Account →'; btn.disabled = false; }
+        return;
       }
 
       // Step 1: Send verification code to the email
