@@ -568,61 +568,76 @@ async def recover_api_key(
     if not email or "@" not in email:
         raise HTTPException(status_code=400, detail="Please provide a valid email address.")
 
-    import stripe
-    try:
-        customers = stripe.Customer.list(email=email, limit=10)
-    except Exception as e:
-        raise HTTPException(status_code=502, detail=f"Could not verify purchase: {e}")
-
-    if not customers.data:
-        raise HTTPException(
-            status_code=404,
-            detail="No purchase found for that email. Make sure you use the email you paid with.",
-        )
-
-    # Find the most recent customer with an active subscription
+    # ── Step 1: Check local database first ──────────────────────────
     org_id = None
     found_tier = "free"
-    for customer in customers.data:
-        try:
-            subs = stripe.Subscription.list(customer=customer.id, limit=5, status="all")
-        except Exception:
-            continue
-        for sub in subs.data:
-            active_statuses = {"active", "trialing", "past_due"}
-            if sub.get("status") not in active_statuses:
-                continue
-            metadata = sub.get("metadata", {})
-            if metadata.get("organization_id"):
-                org_id = metadata["organization_id"]
-                items = sub.get("items", {}).get("data", [])
-                if items:
-                    from ..services.billing_service import PRICE_IDS
-                    price_id = items[0].get("price", {}).get("id", "")
-                    for t, pid in PRICE_IDS.items():
-                        if pid == price_id:
-                            found_tier = t
-                            break
-                break
-        if org_id:
-            break
+    try:
+        user_record = await storage.get_user_by_email(email.strip().lower())
+        if user_record:
+            org_id = user_record.get("organization_id", "")
+            try:
+                sub = await storage.get_subscription_by_org(org_id)
+                if sub:
+                    found_tier = sub.tier if sub.status != "canceled" else "free"
+            except Exception:
+                pass
+            logger.info("Recover: found user in local DB org=%s tier=%s", org_id, found_tier)
+    except Exception as e:
+        logger.warning("Recover: local DB lookup failed: %s", e)
 
+    # ── Step 2: Fall through to Stripe if not found locally ─────────
     if not org_id:
-        # Last resort: check stored subscriptions by stripe_customer_id
+        import stripe
+        try:
+            customers = stripe.Customer.list(email=email, limit=10)
+        except Exception as e:
+            raise HTTPException(status_code=502, detail=f"Could not verify purchase: {e}")
+
+        if not customers.data:
+            raise HTTPException(
+                status_code=404,
+                detail="No account found for that email. Make sure you use the email you signed up with.",
+            )
+
         for customer in customers.data:
             try:
-                sub = await storage.get_subscription_by_stripe_customer(customer.id)
+                subs = stripe.Subscription.list(customer=customer.id, limit=5, status="all")
             except Exception:
                 continue
-            if sub:
-                org_id = sub.organization_id
-                found_tier = sub.tier
+            for sub in subs.data:
+                active_statuses = {"active", "trialing", "past_due"}
+                if sub.get("status") not in active_statuses:
+                    continue
+                metadata = sub.get("metadata", {})
+                if metadata.get("organization_id"):
+                    org_id = metadata["organization_id"]
+                    items = sub.get("items", {}).get("data", [])
+                    if items:
+                        from ..services.billing_service import PRICE_IDS
+                        price_id = items[0].get("price", {}).get("id", "")
+                        for t, pid in PRICE_IDS.items():
+                            if pid == price_id:
+                                found_tier = t
+                                break
+                    break
+            if org_id:
                 break
+
+        if not org_id:
+            for customer in customers.data:
+                try:
+                    sub = await storage.get_subscription_by_stripe_customer(customer.id)
+                except Exception:
+                    continue
+                if sub:
+                    org_id = sub.organization_id
+                    found_tier = sub.tier
+                    break
 
     if not org_id:
         raise HTTPException(
             status_code=404,
-            detail="Found your account but no active subscription. Your plan may have expired.",
+            detail="No account found for that email. Make sure you use the email you signed up with.",
         )
 
     # Check if org already has active keys before creating another
