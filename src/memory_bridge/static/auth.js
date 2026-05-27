@@ -26,8 +26,6 @@
   function setApiKey(k) { localStorage.setItem(API_KEY, k); }
   function clearApiKey() { localStorage.removeItem(API_KEY); }
 
-  window.__mb = window.__mb || {};
-
   /* ── Decode ──────────────────────────────────────────── */
 
   function decodeJWT(token) {
@@ -307,77 +305,6 @@
   }
 
 
-  /* ── Password Setup ──────────────────────────────────── */
-
-  function showPasswordSetup() {
-    let container = document.getElementById('password-setup-container');
-    if (container) {
-      container.style.display = 'block';
-      return;
-    }
-
-    container = document.createElement('div');
-    container.id = 'password-setup-container';
-    container.style.cssText = 'margin-top:16px;max-width:360px;';
-
-    const title = document.createElement('h3');
-    title.textContent = 'Set Your Password';
-    title.style.cssText = 'margin:0 0 12px;font-size:16px;';
-
-    const pwInput = document.createElement('input');
-    pwInput.type = 'password';
-    pwInput.id = 'setup-password';
-    pwInput.placeholder = 'New password';
-    pwInput.style.cssText = 'width:100%;padding:10px;border:1px solid #ccc;border-radius:6px;font-size:14px;box-sizing:border-box;margin-bottom:8px;';
-
-    const confirmInput = document.createElement('input');
-    confirmInput.type = 'password';
-    confirmInput.id = 'setup-password-confirm';
-    confirmInput.placeholder = 'Confirm password';
-    confirmInput.style.cssText = 'width:100%;padding:10px;border:1px solid #ccc;border-radius:6px;font-size:14px;box-sizing:border-box;margin-bottom:8px;';
-
-    const setBtn = document.createElement('button');
-    setBtn.textContent = 'Set Password';
-    setBtn.style.cssText = 'width:100%;padding:10px;background:#10b981;color:#fff;border:none;border-radius:6px;font-size:14px;cursor:pointer;';
-    setBtn.onclick = setPassword;
-
-    container.appendChild(title);
-    container.appendChild(pwInput);
-    container.appendChild(confirmInput);
-    container.appendChild(setBtn);
-    document.body.appendChild(container);
-  }
-
-  async function setPassword() {
-    const password = document.getElementById('setup-password')?.value;
-    const confirm = document.getElementById('setup-password-confirm')?.value;
-
-    if (!password || !confirm) {
-      if (typeof showError === 'function') showError('Both fields are required.');
-      return;
-    }
-    if (password !== confirm) {
-      if (typeof showError === 'function') showError('Passwords do not match.');
-      return;
-    }
-
-    try {
-      const res = await fetch('/auth/set-password', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + getJWT() },
-        body: JSON.stringify({ password }),
-      });
-      const data = await res.json();
-      if (!res.ok) {
-        if (typeof showError === 'function') showError(data.error || 'Failed to set password.');
-        return;
-      }
-      if (typeof showSuccess === 'function') showSuccess('Password set successfully.');
-    } catch (e) {
-      if (typeof showError === 'function') showError('Network error.');
-    }
-  }
-
   /* ── Simple Init (for most pages) ────────────────────── */
 
   async function initAuth() {
@@ -409,6 +336,4 @@
   window.showSignInToast    = showSignInToast;
   window.recoverAccount     = recoverAccount;
   window.showRecoveryForm   = showRecoveryForm;
-  window.showPasswordSetup  = showPasswordSetup;
-  window.setPassword        = setPassword;
 })();
