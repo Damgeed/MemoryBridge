@@ -507,8 +507,7 @@ async def free_signup(
     except Exception as e:
         logger.warning("Could not store free subscription: %s", e)
 
-    # Create API key
-    result = await storage.create_api_key(label="free-key", project_id=org_id)
+    # Don't auto-create API keys — users generate their own from the dashboard
 
     # Record abuse prevention data
     now = datetime.now(timezone.utc).isoformat()

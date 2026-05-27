@@ -367,21 +367,16 @@ async def passwordless_verify(
         logger.error("JWT generation failed: %s", e)
         raise HTTPException(status_code=500, detail="Could not generate session token")
 
-    # Fetch API key for the user
+    # Fetch API key for the user (don't auto-create — let users generate from dashboard)
     api_key = ""
     try:
-        # Check if user already has API keys before creating another
+        # Check if user already has API keys
         existing_keys = await storage.list_api_keys()
         org_keys = [k for k in existing_keys if k.get("project_id") == org_id and k.get("is_active") is not False]
-        if not org_keys:
-            # Generate a fresh API key so the user always has a durable credential
-            new_key = await storage.create_api_key(
-                label="auto",
-                project_id=org_id,
-            )
-            api_key = new_key.get("key", "")
+        if org_keys:
+            api_key = org_keys[0].get("key", "")
     except Exception as e:
-        logger.warning("Could not create API key: %s", e)
+        logger.warning("Could not fetch API key: %s", e)
         pass
 
     return {

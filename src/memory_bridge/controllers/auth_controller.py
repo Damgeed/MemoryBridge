@@ -212,24 +212,8 @@ async def get_my_api_key_value(request: Request):
     user_keys = [k for k in all_keys if k.get("project_id") == org_id and k.get("is_active") is not False]
 
     if not user_keys:
-        # No keys yet — auto-create one for the user
-        try:
-            new_key = await storage.create_api_key(
-                label="auto",
-                project_id=org_id,
-            )
-            logger.info("Auto-created API key for org=%s", org_id)
-            return {
-                "key": new_key.get("key", ""),
-                "key_id": new_key.get("id", ""),
-                "label": new_key.get("label", "auto"),
-                "key_count": 1,
-                "new": True,
-                "hint": "This is your new API key. Keep it safe!",
-            }
-        except Exception as e:
-            logger.warning("Auto-create API key failed for org=%s: %s", org_id, e)
-            return {"key": None, "key_id": "", "key_count": 0, "new": False, "hint": "Could not create API key. Try again from the dashboard."}
+        # No keys yet — clean slate, return null
+        return {"key": None, "key_id": "", "key_count": 0, "new": False, "hint": "Generate your first API key from the dashboard."}
 
     # Return the most recent active key — never create a duplicate
     # list_api_keys returns hashes, not plaintext, which is by design.
