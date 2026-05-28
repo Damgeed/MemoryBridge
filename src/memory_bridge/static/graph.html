@@ -487,10 +487,15 @@
                 .attr('fill', d => COLORS[d.type] || '#888')
                 .call(d3.drag()
                     .on('start', (event, d) => {
+                        if (!event.active) simulation.alphaTarget(0.3).restart();
                         d.fx = d.x; d.fy = d.y;
                     })
-                    .on('drag', (event, d) => { d.fx = event.x; d.fy = event.y; })
+                    .on('drag', (event, d) => {
+                        d.fx = event.x;
+                        d.fy = event.y;
+                    })
                     .on('end', (event, d) => {
+                        if (!event.active) simulation.alphaTarget(0);
                         d.fx = d.x; d.fy = d.y;
                     })
                 );
@@ -542,15 +547,16 @@
                 .force('link', d3.forceLink(data.edges)
                     .id(d => d.id)
                     .distance(d => d.type === 'tagged' ? 120 : 200)
-                    .strength(0.15)
+                    .strength(0.3)
                 )
                 .force('charge', d3.forceManyBody()
                     .strength(d => d.type === 'session' ? -800 : d.type === 'agent' ? -600 : -400)
                 )
-                .force('center', d3.forceCenter(width / 2, height / 2).strength(0.05))
+                .force('center', d3.forceCenter(width / 2, height / 2).strength(0.1))
                 .force('collision', d3.forceCollide().radius(40))
-                .alphaDecay(0.02)
-                .velocityDecay(0.85)
+                .alphaDecay(0.5)
+                .alphaMin(0.001)
+                .velocityDecay(0.6)
                 .on('tick', () => {
                     linkElements
                         .attr('x1', d => d.source.x)
@@ -562,7 +568,6 @@
                 })
                 .on('end', () => {
                     nodeElements.each(d => { d.fx = d.x; d.fy = d.y; });
-                    simulation.stop();
                 });
 
             setTimeout(() => {
