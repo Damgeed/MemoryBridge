@@ -1456,6 +1456,20 @@ class SQLiteMemoryRepository(MemoryRepository):
             ]
             return deliveries, total
 
+    async def cleanup_old_webhook_deliveries(self, max_age_days: int = 30) -> int:
+        """Delete webhook delivery records older than max_age_days.
+        Returns the number of records deleted."""
+        cutoff = (datetime.now(timezone.utc) - timedelta(days=max_age_days)).isoformat()
+        async with aiosqlite.connect(self.db_path) as db:
+            cursor = await db.execute(
+                "DELETE FROM webhook_deliveries WHERE timestamp < ?", (cutoff,)
+            )
+            await db.commit()
+            count = cursor.rowcount
+            if count:
+                logger.info("Cleaned up %d old webhook deliveries (>%d days)", count, max_age_days)
+            return count
+
     # ── Additional utilities (beyond the ABC) ────────────────────────────────
 
     async def query_memories_lineage(

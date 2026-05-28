@@ -1557,6 +1557,21 @@ class PostgresMemoryRepository(MemoryRepository):
             ]
             return deliveries, total
 
+    async def cleanup_old_webhook_deliveries(self, max_age_days: int = 30) -> int:
+        """Delete webhook delivery records older than max_age_days.
+        Returns the number of records deleted."""
+        async with self.pool.acquire() as conn:
+            result = await conn.execute(
+                f"DELETE FROM {self.schema}.webhook_deliveries "
+                f"WHERE timestamp < NOW() - $1::interval",
+                f"{max_age_days} days",
+            )
+            # asyncpg returns e.g. "DELETE 5" — parse the count
+            count = int(result.split()[-1]) if result else 0
+            if count:
+                logger.info("Cleaned up %d old webhook deliveries (>%d days)", count, max_age_days)
+            return count
+
     # ── Additional utilities (beyond the ABC) ────────────────────────────────
 
     async def query_memories_lineage(

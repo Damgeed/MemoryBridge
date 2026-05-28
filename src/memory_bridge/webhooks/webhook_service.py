@@ -13,7 +13,7 @@ import logging
 import time
 import uuid
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from typing import Any, Optional
 
 import httpx
@@ -470,3 +470,43 @@ class WebhookService:
         total = len(deliveries)
         page = deliveries[offset:offset + limit]
         return page, total
+
+    async def cleanup_old_deliveries(self, max_age_days: int = 30) -> int:
+        """Remove delivery records older than max_age_days from both the
+        in-memory caches and the persistent repository (if available).
+
+        Returns the total number of records purged.
+        """
+        total_purged = 0
+
+        # 1. Clean up the persistent repository if available
+        if self.repo:
+            total_purged += await self.repo.cleanup_old_webhook_deliveries(max_age_days)
+
+        # 2. Clean up in-memory caches
+        cutoff = datetime.now(timezone.utc) - timedelta(days=max_age_days)
+        # _last_deliveries
+        stale_last_ids = [
+            sid for sid, d in self._last_deliveries.items()
+            if d.timestamp < cutoff
+        ]
+        for sid in stale_last_ids:
+            del self._last_deliveries[sid]
+        total_purged += len(stale_last_ids)
+
+        # _delivery_history
+        for sub_id in list(self._delivery_history.keys()):
+            old_count = len(self._delivery_history[sub_id])
+            self._delivery_history[sub_id] = [
+                d for d in self._delivery_history[sub_id]
+                if d.timestamp >= cutoff
+            ]
+            total_purged += old_count - len(self._delivery_history[sub_id])
+
+        if total_purged:
+            logger.info(
+                "Cleaned up %d old webhook deliveries (>%d days)",
+                total_purged,
+                max_age_days,
+            )
+        return total_purged

@@ -318,3 +318,9 @@ class MemoryRepository(ABC):
         """Get paginated delivery history for a webhook subscription.
         Returns (deliveries, total_count)."""
         ...
+
+    @abstractmethod
+    async def cleanup_old_webhook_deliveries(self, max_age_days: int = 30) -> int:
+        """Delete webhook delivery records older than max_age_days.
+        Returns the number of records deleted."""
+        ...
