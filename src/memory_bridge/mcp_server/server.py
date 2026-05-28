@@ -118,7 +118,8 @@ TOOL_DEFINITIONS: list[dict[str, Any]] = [
             "Get all memories relevant to handing off context between agents. "
             "Returns memories grouped by session, showing what each agent has "
             "learned. Use this when starting a new task or when a different "
-            "agent needs to pick up where another left off."
+            "agent needs to pick up where another left off. "
+            "Optionally provide a 'query' for scored/ranked results by relevance."
         ),
         "inputSchema": {
             "type": "object",
@@ -130,6 +131,10 @@ TOOL_DEFINITIONS: list[dict[str, Any]] = [
                 "session_id": {
                     "type": "string",
                     "description": "Filter to only memories from this session",
+                },
+                "query": {
+                    "type": "string",
+                    "description": "Optional natural language query for relevance-based ranking",
                 },
                 "limit": {
                     "type": "integer",
@@ -200,6 +205,83 @@ TOOL_DEFINITIONS: list[dict[str, Any]] = [
             "required": ["query"],
         },
     },
+    {
+        "name": "extract_facts",
+        "description": (
+            "Extract atomic, structured facts from raw text using an LLM. "
+            "Returns facts with categories (preference, fact, decision, log, other), "
+            "confidence scores, and extracted entities. Optionally stores each "
+            "fact as a separate memory entry for later retrieval."
+        ),
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "text": {
+                    "type": "string",
+                    "description": "Raw text to extract facts from",
+                },
+                "store_facts": {
+                    "type": "boolean",
+                    "description": "If true, store each extracted fact as a separate memory entry",
+                    "default": False,
+                },
+                "agent_id": {
+                    "type": "string",
+                    "description": "Agent ID (required when store_facts=true)",
+                },
+                "session_id": {
+                    "type": "string",
+                    "description": "Session ID (required when store_facts=true)",
+                },
+                "tags": {
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Optional tags to apply when storing facts",
+                },
+            },
+            "required": ["text"],
+        },
+    },
+    {
+        "name": "score_memories",
+        "description": (
+            "Score and rank memories by recency, relevance, and importance. "
+            "Returns each memory with a composite score (0-1) and its component "
+            "scores. Provide a 'query' for relevance-based ranking, or omit it "
+            "for recency+importance-only ranking."
+        ),
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "query": {
+                    "type": "string",
+                    "description": "Natural language query for relevance scoring (optional)",
+                },
+                "session_id": {
+                    "type": "string",
+                    "description": "Filter by session ID",
+                },
+                "agent_id": {
+                    "type": "string",
+                    "description": "Filter by agent ID",
+                },
+                "limit": {
+                    "type": "integer",
+                    "description": "Maximum number of memories to return (default: 20, max: 200)",
+                    "default": 20,
+                },
+                "weights": {
+                    "type": "object",
+                    "description": "Custom scoring weights: {\"recency\": 0.3, \"relevance\": 0.5, \"importance\": 0.2}",
+                    "properties": {
+                        "recency": {"type": "number"},
+                        "relevance": {"type": "number"},
+                        "importance": {"type": "number"},
+                    },
+                },
+            },
+        },
+    },
 ]
 
 
@@ -228,6 +310,8 @@ class MCPServer:
             "list_sessions": self._handle_list_sessions,
             "delete_memory": self._handle_delete_memory,
             "search_semantic": self._handle_search_semantic,
+            "extract_facts": self._handle_extract_facts,
+            "score_memories": self._handle_score_memories,
         }
 
     # ── Auth helpers ──────────────────────────────────────────────────
@@ -344,8 +428,29 @@ class MCPServer:
         if args.get("session_id"):
             params["session_id"] = args["session_id"]
 
-        result = self._api_call("GET", "/memories/", params=params)
-        memories = result if isinstance(result, list) else result.get("results", result.get("memories", []))
+        query = args.get("query", "")
+
+        if query:
+            # Use scoring endpoint for relevance-based ranking
+            body = {
+                "query": query,
+                "limit": min(args.get("limit", 50), 200),
+            }
+            if args.get("agent_id"):
+                body["agent_id"] = args["agent_id"]
+            if args.get("session_id"):
+                body["session_id"] = args["session_id"]
+            result = self._api_call("POST", "/memories/score", json=body)
+            scored_results = result.get("results", []) if isinstance(result, dict) else []
+            memories = [r.get("memory", r) for r in scored_results]
+            scores = {r.get("memory", {}).get("id", ""): r for r in scored_results}
+        else:
+            # No query — fetch raw and sort by recency
+            result = self._api_call("GET", "/memories/", params=params)
+            memories = result if isinstance(result, list) else result.get("results", result.get("memories", []))
+            # Sort by created_at descending (most recent first)
+            memories.sort(key=lambda m: m.get("created_at", "") or "", reverse=True)
+            scores = {}
 
         if not memories:
             return {
@@ -359,14 +464,31 @@ class MCPServer:
             by_session.setdefault(sid, []).append(m)
 
         lines = [f"Handoff context: {len(memories)} memories across {len(by_session)} session(s)", ""]
+        if query:
+            lines.append(f"  Ranked by relevance to: \"{query}\"")
+            lines.append("")
         for sid, mems in sorted(by_session.items()):
             agents = set(m.get("agent_id", "") for m in mems)
             lines.append(f"  Session: {sid}")
             lines.append(f"  Agents:  {', '.join(sorted(agents))}")
             for m in mems:
+                mid = m.get("id", "")
+                score_info = ""
+                if mid in scores:
+                    s = scores[mid]
+                    score_info = "  [score={:.4f} r={:.2f} v={:.2f} i={:.2f}]".format(
+                        s.get("score", 0),
+                        s.get("recency_score", 0),
+                        s.get("relevance_score", 0),
+                        s.get("importance_score", 0),
+                    )
                 val = m.get("value", "")
                 val_str = json.dumps(val, indent=2) if not isinstance(val, str) else str(val)
-                lines.append(f"    • [{m.get('key', '')}] = {val_str[:200]}")
+                lines.append("    • [{key}]{score} = {val}".format(
+                    key=m.get("key", ""),
+                    score=score_info,
+                    val=val_str[:200],
+                ))
             lines.append("")
 
         return {"content": [{"type": "text", "text": "\n".join(lines)}]}
@@ -462,6 +584,137 @@ class MCPServer:
             if tags_str:
                 lines.append(tags_str)
             lines.append(f"        value: {val_str[:300]}")
+            lines.append("")
+
+        return {"content": [{"type": "text", "text": "\n".join(lines)}]}
+
+    def _handle_extract_facts(self, args: dict) -> dict:
+        """Extract facts from text using the API."""
+
+        body = {
+            "text": args["text"],
+            "source_key": args.get("source_key", ""),
+            "store_facts": args.get("store_facts", False),
+            "max_facts": min(args.get("max_facts", 10), 25),
+        }
+        if args.get("agent_id"):
+            body["agent_id"] = args["agent_id"]
+        if args.get("session_id"):
+            body["session_id"] = args["session_id"]
+        if args.get("tags"):
+            body["tags"] = args["tags"]
+
+        try:
+            result = self._api_call("POST", "/memories/extract", json=body)
+        except RuntimeError as e:
+            return {
+                "content": [
+                    {
+                        "type": "text",
+                        "text": "Fact extraction failed: {}".format(str(e)),
+                    }
+                ],
+            }
+
+        facts = result.get("facts", [])
+        provider = result.get("provider", "unknown")
+        stored_count = result.get("stored_count", 0)
+
+        if not facts:
+            return {
+                "content": [
+                    {
+                        "type": "text",
+                        "text": "No facts could be extracted from the provided text.",
+                    }
+                ],
+            }
+
+        lines = [
+            "Extracted {} fact(s) using {}:".format(len(facts), provider),
+            "",
+        ]
+        for i, f in enumerate(facts):
+            entities = ", ".join(f.get("entities", []))
+            entities_str = " [entities: {}]".format(entities) if entities else ""
+            lines.append(
+                "  {}. [{}] (confidence: {:.2f}){}{}".format(
+                    i + 1,
+                    f.get("category", "other"),
+                    f.get("confidence", 0.0),
+                    entities_str,
+                )
+            )
+            lines.append("     {}".format(f.get("fact", "")))
+            lines.append("")
+
+        if stored_count:
+            lines.append("Stored {} fact(s) as memories.".format(stored_count))
+
+        return {"content": [{"type": "text", "text": "\n".join(lines)}]}
+
+    def _handle_score_memories(self, args: dict) -> dict:
+        """Score and rank memories by recency, relevance, and importance."""
+        body = {}
+        if args.get("query"):
+            body["query"] = args["query"]
+        if args.get("session_id"):
+            body["session_id"] = args["session_id"]
+        if args.get("agent_id"):
+            body["agent_id"] = args["agent_id"]
+        if args.get("weights"):
+            body["weights"] = args["weights"]
+        body["limit"] = min(args.get("limit", 20), 200)
+
+        result = self._api_call("POST", "/memories/score", json=body)
+
+        results = result.get("results", []) if isinstance(result, dict) else []
+        count = result.get("count", 0) if isinstance(result, dict) else 0
+
+        if not results:
+            return {
+                "content": [{"type": "text", "text": "No memories to score."}],
+            }
+
+        lines = [
+            f"Scored {count} memories:",
+            "",
+        ]
+        for r in results:
+            m = r.get("memory", {})
+            score = r.get("score", 0)
+            recency = r.get("recency_score", 0)
+            relevance = r.get("relevance_score", 0)
+            importance = r.get("importance_score", 0)
+            created = m.get("created_at", "")[:19] if m.get("created_at") else ""
+            tags_str = (
+                f"  tags: {', '.join(m.get('tags', []))}"
+                if m.get("tags") else ""
+            )
+            val = m.get("value", "")
+            val_str = json.dumps(val, indent=2) if not isinstance(val, str) else val
+            lines.append(
+                "  [{id}] key={key}".format(
+                    id=m.get("id", "")[:8],
+                    key=m.get("key", ""),
+                )
+            )
+            lines.append(
+                "        score={:.4f}  recency={:.2f}  relevance={:.2f}  importance={:.2f}".format(
+                    score, recency, relevance, importance,
+                )
+            )
+            lines.append(
+                "        agent={agent}  session={session}".format(
+                    agent=m.get("agent_id", ""),
+                    session=m.get("session_id", ""),
+                )
+            )
+            if created:
+                lines.append("        created: {}".format(created))
+            if tags_str:
+                lines.append(tags_str)
+            lines.append("        value: {}".format(val_str[:200]))
             lines.append("")
 
         return {"content": [{"type": "text", "text": "\n".join(lines)}]}

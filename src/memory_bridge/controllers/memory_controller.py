@@ -13,10 +13,20 @@ from fastapi import APIRouter, Depends, HTTPException, Query, Request
 
 from ..config import get_settings
 from ..dependencies import get_storage
-from ..models import MemoryCreate, MemoryEntry, MemoryQuery
+from ..models import (
+    ExtractFactsRequest,
+    MemoryCreate,
+    MemoryEntry,
+    MemoryQuery,
+    ScoreMemoriesRequest,
+    ScoreMemoriesResponse,
+    ScoredMemoryResult,
+)
 from ..repository.s3_store import S3Store
 from ..services.embedding_service import EmbeddingService
+from ..services.fact_extraction_service import FactExtractionService
 from ..services.memory_service import MemoryService
+from ..services.scoring_service import MemoryScoringService
 
 logger = logging.getLogger(__name__)
 
@@ -63,6 +73,81 @@ async def create_memory(
         project=project,
         auth_context=auth_context,
     )
+
+
+@router.post("/extract")
+async def extract_facts(
+    payload: ExtractFactsRequest,
+    request: Request,
+    repo=Depends(get_storage),
+):
+    """Extract atomic facts from raw text using an LLM provider.
+
+    Returns extracted facts with categories, confidence scores, and entities.
+    Optionally stores each fact as a separate MemoryEntry when store_facts=true.
+
+    When no LLM provider is configured, returns the raw text as a single
+    fact with category 'other'.
+    """
+    # Validate store_facts requirements
+    if payload.store_facts:
+        if not payload.agent_id:
+            raise HTTPException(
+                status_code=422,
+                detail="agent_id is required when store_facts=true",
+            )
+        if not payload.session_id:
+            raise HTTPException(
+                status_code=422,
+                detail="session_id is required when store_facts=true",
+            )
+
+    # Extract facts
+    extractor = FactExtractionService()
+    facts = await extractor.extract_facts(
+        text=payload.text,
+        source_key=payload.source_key or "",
+        max_facts=payload.max_facts,
+    )
+
+    # Optionally store each fact as a MemoryEntry
+    stored_count = 0
+    if payload.store_facts and facts:
+        all_tags = list(payload.tags)
+        if "extracted" not in all_tags:
+            all_tags.append("extracted")
+
+        for idx, fact_data in enumerate(facts):
+            source = payload.source_key or "extracted"
+            fact_key = "fact:{}:{}".format(source, idx)
+            entry = MemoryEntry(
+                session_id=payload.session_id,
+                agent_id=payload.agent_id,
+                key=fact_key,
+                value={
+                    "fact": fact_data["fact"],
+                    "category": fact_data["category"],
+                    "confidence": fact_data["confidence"],
+                    "entities": fact_data["entities"],
+                },
+                tags=all_tags,
+            )
+            try:
+                await repo.store_memory(entry)
+                stored_count += 1
+            except Exception as e:
+                logger.warning(
+                    "Failed to store fact %d (key=%s): %s",
+                    idx,
+                    fact_key,
+                    e,
+                )
+
+    return {
+        "facts": facts,
+        "provider": extractor.provider_name,
+        "stored_count": stored_count,
+    }
 
 
 @router.get("/search")
@@ -207,6 +292,71 @@ async def semantic_search_memories(
         offset=payload.offset,
     )
     return {"entries": [e.model_dump() for e in entries], "total": len(entries)}
+
+
+@router.post("/score", response_model=ScoreMemoriesResponse)
+async def score_memories(
+    request: Request,
+    payload: ScoreMemoriesRequest,
+    service: MemoryService = Depends(get_memory_service),
+):
+    """Score and rank memories by recency, relevance, and importance.
+
+    Accepts optional memory IDs to score specific memories, or filters
+    (session_id, agent_id) to select memories, then ranks them using
+    a composite scoring function.
+
+    Weights can be customized via the `weights` parameter:
+    ```json
+    {"recency": 0.3, "relevance": 0.5, "importance": 0.2}
+    ```
+    """
+    project = getattr(request.state, "project_id", None)
+    scorer = MemoryScoringService()
+
+    # Fetch memories to score
+    if payload.memories:
+        # Score specific memories by ID
+        raw_memories = []
+        for mem_id in payload.memories:
+            entry = await service.get_memory(mem_id, project=project)
+            if entry is not None:
+                raw_memories.append(entry)
+        # If no memories found, return empty
+        if not raw_memories:
+            return ScoreMemoriesResponse(results=[], count=0)
+    else:
+        # Fetch via filters
+        raw_memories = await service.query_memories(
+            session_id=payload.session_id,
+            agent_id=payload.agent_id,
+            limit=payload.limit,
+            project=project,
+        )
+
+    # Score and rank
+    scored = await scorer.score_memories_async(
+        memories=raw_memories,
+        query_context=payload.query,
+        weights=payload.weights,
+    )
+
+    # Apply limit and build response
+    if payload.limit and len(scored) > payload.limit:
+        scored = scored[:payload.limit]
+
+    results = [
+        ScoredMemoryResult(
+            memory=s["memory"],
+            score=s["score"],
+            recency_score=s["recency_score"],
+            relevance_score=s["relevance_score"],
+            importance_score=s["importance_score"],
+        )
+        for s in scored
+    ]
+
+    return ScoreMemoriesResponse(results=results, count=len(results))
 
 
 @router.get("/{memory_id}", response_model=MemoryEntry)

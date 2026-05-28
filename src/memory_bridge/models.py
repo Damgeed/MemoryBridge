@@ -105,7 +105,49 @@ class MemoryQuery(BaseModel):
     """Project scope for multi-tenant isolation."""
 
 
+class ExtractFactsRequest(BaseModel):
+    """Request body for POST /memories/extract."""
+    text: str = Field(..., min_length=1)
+    source_key: Optional[str] = None
+    store_facts: bool = False
+    agent_id: Optional[str] = None
+    session_id: Optional[str] = None
+    tags: list[str] = Field(default_factory=list)
+    max_facts: int = Field(default=10, ge=1, le=25)
+
+
 class MemorySearchResult(BaseModel):
     """Search result wrapper."""
     entries: list[MemoryEntry]
     total: int
+
+
+class ScoreMemoriesRequest(BaseModel):
+    """Request body for POST /memories/score."""
+    memories: Optional[list[str]] = None
+    """Optional list of memory IDs to score. If omitted, scores top memories by filters."""
+    query: str = ""
+    """Optional natural language query for relevance scoring."""
+    limit: int = Field(default=20, ge=1, le=200)
+    """Max results to return (when no specific memory IDs given)."""
+    session_id: Optional[str] = None
+    """Optional session filter."""
+    agent_id: Optional[str] = None
+    """Optional agent filter."""
+    weights: Optional[dict[str, float]] = None
+    """Optional custom weights: {"recency": 0.3, "relevance": 0.5, "importance": 0.2}"""
+
+
+class ScoredMemoryResult(BaseModel):
+    """A single scored memory result."""
+    memory: MemoryEntry
+    score: float
+    recency_score: float
+    relevance_score: float
+    importance_score: float
+
+
+class ScoreMemoriesResponse(BaseModel):
+    """Response body for POST /memories/score."""
+    results: list[ScoredMemoryResult]
+    count: int
