@@ -587,23 +587,24 @@
             simulation = d3.forceSimulation(data.nodes)
                 .force('link', d3.forceLink(data.edges)
                     .id(d => d.id)
-                    .distance(d => d.type === 'tagged' ? 60 : 100)
-                    .strength(0.3)
+                    .distance(d => d.type === 'tagged' ? 80 : 150)
+                    .strength(0.05)
                 )
                 .force('charge', d3.forceManyBody()
-                    .strength(d => d.type === 'session' ? -300 : d.type === 'agent' ? -300 : -250)
+                    .strength(-400)
                 )
                 .force('x', d3.forceX(d => {
-                    if (d.type === 'agent') return width * 0.75;
-                    if (d.type === 'session') return width * 0.25;
+                    if (d.type === 'agent') return width * 0.8;
+                    if (d.type === 'session') return width * 0.2;
+                    if (d.type === 'tag') return width * 0.5;
                     return width * 0.5;
-                }).strength(0.08))
+                }).strength(0.15))
                 .force('y', d3.forceY(d => {
-                    if (d.type === 'tag') return height * 0.7;
+                    if (d.type === 'tag') return height * 0.75;
                     return height * 0.45;
-                }).strength(0.06))
-                .force('collision', d3.forceCollide().radius(18))
-                .alphaDecay(0.06)
+                }).strength(0.12))
+                .force('collision', d3.forceCollide().radius(25))
+                .alphaDecay(0.04)
                 .alphaMin(0.001)
                 .on('tick', () => {
                     linkElements
