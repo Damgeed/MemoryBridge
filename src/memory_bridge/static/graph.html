@@ -447,7 +447,7 @@
    447|                container.innerHTML = '';
    448|                const errorDiv = document.createElement('div');
    449|                errorDiv.className = 'error-state';
-   450|                errorDiv.innerHTML = '<h3>⚠️ Failed to load graph</h3>';
+   450|                errorDiv.innerHTML = '<h3> Failed to load graph</h3>';
    451|                const p = errorDiv.appendChild(document.createElement('p'));
    452|                p.textContent = e.message || 'Unknown error';
    453|                container.appendChild(errorDiv);
@@ -1473,7 +1473,7 @@
   1473|            const errorEl = document.getElementById('auth-error-phone');
   1474|            const btn = document.getElementById('pl-phone-btn');
   1475|            if (!localNum) {
-  1476|                errorEl.innerHTML = '⚠️ Enter your phone number';
+  1476|                errorEl.innerHTML = 'Enter your phone number';
   1477|                return;
   1478|            }
   1479|            const fullPhone = '+' + countryCode + localNum;
@@ -1529,7 +1529,7 @@
   1529|            const errorEl = document.getElementById('auth-error-main');
   1530|            const btn = document.getElementById('pl-email-btn');
   1531|            if (!email || !email.includes('@')) {
-  1532|                errorEl.innerHTML = '⚠️ Enter a valid email address';
+  1532|                errorEl.innerHTML = 'Enter a valid email address';
   1533|                return;
   1534|            }
   1535|            const originalBtnHTML = btn.innerHTML;
@@ -1592,7 +1592,7 @@
   1592|            const errorEl = document.getElementById('auth-error-code');
   1593|            const btn = document.getElementById('pl-code-btn');
   1594|            if (!code || code.length < 4) {
-  1595|                errorEl.innerHTML = '⚠️ Enter your 6-digit verification code';
+  1595|                errorEl.innerHTML = 'Enter your 6-digit verification code';
   1596|                return;
   1597|            }
   1598|            const originalBtnHTML = btn.innerHTML;
