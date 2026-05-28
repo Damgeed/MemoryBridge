@@ -767,11 +767,13 @@
         // ── Clear All Memories (Demo Only) ─────────────────────────
         function showClearConfirm() {
             document.getElementById('clear-overlay').style.display = 'block';
+            document.getElementById('clear-overlay').style.backdropFilter = 'none';
             document.getElementById('clear-modal').style.display = 'block';
         }
 
         function closeClearConfirm() {
             document.getElementById('clear-overlay').style.display = 'none';
+            document.getElementById('clear-overlay').style.backdropFilter = '';
             document.getElementById('clear-modal').style.display = 'none';
         }
 
