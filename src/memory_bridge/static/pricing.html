@@ -702,6 +702,18 @@
                 return;
             }
 
+            // Check if JWT is still valid — if expired and refresh fails, open auth modal
+            if (typeof ensureValidJWT === 'function') {
+                const valid = await ensureValidJWT();
+                if (!valid) {
+                    localStorage.removeItem('mb_jwt');
+                    window.postAuthCallback = () => checkout(tier);
+                    document.getElementById('auth-subtitle').textContent = 'Your session expired. Sign in again to subscribe to the ' + tier + ' plan.';
+                    openAuth();
+                    return;
+                }
+            }
+
             // Fetch current tier
             const currentTier = await fetchCurrentTier();
 
@@ -762,6 +774,18 @@
                     btn.onclick = (e) => { e.preventDefault(); openAuth(); };
                 });
                 return;
+            }
+
+            // Validate JWT — if expired and refresh fails, treat as not signed in
+            if (typeof ensureValidJWT === 'function') {
+                const valid = await ensureValidJWT();
+                if (!valid) {
+                    localStorage.removeItem('mb_jwt');
+                    document.querySelectorAll('.pricing-cta').forEach(btn => {
+                        btn.onclick = (e) => { e.preventDefault(); openAuth(); };
+                    });
+                    return;
+                }
             }
 
             // Signed in — fetch tier and update CTAs
