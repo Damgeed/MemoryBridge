@@ -479,6 +479,21 @@
                 .join('line')
                 .attr('class', 'link');
 
+            // Build agent → children map for grouped dragging
+            const nodeMap = {};
+            (data.nodes || []).forEach(n => { nodeMap[n.id] = n; });
+            const agentChildren = {};
+            (data.edges || []).forEach(e => {
+                // Edge direction: memory source → agent target
+                const srcId = typeof e.source === 'object' ? e.source.id : e.source;
+                const tgtId = typeof e.target === 'object' ? e.target.id : e.target;
+                const src = nodeMap[srcId];
+                if (src && src.type === 'memory') {
+                    if (!agentChildren[tgtId]) agentChildren[tgtId] = [];
+                    agentChildren[tgtId].push(src);
+                }
+            });
+
             nodeElements = g.selectAll('circle')
                 .data(data.nodes)
                 .join('circle')
@@ -489,14 +504,33 @@
                     .on('start', (event, d) => {
                         if (!event.active) simulation.alphaTarget(0.3).restart();
                         d.fx = d.x; d.fy = d.y;
+                        // Store offsets for connected children
+                        if (d.type === 'agent') {
+                            const children = agentChildren[d.id] || [];
+                            d._childOffsets = children.map(c => ({ node: c, ox: c.x - d.x, oy: c.y - d.y }));
+                        }
                     })
                     .on('drag', (event, d) => {
                         d.fx = event.x;
                         d.fy = event.y;
+                        // Move connected children with the agent
+                        if (d._childOffsets) {
+                            d._childOffsets.forEach(({ node, ox, oy }) => {
+                                node.fx = d.fx + ox;
+                                node.fy = d.fy + oy;
+                            });
+                        }
                     })
                     .on('end', (event, d) => {
                         if (!event.active) simulation.alphaTarget(0);
                         d.fx = d.x; d.fy = d.y;
+                        // Freeze connected children too
+                        if (d._childOffsets) {
+                            d._childOffsets.forEach(({ node }) => {
+                                node.fx = node.x; node.fy = node.y;
+                            });
+                            delete d._childOffsets;
+                        }
                     })
                 );
 
