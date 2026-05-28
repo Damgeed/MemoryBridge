@@ -505,7 +505,9 @@
                     .on('drag', (event, d) => { d.fx = event.x; d.fy = event.y; })
                     .on('end', (event, d) => {
                         if (!event.active) simulation.alphaTarget(0);
-                        d.fx = null; d.fy = null;
+                        // Keep node where user dropped it — no snap back
+                        d.fx = d.x;
+                        d.fy = d.y;
                     })
                 );
 
@@ -556,14 +558,16 @@
                 .force('link', d3.forceLink(data.edges)
                     .id(d => d.id)
                     .distance(d => d.type === 'tagged' ? 30 : 50)
-                    .strength(0.6)
+                    .strength(0.4)
                 )
                 .force('charge', d3.forceManyBody()
-                    .strength(d => d.type === 'session' ? -120 : d.type === 'agent' ? -100 : -60)
+                    .strength(d => d.type === 'session' ? -100 : d.type === 'agent' ? -80 : -50)
                 )
-                .force('center', d3.forceCenter(width / 2, height / 2))
-                .force('collision', d3.forceCollide().radius(6))
-                .alphaDecay(0.08)
+                .force('x', d3.forceX(width / 2).strength(0.02))
+                .force('y', d3.forceY(height / 2).strength(0.02))
+                .force('collision', d3.forceCollide().radius(12))
+                .alphaDecay(0.15)
+                .velocityDecay(0.4)
                 .on('tick', () => {
                     linkElements
                         .attr('x1', d => d.source.x)
@@ -572,9 +576,6 @@
                         .attr('y2', d => d.target.y);
                     nodeElements.attr('cx', d => d.x).attr('cy', d => d.y);
                     labelElements.attr('x', d => d.x).attr('y', d => d.y);
-                })
-                .on('end', () => {
-                    nodeElements.each(d => { d.fx = d.x; d.fy = d.y; });
                 });
 
             setTimeout(() => {
@@ -588,7 +589,6 @@
                         d3.zoomIdentity.translate(tx, ty).scale(scale)
                     );
                 }
-                simulation.stop();
             }, 500);
         }
 
