@@ -420,8 +420,8 @@
             </div>
             <div class="btn-group">
                 <button class="btn btn-secondary" onclick="searchMemories()" data-i18n="playground.search_btn">🔍 Search</button>
-                <button class="btn btn-secondary" onclick="getAllMemories()" data-i18n="playground.show_all">📋 Show All</button>
-                <button class="btn btn-secondary" onclick="clearSearchResults()" data-i18n="playground.clear_results">Clear Results</button>
+                <button class="btn btn-secondary" id="show-all-btn" onclick="toggleShowAll()">📋 Show All</button>
+                <button class="btn btn-secondary" onclick="showClearConfirm()">🗑️ Clear Results</button>
             </div>
             <div id="search-results" class="results" style="margin-top:0.75rem;"></div>
         </div>
@@ -440,6 +440,20 @@
         <div class="logout-btns">
             <button class="btn btn-secondary" onclick="closeLogoutConfirm()" data-i18n="logout.cancel">Cancel</button>
             <button class="btn btn-danger" id="logout-confirm-btn" onclick="logout()" data-i18n="logout.sign_out">Sign Out</button>
+        </div>
+    </div>
+
+    <!-- Clear Memories Confirm Modal -->
+    <div class="logout-modal-overlay" id="clear-overlay" onclick="closeClearConfirm()"></div>
+    <div class="logout-modal" id="clear-modal">
+        <div class="logout-icon">🗑️</div>
+        <div class="logout-title">Clear All Memories?</div>
+        <div class="logout-text">
+            This will permanently delete all stored memories from the playground demo data. This action cannot be undone.
+        </div>
+        <div class="logout-btns">
+            <button class="btn btn-secondary" onclick="closeClearConfirm()">Cancel</button>
+            <button class="btn btn-danger" id="clear-confirm-btn" onclick="confirmClearMemories()">Delete All</button>
         </div>
     </div>
 
@@ -645,6 +659,12 @@
 
         // ── Search ────────────────────────────────────────────────
         async function searchMemories() {
+            // Reset toggle state
+            const showBtn = document.getElementById('show-all-btn');
+            if (showAllVisible) {
+                showBtn.innerHTML = '📋 Show All';
+                showAllVisible = false;
+            }
             const q = document.getElementById('search-query').value.trim();
             const sessionFilter = document.getElementById('search-session').value.trim();
             const agentFilter = document.getElementById('search-agent').value.trim();
@@ -681,9 +701,31 @@
             }
         }
 
-        async function getAllMemories() {
-            document.getElementById('search-query').value = '';
-            return searchMemories();
+        let showAllVisible = false;
+
+        async function toggleShowAll() {
+            const btn = document.getElementById('show-all-btn');
+            const resultsDiv = document.getElementById('search-results');
+            if (showAllVisible) {
+                // Hide the results
+                resultsDiv.innerHTML = '';
+                btn.innerHTML = '📋 Show All';
+                showAllVisible = false;
+            } else {
+                // Fetch and show all
+                document.getElementById('search-query').value = '';
+                btn.innerHTML = '<span class=\"spinner-sm\"></span> Loading…';
+                btn.disabled = true;
+                try {
+                    await searchMemories();
+                    btn.innerHTML = '🙈 Hide All';
+                    showAllVisible = true;
+                } catch (e) {
+                    btn.innerHTML = '📋 Show All';
+                } finally {
+                    btn.disabled = false;
+                }
+            }
         }
 
         function renderSearchResults(entries, total, query) {
@@ -720,6 +762,41 @@
                     </div>`;
             }
             resultsDiv.innerHTML = html;
+        }
+
+        // ── Clear All Memories (Demo Only) ─────────────────────────
+        function showClearConfirm() {
+            document.getElementById('clear-overlay').style.display = 'block';
+            document.getElementById('clear-modal').style.display = 'block';
+        }
+
+        function closeClearConfirm() {
+            document.getElementById('clear-overlay').style.display = 'none';
+            document.getElementById('clear-modal').style.display = 'none';
+        }
+
+        async function confirmClearMemories() {
+            const btn = document.getElementById('clear-confirm-btn');
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '<span class=\"spinner-sm\"></span> Clearing…';
+            btn.disabled = true;
+            try {
+                const result = await api('DELETE', '/playground/clear');
+                closeClearConfirm();
+                const resultsDiv = document.getElementById('search-results');
+                resultsDiv.innerHTML = `<div class=\"status success\">Cleared ${result.deleted} memory${result.deleted !== 1 ? 'ies' : 'y'}.</div>`;
+                // Reset Show All button
+                const showBtn = document.getElementById('show-all-btn');
+                showBtn.innerHTML = '📋 Show All';
+                showAllVisible = false;
+            } catch (e) {
+                closeClearConfirm();
+                const msg = e.message || 'Failed to clear memories';
+                document.getElementById('search-results').innerHTML = `<div class=\"status error\">${escapeHtml(msg)}</div>`;
+            } finally {
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+            }
         }
 
         function clearSearchResults() {
