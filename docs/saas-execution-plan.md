@@ -108,7 +108,7 @@ if not env_key and not self._has_db_keys:
                      "Set MEMORY_BRIDGE_API_KEY environment variable or create an admin key."},
         )
     # Dev open mode — warn loudly
-    logger.warning("  OPEN MODE: No auth configured. Set MEMORY_BRIDGE_API_KEY for production.")
+    logger.warning("⚠️  OPEN MODE: No auth configured. Set MEMORY_BRIDGE_API_KEY for production.")
     return await call_next(request)
 ```
 

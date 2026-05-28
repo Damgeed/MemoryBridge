@@ -1,1547 +1,1503 @@
-     1|<!DOCTYPE html>
-     2|<html lang="en" data-theme="dark">
-     3|<head>
-     4|<meta charset="UTF-8">
-     5|<meta name="viewport" content="width=device-width, initial-scale=1.0">
-     6|<meta name="theme-color" content="#0a0a0f" media="(prefers-color-scheme: dark)">
-     7|<meta name="theme-color" content="#f8f9fc" media="(prefers-color-scheme: light)">
-     8|<title>Memory Bridge — FAQ</title>
-     9|<link rel="icon" href="/playground/logo.png" type="image/png">
-    10|<link rel="stylesheet" href="/playground/style.css">
-    11|<script src="/playground/i18n.js"></script>
-    12|<script src="/playground/auth.js?v=1"></script>
-    13|<style>
-    14|  * { margin: 0; padding: 0; box-sizing: border-box; }
-    15|  :root {
-    16|    --bg: #0a0a0f;
-    17|    --card: #13131a;
-    18|    --border: #1e1e2a;
-    19|    --text: #e2e2ee;
-    20|    --muted: #6c7086;
-    21|    --accent: #7c5cfc;
-    22|    --accent2: #a78bfa;
-    23|    --green: #4ade80;
-    24|    --pink: #e879f9;
-    25|    --orange: #fb923c;
-    26|    --blue: #60a5fa;
-    27|    --font: 'SF Mono', 'Menlo', 'Monaco', 'Courier New', monospace;
-    28|  }
-    29|  [data-theme="light"] {
-    30|    --bg: #f5f5fa;
-    31|    --card: #ffffff;
-    32|    --border: #d4d4e0;
-    33|    --text: #1a1a2e;
-    34|    --muted: #6b6b80;
-    35|    --accent: #6d4cf5;
-    36|    --accent2: #8b6cf5;
-    37|    --green: #22c55e;
-    38|    --pink: #d946ef;
-    39|    --orange: #ea580c;
-    40|    --blue: #3b82f6;
-    41|  }
-    42|  body {
-    43|    background: var(--bg);
-    44|    color: var(--text);
-    45|    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
-    46|    overflow: hidden;
-    47|    height: 100vh;
-    48|    display: flex;
-    49|    flex-direction: column;
-    50|  }
-    51|  .main { display: flex; flex: 1; overflow: hidden; }
-    52|
-    53|  /* ── Left panel - FAQ items ── */
-    54|  .left {
-    55|    flex: 1;
-    56|    padding: 1.5rem 2rem;
-    57|    overflow-y: auto;
-    58|    display: flex;
-    59|    flex-direction: column;
-    60|    gap: 0.5rem;
-    61|  }
-    62|  .left::-webkit-scrollbar { width: 6px; }
-    63|  .left::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
-    64|
-    65|  .faq-header {
-    66|    margin-bottom: 0.75rem;
-    67|  }
-    68|  .faq-header h1 {
-    69|    font-size: 1.3rem;
-    70|    font-weight: 800;
-    71|    letter-spacing: -0.02em;
-    72|  }
-    73|  .faq-header h1 .gradient {
-    74|    background: linear-gradient(135deg, var(--accent), var(--pink));
-    75|    -webkit-background-clip: text;
-    76|    -webkit-text-fill-color: transparent;
-    77|    background-clip: text;
-    78|  }
-    79|  .faq-header p {
-    80|    font-size: 0.85rem;
-    81|    color: var(--muted);
-    82|    margin-top: 0.25rem;
-    83|  }
-    84|
-    85|  .faq-item {
-    86|    background: var(--card);
-    87|    border: 1px solid var(--border);
-    88|    border-radius: 10px;
-    89|    cursor: pointer;
-    90|    transition: border-color 0.2s;
-    91|    overflow: hidden;
-    92|  }
-    93|  .faq-item:hover { border-color: var(--accent); }
-    94|  .faq-item[open] { border-color: var(--accent); }
-    95|
-    96|  .faq-item summary {
-    97|    font-size: 0.88rem;
-    98|    font-weight: 600;
-    99|    color: var(--text);
-   100|    list-style: none;
-   101|    display: flex;
-   102|    align-items: center;
-   103|    gap: 0.6rem;
-   104|    padding: 0.9rem 1.1rem;
-   105|    cursor: pointer;
-   106|    user-select: none;
-   107|  }
-   108|  .faq-item summary::-webkit-details-marker { display: none; }
-   109|  .faq-item summary .icon { font-size: 1.1rem; flex-shrink: 0; }
-   110|  .faq-item summary .caret {
-   111|    margin-left: auto;
-   112|    font-size: 0.65rem;
-   113|    color: var(--muted);
-   114|    transition: transform 0.2s;
-   115|    flex-shrink: 0;
-   116|  }
-   117|  .faq-item[open] summary .caret { transform: rotate(90deg); }
-   118|
-   119|  .faq-answer {
-   120|    font-size: 0.84rem;
-   121|    color: var(--muted);
-   122|    line-height: 1.65;
-   123|    border-top: 1px solid var(--border);
-   124|    padding: 0.85rem 1.1rem;
-   125|  }
-   126|  .faq-answer a { color: var(--accent); text-decoration: underline; }
-   127|  .faq-answer strong { color: var(--text); }
-   128|
-   129|  /* ── Right panel - decorative visual ── */
-   130|  .right {
-   131|    width: 380px;
-   132|    min-width: 380px;
-   133|    border-left: 1px solid var(--border);
-   134|    display: flex;
-   135|    flex-direction: column;
-   136|    align-items: center;
-   137|    justify-content: center;
-   138|    padding: 2rem;
-   139|    position: relative;
-   140|    overflow: hidden;
-   141|  }
-   142|  .right .big-q {
-   143|    font-size: 8rem;
-   144|    font-weight: 900;
-   145|    background: linear-gradient(135deg, var(--accent), var(--pink));
-   146|    -webkit-background-clip: text;
-   147|    -webkit-text-fill-color: transparent;
-   148|    background-clip: text;
-   149|    opacity: 0.5;
-   150|    line-height: 1;
-   151|    position: absolute;
-   152|    top: 50%;
-   153|    left: 50%;
-   154|    transform: translate(-50%, -50%);
-   155|    animation: pulse-q 3s ease-in-out infinite;
-   156|    user-select: none;
-   157|  }
-   158|  @keyframes pulse-q {
-   159|    0%, 100% { opacity: 0.4; transform: translate(-50%, -50%) scale(1); }
-   160|    50% { opacity: 0.7; transform: translate(-50%, -50%) scale(1.05); }
-   161|  }
-   162|
-   163|  .right .circle-deco {
-   164|    position: absolute;
-   165|    border-radius: 50%;
-   166|    border: 1px solid var(--border);
-   167|    animation: rotate-slow 20s linear infinite;
-   168|  }
-   169|  .circle-deco.c1 { width: 260px; height: 260px; border-color: rgba(124,92,252,0.15); }
-   170|  .circle-deco.c2 { width: 200px; height: 200px; border-color: rgba(232,121,249,0.1); animation-duration: 15s; animation-direction: reverse; }
-   171|  .circle-deco.c3 { width: 140px; height: 140px; border-color: rgba(74,222,128,0.08); animation-duration: 10s; }
-   172|
-   173|  @keyframes rotate-slow { to { transform: rotate(360deg); } }
-   174|
-   175|  .right .tag-cloud {
-   176|    position: absolute;
-   177|    bottom: 2rem;
-   178|    left: 50%;
-   179|    transform: translateX(-50%);
-   180|    display: flex;
-   181|    flex-wrap: wrap;
-   182|    gap: 0.5rem;
-   183|    justify-content: center;
-   184|    max-width: 280px;
-   185|  }
-   186|  .right .tag-cloud span {
-   187|    font-size: 0.72rem;
-   188|    padding: 0.3rem 0.7rem;
-   189|    background: var(--card);
-   190|    border: 1px solid var(--border);
-   191|    border-radius: 20px;
-   192|    color: var(--muted);
-   193|    animation: tag-in 0.4s ease both;
-   194|  }
-   195|  .right .tag-cloud span:nth-child(1) { animation-delay: 0.1s; }
-   196|  .right .tag-cloud span:nth-child(2) { animation-delay: 0.3s; }
-   197|  .right .tag-cloud span:nth-child(3) { animation-delay: 0.5s; }
-   198|  .right .tag-cloud span:nth-child(4) { animation-delay: 0.7s; }
-   199|  .right .tag-cloud span:nth-child(5) { animation-delay: 0.9s; }
-   200|  .right .tag-cloud span:nth-child(6) { animation-delay: 1.1s; }
-   201|  @keyframes tag-in { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
-   202|
-   203|  /* ── User Avatar + Dropdown (shared with dashboard) ── */
-   204|  .user-avatar-btn {
-   205|    display: inline-flex;
-   206|    align-items: center;
-   207|    gap: 0.5rem;
-   208|    padding: 0.25rem 0.5rem 0.25rem 0.25rem;
-   209|    border-radius: var(--radius-full);
-   210|    border: 1px solid var(--border-primary);
-   211|    background: transparent;
-   212|    cursor: pointer;
-   213|    transition: all var(--transition-fast);
-   214|    font-family: var(--font-sans);
-   215|    color: var(--text-primary);
-   216|  }
-   217|  .user-avatar-btn:hover {
-   218|    border-color: var(--accent);
-   219|    background: var(--accent-glow);
-   220|  }
-   221|  .user-avatar-circle {
-   222|    width: 28px;
-   223|    height: 28px;
-   224|    border-radius: 50%;
-   225|    background: var(--accent-gradient);
-   226|    color: #fff;
-   227|    display: flex;
-   228|    align-items: center;
-   229|    justify-content: center;
-   230|    font-size: 0.75rem;
-   231|    font-weight: 700;
-   232|    flex-shrink: 0;
-   233|    overflow: hidden;
-   234|  }
-   235|  .user-avatar-name {
-   236|    font-size: 0.82rem;
-   237|    font-weight: 600;
-   238|    max-width: 110px;
-   239|    overflow: hidden;
-   240|    text-overflow: ellipsis;
-   241|    white-space: nowrap;
-   242|  }
-   243|  .user-chevron {
-   244|    color: var(--text-faint);
-   245|    transition: transform 0.2s;
-   246|  }
-   247|  .user-menu.open .user-chevron { transform: rotate(180deg); }
-   248|  .user-menu {
-   249|    position: relative;
-   250|    display: inline-flex;
-   251|  }
-   252|  .user-dropdown {
-   253|    display: none;
-   254|    position: absolute;
-   255|    top: calc(100% + 6px);
-   256|    right: 0;
-   257|    min-width: 220px;
-   258|    background: var(--card-bg);
-   259|    border: 1px solid var(--border-primary);
-   260|    border-radius: var(--radius-md);
-   261|    box-shadow: var(--shadow-xl);
-   262|    z-index: 100;
-   263|    overflow: hidden;
-   264|  }
-   265|  .user-menu.open .user-dropdown { display: block; }
-   266|  .user-dropdown-header {
-   267|    padding: 0.75rem 1rem;
-   268|    display: flex;
-   269|    flex-direction: column;
-   270|    gap: 0.2rem;
-   271|  }
-   272|  .user-dropdown-email {
-   273|    font-size: 0.85rem;
-   274|    font-weight: 600;
-   275|    color: var(--text-primary);
-   276|    word-break: break-all;
-   277|  }
-   278|  .user-dropdown-plan {
-   279|    font-size: 0.72rem;
-   280|    color: var(--text-muted);
-   281|    font-weight: 500;
-   282|  }
-   283|  .user-dropdown-divider {
-   284|    height: 1px;
-   285|    background: var(--border-subtle);
-   286|    margin: 0;
-   287|  }
-   288|  .user-dropdown-item {
-   289|    display: flex;
-   290|    align-items: center;
-   291|    gap: 0.5rem;
-   292|    padding: 0.65rem 1rem;
-   293|    font-size: 0.85rem;
-   294|    color: var(--text-secondary);
-   295|    text-decoration: none;
-   296|    transition: background var(--transition-fast);
-   297|  }
-   298|  .user-dropdown-item svg { flex-shrink: 0; color: var(--text-muted); }
-   299|  .user-dropdown-item:hover { background: var(--btn-secondary-hover); color: var(--text-primary); }
-   300|  .user-dropdown-item:last-child:hover { color: var(--red); }
-   301|
-   302|  /* ── Logout Confirm Modal ── */
-   303|  .logout-modal-overlay {
-   304|    display: none;
-   305|    position: fixed;
-   306|    inset: 0;
-   307|    background: rgba(0,0,0,0.6);
-   308|    z-index: 1001;
-   309|    backdrop-filter: blur(6px);
-   310|  }
-   311|  .logout-modal-overlay.open { display: block; }
-   312|  .logout-modal {
-   313|    display: none;
-   314|    position: fixed;
-   315|    top: 50%;
-   316|    left: 50%;
-   317|    transform: translate(-50%, -50%) scale(0.96);
-   318|    z-index: 1002;
-   319|    background: var(--card-bg);
-   320|    border: 1px solid var(--border-primary);
-   321|    border-radius: var(--radius-lg);
-   322|    padding: 2rem;
-   323|    min-width: 360px;
-   324|    max-width: 90vw;
-   325|    box-shadow: var(--shadow-xl);
-   326|    text-align: center;
-   327|    opacity: 0;
-   328|    transition: all 0.2s ease;
-   329|  }
-   330|  .logout-modal.open {
-   331|    display: block;
-   332|    opacity: 1;
-   333|    transform: translate(-50%, -50%) scale(1);
-   334|  }
-   335|  .logout-modal .logout-icon {
-   336|    width: 56px;
-   337|    height: 56px;
-   338|    border-radius: 50%;
-   339|    background: rgba(239,68,68,0.12);
-   340|    display: flex;
-   341|    align-items: center;
-   342|    justify-content: center;
-   343|    margin: 0 auto 1rem;
-   344|    font-size: 1.6rem;
-   345|  }
-   346|  .logout-modal .logout-title {
-   347|    font-size: 1.15rem;
-   348|    font-weight: 700;
-   349|    margin-bottom: 0.5rem;
-   350|    color: var(--text-primary);
-   351|  }
-   352|  .logout-modal .logout-text {
-   353|    font-size: 0.88rem;
-   354|    color: var(--text-muted);
-   355|    line-height: 1.55;
-   356|    margin-bottom: 1.5rem;
-   357|  }
-   358|  .logout-modal .logout-btns {
-   359|    display: flex;
-   360|    gap: 0.75rem;
-   361|    justify-content: center;
-   362|  }
-   363|  .logout-modal .logout-btns .btn { min-width: 110px; }
-   364|  @media (max-width: 480px) {
-   365|    .logout-modal { min-width: unset; width: 90vw; padding: 1.25rem; }
-   366|    .logout-modal .logout-title { font-size: 1rem; }
-   367|    .logout-modal .logout-text { font-size: 0.82rem; }
-   368|    .logout-modal .logout-btns { flex-direction: column; align-items: stretch; }
-   369|    .logout-modal .logout-btns .btn { width: 100%; text-align: center; justify-content: center; }
-   370|  }
-   371|
-   372|  /* ── Footer ── */
-   373|  .footer {
-   374|    text-align: center;
-   375|    padding: 0.6rem;
-   376|    font-size: 0.78rem;
-   377|    color: var(--muted);
-   378|    border-top: 1px solid var(--border);
-   379|    flex-shrink: 0;
-   380|  }
-   381|
-   382|  /* ── Responsive ── */
-   383|  @media (max-width: 768px) {
-   384|    body { overflow: auto; height: auto; }
-   385|    .main { flex-direction: column; overflow: visible; }
-   386|    .left { padding: 1rem 1rem; overflow: visible; }
-   387|    .right {
-   388|      width: 100%;
-   389|      min-width: unset;
-   390|      height: 260px;
-   391|      border-left: none;
-   392|      border-top: 1px solid var(--border);
-   393|    }
-   394|    .right .big-q { font-size: 6rem; }
-   395|    .circle-deco.c1 { width: 200px; height: 200px; }
-   396|    .circle-deco.c2 { width: 150px; height: 150px; }
-   397|    .circle-deco.c3 { width: 100px; height: 100px; }
-   398|    .right .tag-cloud { position: relative; bottom: auto; left: auto; transform: none; margin-top: 1rem; }
-   399|    .faq-item summary { padding: 0.75rem 0.9rem; font-size: 0.84rem; }
-   400|    .faq-answer { padding: 0.7rem 0.9rem; font-size: 0.82rem; }
-   401|    .auth-btn-container { display: inline-flex !important; }
-   402|    .nav-cta { display: none !important; }
-   403|  }
-   404|
-   405|  /* Mobile landscape: hide decorative panel, full-width FAQ */
-   406|  @media (max-height: 600px) and (orientation: landscape) {
-   407|    .right { display: none; }
-   408|    .main { flex-direction: column; overflow: auto; }
-   409|    .left { width: 100%; padding: 0.75rem; overflow: visible; }
-   410|    body { overflow: auto; height: auto; }
-   411|    .faq-item summary { padding: 0.6rem 0.8rem; font-size: 0.8rem; }
-   412|  }
-   413|</style>
-   414|</head>
-   415|<body>
-   416|
-   417|<!-- Navbar -->
-   418|<nav class="navbar">
-   419|    <a href="/" class="logo">
-   420|      <img src="/playground/logo.png" alt="Memory Bridge" data-i18n="nav.logo_alt">
-   421|      Memory <span class="logo-accent">Bridge</span>
-   422|    </a>
-   423|    <div class="nav-links">
-   424|      <a href="/" data-i18n="nav.home">Home</a>
-   425|      <a href="/playground/graph.html" data-i18n="nav.graph">Graph</a>
-   426|      <a href="/dashboard/" data-i18n="nav.dashboard">Dashboard</a>
-   427|      <a href="/pricing" data-i18n="nav.pricing">Pricing</a>
-   428|      <a href="/faq" class="active" data-i18n="nav.faq">FAQ</a>
-   429|    </div>
-   430|  <div class="nav-right">
-   431|    <div style="position:relative;display:inline-flex;">
-   432|        <button class="nav-icon-btn lang-toggle" onclick="toggleLang()" title="Switch language" aria-label="Switch language">
-   433|            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-   434|                <circle cx="12" cy="12" r="10"/>
-   435|                <line x1="2" y1="12" x2="22" y2="12"/>
-   436|                <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
-   437|            </svg>
-   438|        </button>
-   439|        <div class="lang-dropdown" id="lang-dropdown">
-   440|            <a href="javascript:void(0)" data-lang="en" class="lang-opt active" onclick="setLang('en')">🇬🇧 English</a>
-   441|            <a href="javascript:void(0)" data-lang="zh" class="lang-opt" onclick="setLang('zh')">🇨🇳 中文</a>
-   442|            <a href="javascript:void(0)" data-lang="ja" class="lang-opt" onclick="setLang('ja')">🇯🇵 日本語</a>
-   443|            <a href="javascript:void(0)" data-lang="ko" class="lang-opt" onclick="setLang('ko')">🇰🇷 한국어</a>
-   444|            <a href="javascript:void(0)" data-lang="es" class="lang-opt" onclick="setLang('es')">🇪🇸 Español</a>
-   445|            <a href="javascript:void(0)" data-lang="fr" class="lang-opt" onclick="setLang('fr')">🇫🇷 Français</a>
-   446|            <a href="javascript:void(0)" data-lang="de" class="lang-opt" onclick="setLang('de')">🇩🇪 Deutsch</a>
-   447|        </div>
-   448|    </div>
-   449|    <button class="nav-icon-btn theme-toggle-btn" onclick="toggleTheme()" title="Toggle theme" aria-label="Toggle theme">
-   450|      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="theme-sun">
-   451|        <circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/>
-   452|        <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
-   453|        <line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/>
-   454|        <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
-   455|      </svg>
-   456|      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="theme-moon" style="display:none">
-   457|        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
-   458|      </svg>
-   459|    </button>
-   460|            <div class="auth-btn-container" id="auth-btn-container">
-   461|                <button class="auth-btn" id="auth-nav-btn" onclick="openAuth()" title="Sign in / Sign up" data-i18n-title="nav.sign_in_title">
-   462|                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-   463|                    <span id="auth-btn-label" data-i18n="auth.sign_in">Sign in</span>
-   464|                </button>
-   465|                <div class="user-menu" id="user-menu" style="display:none;">
-   466|                    <button class="user-avatar-btn" id="user-btn" onclick="toggleUserDropdown()" title="Account menu">
-   467|                        <span class="user-avatar-circle" id="user-avatar-circle">👤</span>
-   468|                        <span class="session-dot" id="session-dot"></span>
-   469|                        <span class="user-avatar-name" id="user-avatar-name"></span>
-   470|                        <span class="user-plan-badge" id="user-plan-badge"></span>
-   471|                        <svg class="user-chevron" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
-   472|                    </button>
-   473|                    <div class="user-dropdown" id="user-dropdown">
-   474|                        <div class="user-dropdown-header">
-   475|                            <span class="user-dropdown-email" id="user-dropdown-email"></span>
-   476|                            <span class="user-dropdown-plan" id="user-dropdown-plan" data-i18n="dash.free_plan">Free Plan</span>
-   477|                            <span class="user-dropdown-since" id="user-dropdown-since"></span>
-   478|                        </div>
-   479|                        <div class="user-dropdown-divider"></div>
-   480|                        <a href="/pricing" class="user-dropdown-item" data-i18n="dash.manage_billing">
-   481|                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
-   482|                            Manage Billing
-   483|                        </a>
-   484|                        <div class="user-dropdown-item sign-out" onclick="showLogoutConfirm()" style="cursor:pointer;" data-i18n="nav.sign_out">
-   485|                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
-   486|                            Sign Out
-   487|                        </div>
-   488|                    </div>
-   489|                </div>
-   490|            </div>
-   491|            <a href="/playground/" class="nav-cta">
-   492|                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-   493|                    <polygon points="5 3 19 12 5 21 5 3"/>
-   494|                </svg>
-   495|                <span data-i18n="nav.launch_playground">Launch Playground</span>
-   496|            </a>
-   497|            <button class="nav-hamburger" onclick="toggleMobileNav()" aria-label="Open menu">
-   498|                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-   499|                    <line x1="4" y1="6" x2="20" y2="6"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="18" x2="20" y2="18"/>
-   500|                </svg>
-   501|            </button>
-   502|        </div>
-   503|    </nav>
-   504|
-   505|<!-- Mobile Nav Panel -->
-   506|<div class="nav-mobile-backdrop" id="nav-backdrop" onclick="closeMobileNav()"></div>
-   507|<div class="nav-mobile-panel" id="nav-mobile">
-   508|  <div class="nav-mobile-header">
-   509|    <div class="logo">
-   510|      <img src="/playground/logo.png" alt="Memory Bridge" data-i18n="nav.logo_alt">
-   511|      Memory <span class="logo-accent">Bridge</span>
-   512|    </div>
-   513|    <button class="nav-mobile-close" onclick="closeMobileNav()" aria-label="Close menu">
-   514|      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-   515|        <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
-   516|      </svg>
-   517|    </button>
-   518|  </div>
-   519|  <a href="/" onclick="closeMobileNav()" data-i18n="nav.home">
-   520|    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
-   521|    Home
-   522|  </a>
-   523|  <a href="/playground/graph.html" onclick="closeMobileNav()" data-i18n="nav.graph">
-   524|    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="5" cy="5" r="3"/><circle cx="19" cy="5" r="3"/><circle cx="12" cy="19" r="3"/><line x1="5" y1="5" x2="19" y2="5"/><line x1="5" y1="5" x2="12" y2="19"/><line x1="19" y1="5" x2="12" y2="19"/></svg>
-   525|    Graph
-   526|  </a>
-   527|  <a href="/dashboard/" onclick="closeMobileNav()" data-i18n="nav.dashboard">
-   528|    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
-   529|    Dashboard
-   530|  </a>
-   531|  <a href="/pricing" onclick="closeMobileNav()" data-i18n="nav.pricing">
-   532|    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
-   533|    Pricing
-   534|  </a>
-   535|  <a href="/faq" class="active" onclick="closeMobileNav()" data-i18n="nav.faq">
-   536|    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-   537|    FAQ
-   538|  </a>
-   539|  <a href="javascript:void(0)" id="auth-mobile-btn" onclick="closeMobileNav();openAuth()" style="display:flex;align-items:center;gap:0.45rem;padding:0.7rem 1.25rem;border-radius:var(--radius-sm);font-size:0.88rem;font-weight:600;color:var(--accent);text-decoration:none;">
-   540|    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-   541|    <span id="auth-mobile-label" data-i18n="auth.sign_in">Sign in</span>
-   542|  </a>
-   543|  <!-- Mobile User Card (when signed in) -->
-   544|  <div id="mobile-user-card" style="display:none;">
-   545|    <div class="mobile-user-header">
-   546|      <div class="mobile-user-avatar">
-   547|        <span class="mobile-user-circle" id="mobile-user-circle">👤</span>
-   548|        <span class="session-dot" id="mobile-session-dot"></span>
-   549|      </div>
-   550|      <div class="mobile-user-info">
-   551|        <span class="mobile-user-email" id="mobile-user-email"></span>
-   552|                    <span class="mobile-user-plan" id="mobile-user-plan" data-i18n="dash.free_plan">Free Plan</span>
-   553|      </div>
-   554|    </div>
-   555|    <div class="mobile-user-divider"></div>
-   556|    <a href="/pricing" class="mobile-user-action" onclick="closeMobileNav()">
-   557|      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
-   558|      <span data-i18n="dash.manage_billing">Manage Billing</span>
-   559|      </a>
-   560|    <div class="mobile-user-divider"></div>
-   561|    <span class="mobile-user-since" id="mobile-user-since"></span>
-   562|    <a href="javascript:void(0)" class="mobile-user-action sign-out" id="mobile-sign-out-btn" onclick="closeMobileNav();showLogoutConfirm()">
-   563|      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
-   564|      <span data-i18n="nav.sign_out">Sign Out</span>
-   565|    </a>
-   566|</div>
-   567|  <div class="nav-mobile-divider"></div>
-   568|  <a href="/playground/" class="nav-mobile-cta" onclick="closeMobileNav()">
-   569|    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
-   570|    <span data-i18n="nav.launch_playground">Launch Playground</span>
-   571|  </a>
-   572|</div>
-   573|
-   574|<!-- Logout Confirm Modal -->
-   575|<div class="logout-modal-overlay" id="logout-overlay" onclick="closeLogoutConfirm()"></div>
-   576|<div class="logout-modal" id="logout-modal">
-   577|    <div class="logout-icon">🚪</div>
-   578|    <div class="logout-title" data-i18n="logout.title">Sign out of Memory Bridge?</div>
-   579|    <div class="logout-text" data-i18n="logout.text">
-   580|        You'll need to sign in again to manage API keys, view subscription details, or access your dashboard.
-   581|    </div>
-   582|    <div class="logout-btns">
-   583|        <button class="btn btn-secondary" data-i18n="logout.cancel" onclick="closeLogoutConfirm()">Cancel</button>
-   584|        <button class="btn btn-danger" id="logout-confirm-btn" data-i18n="logout.sign_out" onclick="logout()">Sign Out</button>
-   585|    </div>
-   586|</div>
-   587|
-   588|<!-- Main content: side-by-side -->
-   589|<div class="main">
-   590|  <!-- Left: FAQ items -->
-   591|  <div class="left">
-   592|    <div class="faq-header">
-   593|      <h1 data-i18n="faq.title">Frequently asked <span class="gradient">questions</span></h1>
-   594|      <p data-i18n="faq.subtitle">Everything you need to know about Memory Bridge.</p>
-   595|    </div>
-   596|
-   597|    <details class="faq-item">
-   598|      <summary data-i18n="faq.q1"><span class="icon">📋</span> How do I sign up? Do you store my password?<span class="caret">▸</span></summary>
-   599|      <div class="faq-answer" data-i18n="faq.a1">
-   600|        <strong>No passwords.</strong> Type your email → get a 6-digit code → enter it. That's it.<br><br>
-   601|        Or sign in with <strong>Google</strong>, <strong>Apple</strong>, or <strong>Phone (SMS)</strong> — we never see or store your password because there isn't one.<br><br>
-   602|        Forgot your password? Doesn't exist. Every login sends a fresh code.
-   603|      </div>
-   604|    </details>
-   605|
-   606|    <details class="faq-item">
-   607|      <summary data-i18n="faq.q2"><span class="icon">🔐</span> Is my instance secure?<span class="caret">▸</span></summary>
-   608|      <div class="faq-answer" data-i18n="faq.a2">
-   609|        <strong>Yes.</strong> API calls are authenticated via <strong>JWT</strong> or <strong>API keys</strong> with role-based access. Rate limiting per tier protects against abuse.<br><br>
-   610|        Your database is <strong>yours alone</strong> — multi-tenancy via schema-per-tenant with Row-Level Security. No cross-tenant data leaks.
-   611|      </div>
-   612|    </details>
-   613|
-   614|    <details class="faq-item">
-   615|      <summary data-i18n="faq.q3"><span class="icon">🧩</span> What LLMs and frameworks do you support?<span class="caret">▸</span></summary>
-   616|      <div class="faq-answer" data-i18n="faq.a3">
-   617|        Any LLM with an API — OpenAI, Claude, Gemini, Ollama, llama.cpp, OpenRouter.<br><br>
-   618|        Any framework — LangGraph, AutoGen, CrewAI. Memory Bridge sits between your code and the LLM, so the integration pattern is the same regardless of what you're using.
-   619|      </div>
-   620|    </details>
-   621|
-   622|    <details class="faq-item">
-   623|      <summary data-i18n="faq.q4"><span class="icon">🔄</span> Can I self-host?<span class="caret">▸</span></summary>
-   624|      <div class="faq-answer" data-i18n="faq.a4">
-   625|        Yes! Memory Bridge is MIT licensed. Self-host with Docker Compose on any machine — no limits, no restrictions.<br><br>
-   626|        Or use the hosted version and let us handle the infrastructure. Either way, your data stays yours.
-   627|      </div>
-   628|    </details>
-   629|
-   630|    <details class="faq-item">
-   631|      <summary data-i18n="faq.q5"><span class="icon">💾</span> How is data stored and retained?<span class="caret">▸</span></summary>
-   632|      <div class="faq-answer" data-i18n="faq.a5">
-   633|        Every memory is stored as a row in your own database. Export, query, delete, or audit at any time — it's your data.<br><br>
-   634|        Retention depends on your plan: Free (7 days), Starter (90 days), Pro (365 days). Memories older than your retention window are automatically cleaned up.
-   635|      </div>
-   636|    </details>
-   637|
-   638|    <details class="faq-item">
-   639|      <summary data-i18n="faq.q6"><span class="icon">🏢</span> Is there an Enterprise plan?<span class="caret">▸</span></summary>
-   640|      <div class="faq-answer" data-i18n="faq.a6">
-   641|        Yes — dedicated infrastructure, SSO/SAML, custom retention policies, SLA guarantees, and a dedicated support engineer.<br><br>
-   642|        <a href="mailto:sales@memorybridge.io">Contact us</a> for custom pricing.
-   643|      </div>
-   644|    </details>
-   645|
-   646|    <details class="faq-item">
-   647|      <summary data-i18n="faq.q7"><span class="icon">🛠️</span> Do I need to register to try it?<span class="caret">▸</span></summary>
-   648|      <div class="faq-answer" data-i18n="faq.a7">
-   649|        Nope! Open the <a href="/playground/">Playground</a> with the demo key and start storing memories immediately.<br><br>
-   650|        When you're ready to go to production, sign up for a free account to get your own dedicated API keys and higher rate limits.
-   651|      </div>
-   652|    </details>
-   653|
-   654|    <details class="faq-item">
-   655|      <summary data-i18n="faq.q8"><span class="icon">📦</span> What's included in the pricing plans?<span class="caret">▸</span></summary>
-   656|      <div class="faq-answer" data-i18n="faq.a8">
-   657|        All plans include the full Memory Bridge API — there are no feature restrictions. Plans differ by capacity: memories stored, sessions, API keys, retention period, and rate limits.<br><br>
-   658|        See the <a href="/pricing">Pricing page</a> for full details. Upgrade or downgrade anytime — changes apply immediately.
-   659|      </div>
-   660|    </details>
-   661|  </div>
-   662|
-   663|  <!-- Right: decorative visual -->
-   664|  <div class="right">
-   665|    <div class="circle-deco c1"></div>
-   666|    <div class="circle-deco c2"></div>
-   667|    <div class="circle-deco c3"></div>
-   668|    <div class="big-q">?</div>
-   669|    <div class="tag-cloud">
-   670|      <span>#memory</span>
-   671|      <span>#agents</span>
-   672|      <span>#AI</span>
-   673|      <span>#opensource</span>
-   674|      <span>#privacy</span>
-   675|      <span>#API</span>
-   676|    </div>
-   677|  </div>
-   678|</div>
-   679|
-   680|<footer class="footer" data-i18n="footer.text">© 2026 Memory Bridge — API for cross-agent memory</footer>
-   681|
-   682|<!-- Auth Modal -->
-   683|<div class="auth-overlay" id="auth-overlay">
-   684|  <div class="auth-modal">
-   685|    <button class="auth-close" onclick="closeAuth()" aria-label="Close" >
-   686|      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-   687|    </button>
-   688|    <div class="auth-icon">🔑</div>
-   689|    <div class="auth-title" data-i18n="auth.title">Memory Bridge</div>
-   690|    <!-- Sign In / Create Account tabs -->
-   691|    <div class="auth-tabs" style="display:flex;gap:0;margin:0.5rem 0 1rem;border:1px solid var(--border-primary);border-radius:var(--radius-md);overflow:hidden;width:100%;">
-   692|      <button class="auth-tab active" id="auth-tab-signin" onclick="selectAuthTab('signin')" style="flex:1;padding:0.5rem 0;border:none;background:var(--accent);color:#fff;font-size:0.88rem;font-weight:600;cursor:pointer;">Sign In</button>
-   693|      <button class="auth-tab" id="auth-tab-signup" onclick="selectAuthTab('signup')" style="flex:1;padding:0.5rem 0;border:none;background:transparent;color:var(--text-muted);font-size:0.88rem;font-weight:600;cursor:pointer;">Create Account</button>
-   694|    </div>
-   695|    <div class="auth-subtitle" id="auth-subtitle" data-i18n="auth.subtitle">Sign in to access your account.</div>
-   696|
-   697|    <!-- Step 1: Options (social + email) -->
-   698|    <div id="auth-options" class="auth-options">
-   699|      <button class="auth-social-btn" onclick="socialLogin('google-oauth2')">
-   700|        <span class="s-icon google">
-   701|          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 48 48">
-   702|            <path fill="#FFC107" d="M43.611,20.083H42V20H24v8h11.303c-1.649,4.657-6.08,8-11.303,8c-6.627,0-12-5.373-12-12c0-6.627,5.373-12,12-12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C12.955,4,4,12.955,4,24c0,11.045,8.955,20,20,20c11.045,0,20-8.955,20-20C44,22.659,43.862,21.35,43.611,20.083z"/>
-   703|            <path fill="#FF3D00" d="M6.306,14.691l6.571,4.819C14.655,15.108,18.961,12,24,12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C16.318,4,9.656,8.337,6.306,14.691z"/>
-   704|            <path fill="#4CAF50" d="M24,44c5.166,0,9.86-1.977,13.409-5.192l-6.19-5.238C29.211,35.091,26.715,36,24,36c-5.202,0-9.619-3.317-11.283-7.946l-6.522,5.025C9.505,39.556,16.227,44,24,44z"/>
-   705|            <path fill="#1976D2" d="M43.611,20.083H42V20H24v8h11.303c-0.792,2.237-2.231,4.166-4.087,5.571c0.001-0.001,0.002-0.001,0.003-0.002l6.19,5.238C36.971,39.205,44,34,44,24C44,22.659,43.862,21.35,43.611,20.083z"/>
-   706|          </svg>
-   707|        </span>
-   708|        <span data-i18n="auth.continue_google">Continue with Google</span>
-   709|      </button>
-   710|      <button class="auth-social-btn" onclick="socialLogin('apple')">
-   711|        <span class="s-icon apple">
-   712|          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="#000">
-   713|            <path d="M17.05 20.28c-.98.95-2.05.8-3.08.35-1.09-.46-2.09-.48-3.24 0-1.44.62-2.2.44-3.06-.35C2.79 15.25 3.51 7.59 9.05 7.31c1.35.07 2.29.74 3.08.8 1.18-.24 2.31-.93 3.57-.84 1.51.12 2.65.72 3.4 1.8-3.12 1.87-2.38 5.98.48 7.13-.57 1.5-1.31 2.99-2.54 4.09zM12.03 7.25c-.15-2.23 1.66-4.07 3.74-4.25.29 2.58-2.34 4.5-3.74 4.25z"/>
-   714|          </svg>
-   715|        </span>
-   716|        <span data-i18n="auth.continue_apple">Continue with Apple</span>
-   717|      </button>
-   718|      <button class="auth-social-btn" onclick="phoneLogin()">
-   719|        <span class="s-icon phone">
-   720|          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-   721|            <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
-   722|          </svg>
-   723|        </span>
-   724|        <span data-i18n="auth.continue_phone">Continue with Phone</span>
-   725|      </button>
-   726|      <div class="auth-divider">
-   727|        <hr>
-   728|        <span data-i18n="auth.or_email">or continue with email</span>
-   729|        <hr>
-   730|      </div>
-   731|      <input type="email" class="auth-email-field" id="pl-email" placeholder="you@example.com" data-i18n="auth.email_placeholder" autocomplete="email" onkeydown="if(event.key==='Enter')continueWithEmail()">
-   732|      <button class="auth-email-cta" onclick="continueWithEmail()" id="pl-email-btn" data-i18n="auth.continue_btn">Continue →</button>
-   733|      <div class="auth-error" id="auth-error-main"></div>
-   734|<div style="margin-top: 0.75rem; text-align: center;">
-   735|                <a href="#" onclick="showRecoveryForm(); return false;" style="color: var(--accent); text-decoration: none; font-size: 0.85rem; font-weight: 500; opacity: 0.85; transition: opacity 0.15s;" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0.85'">Lost your account? Recover it here →</a>
-   736|              </div>
-   737|    </div>
-   738|
-   739|    <!-- Step 2: Phone input -->
-   740|    <div id="auth-phone-step" class="auth-form">
-   741|      <button class="back-link" onclick="showAuthOptions()">
-   742|        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
-   743|        <span data-i18n="auth.back">Back</span>
-   744|      </button>
-   745|      <div class="auth-code-info">
-   746|        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-   747|          <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
-   748|        </svg>
-   749|        <div class="auth-code-msg" data-i18n="auth.enter_phone">Enter your phone number</div>
-   750|        <div style="font-size:0.8rem;color:var(--text-muted);margin-top:0.25rem;" data-i18n="auth.sms_notice">We'll send a 6-digit code via SMS</div>
-   751|      </div>
-   752|      <div class="auth-phone-input-row">
-   753|        <div class="phone-country-select">
-   754|          <select id="pl-country-code" onchange="updatePhoneFlag()">
-   755|            <option value="93">🇦🇫 Afghanistan +93</option>
-   756|            <option value="355">🇦🇱 Albania +355</option>
-   757|            <option value="213">🇩🇿 Algeria +213</option>
-   758|            <option value="376">🇦🇩 Andorra +376</option>
-   759|            <option value="244">🇦🇴 Angola +244</option>
-   760|            <option value="54">🇦🇷 Argentina +54</option>
-   761|            <option value="374">🇦🇲 Armenia +374</option>
-   762|            <option value="297">🇦🇼 Aruba +297</option>
-   763|            <option value="61">🇦🇺 Australia +61</option>
-   764|            <option value="43">🇦🇹 Austria +43</option>
-   765|            <option value="994">🇦🇿 Azerbaijan +994</option>
-   766|            <option value="973">🇧🇭 Bahrain +973</option>
-   767|            <option value="880">🇧🇩 Bangladesh +880</option>
-   768|            <option value="375">🇧🇾 Belarus +375</option>
-   769|            <option value="32">🇧🇪 Belgium +32</option>
-   770|            <option value="501">🇧🇿 Belize +501</option>
-   771|            <option value="229">🇧🇯 Benin +229</option>
-   772|            <option value="975">🇧🇹 Bhutan +975</option>
-   773|            <option value="591">🇧🇴 Bolivia +591</option>
-   774|            <option value="387">🇧🇦 Bosnia +387</option>
-   775|            <option value="267">🇧🇼 Botswana +267</option>
-   776|            <option value="55">🇧🇷 Brazil +55</option>
-   777|            <option value="673">🇧🇳 Brunei +673</option>
-   778|            <option value="359">🇧🇬 Bulgaria +359</option>
-   779|            <option value="226">🇧🇫 Burkina Faso +226</option>
-   780|            <option value="257">🇧🇮 Burundi +257</option>
-   781|            <option value="855">🇰🇭 Cambodia +855</option>
-   782|            <option value="237">🇨🇲 Cameroon +237</option>
-   783|            <option value="1">🇨🇦 Canada +1</option>
-   784|            <option value="238">🇨🇻 Cape Verde +238</option>
-   785|            <option value="236">🇨🇫 CAR +236</option>
-   786|            <option value="235">🇹🇩 Chad +235</option>
-   787|            <option value="56">🇨🇱 Chile +56</option>
-   788|            <option value="86">🇨🇳 China +86</option>
-   789|            <option value="57">🇨🇴 Colombia +57</option>
-   790|            <option value="269">🇰🇲 Comoros +269</option>
-   791|            <option value="243">🇨🇩 Congo (DRC) +243</option>
-   792|            <option value="242">🇨🇬 Congo +242</option>
-   793|            <option value="506">🇨🇷 Costa Rica +506</option>
-   794|            <option value="385">🇭🇷 Croatia +385</option>
-   795|            <option value="53">🇨🇺 Cuba +53</option>
-   796|            <option value="357">🇨🇾 Cyprus +357</option>
-   797|            <option value="420">🇨🇿 Czechia +420</option>
-   798|            <option value="45">🇩🇰 Denmark +45</option>
-   799|            <option value="253">🇩🇯 Djibouti +253</option>
-   800|            <option value="593">🇪🇨 Ecuador +593</option>
-   801|            <option value="20">🇪🇬 Egypt +20</option>
-   802|            <option value="503">🇸🇻 El Salvador +503</option>
-   803|            <option value="372">🇪🇪 Estonia +372</option>
-   804|            <option value="251">🇪🇹 Ethiopia +251</option>
-   805|            <option value="679">🇫🇯 Fiji +679</option>
-   806|            <option value="358">🇫🇮 Finland +358</option>
-   807|            <option value="33">🇫🇷 France +33</option>
-   808|            <option value="241">🇬🇦 Gabon +241</option>
-   809|            <option value="220">🇬🇲 Gambia +220</option>
-   810|            <option value="995">🇬🇪 Georgia +995</option>
-   811|            <option value="49">🇩🇪 Germany +49</option>
-   812|            <option value="233">🇬🇭 Ghana +233</option>
-   813|            <option value="30">🇬🇷 Greece +30</option>
-   814|            <option value="299">🇬🇱 Greenland +299</option>
-   815|            <option value="502">🇬🇹 Guatemala +502</option>
-   816|            <option value="224">🇬🇳 Guinea +224</option>
-   817|            <option value="245">🇬🇼 Guinea-Bissau +245</option>
-   818|            <option value="592">🇬🇾 Guyana +592</option>
-   819|            <option value="509">🇭🇹 Haiti +509</option>
-   820|            <option value="504">🇭🇳 Honduras +504</option>
-   821|            <option value="852">🇭🇰 Hong Kong +852</option>
-   822|            <option value="36">🇭🇺 Hungary +36</option>
-   823|            <option value="354">🇮🇸 Iceland +354</option>
-   824|            <option value="91">🇮🇳 India +91</option>
-   825|            <option value="62">🇮🇩 Indonesia +62</option>
-   826|            <option value="98">🇮🇷 Iran +98</option>
-   827|            <option value="964">🇮🇶 Iraq +964</option>
-   828|            <option value="353">🇮🇪 Ireland +353</option>
-   829|            <option value="972">🇮🇱 Israel +972</option>
-   830|            <option value="39">🇮🇹 Italy +39</option>
-   831|            <option value="225">🇨🇮 Ivory Coast +225</option>
-   832|            <option value="81">🇯🇵 Japan +81</option>
-   833|            <option value="962">🇯🇴 Jordan +962</option>
-   834|            <option value="7">🇰🇿 Kazakhstan +7</option>
-   835|            <option value="254">🇰🇪 Kenya +254</option>
-   836|            <option value="383">🇽🇰 Kosovo +383</option>
-   837|            <option value="965">🇰🇼 Kuwait +965</option>
-   838|            <option value="996">🇰🇬 Kyrgyzstan +996</option>
-   839|            <option value="856">🇱🇦 Laos +856</option>
-   840|            <option value="371">🇱🇻 Latvia +371</option>
-   841|            <option value="961">🇱🇧 Lebanon +961</option>
-   842|            <option value="266">🇱🇸 Lesotho +266</option>
-   843|            <option value="231">🇱🇷 Liberia +231</option>
-   844|            <option value="218">🇱🇾 Libya +218</option>
-   845|            <option value="423">🇱🇮 Liechtenstein +423</option>
-   846|            <option value="370">🇱🇹 Lithuania +370</option>
-   847|            <option value="352">🇱🇺 Luxembourg +352</option>
-   848|            <option value="853">🇲🇴 Macau +853</option>
-   849|            <option value="389">🇲🇰 North Macedonia +389</option>
-   850|            <option value="261">🇲🇬 Madagascar +261</option>
-   851|            <option value="265">🇲🇼 Malawi +265</option>
-   852|            <option value="60">🇲🇾 Malaysia +60</option>
-   853|            <option value="960">🇲🇻 Maldives +960</option>
-   854|            <option value="223">🇲🇱 Mali +223</option>
-   855|            <option value="356">🇲🇹 Malta +356</option>
-   856|            <option value="222">🇲🇷 Mauritania +222</option>
-   857|            <option value="230">🇲🇺 Mauritius +230</option>
-   858|            <option value="52">🇲🇽 Mexico +52</option>
-   859|            <option value="373">🇲🇩 Moldova +373</option>
-   860|            <option value="377">🇲🇨 Monaco +377</option>
-   861|            <option value="976">🇲🇳 Mongolia +976</option>
-   862|            <option value="382">🇲🇪 Montenegro +382</option>
-   863|            <option value="212">🇲🇦 Morocco +212</option>
-   864|            <option value="258">🇲🇿 Mozambique +258</option>
-   865|            <option value="95">🇲🇲 Myanmar +95</option>
-   866|            <option value="264">🇳🇦 Namibia +264</option>
-   867|            <option value="977">🇳🇵 Nepal +977</option>
-   868|            <option value="31">🇳🇱 Netherlands +31</option>
-   869|            <option value="64">🇳🇿 New Zealand +64</option>
-   870|            <option value="505">🇳🇮 Nicaragua +505</option>
-   871|            <option value="227">🇳🇪 Niger +227</option>
-   872|            <option value="234">🇳🇬 Nigeria +234</option>
-   873|            <option value="47">🇳🇴 Norway +47</option>
-   874|            <option value="968">🇴🇲 Oman +968</option>
-   875|            <option value="92">🇵🇰 Pakistan +92</option>
-   876|            <option value="680">🇵🇼 Palau +680</option>
-   877|            <option value="970">🇵🇸 Palestine +970</option>
-   878|            <option value="507">🇵🇦 Panama +507</option>
-   879|            <option value="675">🇵🇬 Papua New Guinea +675</option>
-   880|            <option value="595">🇵🇾 Paraguay +595</option>
-   881|            <option value="51">🇵🇪 Peru +51</option>
-   882|            <option value="63">🇵🇭 Philippines +63</option>
-   883|            <option value="48">🇵🇱 Poland +48</option>
-   884|            <option value="351">🇵🇹 Portugal +351</option>
-   885|            <option value="974">🇶🇦 Qatar +974</option>
-   886|            <option value="40">🇷🇴 Romania +40</option>
-   887|            <option value="7">🇷🇺 Russia +7</option>
-   888|            <option value="250">🇷🇼 Rwanda +250</option>
-   889|            <option value="685">🇼🇸 Samoa +685</option>
-   890|            <option value="378">🇸🇲 San Marino +378</option>
-   891|            <option value="239">🇸🇹 São Tomé +239</option>
-   892|            <option value="966">🇸🇦 Saudi Arabia +966</option>
-   893|            <option value="221">🇸🇳 Senegal +221</option>
-   894|            <option value="381">🇷🇸 Serbia +381</option>
-   895|            <option value="248">🇸🇨 Seychelles +248</option>
-   896|            <option value="232">🇸🇱 Sierra Leone +232</option>
-   897|            <option value="65" selected>🇸🇬 Singapore +65</option>
-   898|            <option value="421">🇸🇰 Slovakia +421</option>
-   899|            <option value="386">🇸🇮 Slovenia +386</option>
-   900|            <option value="677">🇸🇧 Solomon Islands +677</option>
-   901|            <option value="252">🇸🇴 Somalia +252</option>
-   902|            <option value="27">🇿🇦 South Africa +27</option>
-   903|            <option value="82">🇰🇷 South Korea +82</option>
-   904|            <option value="34">🇪🇸 Spain +34</option>
-   905|            <option value="94">🇱🇰 Sri Lanka +94</option>
-   906|            <option value="249">🇸🇩 Sudan +249</option>
-   907|            <option value="597">🇸🇷 Suriname +597</option>
-   908|            <option value="268">🇸🇿 Eswatini +268</option>
-   909|            <option value="46">🇸🇪 Sweden +46</option>
-   910|            <option value="41">🇨🇭 Switzerland +41</option>
-   911|            <option value="963">🇸🇾 Syria +963</option>
-   912|            <option value="886">🇹🇼 Taiwan +886</option>
-   913|            <option value="992">🇹🇯 Tajikistan +992</option>
-   914|            <option value="255">🇹🇿 Tanzania +255</option>
-   915|            <option value="66">🇹🇭 Thailand +66</option>
-   916|            <option value="670">🇹🇱 Timor-Leste +670</option>
-   917|            <option value="228">🇹🇬 Togo +228</option>
-   918|            <option value="676">🇹🇴 Tonga +676</option>
-   919|            <option value="216">🇹🇳 Tunisia +216</option>
-   920|            <option value="90">🇹🇷 Turkey +90</option>
-   921|            <option value="993">🇹🇲 Turkmenistan +993</option>
-   922|            <option value="256">🇺🇬 Uganda +256</option>
-   923|            <option value="380">🇺🇦 Ukraine +380</option>
-   924|            <option value="971">🇦🇪 UAE +971</option>
-   925|            <option value="44">🇬🇧 UK +44</option>
-   926|            <option value="1">🇺🇸 US +1</option>
-   927|            <option value="598">🇺🇾 Uruguay +598</option>
-   928|            <option value="998">🇺🇿 Uzbekistan +998</option>
-   929|            <option value="678">🇻🇺 Vanuatu +678</option>
-   930|            <option value="379">🇻🇦 Vatican +379</option>
-   931|            <option value="58">🇻🇪 Venezuela +58</option>
-   932|            <option value="84">🇻🇳 Vietnam +84</option>
-   933|            <option value="967">🇾🇪 Yemen +967</option>
-   934|            <option value="260">🇿🇲 Zambia +260</option>
-   935|            <option value="263">🇿🇼 Zimbabwe +263</option>
-   936|          </select>
-   937|          <span class="phone-caret">▼</span>
-   938|        </div>
-   939|        <input type="tel" id="pl-phone" placeholder="8123 4567" data-i18n="auth.phone_placeholder" autocomplete="tel" onkeydown="if(event.key==='Enter')sendPhoneCode()">
-   940|      </div>
-   941|      <button class="auth-email-cta" onclick="sendPhoneCode()" id="pl-phone-btn" data-i18n="auth.send_code_btn">Send Code →</button>
-   942|      <div class="auth-error" id="auth-error-phone"></div>
-   943|    </div>
-   944|
-   945|    <!-- Step 3: Code verification -->
-   946|    <div id="auth-code-step" class="auth-form">
-   947|      <button class="back-link" onclick="showAuthOptions()">
-   948|        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
-   949|        <span id="code-back-label" data-i18n="auth.change_email">Change email</span>
-   950|      </button>
-   951|      <div class="auth-code-info">
-   952|        <svg id="code-step-icon" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-   953|          <rect x="2" y="4" width="20" height="16" rx="2"/>
-   954|          <path d="M22 7l-10 7L2 7"/>
-   955|        </svg>
-   956|        <div class="auth-code-msg" data-i18n="auth.sent_code">We sent a code to</div>
-   957|        <div class="auth-code-email" id="code-email-display">j***@example.com</div>
-   958|      </div>
-   959|      <div class="auth-code-input-row">
-   960|        <input type="text" id="pl-code" placeholder="Enter 6-digit code" data-i18n="auth.code_placeholder" maxlength="6" inputmode="numeric" autocomplete="one-time-code" onkeydown="if(event.key==='Enter')verifyCode()">
-   961|      </div>
-   962|      <button class="btn btn-primary" onclick="verifyCode()" id="pl-code-btn" data-i18n="auth.verify_btn">Verify Code →</button>
-   963|      <div class="auth-error" id="auth-error-code"></div>
-   964|      <div class="auth-code-resend" data-i18n="auth.resend_label">
-   965|        Didn't get it? <a onclick="resendCode()" data-i18n="auth.send_new_code">Send new code</a>
-   966|      </div>
-   967|    </div>
-   968|  <!-- Step 4: Recovery -->
-   969|  <div id="auth-recovery-step" class="auth-form" style="display:none;">
-   970|    <button class="back-link" onclick="showAuthOptions()">
-   971|      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
-   972|      <span data-i18n="auth.back">Back</span>
-   973|    </button>
-   974|    <div class="auth-code-info">
-   975|      <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-   976|        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
-   977|      </svg>
-   978|      <div class="auth-code-msg">Recover Your Account</div>
-   979|      <div class="recovery-subtitle" style="font-size:0.8rem;color:var(--text-muted);margin-top:0.25rem;">Enter your email to recover your API keys and subscription.</div>
-   980|    </div>
-   981|    <div id="recovery-email-row">
-   982|      <input type="email" class="auth-email-field" id="recovery-email" placeholder="you@example.com" autocomplete="email" style="margin-bottom:0.5rem;" onkeydown="if(event.key==='Enter')recoverAccount(document.getElementById('recovery-email')?.value)">
-   983|      <button class="auth-email-cta" id="recovery-btn" onclick="recoverAccount(document.getElementById('recovery-email')?.value)">Recover Account →</button>
-   984|    </div>
-   985|    <div id="recovery-code-section" style="display:none;">
-   986|      <div class="auth-code-input-row">
-   987|        <input type="text" id="recovery-code" placeholder="Enter 6-digit code" data-i18n="auth.code_placeholder" maxlength="6" inputmode="numeric" autocomplete="one-time-code" onkeydown="if(event.key==='Enter')recoverVerifyCode()">
-   988|      </div>
-   989|      <button class="btn btn-primary" id="recovery-verify-btn" onclick="recoverVerifyCode()" data-i18n="auth.verify_btn">Verify Code →</button>
-   990|      <div style="margin-top:0.5rem;text-align:center;font-size:0.78rem;color:var(--text-muted);">
-   991|        Didn't get it? <a href="#" onclick="recoverAccount(document.getElementById('recovery-email')?.value); return false;" style="color:var(--accent);text-decoration:none;">Send new code</a>
-   992|      </div>
-   993|    </div>
-   994|    <div class="auth-error" id="auth-error-recovery" style="margin-top:0.5rem;"></div>
-   995|  </div>
-   996|  </div>
-   997|</div>
-   998|
-   999|<style>
-  1000|  /* ── Auth Modal: Passwordless ────────────────────── */
-  1001|  .auth-email-field {
-  1002|    width: 100%;
-  1003|    padding: 0.7rem 1rem 0.7rem 2.5rem;
-  1004|    border-radius: var(--radius-sm);
-  1005|    border: 1px solid var(--border-primary);
-  1006|    background: var(--bg-glass);
-  1007|    color: var(--text-primary);
-  1008|    font-size: 0.88rem;
-  1009|    font-family: var(--font-sans);
-  1010|    transition: all var(--transition-fast);
-  1011|    outline: none;
-  1012|    box-sizing: border-box;
-  1013|    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23888888' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='2' y='4' width='20' height='16' rx='2'/%3E%3Cpath d='M22 7l-10 7L2 7'/%3E%3C/svg%3E");
-  1014|    background-repeat: no-repeat;
-  1015|    background-position: 0.75rem center;
-  1016|    background-size: 16px;
-  1017|  }
-  1018|  .auth-email-field:focus {
-  1019|    border-color: var(--accent);
-  1020|    box-shadow: 0 0 0 2px var(--accent-glow);
-  1021|  }
-  1022|  .auth-email-field::placeholder {
-  1023|    color: var(--text-faint);
-  1024|  }
-  1025|  .auth-email-cta {
-  1026|    display: flex;
-  1027|    align-items: center;
-  1028|    justify-content: center;
-  1029|    width: 100%;
-  1030|    padding: 0.7rem 1rem;
-  1031|    border-radius: var(--radius-sm);
-  1032|    border: none;
-  1033|    background: var(--accent-gradient);
-  1034|    color: #fff;
-  1035|    font-size: 0.88rem;
-  1036|    font-weight: 700;
-  1037|    font-family: var(--font-sans);
-  1038|    cursor: pointer;
-  1039|    transition: all var(--transition-fast);
-  1040|    gap: 0.4rem;
-  1041|  }
-  1042|  .auth-email-cta:hover {
-  1043|    opacity: 0.9;
-  1044|    transform: translateY(-1px);
-  1045|    box-shadow: var(--shadow-sm);
-  1046|  }
-  1047|  .auth-email-cta:active {
-  1048|    transform: translateY(0);
-  1049|  }
-  1050|  .auth-email-cta:disabled {
-  1051|    opacity: 0.5;
-  1052|    cursor: not-allowed;
-  1053|    transform: none;
-  1054|  }
-  1055|  .auth-phone-input-row {
-  1056|    display: flex;
-  1057|    flex-direction: column;
-  1058|    gap: 0.5rem;
-  1059|    margin: 1rem 0;
-  1060|  }
-  1061|  .phone-country-select {
-  1062|    position: relative;
-  1063|    width: 100%;
-  1064|  }
-  1065|  .phone-country-select select {
-  1066|    appearance: none;
-  1067|    -webkit-appearance: none;
-  1068|    width: 100%;
-  1069|    padding: 0.7rem 2rem 0.7rem 0.75rem;
-  1070|    border-radius: var(--radius-sm);
-  1071|    border: 1px solid var(--border-primary);
-  1072|    background: var(--bg-glass);
-  1073|    color: var(--text-primary);
-  1074|    font-size: 0.88rem;
-  1075|    font-family: var(--font-sans);
-  1076|    cursor: pointer;
-  1077|    outline: none;
-  1078|    min-width: 175px;
-  1079|    transition: all var(--transition-fast);
-  1080|  }
-  1081|  .phone-country-select select:focus {
-  1082|    border-color: var(--accent);
-  1083|    box-shadow: 0 0 0 2px var(--accent-glow);
-  1084|  }
-  1085|  .phone-country-select .phone-caret {
-  1086|    position: absolute;
-  1087|    right: 0.5rem;
-  1088|    top: 50%;
-  1089|    transform: translateY(-50%);
-  1090|    pointer-events: none;
-  1091|    color: var(--text-muted);
-  1092|    font-size: 0.6rem;
-  1093|  }
-  1094|  .auth-phone-input-row input {
-  1095|    width: 100%;
-  1096|    padding: 0.7rem 1rem;
-  1097|    border-radius: var(--radius-sm);
-  1098|    border: 1px solid var(--border-primary);
-  1099|    background: var(--bg-glass);
-  1100|    color: var(--text-primary);
-  1101|    font-size: 0.95rem;
-  1102|    font-family: var(--font-sans);
-  1103|    text-align: center;
-  1104|    outline: none;
-  1105|    box-sizing: border-box;
-  1106|    transition: all var(--transition-fast);
-  1107|  }
-  1108|  .auth-phone-input-row input:focus {
-  1109|    border-color: var(--accent);
-  1110|    box-shadow: 0 0 0 2px var(--accent-glow);
-  1111|  }
-  1112|  .auth-phone-input-row input::placeholder {
-  1113|    color: var(--text-faint);
-  1114|  }
-  1115|  .auth-code-info {
-  1116|    text-align: center;
-  1117|    padding: 1rem 0 0.75rem;
-  1118|  }
-  1119|  .auth-code-info svg {
-  1120|    margin-bottom: 0.75rem;
-  1121|  }
-  1122|  .auth-code-msg {
-  1123|    color: var(--text-secondary);
-  1124|    font-size: 0.9rem;
-  1125|  }
-  1126|  .auth-code-email {
-  1127|    font-weight: 700;
-  1128|    font-size: 1.05rem;
-  1129|    color: var(--text-primary);
-  1130|    margin-top: 0.2rem;
-  1131|  }
-  1132|  .auth-code-input-row {
-  1133|    margin: 1rem 0;
-  1134|  }
-  1135|  .auth-code-input-row input {
-  1136|    text-align: center;
-  1137|    font-size: 1.5rem;
-  1138|    font-family: var(--font-mono);
-  1139|    letter-spacing: 0.5em;
-  1140|    padding: 0.75rem 0.5rem;
-  1141|  }
-  1142|  .auth-code-resend {
-  1143|    text-align: center;
-  1144|    margin-top: 0.75rem;
-  1145|    font-size: 0.85rem;
-  1146|    color: var(--text-muted);
-  1147|  }
-  1148|  .auth-code-resend a {
-  1149|    color: var(--accent);
-  1150|    cursor: pointer;
-  1151|    text-decoration: underline;
-  1152|    text-underline-offset: 2px;
-  1153|  }
-  1154|  .auth-code-resend a:hover {
-  1155|    color: var(--accent-hover);
-  1156|  }
-  1157|</style>
-  1158|
-  1159|<script>
-  1160|// ── Theme ──────────────────────────────────────────────
-  1161|(function initTheme() {
-  1162|  const saved = localStorage.getItem('mb-theme');
-  1163|  const html = document.documentElement;
-  1164|  if (saved) html.setAttribute('data-theme', saved);
-  1165|  else {
-  1166|    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-  1167|    html.setAttribute('data-theme', prefersDark ? 'dark' : 'light');
-  1168|  }
-  1169|  updateThemeIcons();
-  1170|})();
-  1171|function toggleTheme() {
-  1172|  const html = document.documentElement;
-  1173|  const next = html.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
-  1174|  html.setAttribute('data-theme', next);
-  1175|  localStorage.setItem('mb-theme', next);
-  1176|  updateThemeIcons();
-  1177|}
-  1178|function updateThemeIcons() {
-  1179|  const theme = document.documentElement.getAttribute('data-theme');
-  1180|  document.querySelectorAll('.theme-toggle-btn').forEach(btn => {
-  1181|    const sun = btn.querySelector('.theme-sun');
-  1182|    const moon = btn.querySelector('.theme-moon');
-  1183|    if (sun) sun.style.display = theme === 'dark' ? 'block' : 'none';
-  1184|    if (moon) moon.style.display = theme === 'dark' ? 'none' : 'block';
-  1185|  });
-  1186|}
-  1187|
-  1188|// ── Mobile Nav ─────────────────────────────────────────
-  1189|function toggleMobileNav() {
-  1190|  document.getElementById('nav-backdrop').classList.toggle('open');
-  1191|  document.getElementById('nav-mobile').classList.toggle('open');
-  1192|  document.body.style.overflow = document.getElementById('nav-mobile').classList.contains('open') ? 'hidden' : '';
-  1193|}
-  1194|function closeMobileNav() {
-  1195|  document.getElementById('nav-mobile').classList.remove('open');
-  1196|  document.getElementById('nav-backdrop').classList.remove('open');
-  1197|  document.body.style.overflow = '';
-  1198|}
-  1199|
-  1200|// ── Lang toggle ────────────────────────────────────────
-  1201|function toggleLang() {
-  1202|  const dd = document.getElementById('lang-dropdown');
-  1203|  dd.classList.toggle('open');
-  1204|}
-  1205|document.addEventListener('click', function(e) {
-  1206|  const dd = document.getElementById('lang-dropdown');
-  1207|  if (dd && dd.classList.contains('open') && !e.target.closest('.lang-toggle') && !e.target.closest('.lang-dropdown')) {
-  1208|    dd.classList.remove('open');
-  1209|  }
-  1210|});
-  1211|function setLang(code) {
-  1212|  localStorage.setItem('mb-lang', code);
-  1213|  initLanguage();
-  1214|}
-  1215|
-  1216|// ── Shared Auth ──────────────────────────────────────────────
-  1217|let currentApiKey = '';
-  1218|let pendingEmail = '';
-  1219|let pendingPhone = '';
-  1220|let pendingMethod = 'email'; // 'email' or 'phone'
-  1221|
-  1222|function openAuth(tab) {
-  1223|    const overlay = document.getElementById('auth-overlay');
-  1224|    if (overlay) {
-  1225|        overlay.style.display = 'flex';
-  1226|        document.body.style.overflow = 'hidden';
-  1227|selectAuthTab(tab === 'signup' ? 'signup' : 'signin');
-  1228|        showAuthOptions();
-  1229|    } else {
-  1230|        window.location.href = '/pricing';
-  1231|    }
-  1232|}
-  1233|
-  1234|        function socialLogin(connection) {
-  1235|            window.location.href = '/auth/auth0/login?connection=' + connection + (authMode === 'signup' ? '&screen_hint=signup' : '');
-  1236|        }
-  1237|
-  1238|function closeAuth() {
-  1239|    const overlay = document.getElementById('auth-overlay');
-  1240|    if (overlay) overlay.style.display = '';
-  1241|    document.body.style.overflow = '';
-  1242|    pendingEmail = '';
-  1243|}
-  1244|
-  1245|let authMode = 'signin'; // 'signin' or 'signup'
-  1246|
-  1247|function selectAuthTab(mode) {
-  1248|    authMode = mode;
-  1249|    const signinTab = document.getElementById('auth-tab-signin');
-  1250|    const signupTab = document.getElementById('auth-tab-signup');
-  1251|    if (!signinTab || !signupTab) return;
-  1252|    const subtitle = document.getElementById('auth-subtitle');
-  1253|
-  1254|    if (mode === 'signin') {
-  1255|        signinTab.style.background = 'var(--accent)';
-  1256|        signinTab.style.color = '#fff';
-  1257|        signupTab.style.background = 'transparent';
-  1258|        signupTab.style.color = 'var(--text-muted)';
-  1259|        subtitle.textContent = 'Sign in to access your account.';
-  1260|    } else {
-  1261|        signupTab.style.background = 'var(--accent)';
-  1262|        signupTab.style.color = '#fff';
-  1263|        signinTab.style.background = 'transparent';
-  1264|        signinTab.style.color = 'var(--text-muted)';
-  1265|        subtitle.textContent = 'Create an account to get started.';
-  1266|    }
-  1267|}
-  1268|
-  1269|function showAuthOptions() {
-  1270|    document.querySelectorAll('.auth-form').forEach(el => el.classList.remove('active'));
-  1271|    const opts = document.getElementById('auth-options');
-  1272|    opts.style.display = '';
-  1273|    // Reset code step
-  1274|    document.getElementById('pl-code').value = '';
-  1275|    document.getElementById('pl-email').value = '';
-  1276|    document.getElementById('pl-phone').value = '';
-  1277|document.getElementById('auth-code-step').classList.remove('active');
-  1278|            document.getElementById('auth-phone-step').classList.remove('active');
-  1279|            document.getElementById('auth-recovery-step').style.display = 'none';
-  1280|    // Clear all errors
-  1281|    document.querySelectorAll('.auth-error').forEach(el => el.textContent = '');
-  1282|    // Re-enable buttons
-  1283|    document.getElementById('pl-email-btn').disabled = false;
-  1284|    document.getElementById('pl-code-btn').disabled = false;
-  1285|    document.getElementById('pl-phone-btn').disabled = false;
-  1286|    pendingMethod = 'email';
-  1287|    pendingPhone = '';
-  1288|    // Reset recovery code section
-  1289|    const recoveryCodeSection = document.getElementById('recovery-code-section');
-  1290|    if (recoveryCodeSection) recoveryCodeSection.style.display = 'none';
-  1291|    const recoveryEmailRow = document.getElementById('recovery-email-row');
-  1292|    if (recoveryEmailRow) recoveryEmailRow.style.display = '';
-  1293|    const recoveryBtn = document.getElementById('recovery-btn');
-  1294|    if (recoveryBtn) recoveryBtn.style.display = '';
-  1295|    // Reset buttons
-  1296|    const continueBtn = document.getElementById('pl-email-btn');
-  1297|    if (continueBtn) { continueBtn.innerHTML = 'Continue →'; continueBtn.disabled = false; }
-  1298|    const recoveryResetBtn = document.getElementById('recovery-btn');
-  1299|    if (recoveryResetBtn) { recoveryResetBtn.innerHTML = 'Recover Account →'; recoveryResetBtn.disabled = false; }
-  1300|    const recoveryVerifyBtn = document.getElementById('recovery-verify-btn');
-  1301|    if (recoveryVerifyBtn) { recoveryVerifyBtn.innerHTML = 'Verify Code →'; recoveryVerifyBtn.disabled = false; }
-  1302|}
-  1303|
-  1304|function phoneLogin() {
-  1305|    pendingMethod = 'phone';
-  1306|    document.getElementById('auth-options').style.display = 'none';
-  1307|    document.querySelectorAll('.auth-form').forEach(el => el.classList.remove('active'));
-  1308|    document.getElementById('auth-phone-step').classList.add('active');
-  1309|    document.getElementById('pl-phone').value = '';
-  1310|    document.getElementById('auth-error-phone').textContent = '';
-  1311|    document.getElementById('pl-phone-btn').disabled = false;
-  1312|    setTimeout(() => document.getElementById('pl-phone').focus(), 150);
-  1313|}
-  1314|
-  1315|function updatePhoneFlag() {
-  1316|    // Placeholder — the select handles display natively with emoji flags
-  1317|}
-  1318|
-  1319|async function sendPhoneCode() {
-  1320|    const countryCode = document.getElementById('pl-country-code').value;
-  1321|    const localNum = document.getElementById('pl-phone').value.trim().replace(/[^0-9]/g, '');
-  1322|    const errorEl = document.getElementById('auth-error-phone');
-  1323|    const btn = document.getElementById('pl-phone-btn');
-  1324|    if (!localNum) {
-  1325|        errorEl.innerHTML = 'Enter your phone number';
-  1326|        return;
-  1327|    }
-  1328|            const fullPhone = '+' + countryCode + localNum;
-  1329|            const originalBtnHTML = btn.innerHTML;
-  1330|            btn.innerHTML = '<span class="spinner-sm"></span> Sending...';
-  1331|            btn.disabled = true;
-  1332|            try {
-  1333|                const res = await fetch('/auth/auth0/passwordless/start-sms', {
-  1334|            method: 'POST',
-  1335|            headers: {'Content-Type': 'application/json'},
-  1336|            body: JSON.stringify({phone: fullPhone}),
-  1337|        });
-  1338|        if (!res.ok) {
-  1339|            let errMsg = 'Failed to send code';
-  1340|            try {
-  1341|                const err = await res.json();
-  1342|                errMsg = err.detail || err.message || errMsg;
-  1343|            } catch {
-  1344|                try {
-  1345|                    const text = await res.text();
-  1346|                    if (text) errMsg = text.slice(0, 200);
-  1347|                } catch {}
-  1348|            }
-  1349|                    errorEl.innerHTML = '' + errMsg;
-  1350|                    btn.innerHTML = originalBtnHTML;
-  1351|                    btn.disabled = false;
-  1352|                    return;
-  1353|                }
-  1354|                const data = await res.json();
-  1355|                pendingPhone = fullPhone;
-  1356|        // Show code verification step with phone icon
-  1357|        document.getElementById('code-back-label').textContent = 'Change phone';
-  1358|        document.getElementById('code-step-icon').innerHTML = '<path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>';
-  1359|        document.getElementById('code-email-display').textContent = data.phone || '*******' + fullPhone.slice(-4);
-  1360|        document.getElementById('auth-phone-step').classList.remove('active');
-  1361|        document.getElementById('auth-code-step').classList.add('active');
-  1362|        document.getElementById('pl-code').value = '';
-  1363|        document.getElementById('auth-error-code').textContent = '';
-  1364|        setTimeout(() => document.getElementById('pl-code').focus(), 150);
-  1365|        btn.disabled = false;
-  1366|    } catch (e) {
-  1367|        const isNetwork = e.message === 'Failed to fetch' || e.name === 'TypeError' || e.message === 'NetworkError';
-  1368|        errorEl.innerHTML = isNetwork
-  1369|            ? 'Could not reach server. Check your connection.'
-  1370|            : '' + e.message;
-  1371|        btn.disabled = false;
-  1372|    }
-  1373|}
-  1374|
-  1375|async function continueWithEmail() {
-  1376|    const email = document.getElementById('pl-email').value.trim();
-  1377|    const errorEl = document.getElementById('auth-error-main');
-  1378|    const btn = document.getElementById('pl-email-btn');
-  1379|    if (!email || !email.includes('@')) {
-  1380|        errorEl.innerHTML = 'Enter a valid email address';
-  1381|        return;
-  1382|    }
-  1383|    const originalBtnHTML = btn.innerHTML;
-  1384|    btn.innerHTML = '<span class="spinner-sm"></span> Sending...';
-  1385|    btn.disabled = true;
-  1386|    try {
-  1387|        // Check if email exists before sending a code
-  1388|        const checkRes = await fetch('/auth/check-email', {
-  1389|            method: 'POST',
-  1390|            headers: {'Content-Type': 'application/json'},
-  1391|            body: JSON.stringify({email}),
-  1392|        });
-  1393|        const checkData = checkRes.ok ? await checkRes.json() : {exists: false};
-  1394|        if (!checkData.exists) {
-  1395|            if (authMode === 'signin') {
-  1396|                errorEl.innerHTML = '<span class="auth-notice">No account found. Try the Create Account tab.</span>';
-  1397|                btn.innerHTML = originalBtnHTML;
-  1398|                btn.disabled = false;
-  1399|                return;
-  1400|            }
-  1401|            // authMode === 'signup' — allow through, new user registering
-  1402|        }
-  1403|        const res = await fetch('/auth/auth0/passwordless/start', {
-  1404|            method: 'POST',
-  1405|            headers: {'Content-Type': 'application/json'},
-  1406|            body: JSON.stringify({email}),
-  1407|        });
-  1408|        if (!res.ok) {
-  1409|            const err = await res.json().catch(() => ({}));
-  1410|            errorEl.innerHTML = '' + (err.detail || 'Failed to send code');
-  1411|            btn.innerHTML = originalBtnHTML;
-  1412|            btn.disabled = false;
-  1413|            return;
-  1414|        }
-  1415|        const data = await res.json();
-  1416|        pendingEmail = email;
-  1417|        pendingMethod = 'email';
-  1418|        document.getElementById('code-back-label').textContent = 'Change email';
-  1419|        document.getElementById('code-step-icon').innerHTML = '<rect x="2" y="4" width="20" height="16" rx="2"/><path d="M22 7l-10 7L2 7"/>';
-  1420|        document.getElementById('code-email-display').textContent = data.email || email[0] + '***' + email.substring(email.indexOf('@'));
-  1421|        // Show code verification step
-  1422|        document.getElementById('auth-options').style.display = 'none';
-  1423|        document.getElementById('auth-code-step').classList.add('active');
-  1424|        document.getElementById('pl-code').value = '';
-  1425|        document.getElementById('auth-error-code').textContent = '';
-  1426|        setTimeout(() => document.getElementById('pl-code').focus(), 150);
-  1427|        btn.disabled = false;
-  1428|    } catch (e) {
-  1429|        const isNetwork = e.message === 'Failed to fetch' || e.name === 'TypeError' || e.message === 'NetworkError';
-  1430|        errorEl.innerHTML = isNetwork
-  1431|            ? 'Could not reach server. Check your connection.'
-  1432|            : '' + e.message;
-  1433|        btn.innerHTML = originalBtnHTML;
-  1434|        btn.disabled = false;
-  1435|    }
-  1436|}
-  1437|
-  1438|async function verifyCode() {
-  1439|    const code = document.getElementById('pl-code').value.trim();
-  1440|    const errorEl = document.getElementById('auth-error-code');
-  1441|    const btn = document.getElementById('pl-code-btn');
-  1442|    if (!code || code.length < 4) {
-  1443|        errorEl.innerHTML = 'Enter your 6-digit verification code';
-  1444|        return;
-  1445|    }
-  1446|    const originalBtnHTML = btn.innerHTML;
-  1447|    btn.innerHTML = '<span class="spinner-sm"></span> Verifying...';
-  1448|    btn.disabled = true;
-  1449|    try {
-  1450|        const body = pendingMethod === 'phone'
-  1451|            ? {phone: pendingPhone, code}
-  1452|            : {email: pendingEmail, code};
-  1453|        const res = await fetch('/auth/auth0/passwordless/verify', {
-  1454|            method: 'POST',
-  1455|            headers: {'Content-Type': 'application/json'},
-  1456|            body: JSON.stringify(body),
-  1457|        });
-  1458|        if (!res.ok) {
-  1459|            const err = await res.json().catch(() => ({}));
-  1460|                    errorEl.innerHTML = '' + (err.detail || 'Verification failed');
-  1461|                    btn.innerHTML = originalBtnHTML;
-  1462|                    btn.disabled = false;
-  1463|            return;
-  1464|        }
-  1465|        const data = await res.json();
-  1466|        localStorage.setItem('mb_jwt', data.token);
-  1467|        if (data.api_key) {
-  1468|            localStorage.setItem('mb_api_key', data.api_key);
-  1469|            currentApiKey = data.api_key;
-  1470|        }
-  1471|        updateAuthUI();
-  1472|        if (typeof window.postAuthCallback === 'function') {
-  1473|            window.postAuthCallback();
-  1474|            window.postAuthCallback = null;
-  1475|        }
-  1476|        const _params = new URLSearchParams(window.location.search);
-  1477|        if (_params.has('pending_org_id')) {
-  1478|            fetch('/auth/link-subscription', {
-  1479|                method: 'POST',
-  1480|                headers: { 'Authorization': 'Bearer ' + data.token, 'Content-Type': 'application/json' },
-  1481|                body: JSON.stringify({ pending_org_id: _params.get('pending_org_id') })
-  1482|            }).catch(() => {});
-  1483|        }
-  1484|        closeAuth();
-  1485|        window.location.reload();
-  1486|    } catch (e) {
-  1487|        const isNetwork = e.message === 'Failed to fetch' || e.name === 'TypeError' || e.message === 'NetworkError';
-  1488|        errorEl.innerHTML = isNetwork
-  1489|            ? 'Could not reach server. Check your connection.'
-  1490|            : '' + e.message;
-  1491|        btn.innerHTML = originalBtnHTML;
-  1492|        btn.disabled = false;
-  1493|    }
-  1494|}
-  1495|
-  1496|async function resendCode() {
-  1497|    const errorEl = document.getElementById('auth-error-code');
-  1498|    const btn = document.getElementById('pl-code-btn');
-  1499|    if (!pendingEmail && !pendingPhone) return;
-  1500|    errorEl.innerHTML = '<span class="auth-spinner"></span>';
-  1501|    btn.disabled = true;
-  1502|    try {
-  1503|        const url = pendingMethod === 'phone'
-  1504|            ? '/auth/auth0/passwordless/start-sms'
-  1505|            : '/auth/auth0/passwordless/start';
-  1506|        const body = pendingMethod === 'phone'
-  1507|            ? JSON.stringify({phone: pendingPhone})
-  1508|            : JSON.stringify({email: pendingEmail});
-  1509|        const res = await fetch(url, {
-  1510|            method: 'POST',
-  1511|            headers: {'Content-Type': 'application/json'},
-  1512|            body,
-  1513|        });
-  1514|        if (!res.ok) {
-  1515|            const err = await res.json().catch(() => ({}));
-  1516|            errorEl.innerHTML = '' + (err.detail || 'Failed to resend code');
-  1517|            btn.disabled = false;
-  1518|            return;
-  1519|        }
-  1520|        errorEl.innerHTML = '✅ New code sent!';
-  1521|        document.getElementById('pl-code').value = '';
-  1522|        setTimeout(() => document.getElementById('pl-code').focus(), 150);
-  1523|        btn.disabled = false;
-  1524|    } catch (e) {
-  1525|        const isNetwork = e.message === 'Failed to fetch' || e.name === 'TypeError' || e.message === 'NetworkError';
-  1526|        errorEl.innerHTML = isNetwork
-  1527|            ? 'Could not reach server. Check your connection.'
-  1528|            : '' + e.message;
-  1529|        btn.disabled = false;
-  1530|    }
-  1531|}
-  1532|
-  1533|function escapeHtml(str) {
-  1534|    const div = document.createElement('div');
-  1535|    div.textContent = str;
-  1536|    return div.innerHTML;
-  1537|}
-  1538|
-  1539|// ── Init ──────────────────────────────────────────────────
-  1540|document.addEventListener('DOMContentLoaded', async () => {
-  1541|    await initAuth();
-  1542|    initLanguage();
-  1543|});
-  1544|</script>
-  1545|</body>
-  1546|</html>
-  1547|
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#0a0a0f" media="(prefers-color-scheme: dark)">
+<meta name="theme-color" content="#f8f9fc" media="(prefers-color-scheme: light)">
+<title>Memory Bridge — FAQ</title>
+<link rel="icon" href="/playground/logo.png" type="image/png">
+<link rel="stylesheet" href="/playground/style.css">
+<script src="/playground/i18n.js"></script>
+<script src="/playground/auth.js?v=1"></script>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  :root {
+    --bg: #0a0a0f;
+    --card: #13131a;
+    --border: #1e1e2a;
+    --text: #e2e2ee;
+    --muted: #6c7086;
+    --accent: #7c5cfc;
+    --accent2: #a78bfa;
+    --green: #4ade80;
+    --pink: #e879f9;
+    --orange: #fb923c;
+    --blue: #60a5fa;
+    --font: 'SF Mono', 'Menlo', 'Monaco', 'Courier New', monospace;
+  }
+  [data-theme="light"] {
+    --bg: #f5f5fa;
+    --card: #ffffff;
+    --border: #d4d4e0;
+    --text: #1a1a2e;
+    --muted: #6b6b80;
+    --accent: #6d4cf5;
+    --accent2: #8b6cf5;
+    --green: #22c55e;
+    --pink: #d946ef;
+    --orange: #ea580c;
+    --blue: #3b82f6;
+  }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+    overflow: hidden;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+  .main { display: flex; flex: 1; overflow: hidden; }
+
+  /* ── Left panel - FAQ items ── */
+  .left {
+    flex: 1;
+    padding: 1.5rem 2rem;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  .left::-webkit-scrollbar { width: 6px; }
+  .left::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+  .faq-header {
+    margin-bottom: 0.75rem;
+  }
+  .faq-header h1 {
+    font-size: 1.3rem;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+  }
+  .faq-header h1 .gradient {
+    background: linear-gradient(135deg, var(--accent), var(--pink));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .faq-header p {
+    font-size: 0.85rem;
+    color: var(--muted);
+    margin-top: 0.25rem;
+  }
+
+  .faq-item {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    cursor: pointer;
+    transition: border-color 0.2s;
+    overflow: hidden;
+  }
+  .faq-item:hover { border-color: var(--accent); }
+  .faq-item[open] { border-color: var(--accent); }
+
+  .faq-item summary {
+    font-size: 0.88rem;
+    font-weight: 600;
+    color: var(--text);
+    list-style: none;
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 0.9rem 1.1rem;
+    cursor: pointer;
+    user-select: none;
+  }
+  .faq-item summary::-webkit-details-marker { display: none; }
+  .faq-item summary .icon { font-size: 1.1rem; flex-shrink: 0; }
+  .faq-item summary .caret {
+    margin-left: auto;
+    font-size: 0.65rem;
+    color: var(--muted);
+    transition: transform 0.2s;
+    flex-shrink: 0;
+  }
+  .faq-item[open] summary .caret { transform: rotate(90deg); }
+
+  .faq-answer {
+    font-size: 0.84rem;
+    color: var(--muted);
+    line-height: 1.65;
+    border-top: 1px solid var(--border);
+    padding: 0.85rem 1.1rem;
+  }
+  .faq-answer a { color: var(--accent); text-decoration: underline; }
+  .faq-answer strong { color: var(--text); }
+
+  /* ── Right panel - decorative visual ── */
+  .right {
+    width: 380px;
+    min-width: 380px;
+    border-left: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+    position: relative;
+    overflow: hidden;
+  }
+  .right .big-q {
+    font-size: 8rem;
+    font-weight: 900;
+    background: linear-gradient(135deg, var(--accent), var(--pink));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    opacity: 0.5;
+    line-height: 1;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    animation: pulse-q 3s ease-in-out infinite;
+    user-select: none;
+  }
+  @keyframes pulse-q {
+    0%, 100% { opacity: 0.4; transform: translate(-50%, -50%) scale(1); }
+    50% { opacity: 0.7; transform: translate(-50%, -50%) scale(1.05); }
+  }
+
+  .right .circle-deco {
+    position: absolute;
+    border-radius: 50%;
+    border: 1px solid var(--border);
+    animation: rotate-slow 20s linear infinite;
+  }
+  .circle-deco.c1 { width: 260px; height: 260px; border-color: rgba(124,92,252,0.15); }
+  .circle-deco.c2 { width: 200px; height: 200px; border-color: rgba(232,121,249,0.1); animation-duration: 15s; animation-direction: reverse; }
+  .circle-deco.c3 { width: 140px; height: 140px; border-color: rgba(74,222,128,0.08); animation-duration: 10s; }
+
+  @keyframes rotate-slow { to { transform: rotate(360deg); } }
+
+  .right .tag-cloud {
+    position: absolute;
+    bottom: 2rem;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    justify-content: center;
+    max-width: 280px;
+  }
+  .right .tag-cloud span {
+    font-size: 0.72rem;
+    padding: 0.3rem 0.7rem;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    color: var(--muted);
+    animation: tag-in 0.4s ease both;
+  }
+  .right .tag-cloud span:nth-child(1) { animation-delay: 0.1s; }
+  .right .tag-cloud span:nth-child(2) { animation-delay: 0.3s; }
+  .right .tag-cloud span:nth-child(3) { animation-delay: 0.5s; }
+  .right .tag-cloud span:nth-child(4) { animation-delay: 0.7s; }
+  .right .tag-cloud span:nth-child(5) { animation-delay: 0.9s; }
+  .right .tag-cloud span:nth-child(6) { animation-delay: 1.1s; }
+  @keyframes tag-in { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+  /* ── User Avatar + Dropdown (shared with dashboard) ── */
+  .user-avatar-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.25rem 0.5rem 0.25rem 0.25rem;
+    border-radius: var(--radius-full);
+    border: 1px solid var(--border-primary);
+    background: transparent;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    font-family: var(--font-sans);
+    color: var(--text-primary);
+  }
+  .user-avatar-btn:hover {
+    border-color: var(--accent);
+    background: var(--accent-glow);
+  }
+  .user-avatar-circle {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: var(--accent-gradient);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.75rem;
+    font-weight: 700;
+    flex-shrink: 0;
+    overflow: hidden;
+  }
+  .user-avatar-name {
+    font-size: 0.82rem;
+    font-weight: 600;
+    max-width: 110px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .user-chevron {
+    color: var(--text-faint);
+    transition: transform 0.2s;
+  }
+  .user-menu.open .user-chevron { transform: rotate(180deg); }
+  .user-menu {
+    position: relative;
+    display: inline-flex;
+  }
+  .user-dropdown {
+    display: none;
+    position: absolute;
+    top: calc(100% + 6px);
+    right: 0;
+    min-width: 220px;
+    background: var(--card-bg);
+    border: 1px solid var(--border-primary);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-xl);
+    z-index: 100;
+    overflow: hidden;
+  }
+  .user-menu.open .user-dropdown { display: block; }
+  .user-dropdown-header {
+    padding: 0.75rem 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+  }
+  .user-dropdown-email {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    word-break: break-all;
+  }
+  .user-dropdown-plan {
+    font-size: 0.72rem;
+    color: var(--text-muted);
+    font-weight: 500;
+  }
+  .user-dropdown-divider {
+    height: 1px;
+    background: var(--border-subtle);
+    margin: 0;
+  }
+  .user-dropdown-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.65rem 1rem;
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    text-decoration: none;
+    transition: background var(--transition-fast);
+  }
+  .user-dropdown-item svg { flex-shrink: 0; color: var(--text-muted); }
+  .user-dropdown-item:hover { background: var(--btn-secondary-hover); color: var(--text-primary); }
+  .user-dropdown-item:last-child:hover { color: var(--red); }
+
+  /* ── Logout Confirm Modal ── */
+  .logout-modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.6);
+    z-index: 1001;
+    backdrop-filter: blur(6px);
+  }
+  .logout-modal-overlay.open { display: block; }
+  .logout-modal {
+    display: none;
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) scale(0.96);
+    z-index: 1002;
+    background: var(--card-bg);
+    border: 1px solid var(--border-primary);
+    border-radius: var(--radius-lg);
+    padding: 2rem;
+    min-width: 360px;
+    max-width: 90vw;
+    box-shadow: var(--shadow-xl);
+    text-align: center;
+    opacity: 0;
+    transition: all 0.2s ease;
+  }
+  .logout-modal.open {
+    display: block;
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+  .logout-modal .logout-icon {
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background: rgba(239,68,68,0.12);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 1rem;
+    font-size: 1.6rem;
+  }
+  .logout-modal .logout-title {
+    font-size: 1.15rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+    color: var(--text-primary);
+  }
+  .logout-modal .logout-text {
+    font-size: 0.88rem;
+    color: var(--text-muted);
+    line-height: 1.55;
+    margin-bottom: 1.5rem;
+  }
+  .logout-modal .logout-btns {
+    display: flex;
+    gap: 0.75rem;
+    justify-content: center;
+  }
+  .logout-modal .logout-btns .btn { min-width: 110px; }
+  @media (max-width: 480px) {
+    .logout-modal { min-width: unset; width: 90vw; padding: 1.25rem; }
+    .logout-modal .logout-title { font-size: 1rem; }
+    .logout-modal .logout-text { font-size: 0.82rem; }
+    .logout-modal .logout-btns { flex-direction: column; align-items: stretch; }
+    .logout-modal .logout-btns .btn { width: 100%; text-align: center; justify-content: center; }
+  }
+
+  /* ── Footer ── */
+  .faq-footer {
+    text-align: center;
+    padding: 0.6rem;
+    font-size: 0.78rem;
+    color: var(--muted);
+    border-top: 1px solid var(--border);
+    flex-shrink: 0;
+  }
+
+  /* ── Responsive ── */
+  @media (max-width: 768px) {
+    body { overflow: auto; height: auto; }
+    .main { flex-direction: column; overflow: visible; }
+    .left { padding: 1rem 1rem; overflow: visible; }
+    .right {
+      width: 100%;
+      min-width: unset;
+      height: 260px;
+      border-left: none;
+      border-top: 1px solid var(--border);
+    }
+    .right .big-q { font-size: 6rem; }
+    .circle-deco.c1 { width: 200px; height: 200px; }
+    .circle-deco.c2 { width: 150px; height: 150px; }
+    .circle-deco.c3 { width: 100px; height: 100px; }
+    .right .tag-cloud { position: relative; bottom: auto; left: auto; transform: none; margin-top: 1rem; }
+    .faq-item summary { padding: 0.75rem 0.9rem; font-size: 0.84rem; }
+    .faq-answer { padding: 0.7rem 0.9rem; font-size: 0.82rem; }
+    .auth-btn-container { display: inline-flex !important; }
+    .nav-cta { display: none !important; }
+  }
+
+  /* Mobile landscape: hide decorative panel, full-width FAQ */
+  @media (max-height: 600px) and (orientation: landscape) {
+    .right { display: none; }
+    .main { flex-direction: column; overflow: auto; }
+    .left { width: 100%; padding: 0.75rem; overflow: visible; }
+    body { overflow: auto; height: auto; }
+    .faq-item summary { padding: 0.6rem 0.8rem; font-size: 0.8rem; }
+  }
+</style>
+</head>
+<body>
+
+<!-- Navbar -->
+<nav class="navbar">
+    <a href="/" class="logo">
+      <img src="/playground/logo.png" alt="Memory Bridge" data-i18n="nav.logo_alt">
+      Memory <span class="logo-accent">Bridge</span>
+    </a>
+    <div class="nav-links">
+      <a href="/" data-i18n="nav.home">Home</a>
+      <a href="/playground/graph.html" data-i18n="nav.graph">Graph</a>
+      <a href="/dashboard/" data-i18n="nav.dashboard">Dashboard</a>
+      <a href="/pricing" data-i18n="nav.pricing">Pricing</a>
+      <a href="/faq" class="active" data-i18n="nav.faq">FAQ</a>
+    </div>
+  <div class="nav-right">
+    <div style="position:relative;display:inline-flex;">
+        <button class="nav-icon-btn lang-toggle" onclick="toggleLang()" title="Switch language" aria-label="Switch language">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"/>
+                <line x1="2" y1="12" x2="22" y2="12"/>
+                <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+            </svg>
+        </button>
+        <div class="lang-dropdown" id="lang-dropdown">
+            <a href="javascript:void(0)" data-lang="en" class="lang-opt active" onclick="setLang('en')">🇬🇧 English</a>
+            <a href="javascript:void(0)" data-lang="zh" class="lang-opt" onclick="setLang('zh')">🇨🇳 中文</a>
+            <a href="javascript:void(0)" data-lang="ja" class="lang-opt" onclick="setLang('ja')">🇯🇵 日本語</a>
+            <a href="javascript:void(0)" data-lang="ko" class="lang-opt" onclick="setLang('ko')">🇰🇷 한국어</a>
+            <a href="javascript:void(0)" data-lang="es" class="lang-opt" onclick="setLang('es')">🇪🇸 Español</a>
+            <a href="javascript:void(0)" data-lang="fr" class="lang-opt" onclick="setLang('fr')">🇫🇷 Français</a>
+            <a href="javascript:void(0)" data-lang="de" class="lang-opt" onclick="setLang('de')">🇩🇪 Deutsch</a>
+        </div>
+    </div>
+    <button class="nav-icon-btn theme-toggle-btn" onclick="toggleTheme()" title="Toggle theme" aria-label="Toggle theme">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="theme-sun">
+        <circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/>
+        <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+        <line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/>
+        <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+      </svg>
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="theme-moon" style="display:none">
+        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+      </svg>
+    </button>
+            <div class="auth-btn-container" id="auth-btn-container">
+                <button class="auth-btn" id="auth-nav-btn" onclick="openAuth()" title="Sign in / Sign up" data-i18n-title="nav.sign_in_title">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                    <span id="auth-btn-label" data-i18n="auth.sign_in">Sign in</span>
+                </button>
+                <div class="user-menu" id="user-menu" style="display:none;">
+                    <button class="user-avatar-btn" id="user-btn" onclick="toggleUserDropdown()" title="Account menu">
+                        <span class="user-avatar-circle" id="user-avatar-circle">👤</span>
+                        <span class="session-dot" id="session-dot"></span>
+                        <span class="user-avatar-name" id="user-avatar-name"></span>
+                        <span class="user-plan-badge" id="user-plan-badge"></span>
+                        <svg class="user-chevron" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+                    </button>
+                    <div class="user-dropdown" id="user-dropdown">
+                        <div class="user-dropdown-header">
+                            <span class="user-dropdown-email" id="user-dropdown-email"></span>
+                            <span class="user-dropdown-plan" id="user-dropdown-plan" data-i18n="dash.free_plan">Free Plan</span>
+                            <span class="user-dropdown-since" id="user-dropdown-since"></span>
+                        </div>
+                        <div class="user-dropdown-divider"></div>
+                        <a href="/pricing" class="user-dropdown-item" data-i18n="dash.manage_billing">
+                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+                            Manage Billing
+                        </a>
+                        <div class="user-dropdown-item sign-out" onclick="showLogoutConfirm()" style="cursor:pointer;" data-i18n="nav.sign_out">
+                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+                            Sign Out
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <a href="/playground/" class="nav-cta">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <polygon points="5 3 19 12 5 21 5 3"/>
+                </svg>
+                <span data-i18n="nav.launch_playground">Launch Playground</span>
+            </a>
+            <button class="nav-hamburger" onclick="toggleMobileNav()" aria-label="Open menu">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="4" y1="6" x2="20" y2="6"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="18" x2="20" y2="18"/>
+                </svg>
+            </button>
+        </div>
+    </nav>
+
+<!-- Mobile Nav Panel -->
+<div class="nav-mobile-backdrop" id="nav-backdrop" onclick="closeMobileNav()"></div>
+<div class="nav-mobile-panel" id="nav-mobile">
+  <div class="nav-mobile-header">
+    <div class="logo">
+      <img src="/playground/logo.png" alt="Memory Bridge" data-i18n="nav.logo_alt">
+      Memory <span class="logo-accent">Bridge</span>
+    </div>
+    <button class="nav-mobile-close" onclick="closeMobileNav()" aria-label="Close menu">
+      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+      </svg>
+    </button>
+  </div>
+  <a href="/" onclick="closeMobileNav()" data-i18n="nav.home">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+    Home
+  </a>
+  <a href="/playground/graph.html" onclick="closeMobileNav()" data-i18n="nav.graph">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="5" cy="5" r="3"/><circle cx="19" cy="5" r="3"/><circle cx="12" cy="19" r="3"/><line x1="5" y1="5" x2="19" y2="5"/><line x1="5" y1="5" x2="12" y2="19"/><line x1="19" y1="5" x2="12" y2="19"/></svg>
+    Graph
+  </a>
+  <a href="/pricing" onclick="closeMobileNav()" data-i18n="nav.pricing">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+    Pricing
+  </a>
+  <a href="/dashboard/" onclick="closeMobileNav()" data-i18n="nav.dashboard">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+    Dashboard
+  </a>
+  <a href="/faq" class="active" onclick="closeMobileNav()" data-i18n="nav.faq">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+    FAQ
+  </a>
+  <a href="javascript:void(0)" id="auth-mobile-btn" onclick="closeMobileNav();openAuth()" style="display:flex;align-items:center;gap:0.45rem;padding:0.7rem 1.25rem;border-radius:var(--radius-sm);font-size:0.88rem;font-weight:600;color:var(--accent);text-decoration:none;">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+    <span id="auth-mobile-label" data-i18n="auth.sign_in">Sign in</span>
+  </a>
+  <!-- Mobile User Card (when signed in) -->
+  <div id="mobile-user-card" style="display:none;">
+    <div class="mobile-user-header">
+      <div class="mobile-user-avatar">
+        <span class="mobile-user-circle" id="mobile-user-circle">👤</span>
+        <span class="session-dot" id="mobile-session-dot"></span>
+      </div>
+      <div class="mobile-user-info">
+        <span class="mobile-user-email" id="mobile-user-email"></span>
+                    <span class="mobile-user-plan" id="mobile-user-plan" data-i18n="dash.free_plan">Free Plan</span>
+      </div>
+    </div>
+    <div class="mobile-user-divider"></div>
+    <a href="/pricing" class="mobile-user-action" onclick="closeMobileNav()">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+      <span data-i18n="dash.manage_billing">Manage Billing</span>
+      </a>
+    <div class="mobile-user-divider"></div>
+    <span class="mobile-user-since" id="mobile-user-since"></span>
+    <a href="javascript:void(0)" class="mobile-user-action sign-out" id="mobile-sign-out-btn" onclick="closeMobileNav();showLogoutConfirm()">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+      <span data-i18n="nav.sign_out">Sign Out</span>
+    </a>
+</div>
+  <div class="nav-mobile-divider"></div>
+  <a href="/playground/" class="nav-mobile-cta" onclick="closeMobileNav()">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+    <span data-i18n="nav.launch_playground">Launch Playground</span>
+  </a>
+</div>
+
+<!-- Logout Confirm Modal -->
+<div class="logout-modal-overlay" id="logout-overlay" onclick="closeLogoutConfirm()"></div>
+<div class="logout-modal" id="logout-modal">
+    <div class="logout-icon">🚪</div>
+    <div class="logout-title" data-i18n="logout.title">Sign out of Memory Bridge?</div>
+    <div class="logout-text" data-i18n="logout.text">
+        You'll need to sign in again to manage API keys, view subscription details, or access your dashboard.
+    </div>
+    <div class="logout-btns">
+        <button class="btn btn-secondary" data-i18n="logout.cancel" onclick="closeLogoutConfirm()">Cancel</button>
+        <button class="btn btn-danger" id="logout-confirm-btn" data-i18n="logout.sign_out" onclick="logout()">Sign Out</button>
+    </div>
+</div>
+
+<!-- Main content: side-by-side -->
+<div class="main">
+  <!-- Left: FAQ items -->
+  <div class="left">
+    <div class="faq-header">
+      <h1 data-i18n="faq.title">Frequently asked <span class="gradient">questions</span></h1>
+      <p data-i18n="faq.subtitle">Everything you need to know about Memory Bridge.</p>
+    </div>
+
+    <details class="faq-item">
+      <summary data-i18n="faq.q1"><span class="icon">📋</span> How do I sign up? Do you store my password?<span class="caret">▸</span></summary>
+      <div class="faq-answer" data-i18n="faq.a1">
+        <strong>No passwords.</strong> Type your email → get a 6-digit code → enter it. That's it.<br><br>
+        Or sign in with <strong>Google</strong>, <strong>Apple</strong>, or <strong>Phone (SMS)</strong> — we never see or store your password because there isn't one.<br><br>
+        Forgot your password? Doesn't exist. Every login sends a fresh code.
+      </div>
+    </details>
+
+    <details class="faq-item">
+      <summary data-i18n="faq.q2"><span class="icon">🔐</span> Is my instance secure?<span class="caret">▸</span></summary>
+      <div class="faq-answer" data-i18n="faq.a2">
+        <strong>Yes.</strong> API calls are authenticated via <strong>JWT</strong> or <strong>API keys</strong> with role-based access. Rate limiting per tier protects against abuse.<br><br>
+        Your database is <strong>yours alone</strong> — multi-tenancy via schema-per-tenant with Row-Level Security. No cross-tenant data leaks.
+      </div>
+    </details>
+
+    <details class="faq-item">
+      <summary data-i18n="faq.q3"><span class="icon">🧩</span> What LLMs and frameworks do you support?<span class="caret">▸</span></summary>
+      <div class="faq-answer" data-i18n="faq.a3">
+        Any LLM with an API — OpenAI, Claude, Gemini, Ollama, llama.cpp, OpenRouter.<br><br>
+        Any framework — LangGraph, AutoGen, CrewAI. Memory Bridge sits between your code and the LLM, so the integration pattern is the same regardless of what you're using.
+      </div>
+    </details>
+
+    <details class="faq-item">
+      <summary data-i18n="faq.q4"><span class="icon">🔄</span> Can I self-host?<span class="caret">▸</span></summary>
+      <div class="faq-answer" data-i18n="faq.a4">
+        Yes! Memory Bridge is MIT licensed. Self-host with Docker Compose on any machine — no limits, no restrictions.<br><br>
+        Or use the hosted version and let us handle the infrastructure. Either way, your data stays yours.
+      </div>
+    </details>
+
+    <details class="faq-item">
+      <summary data-i18n="faq.q5"><span class="icon">💾</span> How is data stored and retained?<span class="caret">▸</span></summary>
+      <div class="faq-answer" data-i18n="faq.a5">
+        Every memory is stored as a row in your own database. Export, query, delete, or audit at any time — it's your data.<br><br>
+        Retention depends on your plan: Free (7 days), Starter (90 days), Pro (365 days). Memories older than your retention window are automatically cleaned up.
+      </div>
+    </details>
+
+    <details class="faq-item">
+      <summary data-i18n="faq.q6"><span class="icon">🏢</span> Is there an Enterprise plan?<span class="caret">▸</span></summary>
+      <div class="faq-answer" data-i18n="faq.a6">
+        Yes — dedicated infrastructure, SSO/SAML, custom retention policies, SLA guarantees, and a dedicated support engineer.<br><br>
+        <a href="mailto:sales@memorybridge.io">Contact us</a> for custom pricing.
+      </div>
+    </details>
+
+    <details class="faq-item">
+      <summary data-i18n="faq.q7"><span class="icon">🛠️</span> Do I need to register to try it?<span class="caret">▸</span></summary>
+      <div class="faq-answer" data-i18n="faq.a7">
+        Nope! Open the <a href="/playground/">Playground</a> with the demo key and start storing memories immediately.<br><br>
+        When you're ready to go to production, sign up for a free account to get your own dedicated API keys and higher rate limits.
+      </div>
+    </details>
+
+    <details class="faq-item">
+      <summary data-i18n="faq.q8"><span class="icon">📦</span> What's included in the pricing plans?<span class="caret">▸</span></summary>
+      <div class="faq-answer" data-i18n="faq.a8">
+        All plans include the full Memory Bridge API — there are no feature restrictions. Plans differ by capacity: memories stored, sessions, API keys, retention period, and rate limits.<br><br>
+        See the <a href="/pricing">Pricing page</a> for full details. Upgrade or downgrade anytime — changes apply immediately.
+      </div>
+    </details>
+  </div>
+
+  <!-- Right: decorative visual -->
+  <div class="right">
+    <div class="circle-deco c1"></div>
+    <div class="circle-deco c2"></div>
+    <div class="circle-deco c3"></div>
+    <div class="big-q">?</div>
+    <div class="tag-cloud">
+      <span>#memory</span>
+      <span>#agents</span>
+      <span>#AI</span>
+      <span>#opensource</span>
+      <span>#privacy</span>
+      <span>#API</span>
+    </div>
+  </div>
+</div>
+
+<footer class="faq-footer" data-i18n="footer.text">© 2026 Memory Bridge — API for cross-agent memory</footer>
+
+<!-- Auth Modal -->
+<div class="auth-overlay" id="auth-overlay">
+  <div class="auth-modal">
+    <button class="auth-close" onclick="closeAuth()" aria-label="Close">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+    </button>
+    <div class="auth-icon">🔑</div>
+    <div class="auth-title">Memory Bridge</div>
+    <!-- Sign In / Create Account tabs -->
+    <div class="auth-tabs" style="display:flex;gap:0;margin:0.5rem 0 1rem;border:1px solid var(--border-primary);border-radius:var(--radius-md);overflow:hidden;width:100%;">
+      <button class="auth-tab active" id="auth-tab-signin" onclick="selectAuthTab('signin')" style="flex:1;padding:0.5rem 0;border:none;background:var(--accent);color:#fff;font-size:0.88rem;font-weight:600;cursor:pointer;">Sign In</button>
+      <button class="auth-tab" id="auth-tab-signup" onclick="selectAuthTab('signup')" style="flex:1;padding:0.5rem 0;border:none;background:transparent;color:var(--text-muted);font-size:0.88rem;font-weight:600;cursor:pointer;">Create Account</button>
+    </div>
+    <div class="auth-subtitle" id="auth-subtitle" data-i18n="auth.subtitle">Sign in to access your account.</div>
+
+    <!-- Step 1: Options (social + email) -->
+    <div id="auth-options" class="auth-options">
+      <button class="auth-social-btn" onclick="socialLogin('google-oauth2')">
+        <span class="s-icon google">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 48 48">
+            <path fill="#FFC107" d="M43.611,20.083H42V20H24v8h11.303c-1.649,4.657-6.08,8-11.303,8c-6.627,0-12-5.373-12-12c0-6.627,5.373-12,12-12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C12.955,4,4,12.955,4,24c0,11.045,8.955,20,20,20c11.045,0,20-8.955,20-20C44,22.659,43.862,21.35,43.611,20.083z"/>
+            <path fill="#FF3D00" d="M6.306,14.691l6.571,4.819C14.655,15.108,18.961,12,24,12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C16.318,4,9.656,8.337,6.306,14.691z"/>
+            <path fill="#4CAF50" d="M24,44c5.166,0,9.86-1.977,13.409-5.192l-6.19-5.238C29.211,35.091,26.715,36,24,36c-5.202,0-9.619-3.317-11.283-7.946l-6.522,5.025C9.505,39.556,16.227,44,24,44z"/>
+            <path fill="#1976D2" d="M43.611,20.083H42V20H24v8h11.303c-0.792,2.237-2.231,4.166-4.087,5.571c0.001-0.001,0.002-0.001,0.003-0.002l6.19,5.238C36.971,39.205,44,34,44,24C44,22.659,43.862,21.35,43.611,20.083z"/>
+          </svg>
+        </span>
+        <span data-i18n="auth.continue_google">Continue with Google</span>
+      </button>
+      <button class="auth-social-btn" onclick="socialLogin('apple')">
+        <span class="s-icon apple">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="#000">
+            <path d="M17.05 20.28c-.98.95-2.05.8-3.08.35-1.09-.46-2.09-.48-3.24 0-1.44.62-2.2.44-3.06-.35C2.79 15.25 3.51 7.59 9.05 7.31c1.35.07 2.29.74 3.08.8 1.18-.24 2.31-.93 3.57-.84 1.51.12 2.65.72 3.4 1.8-3.12 1.87-2.38 5.98.48 7.13-.57 1.5-1.31 2.99-2.54 4.09zM12.03 7.25c-.15-2.23 1.66-4.07 3.74-4.25.29 2.58-2.34 4.5-3.74 4.25z"/>
+          </svg>
+        </span>
+        <span data-i18n="auth.continue_apple">Continue with Apple</span>
+      </button>
+      <button class="auth-social-btn" onclick="phoneLogin()">
+        <span class="s-icon phone">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
+          </svg>
+        </span>
+        <span data-i18n="auth.continue_phone">Continue with Phone</span>
+      </button>
+      <div class="auth-divider">
+        <hr>
+        <span data-i18n="auth.or_email">or continue with email</span>
+        <hr>
+      </div>
+      <input type="email" class="auth-email-field" id="pl-email" placeholder="you@example.com" data-i18n="auth.email_placeholder" autocomplete="email" onkeydown="if(event.key==='Enter')continueWithEmail()">
+      <button class="auth-email-cta" onclick="continueWithEmail()" id="pl-email-btn" data-i18n="auth.continue_btn">Continue →</button>
+      <div class="auth-error" id="auth-error-main"></div>
+<div style="margin-top: 0.75rem; text-align: center;">
+                <a href="#" onclick="showRecoveryForm(); return false;" style="color: var(--accent); text-decoration: none; font-size: 0.85rem; font-weight: 500; opacity: 0.85; transition: opacity 0.15s;" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0.85'">Lost your account? Recover it here →</a>
+              </div>
+    </div>
+
+    <!-- Step 2: Phone input -->
+    <div id="auth-phone-step" class="auth-form">
+      <button class="back-link" onclick="showAuthOptions()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+        <span data-i18n="auth.back">Back</span>
+      </button>
+      <div class="auth-code-info">
+        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
+        </svg>
+        <div class="auth-code-msg" data-i18n="auth.enter_phone">Enter your phone number</div>
+        <div style="font-size:0.8rem;color:var(--text-muted);margin-top:0.25rem;" data-i18n="auth.sms_notice">We'll send a 6-digit code via SMS</div>
+      </div>
+      <div class="auth-phone-input-row">
+        <div class="phone-country-select">
+          <select id="pl-country-code" onchange="updatePhoneFlag()">
+            <option value="93">🇦🇫 Afghanistan +93</option>
+            <option value="355">🇦🇱 Albania +355</option>
+            <option value="213">🇩🇿 Algeria +213</option>
+            <option value="376">🇦🇩 Andorra +376</option>
+            <option value="244">🇦🇴 Angola +244</option>
+            <option value="54">🇦🇷 Argentina +54</option>
+            <option value="374">🇦🇲 Armenia +374</option>
+            <option value="297">🇦🇼 Aruba +297</option>
+            <option value="61">🇦🇺 Australia +61</option>
+            <option value="43">🇦🇹 Austria +43</option>
+            <option value="994">🇦🇿 Azerbaijan +994</option>
+            <option value="973">🇧🇭 Bahrain +973</option>
+            <option value="880">🇧🇩 Bangladesh +880</option>
+            <option value="375">🇧🇾 Belarus +375</option>
+            <option value="32">🇧🇪 Belgium +32</option>
+            <option value="501">🇧🇿 Belize +501</option>
+            <option value="229">🇧🇯 Benin +229</option>
+            <option value="975">🇧🇹 Bhutan +975</option>
+            <option value="591">🇧🇴 Bolivia +591</option>
+            <option value="387">🇧🇦 Bosnia +387</option>
+            <option value="267">🇧🇼 Botswana +267</option>
+            <option value="55">🇧🇷 Brazil +55</option>
+            <option value="673">🇧🇳 Brunei +673</option>
+            <option value="359">🇧🇬 Bulgaria +359</option>
+            <option value="226">🇧🇫 Burkina Faso +226</option>
+            <option value="257">🇧🇮 Burundi +257</option>
+            <option value="855">🇰🇭 Cambodia +855</option>
+            <option value="237">🇨🇲 Cameroon +237</option>
+            <option value="1">🇨🇦 Canada +1</option>
+            <option value="238">🇨🇻 Cape Verde +238</option>
+            <option value="236">🇨🇫 CAR +236</option>
+            <option value="235">🇹🇩 Chad +235</option>
+            <option value="56">🇨🇱 Chile +56</option>
+            <option value="86">🇨🇳 China +86</option>
+            <option value="57">🇨🇴 Colombia +57</option>
+            <option value="269">🇰🇲 Comoros +269</option>
+            <option value="243">🇨🇩 Congo (DRC) +243</option>
+            <option value="242">🇨🇬 Congo +242</option>
+            <option value="506">🇨🇷 Costa Rica +506</option>
+            <option value="385">🇭🇷 Croatia +385</option>
+            <option value="53">🇨🇺 Cuba +53</option>
+            <option value="357">🇨🇾 Cyprus +357</option>
+            <option value="420">🇨🇿 Czechia +420</option>
+            <option value="45">🇩🇰 Denmark +45</option>
+            <option value="253">🇩🇯 Djibouti +253</option>
+            <option value="593">🇪🇨 Ecuador +593</option>
+            <option value="20">🇪🇬 Egypt +20</option>
+            <option value="503">🇸🇻 El Salvador +503</option>
+            <option value="372">🇪🇪 Estonia +372</option>
+            <option value="251">🇪🇹 Ethiopia +251</option>
+            <option value="679">🇫🇯 Fiji +679</option>
+            <option value="358">🇫🇮 Finland +358</option>
+            <option value="33">🇫🇷 France +33</option>
+            <option value="241">🇬🇦 Gabon +241</option>
+            <option value="220">🇬🇲 Gambia +220</option>
+            <option value="995">🇬🇪 Georgia +995</option>
+            <option value="49">🇩🇪 Germany +49</option>
+            <option value="233">🇬🇭 Ghana +233</option>
+            <option value="30">🇬🇷 Greece +30</option>
+            <option value="299">🇬🇱 Greenland +299</option>
+            <option value="502">🇬🇹 Guatemala +502</option>
+            <option value="224">🇬🇳 Guinea +224</option>
+            <option value="245">🇬🇼 Guinea-Bissau +245</option>
+            <option value="592">🇬🇾 Guyana +592</option>
+            <option value="509">🇭🇹 Haiti +509</option>
+            <option value="504">🇭🇳 Honduras +504</option>
+            <option value="852">🇭🇰 Hong Kong +852</option>
+            <option value="36">🇭🇺 Hungary +36</option>
+            <option value="354">🇮🇸 Iceland +354</option>
+            <option value="91">🇮🇳 India +91</option>
+            <option value="62">🇮🇩 Indonesia +62</option>
+            <option value="98">🇮🇷 Iran +98</option>
+            <option value="964">🇮🇶 Iraq +964</option>
+            <option value="353">🇮🇪 Ireland +353</option>
+            <option value="972">🇮🇱 Israel +972</option>
+            <option value="39">🇮🇹 Italy +39</option>
+            <option value="225">🇨🇮 Ivory Coast +225</option>
+            <option value="81">🇯🇵 Japan +81</option>
+            <option value="962">🇯🇴 Jordan +962</option>
+            <option value="7">🇰🇿 Kazakhstan +7</option>
+            <option value="254">🇰🇪 Kenya +254</option>
+            <option value="383">🇽🇰 Kosovo +383</option>
+            <option value="965">🇰🇼 Kuwait +965</option>
+            <option value="996">🇰🇬 Kyrgyzstan +996</option>
+            <option value="856">🇱🇦 Laos +856</option>
+            <option value="371">🇱🇻 Latvia +371</option>
+            <option value="961">🇱🇧 Lebanon +961</option>
+            <option value="266">🇱🇸 Lesotho +266</option>
+            <option value="231">🇱🇷 Liberia +231</option>
+            <option value="218">🇱🇾 Libya +218</option>
+            <option value="423">🇱🇮 Liechtenstein +423</option>
+            <option value="370">🇱🇹 Lithuania +370</option>
+            <option value="352">🇱🇺 Luxembourg +352</option>
+            <option value="853">🇲🇴 Macau +853</option>
+            <option value="389">🇲🇰 North Macedonia +389</option>
+            <option value="261">🇲🇬 Madagascar +261</option>
+            <option value="265">🇲🇼 Malawi +265</option>
+            <option value="60">🇲🇾 Malaysia +60</option>
+            <option value="960">🇲🇻 Maldives +960</option>
+            <option value="223">🇲🇱 Mali +223</option>
+            <option value="356">🇲🇹 Malta +356</option>
+            <option value="222">🇲🇷 Mauritania +222</option>
+            <option value="230">🇲🇺 Mauritius +230</option>
+            <option value="52">🇲🇽 Mexico +52</option>
+            <option value="373">🇲🇩 Moldova +373</option>
+            <option value="377">🇲🇨 Monaco +377</option>
+            <option value="976">🇲🇳 Mongolia +976</option>
+            <option value="382">🇲🇪 Montenegro +382</option>
+            <option value="212">🇲🇦 Morocco +212</option>
+            <option value="258">🇲🇿 Mozambique +258</option>
+            <option value="95">🇲🇲 Myanmar +95</option>
+            <option value="264">🇳🇦 Namibia +264</option>
+            <option value="977">🇳🇵 Nepal +977</option>
+            <option value="31">🇳🇱 Netherlands +31</option>
+            <option value="64">🇳🇿 New Zealand +64</option>
+            <option value="505">🇳🇮 Nicaragua +505</option>
+            <option value="227">🇳🇪 Niger +227</option>
+            <option value="234">🇳🇬 Nigeria +234</option>
+            <option value="47">🇳🇴 Norway +47</option>
+            <option value="968">🇴🇲 Oman +968</option>
+            <option value="92">🇵🇰 Pakistan +92</option>
+            <option value="680">🇵🇼 Palau +680</option>
+            <option value="970">🇵🇸 Palestine +970</option>
+            <option value="507">🇵🇦 Panama +507</option>
+            <option value="675">🇵🇬 Papua New Guinea +675</option>
+            <option value="595">🇵🇾 Paraguay +595</option>
+            <option value="51">🇵🇪 Peru +51</option>
+            <option value="63">🇵🇭 Philippines +63</option>
+            <option value="48">🇵🇱 Poland +48</option>
+            <option value="351">🇵🇹 Portugal +351</option>
+            <option value="974">🇶🇦 Qatar +974</option>
+            <option value="40">🇷🇴 Romania +40</option>
+            <option value="7">🇷🇺 Russia +7</option>
+            <option value="250">🇷🇼 Rwanda +250</option>
+            <option value="685">🇼🇸 Samoa +685</option>
+            <option value="378">🇸🇲 San Marino +378</option>
+            <option value="239">🇸🇹 São Tomé +239</option>
+            <option value="966">🇸🇦 Saudi Arabia +966</option>
+            <option value="221">🇸🇳 Senegal +221</option>
+            <option value="381">🇷🇸 Serbia +381</option>
+            <option value="248">🇸🇨 Seychelles +248</option>
+            <option value="232">🇸🇱 Sierra Leone +232</option>
+            <option value="65" selected>🇸🇬 Singapore +65</option>
+            <option value="421">🇸🇰 Slovakia +421</option>
+            <option value="386">🇸🇮 Slovenia +386</option>
+            <option value="677">🇸🇧 Solomon Islands +677</option>
+            <option value="252">🇸🇴 Somalia +252</option>
+            <option value="27">🇿🇦 South Africa +27</option>
+            <option value="82">🇰🇷 South Korea +82</option>
+            <option value="34">🇪🇸 Spain +34</option>
+            <option value="94">🇱🇰 Sri Lanka +94</option>
+            <option value="249">🇸🇩 Sudan +249</option>
+            <option value="597">🇸🇷 Suriname +597</option>
+            <option value="268">🇸🇿 Eswatini +268</option>
+            <option value="46">🇸🇪 Sweden +46</option>
+            <option value="41">🇨🇭 Switzerland +41</option>
+            <option value="963">🇸🇾 Syria +963</option>
+            <option value="886">🇹🇼 Taiwan +886</option>
+            <option value="992">🇹🇯 Tajikistan +992</option>
+            <option value="255">🇹🇿 Tanzania +255</option>
+            <option value="66">🇹🇭 Thailand +66</option>
+            <option value="670">🇹🇱 Timor-Leste +670</option>
+            <option value="228">🇹🇬 Togo +228</option>
+            <option value="676">🇹🇴 Tonga +676</option>
+            <option value="216">🇹🇳 Tunisia +216</option>
+            <option value="90">🇹🇷 Turkey +90</option>
+            <option value="993">🇹🇲 Turkmenistan +993</option>
+            <option value="256">🇺🇬 Uganda +256</option>
+            <option value="380">🇺🇦 Ukraine +380</option>
+            <option value="971">🇦🇪 UAE +971</option>
+            <option value="44">🇬🇧 UK +44</option>
+            <option value="1">🇺🇸 US +1</option>
+            <option value="598">🇺🇾 Uruguay +598</option>
+            <option value="998">🇺🇿 Uzbekistan +998</option>
+            <option value="678">🇻🇺 Vanuatu +678</option>
+            <option value="379">🇻🇦 Vatican +379</option>
+            <option value="58">🇻🇪 Venezuela +58</option>
+            <option value="84">🇻🇳 Vietnam +84</option>
+            <option value="967">🇾🇪 Yemen +967</option>
+            <option value="260">🇿🇲 Zambia +260</option>
+            <option value="263">🇿🇼 Zimbabwe +263</option>
+          </select>
+          <span class="phone-caret">▼</span>
+        </div>
+        <input type="tel" id="pl-phone" placeholder="8123 4567" data-i18n="auth.phone_placeholder" autocomplete="tel" onkeydown="if(event.key==='Enter')sendPhoneCode()">
+      </div>
+      <button class="auth-email-cta" onclick="sendPhoneCode()" id="pl-phone-btn" data-i18n="auth.send_code_btn">Send Code →</button>
+      <div class="auth-error" id="auth-error-phone"></div>
+    </div>
+
+    <!-- Step 3: Code verification -->
+    <div id="auth-code-step" class="auth-form">
+      <button class="back-link" onclick="showAuthOptions()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+        <span id="code-back-label" data-i18n="auth.change_email">Change email</span>
+      </button>
+      <div class="auth-code-info">
+        <svg id="code-step-icon" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="2" y="4" width="20" height="16" rx="2"/>
+          <path d="M22 7l-10 7L2 7"/>
+        </svg>
+        <div class="auth-code-msg" data-i18n="auth.sent_code">We sent a code to</div>
+        <div class="auth-code-email" id="code-email-display">j***@example.com</div>
+      </div>
+      <div class="auth-code-input-row">
+        <input type="text" id="pl-code" placeholder="Enter 6-digit code" data-i18n="auth.code_placeholder" maxlength="6" inputmode="numeric" autocomplete="one-time-code" onkeydown="if(event.key==='Enter')verifyCode()">
+      </div>
+      <button class="btn btn-primary" onclick="verifyCode()" id="pl-code-btn" data-i18n="auth.verify_btn">Verify Code →</button>
+      <div class="auth-error" id="auth-error-code"></div>
+      <div class="auth-code-resend" data-i18n="auth.resend_label">
+        Didn't get it? <a onclick="resendCode()" data-i18n="auth.send_new_code">Send new code</a>
+      </div>
+    </div>
+  <!-- Step 4: Recovery -->
+  <div id="auth-recovery-step" class="auth-form" style="display:none;">
+    <button class="back-link" onclick="showAuthOptions()">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+      <span data-i18n="auth.back">Back</span>
+    </button>
+    <div class="auth-code-info">
+      <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+      </svg>
+      <div class="auth-code-msg">Recover Your Account</div>
+      <div style="font-size:0.8rem;color:var(--text-muted);margin-top:0.25rem;">Enter your email to recover your API keys and subscription.</div>
+    </div>
+    <input type="email" class="auth-email-field" id="recovery-email" placeholder="you@example.com" autocomplete="email" style="margin-bottom:0.5rem;" onkeydown="if(event.key==='Enter')recoverAccount(document.getElementById('recovery-email')?.value)">
+    <button class="btn-primary auth-submit" id="recovery-btn" onclick="recoverAccount(document.getElementById('recovery-email')?.value)" style="width:100%;">Recover Account →</button>
+    <div class="auth-error" id="auth-error-recovery" style="margin-top:0.5rem;"></div>
+  </div>
+  </div>
+</div>
+
+<style>
+  /* ── Auth Modal: Passwordless ────────────────────── */
+  .auth-email-field {
+    width: 100%;
+    padding: 0.7rem 1rem 0.7rem 2.5rem;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border-primary);
+    background: var(--bg-glass);
+    color: var(--text-primary);
+    font-size: 0.88rem;
+    font-family: var(--font-sans);
+    transition: all var(--transition-fast);
+    outline: none;
+    box-sizing: border-box;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23888888' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='2' y='4' width='20' height='16' rx='2'/%3E%3Cpath d='M22 7l-10 7L2 7'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: 0.75rem center;
+    background-size: 16px;
+  }
+  .auth-email-field:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 2px var(--accent-glow);
+  }
+  .auth-email-field::placeholder {
+    color: var(--text-faint);
+  }
+  .auth-email-cta {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    padding: 0.7rem 1rem;
+    border-radius: var(--radius-sm);
+    border: none;
+    background: var(--accent-gradient);
+    color: #fff;
+    font-size: 0.88rem;
+    font-weight: 700;
+    font-family: var(--font-sans);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    gap: 0.4rem;
+  }
+  .auth-email-cta:hover {
+    opacity: 0.9;
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-sm);
+  }
+  .auth-email-cta:active {
+    transform: translateY(0);
+  }
+  .auth-email-cta:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+  }
+  .auth-phone-input-row {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    margin: 1rem 0;
+  }
+  .phone-country-select {
+    position: relative;
+    width: 100%;
+  }
+  .phone-country-select select {
+    appearance: none;
+    -webkit-appearance: none;
+    width: 100%;
+    padding: 0.7rem 2rem 0.7rem 0.75rem;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border-primary);
+    background: var(--bg-glass);
+    color: var(--text-primary);
+    font-size: 0.88rem;
+    font-family: var(--font-sans);
+    cursor: pointer;
+    outline: none;
+    min-width: 175px;
+    transition: all var(--transition-fast);
+  }
+  .phone-country-select select:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 2px var(--accent-glow);
+  }
+  .phone-country-select .phone-caret {
+    position: absolute;
+    right: 0.5rem;
+    top: 50%;
+    transform: translateY(-50%);
+    pointer-events: none;
+    color: var(--text-muted);
+    font-size: 0.6rem;
+  }
+  .auth-phone-input-row input {
+    width: 100%;
+    padding: 0.7rem 1rem;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border-primary);
+    background: var(--bg-glass);
+    color: var(--text-primary);
+    font-size: 0.95rem;
+    font-family: var(--font-sans);
+    text-align: center;
+    outline: none;
+    box-sizing: border-box;
+    transition: all var(--transition-fast);
+  }
+  .auth-phone-input-row input:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 2px var(--accent-glow);
+  }
+  .auth-phone-input-row input::placeholder {
+    color: var(--text-faint);
+  }
+  .auth-code-info {
+    text-align: center;
+    padding: 1rem 0 0.75rem;
+  }
+  .auth-code-info svg {
+    margin-bottom: 0.75rem;
+  }
+  .auth-code-msg {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+  }
+  .auth-code-email {
+    font-weight: 700;
+    font-size: 1.05rem;
+    color: var(--text-primary);
+    margin-top: 0.2rem;
+  }
+  .auth-code-input-row {
+    margin: 1rem 0;
+  }
+  .auth-code-input-row input {
+    text-align: center;
+    font-size: 1.5rem;
+    font-family: var(--font-mono);
+    letter-spacing: 0.5em;
+    padding: 0.75rem 0.5rem;
+  }
+  .auth-code-resend {
+    text-align: center;
+    margin-top: 0.75rem;
+    font-size: 0.85rem;
+    color: var(--text-muted);
+  }
+  .auth-code-resend a {
+    color: var(--accent);
+    cursor: pointer;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
+  .auth-code-resend a:hover {
+    color: var(--accent-hover);
+  }
+</style>
+
+<script>
+// ── Theme ──────────────────────────────────────────────
+(function initTheme() {
+  const saved = localStorage.getItem('mb-theme');
+  const html = document.documentElement;
+  if (saved) html.setAttribute('data-theme', saved);
+  else {
+    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    html.setAttribute('data-theme', prefersDark ? 'dark' : 'light');
+  }
+  updateThemeIcons();
+})();
+function toggleTheme() {
+  const html = document.documentElement;
+  const next = html.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+  html.setAttribute('data-theme', next);
+  localStorage.setItem('mb-theme', next);
+  updateThemeIcons();
+}
+function updateThemeIcons() {
+  const theme = document.documentElement.getAttribute('data-theme');
+  document.querySelectorAll('.theme-toggle-btn').forEach(btn => {
+    const sun = btn.querySelector('.theme-sun');
+    const moon = btn.querySelector('.theme-moon');
+    if (sun) sun.style.display = theme === 'dark' ? 'block' : 'none';
+    if (moon) moon.style.display = theme === 'dark' ? 'none' : 'block';
+  });
+}
+
+// ── Mobile Nav ─────────────────────────────────────────
+function toggleMobileNav() {
+  document.getElementById('nav-backdrop').classList.toggle('open');
+  document.getElementById('nav-mobile').classList.toggle('open');
+  document.body.style.overflow = document.getElementById('nav-mobile').classList.contains('open') ? 'hidden' : '';
+}
+function closeMobileNav() {
+  document.getElementById('nav-mobile').classList.remove('open');
+  document.getElementById('nav-backdrop').classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+// ── Lang toggle ────────────────────────────────────────
+function toggleLang() {
+  const dd = document.getElementById('lang-dropdown');
+  dd.classList.toggle('open');
+}
+document.addEventListener('click', function(e) {
+  const dd = document.getElementById('lang-dropdown');
+  if (dd && dd.classList.contains('open') && !e.target.closest('.lang-toggle') && !e.target.closest('.lang-dropdown')) {
+    dd.classList.remove('open');
+  }
+});
+function setLang(code) {
+  localStorage.setItem('mb-lang', code);
+  initLanguage();
+}
+
+// ── Shared Auth ──────────────────────────────────────────────
+let currentApiKey = '';
+let pendingEmail = '';
+let pendingPhone = '';
+let pendingMethod = 'email'; // 'email' or 'phone'
+
+function openAuth(tab) {
+    const overlay = document.getElementById('auth-overlay');
+    if (overlay) {
+        overlay.style.display = 'flex';
+selectAuthTab(tab === 'signup' ? 'signup' : 'signin');
+        showAuthOptions();
+    } else {
+        window.location.href = '/pricing';
+    }
+}
+
+        function socialLogin(connection) {
+            window.location.href = '/auth/auth0/login?connection=' + connection + (authMode === 'signup' ? '&screen_hint=signup' : '');
+        }
+
+function closeAuth() {
+    const overlay = document.getElementById('auth-overlay');
+    if (overlay) overlay.style.display = '';
+    document.body.style.overflow = '';
+    pendingEmail = '';
+}
+
+let authMode = 'signin'; // 'signin' or 'signup'
+
+function selectAuthTab(mode) {
+    authMode = mode;
+    const signinTab = document.getElementById('auth-tab-signin');
+    const signupTab = document.getElementById('auth-tab-signup');
+    if (!signinTab || !signupTab) return;
+    const subtitle = document.getElementById('auth-subtitle');
+
+    if (mode === 'signin') {
+        signinTab.style.background = 'var(--accent)';
+        signinTab.style.color = '#fff';
+        signupTab.style.background = 'transparent';
+        signupTab.style.color = 'var(--text-muted)';
+        subtitle.textContent = 'Sign in to access your account.';
+    } else {
+        signupTab.style.background = 'var(--accent)';
+        signupTab.style.color = '#fff';
+        signinTab.style.background = 'transparent';
+        signinTab.style.color = 'var(--text-muted)';
+        subtitle.textContent = 'Create an account to get started.';
+    }
+}
+
+function showAuthOptions() {
+    document.querySelectorAll('.auth-form').forEach(el => el.classList.remove('active'));
+    const opts = document.getElementById('auth-options');
+    opts.style.display = '';
+    // Reset code step
+    document.getElementById('pl-code').value = '';
+    document.getElementById('pl-email').value = '';
+    document.getElementById('pl-phone').value = '';
+document.getElementById('auth-code-step').classList.remove('active');
+            document.getElementById('auth-phone-step').classList.remove('active');
+            document.getElementById('auth-recovery-step').style.display = 'none';
+    // Clear all errors
+    document.querySelectorAll('.auth-error').forEach(el => el.textContent = '');
+    // Re-enable buttons
+    document.getElementById('pl-email-btn').disabled = false;
+    document.getElementById('pl-code-btn').disabled = false;
+    document.getElementById('pl-phone-btn').disabled = false;
+    pendingMethod = 'email';
+    pendingPhone = '';
+}
+
+function phoneLogin() {
+    pendingMethod = 'phone';
+    document.getElementById('auth-options').style.display = 'none';
+    document.querySelectorAll('.auth-form').forEach(el => el.classList.remove('active'));
+    document.getElementById('auth-phone-step').classList.add('active');
+    document.getElementById('pl-phone').value = '';
+    document.getElementById('auth-error-phone').textContent = '';
+    document.getElementById('pl-phone-btn').disabled = false;
+    setTimeout(() => document.getElementById('pl-phone').focus(), 150);
+}
+
+function updatePhoneFlag() {
+    // Placeholder — the select handles display natively with emoji flags
+}
+
+async function sendPhoneCode() {
+    const countryCode = document.getElementById('pl-country-code').value;
+    const localNum = document.getElementById('pl-phone').value.trim().replace(/[^0-9]/g, '');
+    const errorEl = document.getElementById('auth-error-phone');
+    const btn = document.getElementById('pl-phone-btn');
+    if (!localNum) {
+        errorEl.innerHTML = '⚠️ Enter your phone number';
+        return;
+    }
+            const fullPhone = '+' + countryCode + localNum;
+            const originalBtnHTML = btn.innerHTML;
+            btn.innerHTML = '<span class="spinner-sm"></span> Sending...';
+            btn.disabled = true;
+            try {
+                const res = await fetch('/auth/auth0/passwordless/start-sms', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({phone: fullPhone}),
+        });
+        if (!res.ok) {
+            let errMsg = 'Failed to send code';
+            try {
+                const err = await res.json();
+                errMsg = err.detail || err.message || errMsg;
+            } catch {
+                try {
+                    const text = await res.text();
+                    if (text) errMsg = text.slice(0, 200);
+                } catch {}
+            }
+                    errorEl.innerHTML = '❌ ' + errMsg;
+                    btn.innerHTML = originalBtnHTML;
+                    btn.disabled = false;
+                    return;
+                }
+                const data = await res.json();
+                pendingPhone = fullPhone;
+        // Show code verification step with phone icon
+        document.getElementById('code-back-label').textContent = 'Change phone';
+        document.getElementById('code-step-icon').innerHTML = '<path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>';
+        document.getElementById('code-email-display').textContent = data.phone || '*******' + fullPhone.slice(-4);
+        document.getElementById('auth-phone-step').classList.remove('active');
+        document.getElementById('auth-code-step').classList.add('active');
+        document.getElementById('pl-code').value = '';
+        document.getElementById('auth-error-code').textContent = '';
+        setTimeout(() => document.getElementById('pl-code').focus(), 150);
+        btn.disabled = false;
+    } catch (e) {
+        const isNetwork = e.message === 'Failed to fetch' || e.name === 'TypeError' || e.message === 'NetworkError';
+        errorEl.innerHTML = isNetwork
+            ? '❌ Could not reach server. Check your connection.'
+            : '❌ ' + e.message;
+        btn.disabled = false;
+    }
+}
+
+async function continueWithEmail() {
+    const email = document.getElementById('pl-email').value.trim();
+    const errorEl = document.getElementById('auth-error-main');
+    const btn = document.getElementById('pl-email-btn');
+    if (!email || !email.includes('@')) {
+        errorEl.innerHTML = '⚠️ Enter a valid email address';
+        return;
+    }
+    const originalBtnHTML = btn.innerHTML;
+    btn.innerHTML = '<span class="spinner-sm"></span> Sending...';
+    btn.disabled = true;
+    try {
+        const res = await fetch('/auth/auth0/passwordless/start', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({email}),
+        });
+        if (!res.ok) {
+            const err = await res.json().catch(() => ({}));
+            errorEl.innerHTML = '❌ ' + (err.detail || 'Failed to send code');
+            btn.disabled = false;
+            return;
+        }
+        const data = await res.json();
+        pendingEmail = email;
+        pendingMethod = 'email';
+        document.getElementById('code-back-label').textContent = 'Change email';
+        document.getElementById('code-step-icon').innerHTML = '<rect x="2" y="4" width="20" height="16" rx="2"/><path d="M22 7l-10 7L2 7"/>';
+        document.getElementById('code-email-display').textContent = data.email || email[0] + '***' + email.substring(email.indexOf('@'));
+        // Show code verification step
+        document.getElementById('auth-options').style.display = 'none';
+        document.getElementById('auth-code-step').classList.add('active');
+        document.getElementById('pl-code').value = '';
+        document.getElementById('auth-error-code').textContent = '';
+        setTimeout(() => document.getElementById('pl-code').focus(), 150);
+        btn.disabled = false;
+    } catch (e) {
+        const isNetwork = e.message === 'Failed to fetch' || e.name === 'TypeError' || e.message === 'NetworkError';
+        errorEl.innerHTML = isNetwork
+            ? '❌ Could not reach server. Check your connection.'
+            : '❌ ' + e.message;
+        btn.innerHTML = originalBtnHTML;
+        btn.disabled = false;
+    }
+}
+
+async function verifyCode() {
+    const code = document.getElementById('pl-code').value.trim();
+    const errorEl = document.getElementById('auth-error-code');
+    const btn = document.getElementById('pl-code-btn');
+    if (!code || code.length < 4) {
+        errorEl.innerHTML = '⚠️ Enter your 6-digit verification code';
+        return;
+    }
+    const originalBtnHTML = btn.innerHTML;
+    btn.innerHTML = '<span class="spinner-sm"></span> Verifying...';
+    btn.disabled = true;
+    try {
+        const body = pendingMethod === 'phone'
+            ? {phone: pendingPhone, code}
+            : {email: pendingEmail, code};
+        const res = await fetch('/auth/auth0/passwordless/verify', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(body),
+        });
+        if (!res.ok) {
+            const err = await res.json().catch(() => ({}));
+                    errorEl.innerHTML = '❌ ' + (err.detail || 'Verification failed');
+                    btn.innerHTML = originalBtnHTML;
+                    btn.disabled = false;
+            return;
+        }
+        const data = await res.json();
+        localStorage.setItem('mb_jwt', data.token);
+        if (data.api_key) {
+            localStorage.setItem('mb_api_key', data.api_key);
+            currentApiKey = data.api_key;
+        }
+        updateAuthUI();
+        if (typeof window.postAuthCallback === 'function') {
+            window.postAuthCallback();
+            window.postAuthCallback = null;
+        }
+        const _params = new URLSearchParams(window.location.search);
+        if (_params.has('pending_org_id')) {
+            fetch('/auth/link-subscription', {
+                method: 'POST',
+                headers: { 'Authorization': 'Bearer ' + data.token, 'Content-Type': 'application/json' },
+                body: JSON.stringify({ pending_org_id: _params.get('pending_org_id') })
+            }).catch(() => {});
+        }
+        closeAuth();
+        window.location.reload();
+    } catch (e) {
+        const isNetwork = e.message === 'Failed to fetch' || e.name === 'TypeError' || e.message === 'NetworkError';
+        errorEl.innerHTML = isNetwork
+            ? '❌ Could not reach server. Check your connection.'
+            : '❌ ' + e.message;
+        btn.innerHTML = originalBtnHTML;
+        btn.disabled = false;
+    }
+}
+
+async function resendCode() {
+    const errorEl = document.getElementById('auth-error-code');
+    const btn = document.getElementById('pl-code-btn');
+    if (!pendingEmail && !pendingPhone) return;
+    errorEl.innerHTML = '<span class="auth-spinner"></span>';
+    btn.disabled = true;
+    try {
+        const url = pendingMethod === 'phone'
+            ? '/auth/auth0/passwordless/start-sms'
+            : '/auth/auth0/passwordless/start';
+        const body = pendingMethod === 'phone'
+            ? JSON.stringify({phone: pendingPhone})
+            : JSON.stringify({email: pendingEmail});
+        const res = await fetch(url, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body,
+        });
+        if (!res.ok) {
+            const err = await res.json().catch(() => ({}));
+            errorEl.innerHTML = '❌ ' + (err.detail || 'Failed to resend code');
+            btn.disabled = false;
+            return;
+        }
+        errorEl.innerHTML = '✅ New code sent!';
+        document.getElementById('pl-code').value = '';
+        setTimeout(() => document.getElementById('pl-code').focus(), 150);
+        btn.disabled = false;
+    } catch (e) {
+        const isNetwork = e.message === 'Failed to fetch' || e.name === 'TypeError' || e.message === 'NetworkError';
+        errorEl.innerHTML = isNetwork
+            ? '❌ Could not reach server. Check your connection.'
+            : '❌ ' + e.message;
+        btn.disabled = false;
+    }
+}
+
+function escapeHtml(str) {
+    const div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+}
+
+// ── Init ──────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', async () => {
+    await initAuth();
+    initLanguage();
+});
+</script>
+</body>
+</html>

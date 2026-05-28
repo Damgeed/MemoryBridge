@@ -514,7 +514,7 @@ session_id detected → start 2s polling (max 30 attempts = 60s)
 | Scenario | What User Sees | Recovery Action |
 |----------|---------------|-----------------|
 | Network down | "📡 No internet connection. Your dashboard will load once you're back online." | Auto-retry when network returns |
-| API 500 | " We're having trouble loading your dashboard. It's not you — it's us." | "Retry" button + "Contact support" link |
+| API 500 | "⚠️ We're having trouble loading your dashboard. It's not you — it's us." | "Retry" button + "Contact support" link |
 | API 401 (expired JWT) | Auth gate card: "🔑 Your session has expired. Sign in again." | Auto-shows auth modal |
 | Webhook not fired yet | "✅ Payment confirmed! Activating your plan... (usually takes a few seconds)" | Progress bar + auto-poll |
 | Rate limited | "⏳ You're refreshing too fast. Give it a moment." | Cooldown countdown |

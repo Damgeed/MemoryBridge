@@ -72,7 +72,7 @@ def check_backward_compatible(sql_file_path: Union[str, Path]) -> list[str]:
     warnings: list[str] = []
     for pattern, message in _DESTRUCTIVE_PATTERNS:
         if re.search(pattern, content, re.IGNORECASE):
-            warnings.append(f"  {message}")
+            warnings.append(f"⚠️  {message}")
     return warnings
 
 

@@ -124,7 +124,7 @@ class APIKeyMiddleware(BaseHTTPMiddleware):
                     content={"detail": "Authentication required. No API keys configured on this server. "
                              "Set MEMORY_BRIDGE_API_KEY environment variable or create an API key."},
                 )
-            logger.warning("  OPEN MODE: MEMORY_BRIDGE_ALLOW_OPEN=true. No auth configured. Do NOT use in production.")
+            logger.warning("⚠️  OPEN MODE: MEMORY_BRIDGE_ALLOW_OPEN=true. No auth configured. Do NOT use in production.")
             return await call_next(request)
 
         auth_header = request.headers.get("Authorization")
