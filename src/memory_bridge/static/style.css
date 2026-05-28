@@ -552,6 +552,11 @@ a:hover { color: var(--accent-light); text-decoration: none; }
   text-decoration: none;
 }
 .auth-form .switch-text a:hover { text-decoration: underline; }
+/* Standalone auth-error: catches errors outside .auth-form (e.g. auth-error-main) */
+.auth-error {
+  text-align: center;
+  font-weight: 500;
+}
 .auth-form .auth-error {
   font-size: 0.82rem;
   color: var(--red);
@@ -561,6 +566,11 @@ a:hover { color: var(--accent-light); text-decoration: none; }
   min-height: 1.2rem;
 }
 
+/* Standalone auth-notice: catches notices outside .auth-form */
+.auth-notice {
+  text-align: center;
+  font-weight: 600;
+}
 .auth-form .auth-notice {
   display: block;
   width: 100%;
@@ -1050,7 +1060,7 @@ label {
 select.input { cursor: pointer; }
 
 /* ── Status Messages ───────────────────────────────────── */
-.status { padding: 0.6rem 1rem; border-radius: var(--radius-sm); margin-top: 0.5rem; font-size: 0.88rem; line-height: 1.5; }
+.status { padding: 0.6rem 1rem; border-radius: var(--radius-sm); margin-top: 0.5rem; font-size: 0.88rem; line-height: 1.5; text-align: center; }
 .status.success { background: var(--green-bg); color: var(--green); border: 1px solid color-mix(in srgb, var(--green) 30%, transparent); }
 .status.error   { background: rgba(239,68,68,0.1); color: var(--red); border: 1px solid rgba(239,68,68,0.2); }
 .status.info    { background: var(--accent-glow); color: var(--accent); border: 1px solid color-mix(in srgb, var(--accent) 20%, transparent); }
