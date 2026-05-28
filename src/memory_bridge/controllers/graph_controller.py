@@ -8,13 +8,57 @@ import logging
 import os
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, JSONResponse
 
 from ..dependencies import get_storage
 from ..repository import MemoryRepository
 
 logger = logging.getLogger(__name__)
+
+# Re-use auth helpers from auth.py
+import hashlib
+import jwt as pyjwt
+from ..config import get_settings
+
 router = APIRouter(prefix="/graph", tags=["graph"])
+
+
+async def _resolve_project_id(request: Request) -> str | None:
+    """Extract project_id from Authorization header (JWT or API key), or return None."""
+    auth_header = request.headers.get("Authorization")
+    if not auth_header or not auth_header.startswith("Bearer "):
+        return None
+    token = auth_header.removeprefix("Bearer ")
+
+    # Try env var key
+    import os
+    env_key = os.environ.get("MEMORY_BRIDGE_API_KEY")
+    if env_key and token == env_key:
+        return None  # env key has no project_id — show all
+
+    # Try DB API key
+    try:
+        storage = await get_storage()
+        key_info = await storage.authenticate_key(token)
+        if key_info:
+            return key_info.get("project_id")
+    except Exception:
+        pass
+
+    # Try JWT
+    settings = get_settings()
+    if settings.jwt_secret:
+        try:
+            payload = pyjwt.decode(
+                token,
+                settings.jwt_secret,
+                algorithms=[settings.jwt_algorithm],
+            )
+            return payload.get("project_id") or payload.get("organization_id")
+        except Exception:
+            pass
+
+    return None
 
 
 @router.get("/data")
@@ -44,12 +88,8 @@ async def get_memory_graph(
     edges = []
     seen_ids = set()
 
-    # --- Auth check: enforce user-scoped filtering ---
-    auth = getattr(request.state, "auth", None)
-    if auth is None:
-        return {"nodes": [], "edges": [], "detail": "Authentication required. Sign in to view your memory graph."}
-
-    effective_project = project or auth.get("project_id")
+    # --- Auth check: resolve project from request headers ---
+    effective_project = project or await _resolve_project_id(request)
 
     # Fetch memories
     memories = await storage.query_memories(
