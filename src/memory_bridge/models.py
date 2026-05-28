@@ -147,6 +147,25 @@ class ScoredMemoryResult(BaseModel):
     importance_score: float
 
 
+class AgentPermission(BaseModel):
+    """Permission rule for a specific agent."""
+    agent_id: str
+    project: Optional[str] = None
+    can_read: bool = True    # Can read memories stored by other agents in this project
+    can_write: bool = True   # Can store new memories
+    can_delete: bool = False # Can delete memories
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+
+class AgentPermissionUpdate(BaseModel):
+    """Request to update agent permissions."""
+    agent_id: Optional[str] = None
+    can_read: Optional[bool] = None
+    can_write: Optional[bool] = None
+    can_delete: Optional[bool] = None
+
+
 class ScoreMemoriesResponse(BaseModel):
     """Response body for POST /memories/score."""
     results: list[ScoredMemoryResult]

@@ -147,6 +147,12 @@ class MigrationRunner:
                 logger.warning("Migration %s: %s", name, warning)
 
             try:
+                # Acquire advisory lock before applying migration
+                if self.backend == "sqlite":
+                    await conn_or_db.execute("BEGIN IMMEDIATE")
+                elif self.backend == "postgresql":
+                    await conn_or_db.execute("SELECT pg_advisory_xact_lock(123456789)")
+
                 await self._apply_sql_file(conn_or_db, filepath)
                 await self._record_version(conn_or_db, version)
                 applied_names.append(name)
@@ -167,6 +173,7 @@ class MigrationRunner:
     async def _ensure_schema_version(self, conn_or_db: Any) -> None:
         """Create the ``schema_version`` table if it does not exist."""
         if self.backend == "sqlite":
+            await conn_or_db.execute("BEGIN IMMEDIATE")
             await conn_or_db.execute(
                 "CREATE TABLE IF NOT EXISTS schema_version ("
                 "  version INTEGER PRIMARY KEY,"
@@ -175,6 +182,7 @@ class MigrationRunner:
             )
             await conn_or_db.commit()
         else:
+            await conn_or_db.execute("SELECT pg_advisory_xact_lock(123456789)")
             await conn_or_db.execute(
                 "CREATE TABLE IF NOT EXISTS schema_version ("
                 "  version INTEGER PRIMARY KEY,"

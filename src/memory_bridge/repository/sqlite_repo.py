@@ -10,7 +10,7 @@ from typing import Any, Optional
 from pathlib import Path
 from uuid import uuid4
 
-from ..models import MemoryEntry, Session, Subscription
+from ..models import MemoryEntry, Session, Subscription, AgentPermission
 from ..config import get_settings
 
 logger = logging.getLogger(__name__)
@@ -123,6 +123,42 @@ _SCHEMA_MIGRATIONS: dict[int, str] = {
         "embedding TEXT NOT NULL, "
         "updated_at TEXT NOT NULL"
         ")"
+    ),
+    15: (
+        "CREATE TABLE IF NOT EXISTS agent_permissions ("
+        "agent_id TEXT NOT NULL, "
+        "project TEXT, "
+        "can_read INTEGER NOT NULL DEFAULT 1, "
+        "can_write INTEGER NOT NULL DEFAULT 1, "
+        "can_delete INTEGER NOT NULL DEFAULT 0, "
+        "created_at TEXT NOT NULL, "
+        "updated_at TEXT NOT NULL, "
+        "PRIMARY KEY (agent_id, project)"
+        ")"
+    ),
+    16: (
+        "CREATE TABLE IF NOT EXISTS webhook_subscriptions ("
+        "id TEXT PRIMARY KEY, "
+        "url TEXT NOT NULL, "
+        "event_types TEXT NOT NULL, "
+        "secret TEXT NOT NULL, "
+        "project TEXT, "
+        "is_active INTEGER NOT NULL DEFAULT 1, "
+        "created_at TEXT NOT NULL"
+        "); "
+        "CREATE TABLE IF NOT EXISTS webhook_deliveries ("
+        "id TEXT PRIMARY KEY, "
+        "subscription_id TEXT NOT NULL REFERENCES webhook_subscriptions(id) ON DELETE CASCADE, "
+        "event_type TEXT NOT NULL, "
+        "url TEXT NOT NULL, "
+        "status TEXT NOT NULL, "
+        "status_code INTEGER, "
+        "error TEXT, "
+        "attempts INTEGER NOT NULL DEFAULT 0, "
+        "timestamp TEXT NOT NULL"
+        "); "
+        "CREATE INDEX IF NOT EXISTS idx_webhook_deliveries_subscription "
+        "ON webhook_deliveries(subscription_id, timestamp DESC)"
     ),
 }
 # ──────────────────────────────────────────────────────────────────────────────
@@ -1185,6 +1221,240 @@ class SQLiteMemoryRepository(MemoryRepository):
                 (user_id, provider, provider_user_id, datetime.now(timezone.utc).isoformat()),
             )
             await db.commit()
+
+    # ── Agent ACL (Access Control List) ────────────────────────────────────
+
+    async def set_agent_permission(self, perm: AgentPermission) -> None:
+        """Set or update permission for an agent."""
+        async with aiosqlite.connect(self.db_path) as db:
+            await db.execute(
+                """INSERT OR REPLACE INTO agent_permissions
+                   (agent_id, project, can_read, can_write, can_delete, created_at, updated_at)
+                   VALUES (?, ?, ?, ?, ?, ?, ?)""",
+                (
+                    perm.agent_id,
+                    perm.project,
+                    int(perm.can_read),
+                    int(perm.can_write),
+                    int(perm.can_delete),
+                    perm.created_at.isoformat(),
+                    perm.updated_at.isoformat(),
+                ),
+            )
+            await db.commit()
+
+    async def get_agent_permission(
+        self, agent_id: str, project: Optional[str] = None
+    ) -> Optional[AgentPermission]:
+        """Get permission for an agent. Returns None if no rule set."""
+        async with aiosqlite.connect(self.db_path) as db:
+            db.row_factory = aiosqlite.Row
+            if project is not None:
+                cursor = await db.execute(
+                    "SELECT * FROM agent_permissions WHERE agent_id = ? AND project = ?",
+                    (agent_id, project),
+                )
+            else:
+                cursor = await db.execute(
+                    "SELECT * FROM agent_permissions WHERE agent_id = ? AND project IS NULL",
+                    (agent_id,),
+                )
+            row = await cursor.fetchone()
+            if row is None:
+                return None
+            return AgentPermission(
+                agent_id=row["agent_id"],
+                project=row["project"],
+                can_read=bool(row["can_read"]),
+                can_write=bool(row["can_write"]),
+                can_delete=bool(row["can_delete"]),
+                created_at=datetime.fromisoformat(row["created_at"]),
+                updated_at=datetime.fromisoformat(row["updated_at"]),
+            )
+
+    async def list_agent_permissions(
+        self, project: Optional[str] = None
+    ) -> list[AgentPermission]:
+        """List all agent permission rules, optionally filtered by project."""
+        async with aiosqlite.connect(self.db_path) as db:
+            db.row_factory = aiosqlite.Row
+            if project is not None:
+                cursor = await db.execute(
+                    "SELECT * FROM agent_permissions WHERE project = ? ORDER BY agent_id",
+                    (project,),
+                )
+            else:
+                cursor = await db.execute(
+                    "SELECT * FROM agent_permissions ORDER BY agent_id"
+                )
+            rows = await cursor.fetchall()
+            return [
+                AgentPermission(
+                    agent_id=row["agent_id"],
+                    project=row["project"],
+                    can_read=bool(row["can_read"]),
+                    can_write=bool(row["can_write"]),
+                    can_delete=bool(row["can_delete"]),
+                    created_at=datetime.fromisoformat(row["created_at"]),
+                    updated_at=datetime.fromisoformat(row["updated_at"]),
+                )
+                for row in rows
+            ]
+
+    async def delete_agent_permission(
+        self, agent_id: str, project: Optional[str] = None
+    ) -> bool:
+        """Delete permission rule for an agent. Returns True if deleted."""
+        async with aiosqlite.connect(self.db_path) as db:
+            if project is not None:
+                cursor = await db.execute(
+                    "DELETE FROM agent_permissions WHERE agent_id = ? AND project = ?",
+                    (agent_id, project),
+                )
+            else:
+                cursor = await db.execute(
+                    "DELETE FROM agent_permissions WHERE agent_id = ? AND project IS NULL",
+                    (agent_id,),
+                )
+            await db.commit()
+            return cursor.rowcount > 0
+
+    # ── Webhook Subscriptions ────────────────────────────────────────────
+
+    async def store_webhook_subscription(self, sub: dict) -> None:
+        """Store or update a webhook subscription."""
+        async with aiosqlite.connect(self.db_path) as db:
+            await db.execute(
+                """INSERT OR REPLACE INTO webhook_subscriptions
+                   (id, url, event_types, secret, project, is_active, created_at)
+                   VALUES (?, ?, ?, ?, ?, ?, ?)""",
+                (
+                    sub["id"],
+                    sub["url"],
+                    json.dumps(sub["event_types"]),
+                    sub["secret"],
+                    sub.get("project"),
+                    1 if sub.get("is_active", True) else 0,
+                    sub.get("created_at", datetime.now(timezone.utc).isoformat()),
+                ),
+            )
+            await db.commit()
+
+    async def get_webhook_subscription(self, sub_id: str) -> Optional[dict]:
+        """Get a webhook subscription by ID."""
+        async with aiosqlite.connect(self.db_path) as db:
+            db.row_factory = aiosqlite.Row
+            cursor = await db.execute(
+                "SELECT * FROM webhook_subscriptions WHERE id = ?", (sub_id,)
+            )
+            row = await cursor.fetchone()
+            if row is None:
+                return None
+            return {
+                "id": row["id"],
+                "url": row["url"],
+                "event_types": json.loads(row["event_types"]),
+                "secret": row["secret"],
+                "project": row["project"],
+                "is_active": bool(row["is_active"]),
+                "created_at": row["created_at"],
+            }
+
+    async def list_webhook_subscriptions(
+        self, project: Optional[str] = None
+    ) -> list[dict]:
+        """List webhook subscriptions, optionally filtered by project."""
+        async with aiosqlite.connect(self.db_path) as db:
+            db.row_factory = aiosqlite.Row
+            if project:
+                cursor = await db.execute(
+                    "SELECT * FROM webhook_subscriptions WHERE project = ? OR project IS NULL",
+                    (project,),
+                )
+            else:
+                cursor = await db.execute("SELECT * FROM webhook_subscriptions")
+            rows = await cursor.fetchall()
+            return [
+                {
+                    "id": row["id"],
+                    "url": row["url"],
+                    "event_types": json.loads(row["event_types"]),
+                    "secret": row["secret"],
+                    "project": row["project"],
+                    "is_active": bool(row["is_active"]),
+                    "created_at": row["created_at"],
+                }
+                for row in rows
+            ]
+
+    async def remove_webhook_subscription(self, sub_id: str) -> bool:
+        """Remove a webhook subscription by ID. Returns True if removed."""
+        async with aiosqlite.connect(self.db_path) as db:
+            cursor = await db.execute(
+                "DELETE FROM webhook_subscriptions WHERE id = ?", (sub_id,)
+            )
+            await db.commit()
+            return cursor.rowcount > 0
+
+    async def store_webhook_delivery(self, delivery: dict) -> None:
+        """Record a webhook delivery attempt."""
+        async with aiosqlite.connect(self.db_path) as db:
+            await db.execute(
+                """INSERT INTO webhook_deliveries
+                   (id, subscription_id, event_type, url, status, status_code, error, attempts, timestamp)
+                   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                (
+                    delivery.get("id", str(uuid4())),
+                    delivery["subscription_id"],
+                    delivery["event_type"],
+                    delivery["url"],
+                    delivery["status"],
+                    delivery.get("status_code"),
+                    delivery.get("error"),
+                    delivery.get("attempts", 0),
+                    delivery.get(
+                        "timestamp", datetime.now(timezone.utc).isoformat()
+                    ),
+                ),
+            )
+            await db.commit()
+
+    async def get_webhook_deliveries(
+        self, subscription_id: str, limit: int = 50, offset: int = 0
+    ) -> tuple[list[dict], int]:
+        """Get paginated delivery history for a webhook subscription."""
+        async with aiosqlite.connect(self.db_path) as db:
+            db.row_factory = aiosqlite.Row
+            # Get total count
+            count_cursor = await db.execute(
+                "SELECT COUNT(*) FROM webhook_deliveries WHERE subscription_id = ?",
+                (subscription_id,),
+            )
+            total_row = await count_cursor.fetchone()
+            total = total_row[0]
+
+            # Get paginated rows
+            cursor = await db.execute(
+                "SELECT * FROM webhook_deliveries WHERE subscription_id = ? "
+                "ORDER BY timestamp DESC LIMIT ? OFFSET ?",
+                (subscription_id, limit, offset),
+            )
+            rows = await cursor.fetchall()
+            deliveries = [
+                {
+                    "id": row["id"],
+                    "subscription_id": row["subscription_id"],
+                    "event_type": row["event_type"],
+                    "url": row["url"],
+                    "status": row["status"],
+                    "status_code": row["status_code"],
+                    "error": row["error"],
+                    "attempts": row["attempts"],
+                    "timestamp": row["timestamp"],
+                }
+                for row in rows
+            ]
+            return deliveries, total
 
     # ── Additional utilities (beyond the ABC) ────────────────────────────────
 

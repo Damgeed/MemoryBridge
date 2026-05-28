@@ -23,6 +23,7 @@ from ..models import (
     ScoredMemoryResult,
 )
 from ..repository.s3_store import S3Store
+from ..services.acl_service import ACLService
 from ..services.embedding_service import EmbeddingService
 from ..services.fact_extraction_service import FactExtractionService
 from ..services.memory_service import MemoryService
@@ -67,6 +68,13 @@ async def create_memory(
             status_code=413,
             detail=f"Memory value too large: {value_size} bytes exceeds limit of {max_value_size} bytes",
         )
+
+    # ACL check: verify the agent has write permission
+    acl = ACLService(storage=service.repo)
+    try:
+        await acl.require_write(agent_id=payload.agent_id, project=project)
+    except PermissionError as e:
+        raise HTTPException(status_code=403, detail=str(e))
 
     return await service.create_memory(
         payload=payload,
@@ -362,12 +370,22 @@ async def score_memories(
 @router.get("/{memory_id}", response_model=MemoryEntry)
 async def get_memory(
     memory_id: str,
+    request: Request,
     service: MemoryService = Depends(get_memory_service),
 ):
     """Get a memory by its ID."""
     entry = await service.get_memory(memory_id)
     if entry is None:
         raise HTTPException(status_code=404, detail="Memory not found")
+
+    # ACL check: verify the agent that owns this memory has read permission
+    project = getattr(request.state, "project_id", None)
+    acl = ACLService(storage=service.repo)
+    try:
+        await acl.require_read(agent_id=entry.agent_id, project=project)
+    except PermissionError as e:
+        raise HTTPException(status_code=403, detail=str(e))
+
     return entry
 
 
@@ -399,9 +417,20 @@ async def query_memories(
 @router.delete("/{memory_id}")
 async def delete_memory(
     memory_id: str,
+    request: Request,
+    agent_id: Optional[str] = Query(None, description="Agent ID for ACL permission check"),
     service: MemoryService = Depends(get_memory_service),
 ):
     """Delete a memory by its ID."""
+    # ACL check: verify the agent has delete permission
+    project = getattr(request.state, "project_id", None)
+    if agent_id:
+        acl = ACLService(storage=service.repo)
+        try:
+            await acl.require_delete(agent_id=agent_id, project=project)
+        except PermissionError as e:
+            raise HTTPException(status_code=403, detail=str(e))
+
     deleted = await service.delete_memory(memory_id)
     if not deleted:
         raise HTTPException(status_code=404, detail="Memory not found")

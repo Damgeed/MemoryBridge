@@ -3,7 +3,7 @@
 from abc import ABC, abstractmethod
 from typing import Any, Optional
 
-from ..models import MemoryEntry, Session, Subscription
+from ..models import MemoryEntry, Session, Subscription, AgentPermission
 
 
 class MemoryRepository(ABC):
@@ -252,4 +252,69 @@ class MemoryRepository(ABC):
 
     @abstractmethod
     async def get_all_audit_entries(self) -> list[dict]:
+        ...
+
+    # ── Agent ACL (Access Control List) ────────────────────────────────────
+
+    @abstractmethod
+    async def set_agent_permission(self, perm: AgentPermission) -> None:
+        """Set or update permission for an agent."""
+        ...
+
+    @abstractmethod
+    async def get_agent_permission(
+        self, agent_id: str, project: Optional[str] = None
+    ) -> Optional[AgentPermission]:
+        """Get permission for an agent. Returns None if no rule set (default = full access)."""
+        ...
+
+    @abstractmethod
+    async def list_agent_permissions(
+        self, project: Optional[str] = None
+    ) -> list[AgentPermission]:
+        """List all agent permission rules, optionally filtered by project."""
+        ...
+
+    @abstractmethod
+    async def delete_agent_permission(
+        self, agent_id: str, project: Optional[str] = None
+    ) -> bool:
+        """Delete permission rule for an agent. Returns True if deleted."""
+        ...
+
+    # ── Webhook Subscriptions ────────────────────────────────────────────────
+
+    @abstractmethod
+    async def store_webhook_subscription(self, sub: dict) -> None:
+        """Store or update a webhook subscription."""
+        ...
+
+    @abstractmethod
+    async def get_webhook_subscription(self, sub_id: str) -> Optional[dict]:
+        """Get a webhook subscription by ID. Returns None if not found."""
+        ...
+
+    @abstractmethod
+    async def list_webhook_subscriptions(
+        self, project: Optional[str] = None
+    ) -> list[dict]:
+        """List webhook subscriptions, optionally filtered by project."""
+        ...
+
+    @abstractmethod
+    async def remove_webhook_subscription(self, sub_id: str) -> bool:
+        """Remove a webhook subscription by ID. Returns True if removed."""
+        ...
+
+    @abstractmethod
+    async def store_webhook_delivery(self, delivery: dict) -> None:
+        """Record a webhook delivery attempt."""
+        ...
+
+    @abstractmethod
+    async def get_webhook_deliveries(
+        self, subscription_id: str, limit: int = 50, offset: int = 0
+    ) -> tuple[list[dict], int]:
+        """Get paginated delivery history for a webhook subscription.
+        Returns (deliveries, total_count)."""
         ...

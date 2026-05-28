@@ -21,6 +21,7 @@ from starlette.middleware.base import BaseHTTPMiddleware
 from .auth import APIKeyMiddleware
 from .middleware.tenant import TenantResolverMiddleware
 from .controllers import (
+    acl_controller,
     admin_controller,
     auth_controller,
     auth0_controller,
@@ -104,18 +105,15 @@ async def lifespan(app: FastAPI):
     else:
         logger.warning("STRIPE_SECRET_KEY not set — billing & recovery will fail")
 
-    # Warn if JWT secret is not configured but auth is enabled
+    # Raise if JWT secret is not configured (required for auth)
     from .config import get_settings
     _settings = get_settings()
     if not _settings.jwt_secret:
-        env_key = os.environ.get("MEMORY_BRIDGE_API_KEY")
-        if env_key or not _settings.allow_open:
-            logger.warning(
-                "  JWT_SECRET is not configured (MEMORY_BRIDGE_JWT_SECRET not set). "
-                "JWT-based authentication and token refresh will fail with a RuntimeError. "
-                "For API-key-only operation this is fine; set MEMORY_BRIDGE_JWT_SECRET if you "
-                "need JWT authentication."
-            )
+        raise ValueError(
+            "MEMORY_BRIDGE_JWT_SECRET is not configured. "
+            "This is required for JWT-based authentication. "
+            "Set the MEMORY_BRIDGE_JWT_SECRET environment variable before starting the server."
+        )
 
     # Initialize shared metrics (set-once, safe for multi-worker)
     await storage.initialize_metric("start_time", datetime.now(timezone.utc).isoformat())
@@ -316,6 +314,7 @@ def create_app() -> FastAPI:
     app.include_router(handoff_controller.router)
     app.include_router(admin_controller.router)
     app.include_router(export_controller.router)
+    app.include_router(acl_controller.router)
     app.include_router(webhook_router)
 
     # ── Root Landing Page ──────────────────────────────────

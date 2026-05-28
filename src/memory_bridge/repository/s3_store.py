@@ -10,6 +10,11 @@ import logging
 import os
 from typing import Any, Optional
 
+try:
+    import aioboto3
+except ImportError:
+    aioboto3 = None  # type: ignore[assignment]
+
 logger = logging.getLogger(__name__)
 
 # Threshold for offloading to S3 (64KB)
@@ -54,10 +59,27 @@ class S3Store:
         key = f"memories/{memory_id}.json"
 
         if self.enabled:
-            logger.info(
-                "S3 store: would upload %d bytes to %s/%s; saving locally too",
-                len(serialized), self._bucket, key,
-            )
+            if aioboto3 is None:
+                logger.warning("aioboto3 not installed. Install with: pip install memory-bridge[ml] or pip install aioboto3")
+            else:
+                try:
+                    session = aioboto3.Session()
+                    async with session.client(
+                        "s3",
+                        endpoint_url=self._endpoint or None,
+                        aws_access_key_id=self._access_key,
+                        aws_secret_access_key=self._secret_key,
+                        region_name=self._region,
+                    ) as s3:
+                        await s3.put_object(
+                            Bucket=self._bucket,
+                            Key=key,
+                            Body=serialized.encode(),
+                            ContentType="application/json",
+                        )
+                    logger.info("S3 store: uploaded %d bytes to %s/%s", len(serialized), self._bucket, key)
+                except Exception as e:
+                    logger.warning("S3 upload failed for %s: %s — saving locally only", key, e)
 
         # Always persist to local fallback — guarantees we never lose data
         os.makedirs(self._local_dir, exist_ok=True)
@@ -83,10 +105,23 @@ class S3Store:
             pass
 
         if self.enabled:
-            logger.info(
-                "S3 retrieve: local miss, would fetch %s from %s (not yet implemented)",
-                s3_key, self._bucket,
-            )
+            if aioboto3 is None:
+                logger.warning("aioboto3 not installed. Install with: pip install memory-bridge[ml] or pip install aioboto3")
+            else:
+                try:
+                    session = aioboto3.Session()
+                    async with session.client(
+                        "s3",
+                        endpoint_url=self._endpoint or None,
+                        aws_access_key_id=self._access_key,
+                        aws_secret_access_key=self._secret_key,
+                        region_name=self._region,
+                    ) as s3:
+                        response = await s3.get_object(Bucket=self._bucket, Key=s3_key)
+                        data = await response["Body"].read()
+                        return json.loads(data)
+                except Exception as e:
+                    logger.warning("S3 retrieve failed for %s: %s", s3_key, e)
 
         logger.warning("S3 retrieve: %s not found in %s", s3_key, self._local_dir)
         return None
@@ -102,9 +137,21 @@ class S3Store:
             pass
 
         if self.enabled:
-            logger.info(
-                "S3 delete: would delete %s from %s (not yet implemented)",
-                s3_key, self._bucket,
-            )
+            if aioboto3 is None:
+                logger.warning("aioboto3 not installed. Install with: pip install memory-bridge[ml] or pip install aioboto3")
+            else:
+                try:
+                    session = aioboto3.Session()
+                    async with session.client(
+                        "s3",
+                        endpoint_url=self._endpoint or None,
+                        aws_access_key_id=self._access_key,
+                        aws_secret_access_key=self._secret_key,
+                        region_name=self._region,
+                    ) as s3:
+                        await s3.delete_object(Bucket=self._bucket, Key=s3_key)
+                    logger.info("S3 delete: removed %s from %s", s3_key, self._bucket)
+                except Exception as e:
+                    logger.warning("S3 delete failed for %s: %s", s3_key, e)
 
         return True

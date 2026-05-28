@@ -11,7 +11,7 @@ from uuid import uuid4
 
 import asyncpg
 
-from ..models import MemoryEntry, Session, Subscription
+from ..models import MemoryEntry, Session, Subscription, AgentPermission
 from ..config import get_settings
 from ..services.embedding_service import EmbeddingService
 
@@ -134,6 +134,42 @@ _SCHEMA_MIGRATIONS: dict[int, str] = {
     ),
     15: (
         "ALTER TABLE {schema}.users ADD COLUMN IF NOT EXISTS stripe_customer_id TEXT NOT NULL DEFAULT ''"
+    ),
+    16: (
+        "CREATE TABLE IF NOT EXISTS {schema}.agent_permissions ("
+        "agent_id TEXT NOT NULL, "
+        "project TEXT, "
+        "can_read BOOLEAN NOT NULL DEFAULT TRUE, "
+        "can_write BOOLEAN NOT NULL DEFAULT TRUE, "
+        "can_delete BOOLEAN NOT NULL DEFAULT FALSE, "
+        "created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(), "
+        "updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(), "
+        "PRIMARY KEY (agent_id, project)"
+        ")"
+    ),
+    17: (
+        "CREATE TABLE IF NOT EXISTS {schema}.webhook_subscriptions ("
+        "id TEXT PRIMARY KEY, "
+        "url TEXT NOT NULL, "
+        "event_types JSONB NOT NULL, "
+        "secret TEXT NOT NULL, "
+        "project TEXT, "
+        "is_active BOOLEAN NOT NULL DEFAULT TRUE, "
+        "created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()"
+        "); "
+        "CREATE TABLE IF NOT EXISTS {schema}.webhook_deliveries ("
+        "id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text, "
+        "subscription_id TEXT NOT NULL REFERENCES {schema}.webhook_subscriptions(id) ON DELETE CASCADE, "
+        "event_type TEXT NOT NULL, "
+        "url TEXT NOT NULL, "
+        "status TEXT NOT NULL, "
+        "status_code INTEGER, "
+        "error TEXT, "
+        "attempts INTEGER NOT NULL DEFAULT 0, "
+        "timestamp TIMESTAMPTZ NOT NULL DEFAULT NOW()"
+        "); "
+        "CREATE INDEX IF NOT EXISTS idx_{schema}_webhook_deliveries_subscription "
+        "ON {schema}.webhook_deliveries(subscription_id, timestamp DESC)"
     ),
 }
 # ──────────────────────────────────────────────────────────────────────────────
@@ -1291,6 +1327,235 @@ class PostgresMemoryRepository(MemoryRepository):
                 """,
                 user_id, provider, provider_user_id, datetime.now(timezone.utc),
             )
+
+    # ── Agent ACL (Access Control List) ────────────────────────────────────
+
+    async def set_agent_permission(self, perm: AgentPermission) -> None:
+        """Set or update permission for an agent."""
+        async with self.pool.acquire() as conn:
+            await conn.execute(
+                f"""
+                INSERT INTO {self.schema}.agent_permissions
+                    (agent_id, project, can_read, can_write, can_delete, created_at, updated_at)
+                VALUES ($1, $2, $3, $4, $5, $6, $7)
+                ON CONFLICT (agent_id, project) DO UPDATE SET
+                    can_read = EXCLUDED.can_read,
+                    can_write = EXCLUDED.can_write,
+                    can_delete = EXCLUDED.can_delete,
+                    updated_at = EXCLUDED.updated_at
+                """,
+                perm.agent_id,
+                perm.project,
+                perm.can_read,
+                perm.can_write,
+                perm.can_delete,
+                perm.created_at,
+                perm.updated_at,
+            )
+
+    async def get_agent_permission(
+        self, agent_id: str, project: Optional[str] = None
+    ) -> Optional[AgentPermission]:
+        """Get permission for an agent. Returns None if no rule set."""
+        async with self.pool.acquire() as conn:
+            row = await conn.fetchrow(
+                f"SELECT * FROM {self.schema}.agent_permissions "
+                f"WHERE agent_id = $1 AND ($2::text IS NULL AND project IS NULL OR project = $2)",
+                agent_id, project,
+            )
+            if row is None:
+                return None
+            return AgentPermission(
+                agent_id=row["agent_id"],
+                project=row["project"],
+                can_read=bool(row["can_read"]),
+                can_write=bool(row["can_write"]),
+                can_delete=bool(row["can_delete"]),
+                created_at=row["created_at"] if isinstance(row["created_at"], datetime) else datetime.fromisoformat(row["created_at"]),
+                updated_at=row["updated_at"] if isinstance(row["updated_at"], datetime) else datetime.fromisoformat(row["updated_at"]),
+            )
+
+    async def list_agent_permissions(
+        self, project: Optional[str] = None
+    ) -> list[AgentPermission]:
+        """List all agent permission rules, optionally filtered by project."""
+        async with self.pool.acquire() as conn:
+            if project is not None:
+                rows = await conn.fetch(
+                    f"SELECT * FROM {self.schema}.agent_permissions "
+                    f"WHERE project = $1 ORDER BY agent_id",
+                    project,
+                )
+            else:
+                rows = await conn.fetch(
+                    f"SELECT * FROM {self.schema}.agent_permissions ORDER BY agent_id"
+                )
+            return [
+                AgentPermission(
+                    agent_id=row["agent_id"],
+                    project=row["project"],
+                    can_read=bool(row["can_read"]),
+                    can_write=bool(row["can_write"]),
+                    can_delete=bool(row["can_delete"]),
+                    created_at=row["created_at"] if isinstance(row["created_at"], datetime) else datetime.fromisoformat(row["created_at"]),
+                    updated_at=row["updated_at"] if isinstance(row["updated_at"], datetime) else datetime.fromisoformat(row["updated_at"]),
+                )
+                for row in rows
+            ]
+
+    async def delete_agent_permission(
+        self, agent_id: str, project: Optional[str] = None
+    ) -> bool:
+        """Delete permission rule for an agent. Returns True if deleted."""
+        async with self.pool.acquire() as conn:
+            result = await conn.execute(
+                f"DELETE FROM {self.schema}.agent_permissions "
+                f"WHERE agent_id = $1 AND ($2::text IS NULL AND project IS NULL OR project = $2)",
+                agent_id, project,
+            )
+            # asyncpg's execute returns 'DELETE N' string
+            count = int(result.split()[-1]) if result else 0
+            return count > 0
+
+    # ── Webhook Subscriptions ────────────────────────────────────────────
+
+    async def store_webhook_subscription(self, sub: dict) -> None:
+        """Store or update a webhook subscription."""
+        async with self.pool.acquire() as conn:
+            await conn.execute(
+                f"""
+                INSERT INTO {self.schema}.webhook_subscriptions
+                    (id, url, event_types, secret, project, is_active, created_at)
+                VALUES ($1, $2, $3::jsonb, $4, $5, $6, $7::timestamptz)
+                ON CONFLICT (id) DO UPDATE SET
+                    url = EXCLUDED.url,
+                    event_types = EXCLUDED.event_types,
+                    secret = EXCLUDED.secret,
+                    project = EXCLUDED.project,
+                    is_active = EXCLUDED.is_active,
+                    created_at = EXCLUDED.created_at
+                """,
+                sub["id"],
+                sub["url"],
+                json.dumps(sub["event_types"]),
+                sub["secret"],
+                sub.get("project"),
+                sub.get("is_active", True),
+                sub.get("created_at", datetime.now(timezone.utc)),
+            )
+
+    async def get_webhook_subscription(self, sub_id: str) -> Optional[dict]:
+        """Get a webhook subscription by ID."""
+        async with self.pool.acquire() as conn:
+            row = await conn.fetchrow(
+                f"SELECT * FROM {self.schema}.webhook_subscriptions WHERE id = $1",
+                sub_id,
+            )
+            if row is None:
+                return None
+            return {
+                "id": row["id"],
+                "url": row["url"],
+                "event_types": list(row["event_types"]) if isinstance(row["event_types"], (list, tuple)) else row["event_types"],
+                "secret": row["secret"],
+                "project": row["project"],
+                "is_active": bool(row["is_active"]),
+                "created_at": row["created_at"].isoformat() if isinstance(row["created_at"], datetime) else row["created_at"],
+            }
+
+    async def list_webhook_subscriptions(
+        self, project: Optional[str] = None
+    ) -> list[dict]:
+        """List webhook subscriptions, optionally filtered by project."""
+        async with self.pool.acquire() as conn:
+            if project:
+                rows = await conn.fetch(
+                    f"SELECT * FROM {self.schema}.webhook_subscriptions "
+                    f"WHERE project = $1 OR project IS NULL",
+                    project,
+                )
+            else:
+                rows = await conn.fetch(
+                    f"SELECT * FROM {self.schema}.webhook_subscriptions"
+                )
+            return [
+                {
+                    "id": row["id"],
+                    "url": row["url"],
+                    "event_types": list(row["event_types"]) if isinstance(row["event_types"], (list, tuple)) else row["event_types"],
+                    "secret": row["secret"],
+                    "project": row["project"],
+                    "is_active": bool(row["is_active"]),
+                    "created_at": row["created_at"].isoformat() if isinstance(row["created_at"], datetime) else row["created_at"],
+                }
+                for row in rows
+            ]
+
+    async def remove_webhook_subscription(self, sub_id: str) -> bool:
+        """Remove a webhook subscription by ID. Returns True if removed."""
+        async with self.pool.acquire() as conn:
+            result = await conn.execute(
+                f"DELETE FROM {self.schema}.webhook_subscriptions WHERE id = $1",
+                sub_id,
+            )
+            count = int(result.split()[-1]) if result else 0
+            return count > 0
+
+    async def store_webhook_delivery(self, delivery: dict) -> None:
+        """Record a webhook delivery attempt."""
+        async with self.pool.acquire() as conn:
+            await conn.execute(
+                f"""
+                INSERT INTO {self.schema}.webhook_deliveries
+                    (id, subscription_id, event_type, url, status, status_code, error, attempts, timestamp)
+                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9::timestamptz)
+                """,
+                delivery.get("id", str(uuid4())),
+                delivery["subscription_id"],
+                delivery["event_type"],
+                delivery["url"],
+                delivery["status"],
+                delivery.get("status_code"),
+                delivery.get("error"),
+                delivery.get("attempts", 0),
+                delivery.get("timestamp", datetime.now(timezone.utc)),
+            )
+
+    async def get_webhook_deliveries(
+        self, subscription_id: str, limit: int = 50, offset: int = 0
+    ) -> tuple[list[dict], int]:
+        """Get paginated delivery history for a webhook subscription."""
+        async with self.pool.acquire() as conn:
+            # Get total count
+            total_row = await conn.fetchrow(
+                f"SELECT COUNT(*) AS cnt FROM {self.schema}.webhook_deliveries "
+                f"WHERE subscription_id = $1",
+                subscription_id,
+            )
+            total = total_row["cnt"] if total_row else 0
+
+            # Get paginated rows
+            rows = await conn.fetch(
+                f"SELECT * FROM {self.schema}.webhook_deliveries "
+                f"WHERE subscription_id = $1 "
+                f"ORDER BY timestamp DESC LIMIT $2 OFFSET $3",
+                subscription_id, limit, offset,
+            )
+            deliveries = [
+                {
+                    "id": row["id"],
+                    "subscription_id": row["subscription_id"],
+                    "event_type": row["event_type"],
+                    "url": row["url"],
+                    "status": row["status"],
+                    "status_code": row["status_code"],
+                    "error": row["error"],
+                    "attempts": row["attempts"],
+                    "timestamp": row["timestamp"].isoformat() if isinstance(row["timestamp"], datetime) else row["timestamp"],
+                }
+                for row in rows
+            ]
+            return deliveries, total
 
     # ── Additional utilities (beyond the ABC) ────────────────────────────────
 

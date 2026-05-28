@@ -11,6 +11,7 @@ import hmac
 import json
 import logging
 import time
+import uuid
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from typing import Any, Optional
@@ -102,6 +103,7 @@ class WebhookService:
         self._delivery_history: dict[str, list[WebhookDelivery]] = {}
         self._max_deliveries_per_webhook = 1000
         self._delivery_semaphore = asyncio.Semaphore(20)
+        self._dispatch_semaphore = asyncio.Semaphore(100)
 
         # Subscribe to all event types on the bus if available
         if event_bus and event_bus.enabled:
@@ -169,35 +171,55 @@ class WebhookService:
     async def load_subscriptions(self) -> None:
         """Load all active subscriptions from the repository.
 
-        In production, this queries a ``webhook_subscriptions`` table
-        via ``self.repo`` and populates ``self._subscriptions``.
+        Queries the ``webhook_subscriptions`` table via ``self.repo``
+        and populates ``self._subscriptions``.
         """
         if not self.repo:
             logger.debug("No repo configured; subscriptions live in memory only")
             return
-        # In production: query webhook_subscriptions table → populate self._subscriptions
-        logger.info("Loaded webhook subscriptions from repository")
+        rows = await self.repo.list_webhook_subscriptions()
+        for row in rows:
+            sub = WebhookSubscription(
+                id=row["id"],
+                url=row["url"],
+                event_types=row["event_types"],
+                secret=row["secret"],
+                project=row.get("project"),
+                is_active=row.get("is_active", True),
+                created_at=datetime.fromisoformat(row["created_at"])
+                if isinstance(row["created_at"], str)
+                else row["created_at"],
+            )
+            self._subscriptions[sub.id] = sub
+        logger.info("Loaded %d webhook subscriptions from repository", len(rows))
 
     async def save_subscription(self, sub: WebhookSubscription) -> None:
         """Save (create or update) a subscription in the repository.
 
-        In production, this INSERTs or UPDATEs the ``webhook_subscriptions``
-        table via ``self.repo``.
+        INSERTs or UPDATEs the ``webhook_subscriptions`` table
+        via ``self.repo``.
         """
         if not self.repo:
             return
-        # In production: INSERT INTO webhook_subscriptions ... ON CONFLICT UPDATE
+        await self.repo.store_webhook_subscription({
+            "id": sub.id,
+            "url": sub.url,
+            "event_types": sub.event_types,
+            "secret": sub.secret,
+            "project": sub.project,
+            "is_active": sub.is_active,
+            "created_at": sub.created_at.isoformat(),
+        })
         logger.debug("Saved webhook subscription %s to repository", sub.id)
 
     async def remove_subscription_from_repo(self, sub_id: str) -> None:
         """Remove a subscription from the repository.
 
-        In production, this DELETEs from the ``webhook_subscriptions``
-        table via ``self.repo``.
+        DELETEs from the ``webhook_subscriptions`` table via ``self.repo``.
         """
         if not self.repo:
             return
-        # In production: DELETE FROM webhook_subscriptions WHERE id = ?
+        await self.repo.remove_webhook_subscription(sub_id)
         logger.debug("Removed webhook subscription %s from repository", sub_id)
 
     def get_last_delivery(self, subscription_id: str) -> Optional[WebhookDelivery]:
@@ -256,7 +278,8 @@ class WebhookService:
             if sub.project and event_project and event_project != sub.project:
                 continue
 
-            asyncio.create_task(self._deliver(sub, payload_data))
+            async with self._dispatch_semaphore:
+                asyncio.create_task(self._deliver(sub, payload_data))
 
     # ── Delivery Logic ──────────────────────────────────────────────────
 
@@ -400,7 +423,8 @@ class WebhookService:
     # ── Internal Helpers ────────────────────────────────────────────────
 
     def _record_delivery(self, delivery: WebhookDelivery) -> None:
-        """Record a delivery attempt in both last-delivery and history stores."""
+        """Record a delivery attempt in both last-delivery and history stores,
+        and persist to the repository if available."""
         sub_id = delivery.subscription_id
         self._last_deliveries[sub_id] = delivery
 
@@ -413,10 +437,35 @@ class WebhookService:
         if len(self._delivery_history[sub_id]) > self._max_deliveries_per_webhook:
             self._delivery_history[sub_id] = self._delivery_history[sub_id][-self._max_deliveries_per_webhook:]
 
+        # Persist to the repository if available
+        if self.repo:
+            asyncio.create_task(self._persist_delivery(delivery))
+
+    async def _persist_delivery(self, delivery: WebhookDelivery) -> None:
+        """Persist a delivery record to the repository."""
+        try:
+            await self.repo.store_webhook_delivery({
+                "id": str(uuid.uuid4()) if not hasattr(delivery, 'id') or not delivery.subscription_id else f"{delivery.subscription_id}_{delivery.timestamp.timestamp()}",
+                "subscription_id": delivery.subscription_id,
+                "event_type": delivery.event_type,
+                "url": delivery.url,
+                "status": delivery.status,
+                "status_code": delivery.status_code,
+                "error": delivery.error,
+                "attempts": delivery.attempts,
+                "timestamp": delivery.timestamp.isoformat(),
+            })
+        except Exception:
+            logger.exception("Failed to persist delivery to repository")
+
     def get_deliveries(
         self, webhook_id: str, limit: int = 50, offset: int = 0
     ) -> tuple[list[WebhookDelivery], int]:
-        """Get paginated delivery history for a webhook."""
+        """Get paginated delivery history for a webhook.
+
+        Merges in-memory delivery history with repository data.
+        """
+        # Get in-memory deliveries
         deliveries = self._delivery_history.get(webhook_id, [])
         total = len(deliveries)
         page = deliveries[offset:offset + limit]

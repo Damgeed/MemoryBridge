@@ -282,6 +282,49 @@ TOOL_DEFINITIONS: list[dict[str, Any]] = [
             },
         },
     },
+    {
+        "name": "set_agent_permission",
+        "description": (
+            "Set or update permissions for an agent in the shared workspace. "
+            "Use this to control which agents can read, write, or delete "
+            "memories. When no permission rule exists, agents have full access "
+            "(backward compatible)."
+        ),
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "agent_id": {
+                    "type": "string",
+                    "description": "ID of the agent to set permissions for",
+                },
+                "can_read": {
+                    "type": "boolean",
+                    "description": "Allow agent to read memories stored by other agents (default: true)",
+                },
+                "can_write": {
+                    "type": "boolean",
+                    "description": "Allow agent to store new memories (default: true)",
+                },
+                "can_delete": {
+                    "type": "boolean",
+                    "description": "Allow agent to delete memories (default: false)",
+                },
+            },
+            "required": ["agent_id"],
+        },
+    },
+    {
+        "name": "list_permissions",
+        "description": (
+            "List all agent permission rules currently configured in the "
+            "shared workspace. Returns the list of permissions with agent IDs, "
+            "read/write/delete flags, and timestamps."
+        ),
+        "inputSchema": {
+            "type": "object",
+            "properties": {},
+        },
+    },
 ]
 
 
@@ -312,6 +355,8 @@ class MCPServer:
             "search_semantic": self._handle_search_semantic,
             "extract_facts": self._handle_extract_facts,
             "score_memories": self._handle_score_memories,
+            "set_agent_permission": self._handle_set_agent_permission,
+            "list_permissions": self._handle_list_permissions,
         }
 
     # ── Auth helpers ──────────────────────────────────────────────────
@@ -330,6 +375,8 @@ class MCPServer:
             resp = self._http.get(url, headers=headers, **kwargs)
         elif method.upper() == "POST":
             resp = self._http.post(url, headers=headers, **kwargs)
+        elif method.upper() == "PUT":
+            resp = self._http.put(url, headers=headers, **kwargs)
         elif method.upper() == "DELETE":
             resp = self._http.delete(url, headers=headers, **kwargs)
         else:
@@ -715,6 +762,57 @@ class MCPServer:
             if tags_str:
                 lines.append(tags_str)
             lines.append("        value: {}".format(val_str[:200]))
+            lines.append("")
+
+        return {"content": [{"type": "text", "text": "\n".join(lines)}]}
+
+    def _handle_set_agent_permission(self, args: dict) -> dict:
+        """Set or update agent permissions."""
+        agent_id = args["agent_id"]
+        body = {}
+        if "can_read" in args:
+            body["can_read"] = args["can_read"]
+        if "can_write" in args:
+            body["can_write"] = args["can_write"]
+        if "can_delete" in args:
+            body["can_delete"] = args["can_delete"]
+
+        result = self._api_call("PUT", f"/permissions/{agent_id}", json=body)
+        permission = result.get("permission", {})
+        return {
+            "content": [
+                {
+                    "type": "text",
+                    "text": json.dumps({
+                        "status": result.get("status", "updated"),
+                        "agent_id": agent_id,
+                        "can_read": permission.get("can_read", True),
+                        "can_write": permission.get("can_write", True),
+                        "can_delete": permission.get("can_delete", False),
+                    }, indent=2),
+                }
+            ],
+        }
+
+    def _handle_list_permissions(self, args: dict) -> dict:
+        """List all agent permission rules."""
+        result = self._api_call("GET", "/permissions/")
+        permissions = result.get("permissions", [])
+
+        if not permissions:
+            return {
+                "content": [{"type": "text", "text": "No permission rules configured — all agents have full default access."}],
+            }
+
+        lines = [f"Agent Permissions ({len(permissions)}):", ""]
+        for p in permissions:
+            lines.append(f"  Agent: {p.get('agent_id', '')}")
+            project = p.get('project')
+            if project:
+                lines.append(f"  Project: {project}")
+            lines.append(f"    Read:   {p.get('can_read', True)}")
+            lines.append(f"    Write:  {p.get('can_write', True)}")
+            lines.append(f"    Delete: {p.get('can_delete', False)}")
             lines.append("")
 
         return {"content": [{"type": "text", "text": "\n".join(lines)}]}
