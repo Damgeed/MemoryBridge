@@ -3,6 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#0a0a0f" media="(prefers-color-scheme: dark)">
+    <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
 <title data-i18n="demo.title">Memory Bridge — Demo</title>
 <link rel="icon" href="/playground/logo.svg" type="image/svg+xml">
 <link rel="stylesheet" href="/playground/style.css">
@@ -698,7 +700,7 @@
     <div class="auth-btn-container" id="auth-btn-container">
         <button class="auth-btn" id="auth-nav-btn" onclick="openAuth()" title="Sign in / Sign up">
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-            <span id="auth-btn-label" data-i18n="nav.sign_in">Sign in</span>
+            <span id="auth-btn-label" data-i18n="nav.sign_out">Sign in</span>
         </button>
         <div class="user-menu" id="user-menu" style="display:none;">
             <button class="user-avatar-btn" id="user-btn" onclick="toggleUserDropdown()" title="Account menu">
@@ -772,7 +774,7 @@
   </a>
   <a href="javascript:void(0)" id="auth-mobile-btn" onclick="closeMobileNav();openAuth()" style="display:flex;align-items:center;gap:0.45rem;padding:0.7rem 1.25rem;border-radius:var(--radius-sm);font-size:0.88rem;font-weight:600;color:var(--accent);text-decoration:none;">
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-    <span id="auth-mobile-label" data-i18n="nav.sign_in">Sign in</span>
+    <span id="auth-mobile-label" data-i18n="nav.sign_out">Sign in</span>
   </a>
   <div class="nav-mobile-divider"></div>
     <a href="/playground/" class="nav-mobile-cta" onclick="closeMobileNav()" data-i18n="nav.launch_playground">
@@ -1077,11 +1079,11 @@ document.addEventListener('DOMContentLoaded', () => {
           </button>
           <div class="auth-divider">
             <hr>
-            <span data-i18n="auth.divider">or continue with email</span>
+            <span data-i18n="auth.or_email">or continue with email</span>
             <hr>
           </div>
-          <input type="email" class="auth-email-field" id="pl-email" placeholder="you@example.com" autocomplete="email" onkeydown="if(event.key==='Enter')continueWithEmail()" data-i18n="auth.email_pl">
-          <button class="auth-email-cta" onclick="continueWithEmail()" id="pl-email-btn" data-i18n="auth.continue">Continue →</button>
+          <input type="email" class="auth-email-field" id="pl-email" placeholder="you@example.com" autocomplete="email" onkeydown="if(event.key==='Enter')continueWithEmail()" data-i18n="auth.email_placeholder">
+          <button class="auth-email-cta" onclick="continueWithEmail()" id="pl-email-btn" data-i18n="auth.continue_btn">Continue →</button>
           <div class="auth-error" id="auth-error-main"></div>
           <div style="margin-top: 0.75rem; text-align: center;">
             <a href="#" onclick="showRecoveryForm(); return false;" style="color: var(--accent); text-decoration: none; font-size: 0.85rem; font-weight: 500; opacity: 0.85; transition: opacity 0.15s;" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0.85'">Lost your account? Recover it here →</a>
@@ -1098,8 +1100,8 @@ document.addEventListener('DOMContentLoaded', () => {
             <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
               <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
             </svg>
-            <div class="auth-code-msg" data-i18n="auth.phone_title">Enter your phone number</div>
-            <div style="font-size:0.8rem;color:var(--text-muted);margin-top:0.25rem;" data-i18n="auth.phone_sms">We'll send a 6-digit code via SMS</div>
+            <div class="auth-code-msg" data-i18n="auth.enter_phone">Enter your phone number</div>
+            <div style="font-size:0.8rem;color:var(--text-muted);margin-top:0.25rem;" data-i18n="auth.sms_notice">We'll send a 6-digit code via SMS</div>
           </div>
           <div class="auth-phone-input-row">
             <div class="phone-country-select">
@@ -1288,9 +1290,9 @@ document.addEventListener('DOMContentLoaded', () => {
               </select>
               <span class="phone-caret">▼</span>
             </div>
-            <input type="tel" id="pl-phone" placeholder="8123 4567" autocomplete="tel" onkeydown="if(event.key==='Enter')sendPhoneCode()" data-i18n="auth.phone_pl">
+            <input type="tel" id="pl-phone" placeholder="8123 4567" autocomplete="tel" onkeydown="if(event.key==='Enter')sendPhoneCode()" data-i18n="auth.phone_placeholder">
           </div>
-          <button class="auth-email-cta" onclick="sendPhoneCode()" id="pl-phone-btn" data-i18n="auth.send_code">Send Code →</button>
+          <button class="auth-email-cta" onclick="sendPhoneCode()" id="pl-phone-btn" data-i18n="auth.send_code_btn">Send Code →</button>
           <div class="auth-error" id="auth-error-phone"></div>
         </div>
 
@@ -1305,16 +1307,16 @@ document.addEventListener('DOMContentLoaded', () => {
               <rect x="2" y="4" width="20" height="16" rx="2"/>
               <path d="M22 7l-10 7L2 7"/>
             </svg>
-            <div class="auth-code-msg" data-i18n="auth.we_sent">We sent a code to</div>
+            <div class="auth-code-msg" data-i18n="auth.sent_code">We sent a code to</div>
             <div class="auth-code-email" id="code-email-display">j***@example.com</div>
           </div>
           <div class="auth-code-input-row">
-            <input type="text" id="pl-code" placeholder="Enter 6-digit code" maxlength="6" inputmode="numeric" autocomplete="one-time-code" onkeydown="if(event.key==='Enter')verifyCode()" data-i18n="auth.code_pl">
+            <input type="text" id="pl-code" placeholder="Enter 6-digit code" maxlength="6" inputmode="numeric" autocomplete="one-time-code" onkeydown="if(event.key==='Enter')verifyCode()" data-i18n="auth.code_placeholder">
           </div>
-          <button class="btn btn-primary" onclick="verifyCode()" id="pl-code-btn" data-i18n="auth.verify">Verify Code →</button>
+          <button class="btn btn-primary" onclick="verifyCode()" id="pl-code-btn" data-i18n="auth.verify_btn">Verify Code →</button>
           <div class="auth-error" id="auth-error-code"></div>
-          <div class="auth-code-resend" data-i18n="auth.resend_text">
-            Didn't get it? <a onclick="resendCode()" data-i18n="auth.resend_link">Send new code</a>
+          <div class="auth-code-resend" data-i18n="auth.resend_label">
+            Didn't get it? <a onclick="resendCode()" data-i18n="auth.send_new_code">Send new code</a>
           </div>
         </div>
 
