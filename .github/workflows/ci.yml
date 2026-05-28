@@ -32,7 +32,7 @@ jobs:
 
       - name: Start server for smoke test
         run: |
-          MEMORY_BRIDGE_API_KEY="ci-test-key" uvicorn memory_bridge.main:app --host 0.0.0.0 --port 8000 &
+          MEMORY_BRIDGE_JWT_SECRET="ci-test-jwt-secret" MEMORY_BRIDGE_API_KEY="ci-test-key" uvicorn memory_bridge.main:app --host 0.0.0.0 --port 8000 &
           sleep 2
           curl -s http://localhost:8000/health
 
