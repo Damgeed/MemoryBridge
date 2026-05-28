@@ -556,6 +556,7 @@ a:hover { color: var(--accent-light); text-decoration: none; }
   font-size: 0.82rem;
   color: var(--red);
   text-align: center;
+  font-weight: 500;
   margin-top: 0.5rem;
   min-height: 1.2rem;
 }
@@ -572,6 +573,7 @@ a:hover { color: var(--accent-light); text-decoration: none; }
   font-size: 0.85rem;
   line-height: 1.5;
   text-align: center;
+  font-weight: 600;
   margin: 0.75rem auto 0;
 }
 
