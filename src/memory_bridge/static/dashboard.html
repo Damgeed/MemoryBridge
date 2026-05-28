@@ -2428,6 +2428,16 @@
             // Detect Stripe checkout redirect — call welcome endpoint
             const sessionId = params.get('session_id');
             if (sessionId) {
+                // Check if we've already processed this session (store in sessionStorage)
+                const processedSessions = JSON.parse(sessionStorage.getItem('mb_processed_sessions') || '[]');
+                if (processedSessions.includes(sessionId)) {
+                    // Already processed — clean URL and load dashboard normally
+                    window.history.replaceState({}, '', '/dashboard/');
+                    showAuthenticatedContent(true);
+                    updateAuthUI();
+                    reloadDashboard();
+                    return;
+                }
                 handleStripeWelcome(sessionId);
                 return;
             }
@@ -2489,7 +2499,19 @@
                 console.warn('Stripe welcome failed:', e);
             }
 
-            // Show the authenticated content
+            // Mark this session as processed so we don't re-run on page refresh
+            const processedSessions = JSON.parse(sessionStorage.getItem('mb_processed_sessions') || '[]');
+            if (!processedSessions.includes(sessionId)) {
+                processedSessions.push(sessionId);
+                // Keep only last 5 to avoid unbounded growth
+                while (processedSessions.length > 5) processedSessions.shift();
+                sessionStorage.setItem('mb_processed_sessions', JSON.stringify(processedSessions));
+            }
+
+            // Always clean URL — prevent re-triggering on refresh
+            window.history.replaceState({}, '', '/dashboard/');
+
+            // Ensure authenticated content is visible even if stripe-welcome failed
             showAuthenticatedContent(true);
             updateAuthUI();
 
