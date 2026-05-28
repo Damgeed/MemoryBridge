@@ -18,12 +18,13 @@ logger = logging.getLogger(__name__)
 # Re-use auth helpers from auth.py
 import hashlib
 import jwt as pyjwt
+from typing import Optional
 from ..config import get_settings
 
 router = APIRouter(prefix="/graph", tags=["graph"])
 
 
-async def _resolve_project_id(request: Request) -> str | None:
+async def _resolve_project_id(request: Request) -> Optional[str]:
     """Extract project_id from Authorization header (JWT or API key), or return None."""
     auth_header = request.headers.get("Authorization")
     if not auth_header or not auth_header.startswith("Bearer "):
