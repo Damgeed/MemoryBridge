@@ -93,8 +93,8 @@
             margin: 0 auto 1rem; font-size: 1.6rem;
         }
         .logout-modal .logout-title { font-size: 1.15rem; font-weight: 700; margin-bottom: 0.5rem; color: var(--text-primary); }
-        .logout-modal .logout-desc { font-size: 0.9rem; color: var(--text-muted); margin-bottom: 1.5rem; }
-        .logout-modal .logout-actions { display: flex; gap: 0.75rem; justify-content: center; }
+        .logout-modal .logout-text { font-size: 0.9rem; color: var(--text-muted); margin-bottom: 1.5rem; }
+        .logout-modal .logout-btns { display: flex; gap: 0.75rem; justify-content: center; }
 
         @media (max-width: 768px) {
             .nav-cta { display: none !important; }
@@ -384,10 +384,6 @@
       <a href="/dashboard/" onclick="closeMobileNav()" data-i18n="nav.dashboard">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
         Dashboard
-      </a>
-      <a href="/concept" class="active" onclick="closeMobileNav()" data-i18n="nav.concept">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-        Concept
       </a>
       <a href="javascript:void(0)" id="auth-mobile-btn" onclick="closeMobileNav();openAuth()" style="display:flex;align-items:center;gap:0.45rem;padding:0.7rem 1.25rem;border-radius:var(--radius-sm);font-size:0.88rem;font-weight:600;color:var(--accent);text-decoration:none;">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
