@@ -192,6 +192,32 @@ async def auth0_callback(
     return RedirectResponse(url=redirect_url)
 
 
+# ── Email existence check (for recovery) ─────────────────────────
+
+
+class CheckEmailRequest(BaseModel):
+    email: str
+
+
+@router.post("/check-email")
+async def check_email_exists(
+    req: CheckEmailRequest,
+    storage: MemoryRepository = Depends(get_storage),
+):
+    """Check if an email exists in the database.
+
+    Used by the recovery flow to avoid sending verification codes
+    to emails that aren't registered.
+    """
+    if not req.email or "@" not in req.email:
+        raise HTTPException(status_code=400, detail="Invalid email address")
+
+    normalized = req.email.strip().lower()
+    user = await storage.get_user_by_email(normalized)
+    exists = user is not None
+    return {"exists": exists}
+
+
 # ── Passwordless (Email OTP) ──────────────────────────────────────
 
 

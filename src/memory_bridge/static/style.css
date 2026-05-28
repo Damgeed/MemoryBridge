@@ -560,6 +560,21 @@ a:hover { color: var(--accent-light); text-decoration: none; }
   min-height: 1.2rem;
 }
 
+.auth-form .auth-notice {
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 0.75rem 1rem;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-primary);
+  border-radius: var(--radius-sm);
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+  line-height: 1.5;
+  text-align: center;
+  margin: 0.75rem auto 0;
+}
+
 /* Auth loading spinner */
 .auth-spinner {
   display: inline-block;

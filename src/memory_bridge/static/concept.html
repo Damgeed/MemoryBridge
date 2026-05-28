@@ -1,312 +1,1195 @@
-<!DOCTYPE html>
-<html lang="en" data-theme="dark">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="theme-color" content="#0a0a0f" media="(prefers-color-scheme: dark)">
-    <meta name="theme-color" content="#f8f9fc" media="(prefers-color-scheme: light)">
-    <title>Memory Bridge — Architecture</title>
-    <link rel="icon" href="/playground/logo.png" type="image/png">
-    <link rel="stylesheet" href="/playground/style.css">
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700;800&display=swap');
-        body { background: var(--bg-primary); color: var(--text-primary); display: flex; flex-direction: column; min-height: 100vh; }
-        .concept-page { flex: 1; max-width: 800px; margin: 0 auto; padding: 3rem 1.5rem 4rem; width: 100%; }
-        .concept-page h1 { font-size: 2rem; font-weight: 800; margin-bottom: 0.5rem; letter-spacing: -0.5px; }
-        .concept-page h1 span { background: var(--accent-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
-        .concept-page .subtitle { color: var(--text-muted); font-size: 1.05rem; margin-bottom: 2.5rem; line-height: 1.6; }
-        .concept-page h2 { font-size: 1.3rem; font-weight: 700; margin: 2rem 0 0.75rem; color: var(--text-primary); }
-        .concept-page p { color: var(--text-secondary); line-height: 1.7; margin-bottom: 1rem; font-size: 0.95rem; }
-        .concept-page ul { list-style: none; padding: 0; margin: 0 0 1.5rem; }
-        .concept-page ul li { padding: 0.6rem 0; border-bottom: 1px solid var(--border-subtle); color: var(--text-secondary); font-size: 0.92rem; line-height: 1.5; }
-        .concept-page ul li:last-child { border-bottom: none; }
-        .concept-page ul li strong { color: var(--text-primary); }
-        .concept-page .tag { display: inline-block; padding: 0.15rem 0.5rem; border-radius: var(--radius-sm); font-size: 0.75rem; font-weight: 600; font-family: var(--font-mono); margin-right: 0.4rem; }
-        .tag-cyan { background: rgba(34,211,238,0.12); color: #22d3ee; }
-        .tag-emerald { background: rgba(52,211,153,0.12); color: #34d399; }
-        .tag-violet { background: rgba(167,139,250,0.12); color: #a78bfa; }
-        .tag-orange { background: rgba(251,146,60,0.12); color: #fb923c; }
-        .back-link { display: inline-flex; align-items: center; gap: 0.4rem; color: var(--accent); text-decoration: none; font-size: 0.88rem; font-weight: 600; margin-bottom: 2rem; transition: opacity var(--transition-fast); }
-        .back-link:hover { opacity: 0.8; }
-
-        /* ── User Avatar + Dropdown ─────────────────────── */
-        .user-avatar-btn {
-            display: inline-flex; align-items: center; gap: 0.5rem;
-            padding: 0.25rem 0.5rem 0.25rem 0.25rem;
-            border-radius: var(--radius-full);
-            border: 1px solid var(--border-primary);
-            background: transparent; cursor: pointer;
-            transition: all var(--transition-fast);
-            font-family: var(--font-sans); color: var(--text-primary);
-        }
-        .user-avatar-btn:hover { border-color: var(--accent); background: var(--accent-glow); }
-        .user-avatar-circle {
-            width: 28px; height: 28px; border-radius: 50%;
-            background: var(--accent-gradient); color: #fff;
-            display: flex; align-items: center; justify-content: center;
-            font-size: 0.75rem; font-weight: 700; flex-shrink: 0; overflow: hidden;
-        }
-        .user-avatar-name { font-size: 0.82rem; font-weight: 600; max-width: 110px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-        .user-chevron { color: var(--text-faint); transition: transform 0.2s; }
-        .user-menu.open .user-chevron { transform: rotate(180deg); }
-        .user-menu { position: relative; display: inline-flex; }
-        .user-dropdown {
-            display: none; position: absolute; top: calc(100% + 6px); right: 0;
-            min-width: 220px; background: var(--card-bg);
-            border: 1px solid var(--border-primary);
-            border-radius: var(--radius-md); box-shadow: var(--shadow-xl);
-            z-index: 100; overflow: hidden; backdrop-filter: blur(16px);
-            animation: drop-in 0.15s ease;
-        }
-        @keyframes drop-in { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: translateY(0); } }
-        .user-menu.open .user-dropdown { display: block; }
-        .user-dropdown-header { padding: 0.75rem 1rem; display: flex; flex-direction: column; gap: 0.2rem; }
-        .user-dropdown-email { font-size: 0.85rem; font-weight: 600; color: var(--text-primary); word-break: break-all; }
-        .user-dropdown-plan { font-size: 0.72rem; color: var(--text-muted); font-weight: 500; }
-        .user-dropdown-divider { height: 1px; background: var(--border-subtle); margin: 0; }
-        .user-dropdown-item { display: flex; align-items: center; gap: 0.5rem; padding: 0.65rem 1rem; font-size: 0.85rem; color: var(--text-secondary); text-decoration: none; transition: background var(--transition-fast); }
-        .user-dropdown-item svg { flex-shrink: 0; color: var(--text-muted); }
-        .user-dropdown-item:hover { background: var(--btn-secondary-hover); color: var(--text-primary); }
-        .user-dropdown-item:last-child:hover { color: var(--red); }
-        .user-dropdown-item:last-child:hover svg { color: var(--red); }
-
-        /* ── Logout Confirm Modal ────────────────────────── */
-        .logout-modal-overlay {
-            display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6);
-            z-index: 1001; backdrop-filter: blur(6px);
-        }
-        .logout-modal-overlay.open { display: block; }
-        .logout-modal {
-            display: none; position: fixed; top: 50%; left: 50%;
-            transform: translate(-50%, -50%) scale(0.96);
-            z-index: 1002; background: var(--card-bg);
-            border: 1px solid var(--border-primary);
-            border-radius: var(--radius-lg); padding: 2rem;
-            min-width: 360px; max-width: 90vw; box-shadow: var(--shadow-xl);
-            text-align: center; opacity: 0; transition: all 0.2s ease;
-        }
-        .logout-modal.open { display: block; opacity: 1; transform: translate(-50%, -50%) scale(1); }
-        .logout-modal .logout-icon {
-            width: 56px; height: 56px; border-radius: 50%;
-            background: var(--red-bg, rgba(239,68,68,0.12));
-            display: flex; align-items: center; justify-content: center;
-            margin: 0 auto 1rem; font-size: 1.6rem;
-        }
-        .logout-modal .logout-title { font-size: 1.15rem; font-weight: 700; margin-bottom: 0.5rem; color: var(--text-primary); }
-        .logout-modal .logout-desc { font-size: 0.9rem; color: var(--text-muted); margin-bottom: 1.5rem; }
-        .logout-modal .logout-actions { display: flex; gap: 0.75rem; justify-content: center; }
-
-        @media (max-width: 768px) {
-            .nav-cta { display: none !important; }
-            .auth-btn-container { display: inline-flex !important; }
-            .concept-page { padding: 2rem 1rem 3rem; }
-            .concept-page h1 { font-size: 1.6rem; }
-        }
-        @media (max-width: 480px) {
-            .concept-page h1 { font-size: 1.3rem; }
-            .concept-page .subtitle { font-size: 0.9rem; }
-        }
-    </style>
-</head>
-<body>
-
-    <!-- Navbar -->
-    <nav class="navbar" id="mainNav">
-        <div class="nav-inner">
-            <a href="/" class="nav-logo">
-                <img src="/playground/logo.png" alt="" class="nav-logo-img">
-                <span class="nav-logo-text">Memory Bridge</span>
-            </a>
-            <div class="nav-links">
-                <a href="/" class="nav-link" data-i18n="nav.home">Home</a>
-                <a href="/concept" class="nav-link active" data-i18n="nav.concept">Concept</a>
-                <a href="/playground/" class="nav-link" data-i18n="nav.playground">Playground</a>
-                <a href="/dashboard" class="nav-link" data-i18n="nav.dashboard">Dashboard</a>
-                <a href="/pricing" class="nav-link" data-i18n="nav.pricing">Pricing</a>
-            </div>
-            <div class="nav-right">
-                <a href="/playground/" class="btn-primary nav-cta" data-i18n="nav.cta">Get Started</a>
-                <div class="auth-btn-container" style="display:none;">
-                    <button class="btn-ghost" onclick="openAuthModal()" id="auth-nav-btn">Sign in</button>
-                </div>
-                <div class="user-menu" id="userMenu" style="display:none;">
-                    <button class="user-avatar-btn" onclick="toggleUserMenu()">
-                        <span class="user-avatar-circle" id="userAvatarSmall"></span>
-                        <span class="user-avatar-name" id="userNameSmall">User</span>
-                        <span class="user-chevron">▾</span>
-                    </button>
-                    <div class="user-dropdown">
-                        <div class="user-dropdown-header">
-                            <span class="user-dropdown-email" id="userDropdownEmail">user@example.com</span>
-                            <span class="user-dropdown-plan" id="userDropdownPlan">Free Plan</span>
-                        </div>
-                        <div class="user-dropdown-divider"></div>
-                        <a href="/dashboard" class="user-dropdown-item">Dashboard</a>
-                        <a href="/pricing" class="user-dropdown-item">Upgrade</a>
-                        <div class="user-dropdown-divider"></div>
-                        <button class="user-dropdown-item" onclick="showLogoutConfirm()" style="width:100%;background:none;border:none;cursor:pointer;font-family:inherit;text-align:left;">Sign Out</button>
-                    </div>
-                </div>
-                <button class="nav-toggle" onclick="toggleMobileNav()" aria-label="Menu">☰</button>
-            </div>
-        </div>
-        <!-- Mobile Nav -->
-        <div class="nav-mobile" id="mobileNav">
-            <div class="nav-mobile-header">
-                <button class="nav-toggle open" onclick="toggleMobileNav()" aria-label="Close">✕</button>
-            </div>
-            <div class="nav-mobile-user" id="mobileUserCard" style="display:none;">
-                <span class="user-avatar-circle" id="mobileAvatar" style="width:36px;height:36px;font-size:1rem;"></span>
-                <div><div id="mobileUserName">User</div><div class="user-dropdown-plan" id="mobileUserPlan" style="font-size:0.75rem;"></div></div>
-            </div>
-            <div class="nav-mobile-links">
-                <a href="/" data-i18n="nav.home">Home</a>
-                <a href="/concept" data-i18n="nav.concept">Concept</a>
-                <a href="/playground/" data-i18n="nav.playground">Playground</a>
-                <a href="/dashboard" data-i18n="nav.dashboard">Dashboard</a>
-                <a href="/pricing" data-i18n="nav.pricing">Pricing</a>
-                <hr>
-                <a href="#" onclick="openAuthModal()" class="mobile-signin" id="mobileSignInBtn" data-i18n="nav.signin">Sign In</a>
-                <button class="user-dropdown-item" onclick="showLogoutConfirm()" id="mobileSignOutBtn" style="display:none;width:100%;background:none;border:none;cursor:pointer;font-family:inherit;text-align:left;padding:0.75rem 1rem;color:var(--red);">Sign Out</button>
-            </div>
-        </div>
-    </nav>
-
-    <!-- Logout Confirm Modal -->
-    <div class="logout-modal-overlay" id="logoutOverlay" onclick="hideLogoutConfirm()"></div>
-    <div class="logout-modal" id="logoutModal">
-        <div class="logout-icon">🚪</div>
-        <div class="logout-title">Sign Out?</div>
-        <div class="logout-desc">You'll need to sign in again to access your dashboard.</div>
-        <div class="logout-actions">
-            <button class="btn-ghost" onclick="hideLogoutConfirm()">Cancel</button>
-            <button class="btn-primary" onclick="confirmLogout()" style="background:var(--red);">Sign Out</button>
-        </div>
-    </div>
-
-    <!-- Auth Modal -->
-    <div class="modal-overlay" id="authOverlay"></div>
-    <div class="auth-modal" id="authModal">
-        <button class="modal-close" onclick="closeAuthModal()">✕</button>
-        <div class="auth-container">
-            <div class="auth-header">
-                <div class="auth-logo"><img src="/playground/logo.png" alt="" style="width:32px;height:32px;"></div>
-                <h2 class="auth-title">Welcome to Memory Bridge</h2>
-                <p class="auth-subtitle" id="authSubtitle">Sign in to your account</p>
-            </div>
-            <div class="auth-providers">
-                <button class="auth-btn" onclick="socialLogin('google')" data-i18n="auth.continueGoogle">Continue with Google</button>
-                <button class="auth-btn" onclick="socialLogin('apple')" data-i18n="auth.continueApple">Continue with Apple</button>
-                <button class="auth-btn email-btn" onclick="switchAuthTab('email')" data-i18n="auth.emailPasswordless">Email a Magic Link</button>
-            </div>
-            <div class="auth-divider"><span data-i18n="auth.or">or</span></div>
-            <div class="auth-tabs">
-                <button class="auth-tab active" onclick="switchAuthTab('email')" data-i18n="auth.email">Email</button>
-                <button class="auth-tab" onclick="switchAuthTab('phone')" data-i18n="auth.phone">Phone</button>
-            </div>
-            <div class="auth-tab-content" id="authTabEmail">
-                <input type="email" class="auth-input" id="authEmail" placeholder="you@example.com" autocomplete="email">
-                <button class="btn-primary auth-submit" id="sendMagicLinkBtn" onclick="sendMagicLink()">Send Magic Link</button>
-            </div>
-            <div class="auth-tab-content" id="authTabPhone" style="display:none;">
-                <div class="phone-input-container">
-                    <select class="country-select" id="countrySelect"></select>
-                    <input type="tel" class="auth-input phone-input" id="authPhone" placeholder="Phone number">
-                </div>
-                <button class="btn-primary auth-submit" onclick="sendPhoneCode()">Send Code</button>
-            </div>
-
-            <!-- Step 3: Recovery -->
-            <div id="auth-recovery-step" class="auth-form" style="display:none;">
-              <button class="back-link" onclick="showAuthOptions()">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
-                <span data-i18n="auth.back">Back</span>
-              </button>
-              <div class="auth-code-info">
-                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
-                </svg>
-                <div class="auth-code-msg">Recover Your Account</div>
-                <div style="font-size:0.8rem;color:var(--text-muted);margin-top:0.25rem;">Enter your email to recover your API keys and subscription.</div>
-              </div>
-              <input type="email" class="auth-input" id="recovery-email" placeholder="you@example.com" autocomplete="email" style="margin-bottom:0.5rem;" onkeydown="if(event.key==='Enter')recoverAccount(document.getElementById('recovery-email')?.value)">
-              <button class="btn-primary auth-submit" id="recovery-btn" onclick="recoverAccount(document.getElementById('recovery-email')?.value)" style="width:100%;">Recover Account →</button>
-              <div class="auth-error" id="auth-error-recovery" style="margin-top:0.5rem;"></div>
-            </div>
-
-            <div class="auth-terms">By continuing, you agree to our Terms of Service and Privacy Policy.</div>
-            <div style="margin-top: 0.75rem; text-align: center;">
-                <a href="#" onclick="showRecoveryForm(); return false;" style="color: var(--accent); text-decoration: none; font-size: 0.85rem; font-weight: 500; opacity: 0.85; transition: opacity 0.15s;" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0.85'">Lost your account? Recover it here →</a>
-            </div>
-        </div>
-    </div>
-
-    <div class="concept-page">
-        <a href="/" class="back-link">← Back to Home</a>
-        <h1><span>Memory Bridge</span> Architecture</h1>
-        <p class="subtitle">
-            Cross-session memory persistence for AI agents — store, retrieve, and share memories across conversations and sessions.
-        </p>
-
-        <h2>Core Components</h2>
-        <ul>
-            <li>
-                <span class="tag tag-cyan">STORE</span>
-                <strong>Memory Ingestion</strong> — Agents write structured memories (facts, decisions, preferences) to a central store via a lightweight API. Each memory carries context, tags, and metadata for precise retrieval.
-            </li>
-            <li>
-                <span class="tag tag-emerald">RETRIEVE</span>
-                <strong>Contextual Recall</strong> — When an agent needs past context, it queries the store with semantic search, keyword matching, or entity graph traversal. Results are ranked by relevance and returned as actionable context.
-            </li>
-            <li>
-                <span class="tag tag-violet">CORE</span>
-                <strong>Memory Core</strong> — The central persistence layer. Dual-backend (SQLite for dev, PostgreSQL for production) with multi-tenancy via schema-per-tenant and RLS. Redis-backed rate limiting for production safety.
-            </li>
-            <li>
-                <span class="tag tag-orange">ORCHESTRATE</span>
-                <strong>Agent Coordination</strong> — The orchestrator manages which agent stores what, resolves conflicts (duplicate facts, contradictory preferences), and triggers consolidation when the memory graph grows beyond thresholds.
-            </li>
-        </ul>
-
-        <h2>Data Flow</h2>
-        <p>
-            When an agent stores a memory, the payload is validated, indexed by embedding (for semantic search), and persisted with full metadata.
-            Retrieval queries run through a multi-stage pipeline: <strong>keyword filter → semantic ranker → entity resolver → dedup → response</strong>.
-            Cross-session sharing uses the entity graph — agents can discover related memories created by other agents in the same organization.
-        </p>
-
-        <h2>Security & Multi-Tenancy</h2>
-        <p>
-            Every organization gets an isolated schema. Row-Level Security (RLS) enforces tenant boundaries at the database level.
-            Authentication uses stateless JWTs (HS256, 60-minute expiry) for users and bcrypt-hashed API keys for programmatic access.
-            All endpoints are gated by the API key middleware with 34 exempt paths for public pages and webhooks.
-        </p>
-    </div>
-
-    <!-- Footer -->
-    <footer class="footer">
-        <div class="footer-inner">
-            <div class="footer-brand">
-                <img src="/playground/logo.png" alt="" style="width:22px;height:22px;">
-                <span>Memory Bridge</span>
-            </div>
-            <div class="footer-links">
-                <a href="/pricing" data-i18n="nav.pricing">Pricing</a>
-                <a href="/api-docs" data-i18n="nav.docs">API Docs</a>
-                <a href="/faq" data-i18n="nav.faq">FAQ</a>
-                <a href="/demo" data-i18n="nav.demo">Demo</a>
-            </div>
-            <div class="footer-copy">&copy; 2025 Memory Bridge. All rights reserved.</div>
-        </div>
-    </footer>
-
-    <script src="/playground/i18n.js"></script>
-    <script src="/playground/auth.js"></script>
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            if (typeof initI18n === 'function') initI18n();
-            if (typeof initAuth === 'function') initAuth();
-        });
-    </script>
-</body>
-</html>
+     1|<!DOCTYPE html>
+     2|<html lang="en" data-theme="dark">
+     3|<head>
+     4|    <meta charset="UTF-8">
+     5|    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+     6|    <meta name="theme-color" content="#0a0a0f" media="(prefers-color-scheme: dark)">
+     7|    <meta name="theme-color" content="#f8f9fc" media="(prefers-color-scheme: light)">
+     8|    <title>Memory Bridge — Architecture</title>
+     9|    <link rel="icon" href="/playground/logo.png" type="image/png">
+    10|    <link rel="stylesheet" href="/playground/style.css">
+    11|    <style>
+    12|        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700;800&display=swap');
+    13|        body { background: var(--bg-primary); color: var(--text-primary); display: flex; flex-direction: column; min-height: 100vh; }
+    14|        .concept-page { flex: 1; max-width: 800px; margin: 0 auto; padding: 3rem 1.5rem 4rem; width: 100%; }
+    15|        .concept-page h1 { font-size: 2rem; font-weight: 800; margin-bottom: 0.5rem; letter-spacing: -0.5px; }
+    16|        .concept-page h1 span { background: var(--accent-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+    17|        .concept-page .subtitle { color: var(--text-muted); font-size: 1.05rem; margin-bottom: 2.5rem; line-height: 1.6; }
+    18|        .concept-page h2 { font-size: 1.3rem; font-weight: 700; margin: 2rem 0 0.75rem; color: var(--text-primary); }
+    19|        .concept-page p { color: var(--text-secondary); line-height: 1.7; margin-bottom: 1rem; font-size: 0.95rem; }
+    20|        .concept-page ul { list-style: none; padding: 0; margin: 0 0 1.5rem; }
+    21|        .concept-page ul li { padding: 0.6rem 0; border-bottom: 1px solid var(--border-subtle); color: var(--text-secondary); font-size: 0.92rem; line-height: 1.5; }
+    22|        .concept-page ul li:last-child { border-bottom: none; }
+    23|        .concept-page ul li strong { color: var(--text-primary); }
+    24|        .concept-page .tag { display: inline-block; padding: 0.15rem 0.5rem; border-radius: var(--radius-sm); font-size: 0.75rem; font-weight: 600; font-family: var(--font-mono); margin-right: 0.4rem; }
+    25|        .tag-cyan { background: rgba(34,211,238,0.12); color: #22d3ee; }
+    26|        .tag-emerald { background: rgba(52,211,153,0.12); color: #34d399; }
+    27|        .tag-violet { background: rgba(167,139,250,0.12); color: #a78bfa; }
+    28|        .tag-orange { background: rgba(251,146,60,0.12); color: #fb923c; }
+    29|        .back-link { display: inline-flex; align-items: center; gap: 0.4rem; color: var(--accent); text-decoration: none; font-size: 0.88rem; font-weight: 600; margin-bottom: 2rem; transition: opacity var(--transition-fast); }
+    30|        .back-link:hover { opacity: 0.8; }
+    31|
+    32|        /* ── User Avatar + Dropdown ─────────────────────── */
+    33|        .user-avatar-btn {
+    34|            display: inline-flex; align-items: center; gap: 0.5rem;
+    35|            padding: 0.25rem 0.5rem 0.25rem 0.25rem;
+    36|            border-radius: var(--radius-full);
+    37|            border: 1px solid var(--border-primary);
+    38|            background: transparent; cursor: pointer;
+    39|            transition: all var(--transition-fast);
+    40|            font-family: var(--font-sans); color: var(--text-primary);
+    41|        }
+    42|        .user-avatar-btn:hover { border-color: var(--accent); background: var(--accent-glow); }
+    43|        .user-avatar-circle {
+    44|            width: 28px; height: 28px; border-radius: 50%;
+    45|            background: var(--accent-gradient); color: #fff;
+    46|            display: flex; align-items: center; justify-content: center;
+    47|            font-size: 0.75rem; font-weight: 700; flex-shrink: 0; overflow: hidden;
+    48|        }
+    49|        .user-avatar-name { font-size: 0.82rem; font-weight: 600; max-width: 110px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    50|        .user-chevron { color: var(--text-faint); transition: transform 0.2s; }
+    51|        .user-menu.open .user-chevron { transform: rotate(180deg); }
+    52|        .user-menu { position: relative; display: inline-flex; }
+    53|        .user-dropdown {
+    54|            display: none; position: absolute; top: calc(100% + 6px); right: 0;
+    55|            min-width: 220px; background: var(--card-bg);
+    56|            border: 1px solid var(--border-primary);
+    57|            border-radius: var(--radius-md); box-shadow: var(--shadow-xl);
+    58|            z-index: 100; overflow: hidden; backdrop-filter: blur(16px);
+    59|            animation: drop-in 0.15s ease;
+    60|        }
+    61|        @keyframes drop-in { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: translateY(0); } }
+    62|        .user-menu.open .user-dropdown { display: block; }
+    63|        .user-dropdown-header { padding: 0.75rem 1rem; display: flex; flex-direction: column; gap: 0.2rem; }
+    64|        .user-dropdown-email { font-size: 0.85rem; font-weight: 600; color: var(--text-primary); word-break: break-all; }
+    65|        .user-dropdown-plan { font-size: 0.72rem; color: var(--text-muted); font-weight: 500; }
+    66|        .user-dropdown-divider { height: 1px; background: var(--border-subtle); margin: 0; }
+    67|        .user-dropdown-item { display: flex; align-items: center; gap: 0.5rem; padding: 0.65rem 1rem; font-size: 0.85rem; color: var(--text-secondary); text-decoration: none; transition: background var(--transition-fast); }
+    68|        .user-dropdown-item svg { flex-shrink: 0; color: var(--text-muted); }
+    69|        .user-dropdown-item:hover { background: var(--btn-secondary-hover); color: var(--text-primary); }
+    70|        .user-dropdown-item:last-child:hover { color: var(--red); }
+    71|        .user-dropdown-item:last-child:hover svg { color: var(--red); }
+    72|
+    73|        /* ── Logout Confirm Modal ────────────────────────── */
+    74|        .logout-modal-overlay {
+    75|            display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6);
+    76|            z-index: 1001; backdrop-filter: blur(6px);
+    77|        }
+    78|        .logout-modal-overlay.open { display: block; }
+    79|        .logout-modal {
+    80|            display: none; position: fixed; top: 50%; left: 50%;
+    81|            transform: translate(-50%, -50%) scale(0.96);
+    82|            z-index: 1002; background: var(--card-bg);
+    83|            border: 1px solid var(--border-primary);
+    84|            border-radius: var(--radius-lg); padding: 2rem;
+    85|            min-width: 360px; max-width: 90vw; box-shadow: var(--shadow-xl);
+    86|            text-align: center; opacity: 0; transition: all 0.2s ease;
+    87|        }
+    88|        .logout-modal.open { display: block; opacity: 1; transform: translate(-50%, -50%) scale(1); }
+    89|        .logout-modal .logout-icon {
+    90|            width: 56px; height: 56px; border-radius: 50%;
+    91|            background: var(--red-bg, rgba(239,68,68,0.12));
+    92|            display: flex; align-items: center; justify-content: center;
+    93|            margin: 0 auto 1rem; font-size: 1.6rem;
+    94|        }
+    95|        .logout-modal .logout-title { font-size: 1.15rem; font-weight: 700; margin-bottom: 0.5rem; color: var(--text-primary); }
+    96|        .logout-modal .logout-desc { font-size: 0.9rem; color: var(--text-muted); margin-bottom: 1.5rem; }
+    97|        .logout-modal .logout-actions { display: flex; gap: 0.75rem; justify-content: center; }
+    98|
+    99|        @media (max-width: 768px) {
+   100|            .nav-cta { display: none !important; }
+   101|            .auth-btn-container { display: inline-flex !important; }
+   102|            .concept-page { padding: 2rem 1rem 3rem; }
+   103|            .concept-page h1 { font-size: 1.6rem; }
+   104|        }
+   105|        @media (max-width: 480px) {
+   106|            .concept-page h1 { font-size: 1.3rem; }
+   107|            .concept-page .subtitle { font-size: 0.9rem; }
+   108|        }
+   109|
+   110|        /* ── Auth Modal: Passwordless ────────────────────── */
+   111|        .auth-email-field {
+   112|            width: 100%;
+   113|            padding: 0.7rem 1rem 0.7rem 2.5rem;
+   114|            border-radius: var(--radius-sm);
+   115|            border: 1px solid var(--border-primary);
+   116|            background: var(--bg-glass);
+   117|            color: var(--text-primary);
+   118|            font-size: 0.88rem;
+   119|            font-family: var(--font-sans);
+   120|            transition: all var(--transition-fast);
+   121|            outline: none;
+   122|            box-sizing: border-box;
+   123|            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23888888' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='2' y='4' width='20' height='16' rx='2'/%3E%3Cpath d='M22 7l-10 7L2 7'/%3E%3C/svg%3E");
+   124|            background-repeat: no-repeat;
+   125|            background-position: 0.75rem center;
+   126|            background-size: 16px;
+   127|        }
+   128|        .auth-email-field:focus {
+   129|            border-color: var(--accent);
+   130|            box-shadow: 0 0 0 2px var(--accent-glow);
+   131|        }
+   132|        .auth-email-field::placeholder {
+   133|            color: var(--text-faint);
+   134|        }
+   135|        .auth-email-cta {
+   136|            display: flex;
+   137|            align-items: center;
+   138|            justify-content: center;
+   139|            width: 100%;
+   140|            padding: 0.7rem 1rem;
+   141|            border-radius: var(--radius-sm);
+   142|            border: none;
+   143|            background: var(--accent-gradient);
+   144|            color: #fff;
+   145|            font-size: 0.88rem;
+   146|            font-weight: 700;
+   147|            font-family: var(--font-sans);
+   148|            cursor: pointer;
+   149|            transition: all var(--transition-fast);
+   150|            gap: 0.4rem;
+   151|        }
+   152|        .auth-email-cta:hover {
+   153|            opacity: 0.9;
+   154|            transform: translateY(-1px);
+   155|            box-shadow: var(--shadow-sm);
+   156|        }
+   157|        .auth-email-cta:active {
+   158|            transform: translateY(0);
+   159|        }
+   160|        .auth-email-cta:disabled {
+   161|            opacity: 0.5;
+   162|            cursor: not-allowed;
+   163|            transform: none;
+   164|        }
+   165|        .auth-phone-input-row {
+   166|            display: flex;
+   167|            flex-direction: column;
+   168|            gap: 0.5rem;
+   169|            margin: 1rem 0;
+   170|        }
+   171|        .phone-country-select {
+   172|            position: relative;
+   173|            width: 100%;
+   174|        }
+   175|        .phone-country-select select {
+   176|            appearance: none;
+   177|            -webkit-appearance: none;
+   178|            width: 100%;
+   179|            padding: 0.7rem 2rem 0.7rem 0.75rem;
+   180|            border-radius: var(--radius-sm);
+   181|            border: 1px solid var(--border-primary);
+   182|            background: var(--bg-glass);
+   183|            color: var(--text-primary);
+   184|            font-size: 0.88rem;
+   185|            font-family: var(--font-sans);
+   186|            cursor: pointer;
+   187|            outline: none;
+   188|            min-width: 175px;
+   189|            transition: all var(--transition-fast);
+   190|        }
+   191|        .phone-country-select select:focus {
+   192|            border-color: var(--accent);
+   193|            box-shadow: 0 0 0 2px var(--accent-glow);
+   194|        }
+   195|        .phone-country-select .phone-caret {
+   196|            position: absolute;
+   197|            right: 0.5rem;
+   198|            top: 50%;
+   199|            transform: translateY(-50%);
+   200|            pointer-events: none;
+   201|            color: var(--text-muted);
+   202|            font-size: 0.6rem;
+   203|        }
+   204|        .auth-phone-input-row input {
+   205|            width: 100%;
+   206|            padding: 0.7rem 1rem;
+   207|            border-radius: var(--radius-sm);
+   208|            border: 1px solid var(--border-primary);
+   209|            background: var(--bg-glass);
+   210|            color: var(--text-primary);
+   211|            font-size: 0.95rem;
+   212|            font-family: var(--font-sans);
+   213|            text-align: center;
+   214|            outline: none;
+   215|            box-sizing: border-box;
+   216|            transition: all var(--transition-fast);
+   217|        }
+   218|        .auth-phone-input-row input:focus {
+   219|            border-color: var(--accent);
+   220|            box-shadow: 0 0 0 2px var(--accent-glow);
+   221|        }
+   222|        .auth-phone-input-row input::placeholder {
+   223|            color: var(--text-faint);
+   224|        }
+   225|        .auth-code-info {
+   226|            text-align: center;
+   227|            padding: 1rem 0 0.75rem;
+   228|        }
+   229|        .auth-code-info svg {
+   230|            margin-bottom: 0.75rem;
+   231|        }
+   232|        .auth-code-msg {
+   233|            color: var(--text-secondary);
+   234|            font-size: 0.9rem;
+   235|        }
+   236|        .auth-code-email {
+   237|            font-weight: 700;
+   238|            font-size: 1.05rem;
+   239|            color: var(--text-primary);
+   240|            margin-top: 0.2rem;
+   241|        }
+   242|        .auth-code-input-row {
+   243|            margin: 1rem 0;
+   244|        }
+   245|        .auth-code-input-row input {
+   246|            text-align: center;
+   247|            font-size: 1.5rem;
+   248|            font-family: var(--font-mono);
+   249|            letter-spacing: 0.5em;
+   250|            padding: 0.75rem 0.5rem;
+   251|        }
+   252|        .auth-code-resend {
+   253|            text-align: center;
+   254|            margin-top: 0.75rem;
+   255|            font-size: 0.85rem;
+   256|            color: var(--text-muted);
+   257|        }
+   258|        .auth-code-resend a {
+   259|            color: var(--accent);
+   260|            cursor: pointer;
+   261|            text-decoration: underline;
+   262|            text-underline-offset: 2px;
+   263|        }
+   264|        .auth-code-resend a:hover {
+   265|            color: var(--accent-hover);
+   266|        }
+   267|    </style>
+   268|</head>
+   269|<body>
+   270|
+   271|    <!-- Navbar -->
+   272|    <nav class="navbar">
+   273|        <a href="/" class="logo">
+   274|          <img src="/playground/logo.png" alt="Memory Bridge" data-i18n="nav.logo_alt">
+   275|          Memory <span class="logo-accent">Bridge</span>
+   276|        </a>
+   277|        <div class="nav-links">
+   278|          <a href="/" class="active" data-i18n="nav.home">Home</a>
+   279|          <a href="/playground/graph.html" data-i18n="nav.graph">Graph</a>
+   280|          <a href="/dashboard/" data-i18n="nav.dashboard">Dashboard</a>
+   281|          <a href="/pricing" data-i18n="nav.pricing">Pricing</a>
+   282|        </div>
+   283|      <div class="nav-right">
+   284|        <div style="position:relative;display:inline-flex;">
+   285|            <button class="nav-icon-btn lang-toggle" onclick="toggleLang()" title="Switch language" aria-label="Switch language">
+   286|                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+   287|                    <circle cx="12" cy="12" r="10"/>
+   288|                    <line x1="2" y1="12" x2="22" y2="12"/>
+   289|                    <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+   290|                </svg>
+   291|            </button>
+   292|            <div class="lang-dropdown" id="lang-dropdown">
+   293|                <a href="javascript:void(0)" data-lang="en" class="lang-opt active" onclick="setLang('en')">🇬🇧 English</a>
+   294|                <a href="javascript:void(0)" data-lang="zh" class="lang-opt" onclick="setLang('zh')">🇨🇳 中文</a>
+   295|                <a href="javascript:void(0)" data-lang="ja" class="lang-opt" onclick="setLang('ja')">🇯🇵 日本語</a>
+   296|                <a href="javascript:void(0)" data-lang="ko" class="lang-opt" onclick="setLang('ko')">🇰🇷 한국어</a>
+   297|                <a href="javascript:void(0)" data-lang="es" class="lang-opt" onclick="setLang('es')">🇪🇸 Español</a>
+   298|                <a href="javascript:void(0)" data-lang="fr" class="lang-opt" onclick="setLang('fr')">🇫🇷 Français</a>
+   299|                <a href="javascript:void(0)" data-lang="de" class="lang-opt" onclick="setLang('de')">🇩🇪 Deutsch</a>
+   300|            </div>
+   301|        </div>
+   302|        <button class="nav-icon-btn theme-toggle-btn" onclick="toggleTheme()" title="Toggle theme" aria-label="Toggle theme">
+   303|          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="theme-sun">
+   304|            <circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/>
+   305|            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+   306|            <line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/>
+   307|            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+   308|          </svg>
+   309|          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="theme-moon" style="display:none">
+   310|            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+   311|          </svg>
+   312|        </button>
+   313|                <div class="auth-btn-container" id="auth-btn-container">
+   314|                    <button class="auth-btn" id="auth-nav-btn" onclick="openAuth()" title="Sign in / Sign up" data-i18n-title="nav.sign_in_title">
+   315|                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+   316|                        <span id="auth-btn-label" data-i18n="auth.sign_in">Sign in</span>
+   317|                    </button>
+   318|                    <div class="user-menu" id="user-menu" style="display:none;">
+   319|                        <button class="user-avatar-btn" id="user-btn" onclick="toggleUserDropdown()" title="Account menu">
+   320|                            <span class="user-avatar-circle" id="user-avatar-circle">👤</span>
+   321|                            <span class="session-dot" id="session-dot"></span>
+   322|                            <span class="user-avatar-name" id="user-avatar-name"></span>
+   323|                            <span class="user-plan-badge" id="user-plan-badge"></span>
+   324|                            <svg class="user-chevron" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+   325|                        </button>
+   326|                        <div class="user-dropdown" id="user-dropdown">
+   327|                            <div class="user-dropdown-header">
+   328|                                <span class="user-dropdown-email" id="user-dropdown-email"></span>
+   329|                                <span class="user-dropdown-plan" id="user-dropdown-plan" data-i18n="dash.free_plan">Free Plan</span>
+   330|                                <span class="user-dropdown-since" id="user-dropdown-since"></span>
+   331|                            </div>
+   332|                            <div class="user-dropdown-divider"></div>
+   333|                            <a href="/pricing" class="user-dropdown-item" data-i18n="dash.manage_billing">
+   334|                                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+   335|                                Manage Billing
+   336|                            </a>
+   337|                            <div class="user-dropdown-item sign-out" onclick="showLogoutConfirm()" style="cursor:pointer;" data-i18n="nav.sign_out">
+   338|                                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+   339|                                Sign Out
+   340|                            </div>
+   341|                        </div>
+   342|                    </div>
+   343|                </div>
+   344|                <a href="/playground/" class="nav-cta">
+   345|                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+   346|                        <polygon points="5 3 19 12 5 21 5 3"/>
+   347|                    </svg>
+   348|                    <span data-i18n="nav.launch_playground">Launch Playground</span>
+   349|                </a>
+   350|                <button class="nav-hamburger" onclick="toggleMobileNav()" aria-label="Open menu">
+   351|                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+   352|                        <line x1="4" y1="6" x2="20" y2="6"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="18" x2="20" y2="18"/>
+   353|                    </svg>
+   354|                </button>
+   355|            </div>
+   356|        </nav>
+   357|
+   358|    <!-- Mobile Nav Panel -->
+   359|    <div class="nav-mobile-backdrop" id="nav-backdrop" onclick="closeMobileNav()"></div>
+   360|    <div class="nav-mobile-panel" id="nav-mobile">
+   361|      <div class="nav-mobile-header">
+   362|        <div class="logo">
+   363|          <img src="/playground/logo.png" alt="Memory Bridge" data-i18n="nav.logo_alt">
+   364|          Memory <span class="logo-accent">Bridge</span>
+   365|        </div>
+   366|        <button class="nav-mobile-close" onclick="closeMobileNav()" aria-label="Close menu">
+   367|          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+   368|            <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+   369|          </svg>
+   370|        </button>
+   371|      </div>
+   372|      <a href="/" onclick="closeMobileNav()" data-i18n="nav.home">
+   373|        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+   374|        Home
+   375|      </a>
+   376|      <a href="/playground/graph.html" onclick="closeMobileNav()" data-i18n="nav.graph">
+   377|        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="5" cy="5" r="3"/><circle cx="19" cy="5" r="3"/><circle cx="12" cy="19" r="3"/><line x1="5" y1="5" x2="19" y2="5"/><line x1="5" y1="5" x2="12" y2="19"/><line x1="19" y1="5" x2="12" y2="19"/></svg>
+   378|        Graph
+   379|      </a>
+   380|      <a href="/pricing" onclick="closeMobileNav()" data-i18n="nav.pricing">
+   381|        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+   382|        Pricing
+   383|      </a>
+   384|      <a href="/dashboard/" onclick="closeMobileNav()" data-i18n="nav.dashboard">
+   385|        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+   386|        Dashboard
+   387|      </a>
+   388|      <a href="/concept" class="active" onclick="closeMobileNav()" data-i18n="nav.concept">
+   389|        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+   390|        Concept
+   391|      </a>
+   392|      <a href="javascript:void(0)" id="auth-mobile-btn" onclick="closeMobileNav();openAuth()" style="display:flex;align-items:center;gap:0.45rem;padding:0.7rem 1.25rem;border-radius:var(--radius-sm);font-size:0.88rem;font-weight:600;color:var(--accent);text-decoration:none;">
+   393|        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+   394|        <span id="auth-mobile-label" data-i18n="auth.sign_in">Sign in</span>
+   395|      </a>
+   396|      <!-- Mobile User Card (when signed in) -->
+   397|      <div id="mobile-user-card" style="display:none;">
+   398|        <div class="mobile-user-header">
+   399|          <div class="mobile-user-avatar">
+   400|            <span class="mobile-user-circle" id="mobile-user-circle">👤</span>
+   401|            <span class="session-dot" id="mobile-session-dot"></span>
+   402|          </div>
+   403|          <div class="mobile-user-info">
+   404|            <span class="mobile-user-email" id="mobile-user-email"></span>
+   405|                        <span class="mobile-user-plan" id="mobile-user-plan" data-i18n="dash.free_plan">Free Plan</span>
+   406|          </div>
+   407|        </div>
+   408|        <div class="mobile-user-divider"></div>
+   409|        <a href="/pricing" class="mobile-user-action" onclick="closeMobileNav()">
+   410|          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+   411|          <span data-i18n="dash.manage_billing">Manage Billing</span>
+   412|          </a>
+   413|        <div class="mobile-user-divider"></div>
+   414|        <span class="mobile-user-since" id="mobile-user-since"></span>
+   415|        <a href="javascript:void(0)" class="mobile-user-action sign-out" id="mobile-sign-out-btn" onclick="closeMobileNav();showLogoutConfirm()">
+   416|          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+   417|          <span data-i18n="nav.sign_out">Sign Out</span>
+   418|        </a>
+   419|    </div>
+   420|      <div class="nav-mobile-divider"></div>
+   421|      <a href="/playground/" class="nav-mobile-cta" onclick="closeMobileNav()">
+   422|        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+   423|        <span data-i18n="nav.launch_playground">Launch Playground</span>
+   424|      </a>
+   425|    </div>
+   426|
+   427|    <!-- Logout Confirm Modal -->
+   428|    <div class="logout-modal-overlay" id="logout-overlay" onclick="closeLogoutConfirm()"></div>
+   429|    <div class="logout-modal" id="logout-modal">
+   430|        <div class="logout-icon">🚪</div>
+   431|        <div class="logout-title" data-i18n="logout.title">Sign out of Memory Bridge?</div>
+   432|        <div class="logout-text" data-i18n="logout.text">
+   433|            You'll need to sign in again to manage API keys, view subscription details, or access your dashboard.
+   434|        </div>
+   435|        <div class="logout-btns">
+   436|            <button class="btn btn-secondary" data-i18n="logout.cancel" onclick="closeLogoutConfirm()">Cancel</button>
+   437|            <button class="btn btn-danger" id="logout-confirm-btn" data-i18n="logout.sign_out" onclick="logout()">Sign Out</button>
+   438|        </div>
+   439|    </div>
+   440|
+   441|    <!-- Auth Modal -->
+   442|    <div class="auth-overlay" id="auth-overlay">
+   443|      <div class="auth-modal">
+   444|        <button class="auth-close" onclick="closeAuth()" aria-label="Close">
+   445|          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+   446|        </button>
+   447|        <div class="auth-icon">🔑</div>
+   448|        <div class="auth-title">Memory Bridge</div>
+   449|        <!-- Sign In / Create Account tabs -->
+   450|        <div class="auth-tabs" style="display:flex;gap:0;margin:0.5rem 0 1rem;border:1px solid var(--border-primary);border-radius:var(--radius-md);overflow:hidden;width:100%;">
+   451|          <button class="auth-tab active" id="auth-tab-signin" onclick="selectAuthTab('signin')" style="flex:1;padding:0.5rem 0;border:none;background:var(--accent);color:#fff;font-size:0.88rem;font-weight:600;cursor:pointer;">Sign In</button>
+   452|          <button class="auth-tab" id="auth-tab-signup" onclick="selectAuthTab('signup')" style="flex:1;padding:0.5rem 0;border:none;background:transparent;color:var(--text-muted);font-size:0.88rem;font-weight:600;cursor:pointer;">Create Account</button>
+   453|        </div>
+   454|        <div class="auth-subtitle" id="auth-subtitle" data-i18n="auth.subtitle">Sign in to access your account.</div>
+   455|
+   456|        <!-- Step 1: Options (social + email) -->
+   457|        <div id="auth-options" class="auth-options">
+   458|          <button class="auth-social-btn" onclick="socialLogin('google-oauth2')">
+   459|            <span class="s-icon google">
+   460|              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 48 48">
+   461|                <path fill="#FFC107" d="M43.611,20.083H42V20H24v8h11.303c-1.649,4.657-6.08,8-11.303,8c-6.627,0-12-5.373-12-12c0-6.627,5.373-12,12-12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C12.955,4,4,12.955,4,24c0,11.045,8.955,20,20,20c11.045,0,20-8.955,20-20C44,22.659,43.862,21.35,43.611,20.083z"/>
+   462|                <path fill="#FF3D00" d="M6.306,14.691l6.571,4.819C14.655,15.108,18.961,12,24,12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C16.318,4,9.656,8.337,6.306,14.691z"/>
+   463|                <path fill="#4CAF50" d="M24,44c5.166,0,9.86-1.977,13.409-5.192l-6.19-5.238C29.211,35.091,26.715,36,24,36c-5.202,0-9.619-3.317-11.283-7.946l-6.522,5.025C9.505,39.556,16.227,44,24,44z"/>
+   464|                <path fill="#1976D2" d="M43.611,20.083H42V20H24v8h11.303c-0.792,2.237-2.231,4.166-4.087,5.571c0.001-0.001,0.002-0.001,0.003-0.002l6.19,5.238C36.971,39.205,44,34,44,24C44,22.659,43.862,21.35,43.611,20.083z"/>
+   465|              </svg>
+   466|            </span>
+   467|            <span data-i18n="auth.continue_google">Continue with Google</span>
+   468|          </button>
+   469|          <button class="auth-social-btn" onclick="socialLogin('apple')">
+   470|            <span class="s-icon apple">
+   471|              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="#000">
+   472|                <path d="M17.05 20.28c-.98.95-2.05.8-3.08.35-1.09-.46-2.09-.48-3.24 0-1.44.62-2.2.44-3.06-.35C2.79 15.25 3.51 7.59 9.05 7.31c1.35.07 2.29.74 3.08.8 1.18-.24 2.31-.93 3.57-.84 1.51.12 2.65.72 3.4 1.8-3.12 1.87-2.38 5.98.48 7.13-.57 1.5-1.31 2.99-2.54 4.09zM12.03 7.25c-.15-2.23 1.66-4.07 3.74-4.25.29 2.58-2.34 4.5-3.74 4.25z"/>
+   473|              </svg>
+   474|            </span>
+   475|            <span data-i18n="auth.continue_apple">Continue with Apple</span>
+   476|          </button>
+   477|          <button class="auth-social-btn" onclick="phoneLogin()">
+   478|            <span class="s-icon phone">
+   479|              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+   480|                <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
+   481|              </svg>
+   482|            </span>
+   483|            <span data-i18n="auth.continue_phone">Continue with Phone</span>
+   484|          </button>
+   485|          <div class="auth-divider">
+   486|            <hr>
+   487|            <span data-i18n="auth.or_email">or continue with email</span>
+   488|            <hr>
+   489|          </div>
+   490|          <input type="email" class="auth-email-field" id="pl-email" placeholder="you@example.com" data-i18n="auth.email_placeholder" autocomplete="email" onkeydown="if(event.key==='Enter')continueWithEmail()">
+   491|          <button class="auth-email-cta" onclick="continueWithEmail()" id="pl-email-btn" data-i18n="auth.continue_btn">Continue →</button>
+   492|          <div class="auth-error" id="auth-error-main"></div>
+   493|    <div style="margin-top: 0.75rem; text-align: center;">
+   494|                    <a href="#" onclick="showRecoveryForm(); return false;" style="color: var(--accent); text-decoration: none; font-size: 0.85rem; font-weight: 500; opacity: 0.85; transition: opacity 0.15s;" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0.85'">Lost your account? Recover it here →</a>
+   495|                  </div>
+   496|        </div>
+   497|
+   498|        <!-- Step 2: Phone input -->
+   499|        <div id="auth-phone-step" class="auth-form">
+   500|          <button class="back-link" onclick="showAuthOptions()">
+   501|            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+   502|            <span data-i18n="auth.back">Back</span>
+   503|          </button>
+   504|          <div class="auth-code-info">
+   505|            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+   506|              <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
+   507|            </svg>
+   508|            <div class="auth-code-msg" data-i18n="auth.enter_phone">Enter your phone number</div>
+   509|            <div style="font-size:0.8rem;color:var(--text-muted);margin-top:0.25rem;" data-i18n="auth.sms_notice">We'll send a 6-digit code via SMS</div>
+   510|          </div>
+   511|          <div class="auth-phone-input-row">
+   512|            <div class="phone-country-select">
+   513|              <select id="pl-country-code" onchange="updatePhoneFlag()">
+   514|                <option value="93">🇦🇫 Afghanistan +93</option>
+   515|                <option value="355">🇦🇱 Albania +355</option>
+   516|                <option value="213">🇩🇿 Algeria +213</option>
+   517|                <option value="376">🇦🇩 Andorra +376</option>
+   518|                <option value="244">🇦🇴 Angola +244</option>
+   519|                <option value="54">🇦🇷 Argentina +54</option>
+   520|                <option value="374">🇦🇲 Armenia +374</option>
+   521|                <option value="297">🇦🇼 Aruba +297</option>
+   522|                <option value="61">🇦🇺 Australia +61</option>
+   523|                <option value="43">🇦🇹 Austria +43</option>
+   524|                <option value="994">🇦🇿 Azerbaijan +994</option>
+   525|                <option value="973">🇧🇭 Bahrain +973</option>
+   526|                <option value="880">🇧🇩 Bangladesh +880</option>
+   527|                <option value="375">🇧🇾 Belarus +375</option>
+   528|                <option value="32">🇧🇪 Belgium +32</option>
+   529|                <option value="501">🇧🇿 Belize +501</option>
+   530|                <option value="229">🇧🇯 Benin +229</option>
+   531|                <option value="975">🇧🇹 Bhutan +975</option>
+   532|                <option value="591">🇧🇴 Bolivia +591</option>
+   533|                <option value="387">🇧🇦 Bosnia +387</option>
+   534|                <option value="267">🇧🇼 Botswana +267</option>
+   535|                <option value="55">🇧🇷 Brazil +55</option>
+   536|                <option value="673">🇧🇳 Brunei +673</option>
+   537|                <option value="359">🇧🇬 Bulgaria +359</option>
+   538|                <option value="226">🇧🇫 Burkina Faso +226</option>
+   539|                <option value="257">🇧🇮 Burundi +257</option>
+   540|                <option value="855">🇰🇭 Cambodia +855</option>
+   541|                <option value="237">🇨🇲 Cameroon +237</option>
+   542|                <option value="1">🇨🇦 Canada +1</option>
+   543|                <option value="238">🇨🇻 Cape Verde +238</option>
+   544|                <option value="236">🇨🇫 CAR +236</option>
+   545|                <option value="235">🇹🇩 Chad +235</option>
+   546|                <option value="56">🇨🇱 Chile +56</option>
+   547|                <option value="86">🇨🇳 China +86</option>
+   548|                <option value="57">🇨🇴 Colombia +57</option>
+   549|                <option value="269">🇰🇲 Comoros +269</option>
+   550|                <option value="243">🇨🇩 Congo (DRC) +243</option>
+   551|                <option value="242">🇨🇬 Congo +242</option>
+   552|                <option value="506">🇨🇷 Costa Rica +506</option>
+   553|                <option value="385">🇭🇷 Croatia +385</option>
+   554|                <option value="53">🇨🇺 Cuba +53</option>
+   555|                <option value="357">🇨🇾 Cyprus +357</option>
+   556|                <option value="420">🇨🇿 Czechia +420</option>
+   557|                <option value="45">🇩🇰 Denmark +45</option>
+   558|                <option value="253">🇩🇯 Djibouti +253</option>
+   559|                <option value="593">🇪🇨 Ecuador +593</option>
+   560|                <option value="20">🇪🇬 Egypt +20</option>
+   561|                <option value="503">🇸🇻 El Salvador +503</option>
+   562|                <option value="372">🇪🇪 Estonia +372</option>
+   563|                <option value="251">🇪🇹 Ethiopia +251</option>
+   564|                <option value="679">🇫🇯 Fiji +679</option>
+   565|                <option value="358">🇫🇮 Finland +358</option>
+   566|                <option value="33">🇫🇷 France +33</option>
+   567|                <option value="241">🇬🇦 Gabon +241</option>
+   568|                <option value="220">🇬🇲 Gambia +220</option>
+   569|                <option value="995">🇬🇪 Georgia +995</option>
+   570|                <option value="49">🇩🇪 Germany +49</option>
+   571|                <option value="233">🇬🇭 Ghana +233</option>
+   572|                <option value="30">🇬🇷 Greece +30</option>
+   573|                <option value="299">🇬🇱 Greenland +299</option>
+   574|                <option value="502">🇬🇹 Guatemala +502</option>
+   575|                <option value="224">🇬🇳 Guinea +224</option>
+   576|                <option value="245">🇬🇼 Guinea-Bissau +245</option>
+   577|                <option value="592">🇬🇾 Guyana +592</option>
+   578|                <option value="509">🇭🇹 Haiti +509</option>
+   579|                <option value="504">🇭🇳 Honduras +504</option>
+   580|                <option value="852">🇭🇰 Hong Kong +852</option>
+   581|                <option value="36">🇭🇺 Hungary +36</option>
+   582|                <option value="354">🇮🇸 Iceland +354</option>
+   583|                <option value="91">🇮🇳 India +91</option>
+   584|                <option value="62">🇮🇩 Indonesia +62</option>
+   585|                <option value="98">🇮🇷 Iran +98</option>
+   586|                <option value="964">🇮🇶 Iraq +964</option>
+   587|                <option value="353">🇮🇪 Ireland +353</option>
+   588|                <option value="972">🇮🇱 Israel +972</option>
+   589|                <option value="39">🇮🇹 Italy +39</option>
+   590|                <option value="225">🇨🇮 Ivory Coast +225</option>
+   591|                <option value="81">🇯🇵 Japan +81</option>
+   592|                <option value="962">🇯🇴 Jordan +962</option>
+   593|                <option value="7">🇰🇿 Kazakhstan +7</option>
+   594|                <option value="254">🇰🇪 Kenya +254</option>
+   595|                <option value="383">🇽🇰 Kosovo +383</option>
+   596|                <option value="965">🇰🇼 Kuwait +965</option>
+   597|                <option value="996">🇰🇬 Kyrgyzstan +996</option>
+   598|                <option value="856">🇱🇦 Laos +856</option>
+   599|                <option value="371">🇱🇻 Latvia +371</option>
+   600|                <option value="961">🇱🇧 Lebanon +961</option>
+   601|                <option value="266">🇱🇸 Lesotho +266</option>
+   602|                <option value="231">🇱🇷 Liberia +231</option>
+   603|                <option value="218">🇱🇾 Libya +218</option>
+   604|                <option value="423">🇱🇮 Liechtenstein +423</option>
+   605|                <option value="370">🇱🇹 Lithuania +370</option>
+   606|                <option value="352">🇱🇺 Luxembourg +352</option>
+   607|                <option value="853">🇲🇴 Macau +853</option>
+   608|                <option value="389">🇲🇰 North Macedonia +389</option>
+   609|                <option value="261">🇲🇬 Madagascar +261</option>
+   610|                <option value="265">🇲🇼 Malawi +265</option>
+   611|                <option value="60">🇲🇾 Malaysia +60</option>
+   612|                <option value="960">🇲🇻 Maldives +960</option>
+   613|                <option value="223">🇲🇱 Mali +223</option>
+   614|                <option value="356">🇲🇹 Malta +356</option>
+   615|                <option value="222">🇲🇷 Mauritania +222</option>
+   616|                <option value="230">🇲🇺 Mauritius +230</option>
+   617|                <option value="52">🇲🇽 Mexico +52</option>
+   618|                <option value="373">🇲🇩 Moldova +373</option>
+   619|                <option value="377">🇲🇨 Monaco +377</option>
+   620|                <option value="976">🇲🇳 Mongolia +976</option>
+   621|                <option value="382">🇲🇪 Montenegro +382</option>
+   622|                <option value="212">🇲🇦 Morocco +212</option>
+   623|                <option value="258">🇲🇿 Mozambique +258</option>
+   624|                <option value="95">🇲🇲 Myanmar +95</option>
+   625|                <option value="264">🇳🇦 Namibia +264</option>
+   626|                <option value="977">🇳🇵 Nepal +977</option>
+   627|                <option value="31">🇳🇱 Netherlands +31</option>
+   628|                <option value="64">🇳🇿 New Zealand +64</option>
+   629|                <option value="505">🇳🇮 Nicaragua +505</option>
+   630|                <option value="227">🇳🇪 Niger +227</option>
+   631|                <option value="234">🇳🇬 Nigeria +234</option>
+   632|                <option value="47">🇳🇴 Norway +47</option>
+   633|                <option value="968">🇴🇲 Oman +968</option>
+   634|                <option value="92">🇵🇰 Pakistan +92</option>
+   635|                <option value="680">🇵🇼 Palau +680</option>
+   636|                <option value="970">🇵🇸 Palestine +970</option>
+   637|                <option value="507">🇵🇦 Panama +507</option>
+   638|                <option value="675">🇵🇬 Papua New Guinea +675</option>
+   639|                <option value="595">🇵🇾 Paraguay +595</option>
+   640|                <option value="51">🇵🇪 Peru +51</option>
+   641|                <option value="63">🇵🇭 Philippines +63</option>
+   642|                <option value="48">🇵🇱 Poland +48</option>
+   643|                <option value="351">🇵🇹 Portugal +351</option>
+   644|                <option value="974">🇶🇦 Qatar +974</option>
+   645|                <option value="40">🇷🇴 Romania +40</option>
+   646|                <option value="7">🇷🇺 Russia +7</option>
+   647|                <option value="250">🇷🇼 Rwanda +250</option>
+   648|                <option value="685">🇼🇸 Samoa +685</option>
+   649|                <option value="378">🇸🇲 San Marino +378</option>
+   650|                <option value="239">🇸🇹 São Tomé +239</option>
+   651|                <option value="966">🇸🇦 Saudi Arabia +966</option>
+   652|                <option value="221">🇸🇳 Senegal +221</option>
+   653|                <option value="381">🇷🇸 Serbia +381</option>
+   654|                <option value="248">🇸🇨 Seychelles +248</option>
+   655|                <option value="232">🇸🇱 Sierra Leone +232</option>
+   656|                <option value="65" selected>🇸🇬 Singapore +65</option>
+   657|                <option value="421">🇸🇰 Slovakia +421</option>
+   658|                <option value="386">🇸🇮 Slovenia +386</option>
+   659|                <option value="677">🇸🇧 Solomon Islands +677</option>
+   660|                <option value="252">🇸🇴 Somalia +252</option>
+   661|                <option value="27">🇿🇦 South Africa +27</option>
+   662|                <option value="82">🇰🇷 South Korea +82</option>
+   663|                <option value="34">🇪🇸 Spain +34</option>
+   664|                <option value="94">🇱🇰 Sri Lanka +94</option>
+   665|                <option value="249">🇸🇩 Sudan +249</option>
+   666|                <option value="597">🇸🇷 Suriname +597</option>
+   667|                <option value="268">🇸🇿 Eswatini +268</option>
+   668|                <option value="46">🇸🇪 Sweden +46</option>
+   669|                <option value="41">🇨🇭 Switzerland +41</option>
+   670|                <option value="963">🇸🇾 Syria +963</option>
+   671|                <option value="886">🇹🇼 Taiwan +886</option>
+   672|                <option value="992">🇹🇯 Tajikistan +992</option>
+   673|                <option value="255">🇹🇿 Tanzania +255</option>
+   674|                <option value="66">🇹🇭 Thailand +66</option>
+   675|                <option value="670">🇹🇱 Timor-Leste +670</option>
+   676|                <option value="228">🇹🇬 Togo +228</option>
+   677|                <option value="676">🇹🇴 Tonga +676</option>
+   678|                <option value="216">🇹🇳 Tunisia +216</option>
+   679|                <option value="90">🇹🇷 Turkey +90</option>
+   680|                <option value="993">🇹🇲 Turkmenistan +993</option>
+   681|                <option value="256">🇺🇬 Uganda +256</option>
+   682|                <option value="380">🇺🇦 Ukraine +380</option>
+   683|                <option value="971">🇦🇪 UAE +971</option>
+   684|                <option value="44">🇬🇧 UK +44</option>
+   685|                <option value="1">🇺🇸 US +1</option>
+   686|                <option value="598">🇺🇾 Uruguay +598</option>
+   687|                <option value="998">🇺🇿 Uzbekistan +998</option>
+   688|                <option value="678">🇻🇺 Vanuatu +678</option>
+   689|                <option value="379">🇻🇦 Vatican +379</option>
+   690|                <option value="58">🇻🇪 Venezuela +58</option>
+   691|                <option value="84">🇻🇳 Vietnam +84</option>
+   692|                <option value="967">🇾🇪 Yemen +967</option>
+   693|                <option value="260">🇿🇲 Zambia +260</option>
+   694|                <option value="263">🇿🇼 Zimbabwe +263</option>
+   695|              </select>
+   696|              <span class="phone-caret">▼</span>
+   697|            </div>
+   698|            <input type="tel" id="pl-phone" placeholder="8123 4567" data-i18n="auth.phone_placeholder" autocomplete="tel" onkeydown="if(event.key==='Enter')sendPhoneCode()">
+   699|          </div>
+   700|          <button class="auth-email-cta" onclick="sendPhoneCode()" id="pl-phone-btn" data-i18n="auth.send_code_btn">Send Code →</button>
+   701|          <div class="auth-error" id="auth-error-phone"></div>
+   702|        </div>
+   703|
+   704|        <!-- Step 3: Code verification -->
+   705|        <div id="auth-code-step" class="auth-form">
+   706|          <button class="back-link" onclick="showAuthOptions()">
+   707|            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+   708|            <span id="code-back-label" data-i18n="auth.change_email">Change email</span>
+   709|          </button>
+   710|          <div class="auth-code-info">
+   711|            <svg id="code-step-icon" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+   712|              <rect x="2" y="4" width="20" height="16" rx="2"/>
+   713|              <path d="M22 7l-10 7L2 7"/>
+   714|            </svg>
+   715|            <div class="auth-code-msg" data-i18n="auth.sent_code">We sent a code to</div>
+   716|            <div class="auth-code-email" id="code-email-display">j***@example.com</div>
+   717|          </div>
+   718|          <div class="auth-code-input-row">
+   719|            <input type="text" id="pl-code" placeholder="Enter 6-digit code" data-i18n="auth.code_placeholder" maxlength="6" inputmode="numeric" autocomplete="one-time-code" onkeydown="if(event.key==='Enter')verifyCode()">
+   720|          </div>
+   721|          <button class="btn btn-primary" onclick="verifyCode()" id="pl-code-btn" data-i18n="auth.verify_btn">Verify Code →</button>
+   722|          <div class="auth-error" id="auth-error-code"></div>
+   723|          <div class="auth-code-resend" data-i18n="auth.resend_label">
+   724|            Didn't get it? <a onclick="resendCode()" data-i18n="auth.send_new_code">Send new code</a>
+   725|          </div>
+   726|        </div>
+   727|      <!-- Step 4: Recovery -->
+   728|      <div id="auth-recovery-step" class="auth-form" style="display:none;">
+   729|        <button class="back-link" onclick="showAuthOptions()">
+   730|          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+   731|          <span data-i18n="auth.back">Back</span>
+   732|        </button>
+   733|        <div class="auth-code-info">
+   734|          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+   735|            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+   736|          </svg>
+   737|          <div class="auth-code-msg">Recover Your Account</div>
+   738|      <div class="recovery-subtitle" style="font-size:0.8rem;color:var(--text-muted);margin-top:0.25rem;">Enter your email to recover your API keys and subscription.</div>
+   739|    </div>
+   740|    <div id="recovery-email-row">
+   741|      <input type="email" class="auth-email-field" id="recovery-email" placeholder="you@example.com" autocomplete="email" style="margin-bottom:0.5rem;" onkeydown="if(event.key==='Enter')recoverAccount(document.getElementById('recovery-email')?.value)">
+   742|      <button class="auth-email-cta" id="recovery-btn" onclick="recoverAccount(document.getElementById('recovery-email')?.value)">Recover Account →</button>
+   743|    </div>
+   744|    <div id="recovery-code-section" style="display:none;">
+   745|      <div class="auth-code-input-row">
+   746|
+   747|        <input type="text" id="recovery-code" placeholder="Enter 6-digit code" data-i18n="auth.code_placeholder" maxlength="6" inputmode="numeric" autocomplete="one-time-code" onkeydown="if(event.key==='Enter')recoverVerifyCode()">
+   748|
+   749|      </div>
+   750|
+   751|      <button class="btn btn-primary" id="recovery-verify-btn" onclick="recoverVerifyCode()" data-i18n="auth.verify_btn">Verify Code →</button>
+   752|      <div style="margin-top:0.5rem;text-align:center;font-size:0.78rem;color:var(--text-muted);">
+   753|        Didn't get it? <a href="#" onclick="recoverAccount(document.getElementById('recovery-email')?.value); return false;" style="color:var(--accent);text-decoration:none;">Send new code</a>
+   754|      </div>
+   755|    </div>
+   756|    <div class="auth-error" id="auth-error-recovery" style="margin-top:0.5rem;"></div>
+   757|  </div>
+   758|  </div>
+   759|</div>
+   760|
+   761|    <div class="concept-page">
+   762|        <a href="/" class="back-link">← Back to Home</a>
+   763|        <h1><span>Memory Bridge</span> Architecture</h1>
+   764|        <p class="subtitle">
+   765|            Cross-session memory persistence for AI agents — store, retrieve, and share memories across conversations and sessions.
+   766|        </p>
+   767|
+   768|        <h2>Core Components</h2>
+   769|        <ul>
+   770|            <li>
+   771|                <span class="tag tag-cyan">STORE</span>
+   772|                <strong>Memory Ingestion</strong> — Agents write structured memories (facts, decisions, preferences) to a central store via a lightweight API. Each memory carries context, tags, and metadata for precise retrieval.
+   773|            </li>
+   774|            <li>
+   775|                <span class="tag tag-emerald">RETRIEVE</span>
+   776|                <strong>Contextual Recall</strong> — When an agent needs past context, it queries the store with semantic search, keyword matching, or entity graph traversal. Results are ranked by relevance and returned as actionable context.
+   777|            </li>
+   778|            <li>
+   779|                <span class="tag tag-violet">CORE</span>
+   780|                <strong>Memory Core</strong> — The central persistence layer. Dual-backend (SQLite for dev, PostgreSQL for production) with multi-tenancy via schema-per-tenant and RLS. Redis-backed rate limiting for production safety.
+   781|            </li>
+   782|            <li>
+   783|                <span class="tag tag-orange">ORCHESTRATE</span>
+   784|                <strong>Agent Coordination</strong> — The orchestrator manages which agent stores what, resolves conflicts (duplicate facts, contradictory preferences), and triggers consolidation when the memory graph grows beyond thresholds.
+   785|            </li>
+   786|        </ul>
+   787|
+   788|        <h2>Data Flow</h2>
+   789|        <p>
+   790|            When an agent stores a memory, the payload is validated, indexed by embedding (for semantic search), and persisted with full metadata.
+   791|            Retrieval queries run through a multi-stage pipeline: <strong>keyword filter → semantic ranker → entity resolver → dedup → response</strong>.
+   792|            Cross-session sharing uses the entity graph — agents can discover related memories created by other agents in the same organization.
+   793|        </p>
+   794|
+   795|        <h2>Security & Multi-Tenancy</h2>
+   796|        <p>
+   797|            Every organization gets an isolated schema. Row-Level Security (RLS) enforces tenant boundaries at the database level.
+   798|            Authentication uses stateless JWTs (HS256, 60-minute expiry) for users and bcrypt-hashed API keys for programmatic access.
+   799|            All endpoints are gated by the API key middleware with 34 exempt paths for public pages and webhooks.
+   800|        </p>
+   801|    </div>
+   802|
+   803|    <!-- Footer -->
+   804|    <footer class="footer" data-i18n="footer.text">© 2026 Memory Bridge — API for cross-agent memory</footer>
+   805|
+   806|    <script src="/playground/i18n.js"></script>
+   807|    <script src="/playground/auth.js?v=1"></script>
+   808|    <script>
+   809|// ── Theme ──────────────────────────────────────────────
+   810|(function initTheme() {
+   811|  const saved = localStorage.getItem('mb-theme');
+   812|  const html = document.documentElement;
+   813|  if (saved) html.setAttribute('data-theme', saved);
+   814|  else {
+   815|    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+   816|    html.setAttribute('data-theme', prefersDark ? 'dark' : 'light');
+   817|  }
+   818|  updateThemeIcons();
+   819|})();
+   820|function toggleTheme() {
+   821|  const html = document.documentElement;
+   822|  const next = html.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+   823|  html.setAttribute('data-theme', next);
+   824|  localStorage.setItem('mb-theme', next);
+   825|  updateThemeIcons();
+   826|}
+   827|function updateThemeIcons() {
+   828|  const theme = document.documentElement.getAttribute('data-theme');
+   829|  document.querySelectorAll('.theme-toggle-btn').forEach(btn => {
+   830|    const sun = btn.querySelector('.theme-sun');
+   831|    const moon = btn.querySelector('.theme-moon');
+   832|    if (sun) sun.style.display = theme === 'dark' ? 'block' : 'none';
+   833|    if (moon) moon.style.display = theme === 'dark' ? 'none' : 'block';
+   834|  });
+   835|}
+   836|
+   837|// ── Mobile Nav ─────────────────────────────────────────
+   838|function toggleMobileNav() {
+   839|  document.getElementById('nav-backdrop').classList.toggle('open');
+   840|  document.getElementById('nav-mobile').classList.toggle('open');
+   841|  document.body.style.overflow = document.getElementById('nav-mobile').classList.contains('open') ? 'hidden' : '';
+   842|}
+   843|function closeMobileNav() {
+   844|  document.getElementById('nav-mobile').classList.remove('open');
+   845|  document.getElementById('nav-backdrop').classList.remove('open');
+   846|  document.body.style.overflow = '';
+   847|}
+   848|
+   849|// ── Lang toggle ────────────────────────────────────────
+   850|function toggleLang() {
+   851|  const dd = document.getElementById('lang-dropdown');
+   852|  dd.classList.toggle('open');
+   853|}
+   854|document.addEventListener('click', function(e) {
+   855|  const dd = document.getElementById('lang-dropdown');
+   856|  if (dd && dd.classList.contains('open') && !e.target.closest('.lang-toggle') && !e.target.closest('.lang-dropdown')) {
+   857|    dd.classList.remove('open');
+   858|  }
+   859|});
+   860|function setLang(code) {
+   861|  localStorage.setItem('mb-lang', code);
+   862|  initLanguage();
+   863|}
+   864|
+   865|// ── Shared Auth ──────────────────────────────────────────────
+   866|let currentApiKey = '';
+   867|let pendingEmail = '';
+   868|let pendingPhone = '';
+   869|let pendingMethod = 'email'; // 'email' or 'phone'
+   870|
+   871|function openAuth(tab) {
+   872|    const overlay = document.getElementById('auth-overlay');
+   873|    if (overlay) {
+   874|        overlay.style.display = 'flex';
+   875|        selectAuthTab(tab === 'signup' ? 'signup' : 'signin');
+   876|        showAuthOptions();
+   877|    } else {
+   878|        window.location.href = '/pricing';
+   879|    }
+   880|}
+   881|
+   882|function socialLogin(connection) {
+   883|    window.location.href = '/auth/auth0/login?connection=' + connection + (authMode === 'signup' ? '&screen_hint=signup' : '');
+   884|}
+   885|
+   886|function closeAuth() {
+   887|    const overlay = document.getElementById('auth-overlay');
+   888|    if (overlay) overlay.style.display = '';
+   889|    document.body.style.overflow = '';
+   890|    pendingEmail = '';
+   891|}
+   892|
+   893|let authMode = 'signin'; // 'signin' or 'signup'
+   894|
+   895|function selectAuthTab(mode) {
+   896|    authMode = mode;
+   897|    const signinTab = document.getElementById('auth-tab-signin');
+   898|    const signupTab = document.getElementById('auth-tab-signup');
+   899|    if (!signinTab || !signupTab) return;
+   900|    const subtitle = document.getElementById('auth-subtitle');
+   901|
+   902|    if (mode === 'signin') {
+   903|        signinTab.style.background = 'var(--accent)';
+   904|        signinTab.style.color = '#fff';
+   905|        signupTab.style.background = 'transparent';
+   906|        signupTab.style.color = 'var(--text-muted)';
+   907|        subtitle.textContent = 'Sign in to access your account.';
+   908|    } else {
+   909|        signupTab.style.background = 'var(--accent)';
+   910|        signupTab.style.color = '#fff';
+   911|        signinTab.style.background = 'transparent';
+   912|        signinTab.style.color = 'var(--text-muted)';
+   913|        subtitle.textContent = 'Create an account to get started.';
+   914|    }
+   915|}
+   916|
+   917|function showAuthOptions() {
+   918|    document.querySelectorAll('.auth-form').forEach(el => el.classList.remove('active'));
+   919|    const opts = document.getElementById('auth-options');
+   920|    opts.style.display = '';
+   921|    // Reset code step
+   922|    document.getElementById('pl-code').value = '';
+   923|    document.getElementById('pl-email').value = '';
+   924|    document.getElementById('pl-phone').value = '';
+   925|    document.getElementById('auth-code-step').classList.remove('active');
+   926|    document.getElementById('auth-phone-step').classList.remove('active');
+   927|    document.getElementById('auth-recovery-step').style.display = 'none';
+   928|    // Clear all errors
+   929|    document.querySelectorAll('.auth-error').forEach(el => el.textContent = '');
+   930|    // Re-enable buttons
+   931|    document.getElementById('pl-email-btn').disabled = false;
+   932|    document.getElementById('pl-code-btn').disabled = false;
+   933|    document.getElementById('pl-phone-btn').disabled = false;
+   934|    pendingMethod = 'email';
+   935|    pendingPhone = '';
+   936|    // Reset recovery code section
+   937|    const recoveryCodeSection = document.getElementById('recovery-code-section');
+   938|    if (recoveryCodeSection) recoveryCodeSection.style.display = 'none';
+   939|    const recoveryEmailRow = document.getElementById('recovery-email-row');
+   940|    if (recoveryEmailRow) recoveryEmailRow.style.display = '';
+   941|    const recoveryBtn = document.getElementById('recovery-btn');
+   942|    if (recoveryBtn) recoveryBtn.style.display = '';
+   943|    // Reset buttons
+   944|    const continueBtn = document.getElementById('pl-email-btn');
+   945|    if (continueBtn) { continueBtn.innerHTML = 'Continue →'; continueBtn.disabled = false; }
+   946|    const recoveryResetBtn = document.getElementById('recovery-btn');
+   947|    if (recoveryResetBtn) { recoveryResetBtn.innerHTML = 'Recover Account →'; recoveryResetBtn.disabled = false; }
+   948|    const recoveryVerifyBtn = document.getElementById('recovery-verify-btn');
+   949|    if (recoveryVerifyBtn) { recoveryVerifyBtn.innerHTML = 'Verify Code →'; recoveryVerifyBtn.disabled = false; }
+   950|}
+   951|
+   952|function phoneLogin() {
+   953|    pendingMethod = 'phone';
+   954|    document.getElementById('auth-options').style.display = 'none';
+   955|    document.querySelectorAll('.auth-form').forEach(el => el.classList.remove('active'));
+   956|    document.getElementById('auth-phone-step').classList.add('active');
+   957|    document.getElementById('pl-phone').value = '';
+   958|    document.getElementById('auth-error-phone').textContent = '';
+   959|    document.getElementById('pl-phone-btn').disabled = false;
+   960|    setTimeout(() => document.getElementById('pl-phone').focus(), 150);
+   961|}
+   962|
+   963|function updatePhoneFlag() {
+   964|    // Placeholder — the select handles display natively with emoji flags
+   965|}
+   966|
+   967|async function sendPhoneCode() {
+   968|    const countryCode = document.getElementById('pl-country-code').value;
+   969|    const localNum = document.getElementById('pl-phone').value.trim().replace(/[^0-9]/g, '');
+   970|    const errorEl = document.getElementById('auth-error-phone');
+   971|    const btn = document.getElementById('pl-phone-btn');
+   972|    if (!localNum) {
+   973|        errorEl.innerHTML = '⚠️ Enter your phone number';
+   974|        return;
+   975|    }
+   976|    const fullPhone = '+' + countryCode + localNum;
+   977|    const originalBtnHTML = btn.innerHTML;
+   978|    btn.innerHTML = '<span class="spinner-sm"></span> Sending...';
+   979|    btn.disabled = true;
+   980|    try {
+   981|        const res = await fetch('/auth/auth0/passwordless/start-sms', {
+   982|            method: 'POST',
+   983|            headers: {'Content-Type': 'application/json'},
+   984|            body: JSON.stringify({phone: fullPhone}),
+   985|        });
+   986|        if (!res.ok) {
+   987|            let errMsg = 'Failed to send code';
+   988|            try {
+   989|                const err = await res.json();
+   990|                errMsg = err.detail || err.message || errMsg;
+   991|            } catch {
+   992|                try {
+   993|                    const text = await res.text();
+   994|                    if (text) errMsg = text.slice(0, 200);
+   995|                } catch {}
+   996|            }
+   997|            errorEl.innerHTML = '' + errMsg;
+   998|            btn.innerHTML = originalBtnHTML;
+   999|            btn.disabled = false;
+  1000|            return;
+  1001|        }
+  1002|        const data = await res.json();
+  1003|        pendingPhone = fullPhone;
+  1004|        // Show code verification step with phone icon
+  1005|        document.getElementById('code-back-label').textContent = 'Change phone';
+  1006|        document.getElementById('code-step-icon').innerHTML = '<path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>';
+  1007|        document.getElementById('code-email-display').textContent = data.phone || '*******' + fullPhone.slice(-4);
+  1008|        document.getElementById('auth-phone-step').classList.remove('active');
+  1009|        document.getElementById('auth-code-step').classList.add('active');
+  1010|        document.getElementById('pl-code').value = '';
+  1011|        document.getElementById('auth-error-code').textContent = '';
+  1012|        setTimeout(() => document.getElementById('pl-code').focus(), 150);
+  1013|        btn.disabled = false;
+  1014|    } catch (e) {
+  1015|        const isNetwork = e.message === 'Failed to fetch' || e.name === 'TypeError' || e.message === 'NetworkError';
+  1016|        errorEl.innerHTML = isNetwork
+  1017|            ? 'Could not reach server. Check your connection.'
+  1018|            : '' + e.message;
+  1019|        btn.disabled = false;
+  1020|    }
+  1021|}
+  1022|
+  1023|async function continueWithEmail() {
+  1024|    const email = document.getElementById('pl-email').value.trim();
+  1025|    const errorEl = document.getElementById('auth-error-main');
+  1026|    const btn = document.getElementById('pl-email-btn');
+  1027|    if (!email || !email.includes('@')) {
+  1028|        errorEl.innerHTML = '⚠️ Enter a valid email address';
+  1029|        return;
+  1030|    }
+  1031|    const originalBtnHTML = btn.innerHTML;
+  1032|    btn.innerHTML = '<span class="spinner-sm"></span> Sending...';
+  1033|    btn.disabled = true;
+  1034|    try {
+  1035|        // Check if email exists before sending a code
+  1036|        const checkRes = await fetch('/auth/check-email', {
+  1037|            method: 'POST',
+  1038|            headers: {'Content-Type': 'application/json'},
+  1039|            body: JSON.stringify({email}),
+  1040|        });
+  1041|        const checkData = checkRes.ok ? await checkRes.json() : {exists: false};
+  1042|        if (!checkData.exists) {
+  1043|            if (authMode === 'signin') {
+  1044|                errorEl.innerHTML = '<span class="auth-notice">No account found. Try the Create Account tab.</span>';
+  1045|                btn.innerHTML = originalBtnHTML;
+  1046|                btn.disabled = false;
+  1047|                return;
+  1048|            }
+  1049|            // authMode === 'signup' — allow through, new user registering
+  1050|        }
+  1051|        const res = await fetch('/auth/auth0/passwordless/start', {
+  1052|            method: 'POST',
+  1053|            headers: {'Content-Type': 'application/json'},
+  1054|            body: JSON.stringify({email}),
+  1055|        });
+  1056|        if (!res.ok) {
+  1057|            const err = await res.json().catch(() => ({}));
+  1058|            errorEl.innerHTML = '' + (err.detail || 'Failed to send code');
+  1059|            btn.innerHTML = originalBtnHTML;
+  1060|            btn.disabled = false;
+  1061|            return;
+  1062|        }
+  1063|        const data = await res.json();
+  1064|        pendingEmail = email;
+  1065|        pendingMethod = 'email';
+  1066|        document.getElementById('code-back-label').textContent = 'Change email';
+  1067|        document.getElementById('code-step-icon').innerHTML = '<rect x="2" y="4" width="20" height="16" rx="2"/><path d="M22 7l-10 7L2 7"/>';
+  1068|        document.getElementById('code-email-display').textContent = data.email || email[0] + '***' + email.substring(email.indexOf('@'));
+  1069|        // Show code verification step
+  1070|        document.getElementById('auth-options').style.display = 'none';
+  1071|        document.getElementById('auth-code-step').classList.add('active');
+  1072|        document.getElementById('pl-code').value = '';
+  1073|        document.getElementById('auth-error-code').textContent = '';
+  1074|        setTimeout(() => document.getElementById('pl-code').focus(), 150);
+  1075|        btn.disabled = false;
+  1076|    } catch (e) {
+  1077|        const isNetwork = e.message === 'Failed to fetch' || e.name === 'TypeError' || e.message === 'NetworkError';
+  1078|        errorEl.innerHTML = isNetwork
+  1079|            ? 'Could not reach server. Check your connection.'
+  1080|            : '' + e.message;
+  1081|        btn.innerHTML = originalBtnHTML;
+  1082|        btn.disabled = false;
+  1083|    }
+  1084|}
+  1085|
+  1086|async function verifyCode() {
+  1087|    const code = document.getElementById('pl-code').value.trim();
+  1088|    const errorEl = document.getElementById('auth-error-code');
+  1089|    const btn = document.getElementById('pl-code-btn');
+  1090|    if (!code || code.length < 4) {
+  1091|        errorEl.innerHTML = '⚠️ Enter your 6-digit verification code';
+  1092|        return;
+  1093|    }
+  1094|    const originalBtnHTML = btn.innerHTML;
+  1095|    btn.innerHTML = '<span class="spinner-sm"></span> Verifying...';
+  1096|    btn.disabled = true;
+  1097|    try {
+  1098|        const body = pendingMethod === 'phone'
+  1099|            ? {phone: pendingPhone, code}
+  1100|            : {email: pendingEmail, code};
+  1101|        const res = await fetch('/auth/auth0/passwordless/verify', {
+  1102|            method: 'POST',
+  1103|            headers: {'Content-Type': 'application/json'},
+  1104|            body: JSON.stringify(body),
+  1105|        });
+  1106|        if (!res.ok) {
+  1107|            const err = await res.json().catch(() => ({}));
+  1108|            errorEl.innerHTML = '' + (err.detail || 'Verification failed');
+  1109|            btn.innerHTML = originalBtnHTML;
+  1110|            btn.disabled = false;
+  1111|            return;
+  1112|        }
+  1113|        const data = await res.json();
+  1114|        localStorage.setItem('mb_jwt', data.token);
+  1115|        if (data.api_key) {
+  1116|            localStorage.setItem('mb_api_key', data.api_key);
+  1117|            currentApiKey = data.api_key;
+  1118|        }
+  1119|        updateAuthUI();
+  1120|        if (typeof window.postAuthCallback === 'function') {
+  1121|            window.postAuthCallback();
+  1122|            window.postAuthCallback = null;
+  1123|        }
+  1124|        const _params = new URLSearchParams(window.location.search);
+  1125|        if (_params.has('pending_org_id')) {
+  1126|            fetch('/auth/link-subscription', {
+  1127|                method: 'POST',
+  1128|                headers: { 'Authorization': 'Bearer ' + data.token, 'Content-Type': 'application/json' },
+  1129|                body: JSON.stringify({ pending_org_id: _params.get('pending_org_id') })
+  1130|            }).catch(() => {});
+  1131|        }
+  1132|        closeAuth();
+  1133|        window.location.reload();
+  1134|    } catch (e) {
+  1135|        const isNetwork = e.message === 'Failed to fetch' || e.name === 'TypeError' || e.message === 'NetworkError';
+  1136|        errorEl.innerHTML = isNetwork
+  1137|            ? 'Could not reach server. Check your connection.'
+  1138|            : '' + e.message;
+  1139|        btn.innerHTML = originalBtnHTML;
+  1140|        btn.disabled = false;
+  1141|    }
+  1142|}
+  1143|
+  1144|async function resendCode() {
+  1145|    const errorEl = document.getElementById('auth-error-code');
+  1146|    const btn = document.getElementById('pl-code-btn');
+  1147|    if (!pendingEmail && !pendingPhone) return;
+  1148|    errorEl.innerHTML = '<span class="auth-spinner"></span>';
+  1149|    btn.disabled = true;
+  1150|    try {
+  1151|        const url = pendingMethod === 'phone'
+  1152|            ? '/auth/auth0/passwordless/start-sms'
+  1153|            : '/auth/auth0/passwordless/start';
+  1154|        const body = pendingMethod === 'phone'
+  1155|            ? JSON.stringify({phone: pendingPhone})
+  1156|            : JSON.stringify({email: pendingEmail});
+  1157|        const res = await fetch(url, {
+  1158|            method: 'POST',
+  1159|            headers: {'Content-Type': 'application/json'},
+  1160|            body,
+  1161|        });
+  1162|        if (!res.ok) {
+  1163|            const err = await res.json().catch(() => ({}));
+  1164|            errorEl.innerHTML = '' + (err.detail || 'Failed to resend code');
+  1165|            btn.disabled = false;
+  1166|            return;
+  1167|        }
+  1168|        errorEl.innerHTML = '✅ New code sent!';
+  1169|        document.getElementById('pl-code').value = '';
+  1170|        setTimeout(() => document.getElementById('pl-code').focus(), 150);
+  1171|        btn.disabled = false;
+  1172|    } catch (e) {
+  1173|        const isNetwork = e.message === 'Failed to fetch' || e.name === 'TypeError' || e.message === 'NetworkError';
+  1174|        errorEl.innerHTML = isNetwork
+  1175|            ? 'Could not reach server. Check your connection.'
+  1176|            : '' + e.message;
+  1177|        btn.disabled = false;
+  1178|    }
+  1179|}
+  1180|
+  1181|function escapeHtml(str) {
+  1182|    const div = document.createElement('div');
+  1183|    div.textContent = str;
+  1184|    return div.innerHTML;
+  1185|}
+  1186|
+  1187|// ── Init ──────────────────────────────────────────────────
+  1188|document.addEventListener('DOMContentLoaded', async () => {
+  1189|    await initAuth();
+  1190|    initLanguage();
+  1191|});
+  1192|    </script>
+  1193|</body>
+  1194|</html>
+  1195|

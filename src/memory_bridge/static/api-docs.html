@@ -1,1215 +1,1262 @@
-<!DOCTYPE html>
-<html lang="en" data-theme="dark">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title data-i18n="api_docs.page_title">Memory Bridge — API Docs</title>
-    <link rel="icon" href="/playground/logo.png" type="image/png">
-    <link rel="stylesheet" href="/playground/style.css">
-    <style>
-        html, body { height: 100%; margin: 0; padding: 0; overflow: hidden; }
-        body { display: flex; flex-direction: column; }
-        iframe { flex: 1; border: none; width: 100%; }
-    </style>
-</head>
-<body>
-    <!-- Navbar -->
-    <nav class="navbar">
-        <a href="/" class="logo">
-            <img src="/playground/logo.png" alt="Memory Bridge" data-i18n="nav.logo_alt">
-            <span data-i18n="nav.logo">Memory </span><span class="logo-accent">Bridge</span>
-        </a>
-        <div class="nav-links">
-            <a href="/" data-i18n="nav.home">Home</a>
-            <a href="/playground/graph.html" data-i18n="nav.graph">Graph</a>
-            <a href="/dashboard/" data-i18n="nav.dashboard">Dashboard</a>
-            <a href="/pricing" data-i18n="nav.pricing">Pricing</a>
-            <a href="/api-docs" class="active" data-i18n="nav.api_docs">API Docs</a>
-        </div>
-        <div class="nav-right">
-            <div style="position:relative;display:inline-flex;">
-                <button class="nav-icon-btn lang-toggle" onclick="toggleLang()" title="Switch language" aria-label="Switch language">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/>
-                        <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
-                    </svg>
-                </button>
-                <div class="lang-dropdown" id="lang-dropdown">
-                    <a href="javascript:void(0)" data-lang="en" class="lang-opt active" onclick="setLang('en')">🇬🇧 English</a>
-                    <a href="javascript:void(0)" data-lang="zh" class="lang-opt" onclick="setLang('zh')">🇨🇳 中文</a>
-                    <a href="javascript:void(0)" data-lang="ja" class="lang-opt" onclick="setLang('ja')">🇯🇵 日本語</a>
-                    <a href="javascript:void(0)" data-lang="ko" class="lang-opt" onclick="setLang('ko')">🇰🇷 한국어</a>
-                    <a href="javascript:void(0)" data-lang="es" class="lang-opt" onclick="setLang('es')">🇪🇸 Español</a>
-                    <a href="javascript:void(0)" data-lang="fr" class="lang-opt" onclick="setLang('fr')">🇫🇷 Français</a>
-                    <a href="javascript:void(0)" data-lang="de" class="lang-opt" onclick="setLang('de')">🇩🇪 Deutsch</a>
-                </div>
-            </div>
-            <button class="nav-icon-btn theme-toggle-btn" onclick="toggleTheme()" title="Toggle theme">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="theme-sun">
-                    <circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/>
-                    <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
-                    <line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/>
-                    <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
-                </svg>
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="theme-moon" style="display:none">
-                    <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
-                </svg>
-            </button>
-            <div class="auth-btn-container" id="auth-btn-container">
-                <button class="auth-btn" id="auth-nav-btn" onclick="openAuth()" title="Sign in / Sign up">
-                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-                    <span id="auth-btn-label" data-i18n="nav.sign_in">Sign in</span>
-                </button>
-                <div class="user-menu" id="user-menu" style="display:none;">
-                    <button class="user-avatar-btn" id="user-btn" onclick="toggleUserDropdown()" title="Account menu">
-                        <span class="user-avatar-circle" id="user-avatar-circle">👤</span>
-                        <span class="session-dot" id="session-dot"></span>
-                        <span class="user-avatar-name" id="user-avatar-name"></span>
-                        <span class="user-plan-badge" id="user-plan-badge"></span>
-                        <svg class="user-chevron" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
-                    </button>
-                    <div class="user-dropdown" id="user-dropdown">
-                        <div class="user-dropdown-header">
-                            <span class="user-dropdown-email" id="user-dropdown-email"></span>
-                            <span class="user-dropdown-plan" id="user-dropdown-plan" data-i18n="dash.free_plan">Free Plan</span>
-                            <span class="user-dropdown-since" id="user-dropdown-since"></span>
-                        </div>
-                        <div class="user-dropdown-divider"></div>
-                        <a href="/pricing" class="user-dropdown-item" data-i18n="dash.manage_billing">
-                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
-                            Manage Billing
-                        </a>
-                        <div class="user-dropdown-item sign-out" onclick="showLogoutConfirm()" style="cursor:pointer;" data-i18n="nav.sign_out">
-                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
-                            Sign Out
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <a href="/playground/" class="nav-cta" data-i18n="nav.launch_playground">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
-                <span data-i18n="nav.launch_playground">Launch Playground</span>
-            </a>
-            <button class="nav-hamburger" onclick="toggleMobileNav()" aria-label="Open menu">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <line x1="4" y1="6" x2="20" y2="6"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="18" x2="20" y2="18"/>
-                </svg>
-            </button>
-        </div>
-    </nav>
-
-    <!-- Mobile Nav Panel -->
-    <div class="nav-mobile-backdrop" id="nav-backdrop" onclick="closeMobileNav()"></div>
-    <div class="nav-mobile-panel" id="nav-mobile">
-        <div class="nav-mobile-header">
-            <div class="logo"><img src="/playground/logo.png" alt=""> <span data-i18n="nav.logo">Memory </span><span class="logo-accent">Bridge</span></div>
-            <button class="nav-mobile-close" onclick="closeMobileNav()" aria-label="Close menu">
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
-                </svg>
-            </button>
-        </div>
-        <a href="/" onclick="closeMobileNav()" data-i18n="nav.home"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg> Home</a>
-        <a href="/playground/graph.html" onclick="closeMobileNav()" data-i18n="nav.graph"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="5" cy="5" r="3"/><circle cx="19" cy="5" r="3"/><circle cx="12" cy="19" r="3"/><line x1="5" y1="5" x2="19" y2="5"/><line x1="5" y1="5" x2="12" y2="19"/><line x1="19" y1="5" x2="12" y2="19"/></svg> Graph</a>
-        <a href="/dashboard/" onclick="closeMobileNav()" data-i18n="nav.dashboard"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg> Dashboard</a>
-        <a href="javascript:void(0)" id="auth-mobile-btn" onclick="closeMobileNav();openAuth()" style="display:flex;align-items:center;gap:0.45rem;padding:0.7rem 1.25rem;border-radius:var(--radius-sm);font-size:0.88rem;font-weight:600;color:var(--accent);text-decoration:none;">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-            <span id="auth-mobile-label" data-i18n="nav.sign_in">Sign in</span>
-        </a>
-        <!-- Mobile User Card (when signed in) -->
-        <div id="mobile-user-card" style="display:none;">
-            <div class="mobile-user-header">
-                <div class="mobile-user-avatar">
-                    <span class="mobile-user-circle" id="mobile-user-circle">👤</span>
-                    <span class="session-dot" id="mobile-session-dot"></span>
-                </div>
-                <div class="mobile-user-info">
-                    <span class="mobile-user-email" id="mobile-user-email"></span>
-                    <span class="mobile-user-plan" id="mobile-user-plan" data-i18n="dash.free_plan">Free Plan</span>
-                </div>
-            </div>
-            <div class="mobile-user-divider"></div>
-            <a href="/pricing" class="mobile-user-action" onclick="closeMobileNav()">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
-                <span data-i18n="dash.manage_billing">Manage Billing</span>
-            </a>
-            <div class="mobile-user-divider"></div>
-            <span class="mobile-user-since" id="mobile-user-since"></span>
-            <a href="javascript:void(0)" class="mobile-user-action sign-out" id="mobile-sign-out-btn" onclick="closeMobileNav();showLogoutConfirm()">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
-                <span data-i18n="nav.sign_out">Sign Out</span>
-            </a>
-        </div>
-        <a href="/pricing" onclick="closeMobileNav()" data-i18n="nav.pricing"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg> Pricing</a>
-        <a href="/api-docs" class="active" onclick="closeMobileNav()" data-i18n="nav.api_docs"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg> API Docs</a>
-        <div class="nav-mobile-divider"></div>
-        <a href="/playground/" class="nav-mobile-cta" onclick="closeMobileNav()"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg> <span data-i18n="nav.launch_playground">Launch Playground</span></a>
-    </div>
-
-    <iframe src="/docs" title="API Documentation" data-i18n="iframe.title"></iframe>
-
-<script src="/playground/i18n.js?v=3"></script>
-<script src="/playground/auth.js?v=1"></script>
-<script>
-        // ── Theme ──────────────────────────────────────────────────
-        (function initTheme() {
-            const saved = localStorage.getItem('mb-theme');
-            if (saved) document.documentElement.setAttribute('data-theme', saved);
-            else {
-                const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-                document.documentElement.setAttribute('data-theme', prefersDark ? 'dark' : 'light');
-            }
-            updateThemeIcons();
-        })();
-        function toggleTheme() {
-            const html = document.documentElement;
-            const next = html.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
-            html.setAttribute('data-theme', next);
-            localStorage.setItem('mb-theme', next);
-            updateThemeIcons();
-        }
-        function updateThemeIcons() {
-            const theme = document.documentElement.getAttribute('data-theme');
-            const isDark = theme === 'dark';
-            document.querySelectorAll('.theme-toggle-btn').forEach(btn => {
-                const sun = btn.querySelector('.theme-sun');
-                const moon = btn.querySelector('.theme-moon');
-                if (sun) sun.style.display = isDark ? 'block' : 'none';
-                if (moon) moon.style.display = isDark ? 'none' : 'block';
-            });
-        }
-        // ── Mobile Nav ───────────────────────────────────────────
-        function toggleMobileNav() {
-            const panel = document.getElementById('nav-mobile');
-            const backdrop = document.getElementById('nav-backdrop');
-            const isOpen = panel.classList.toggle('open');
-            backdrop.classList.toggle('open');
-            document.body.style.overflow = isOpen ? 'hidden' : '';
-        }
-        function closeMobileNav() {
-            const panel = document.getElementById('nav-mobile');
-            const backdrop = document.getElementById('nav-backdrop');
-            if (panel) panel.classList.remove('open');
-            if (backdrop) backdrop.classList.remove('open');
-            document.body.style.overflow = '';
-        }
-        // ── Language ────────────────────────────────────────────────
-        function toggleLang() {
-            document.getElementById('lang-dropdown').classList.toggle('open');
-        }
-        document.addEventListener('click', (e) => {
-            if (!e.target.closest('.lang-toggle') && !e.target.closest('#lang-dropdown')) {
-                document.getElementById('lang-dropdown')?.classList.remove('open');
-            }
-        });
-        function setLang(code) {
-            localStorage.setItem('mb-lang', code);
-            document.querySelectorAll('.lang-opt').forEach(el => el.classList.remove('active'));
-            const opt = document.querySelector(`.lang-opt[data-lang="${code}"]`);
-            if (opt) opt.classList.add('active');
-            document.getElementById('lang-dropdown').classList.remove('open');
-        }
-        (function initLang() {
-            initLanguage();
-        })();
-    </script>
-    <!-- Auth Modal -->
-    <div class="auth-overlay" id="auth-overlay">
-      <div class="auth-modal">
-        <button class="auth-close" onclick="closeAuth()" aria-label="Close" data-i18n="auth.close">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-        </button>
-        <div class="auth-icon">🔑</div>
-        <div class="auth-title" data-i18n="auth.title">Memory Bridge</div>
-                    <!-- Sign In / Create Account tabs -->
-            <div class="auth-tabs" style="display:flex;gap:0;margin:0.5rem 0 1rem;border:1px solid var(--border-primary);border-radius:var(--radius-md);overflow:hidden;width:100%;">
-              <button class="auth-tab active" id="auth-tab-signin" onclick="selectAuthTab('signin')" style="flex:1;padding:0.5rem 0;border:none;background:var(--accent);color:#fff;font-size:0.88rem;font-weight:600;cursor:pointer;">Sign In</button>
-              <button class="auth-tab" id="auth-tab-signup" onclick="selectAuthTab('signup')" style="flex:1;padding:0.5rem 0;border:none;background:transparent;color:var(--text-muted);font-size:0.88rem;font-weight:600;cursor:pointer;">Create Account</button>
-            </div>
-            <div class="auth-subtitle" id="auth-subtitle" data-i18n="auth.subtitle">Sign in to access your account.</div>
-
-        <!-- Step 1: Options (social + email) -->
-        <div id="auth-options" class="auth-options">
-          <button class="auth-social-btn" onclick="socialLogin('google-oauth2')" style="background:transparent;" data-i18n="auth.google">
-            <span class="s-icon" style="background:transparent;border:none;font-size:1.2rem;">
-              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 48 48">
-                <path fill="#FFC107" d="M43.611,20.083H42V20H24v8h11.303c-1.649,4.657-6.08,8-11.303,8c-6.627,0-12-5.373-12-12c0-6.627,5.373-12,12-12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C12.955,4,4,12.955,4,24c0,11.045,8.955,20,20,20c11.045,0,20-8.955,20-20C44,22.659,43.862,21.35,43.611,20.083z"/>
-                <path fill="#FF3D00" d="M6.306,14.691l6.571,4.819C14.655,15.108,18.961,12,24,12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C16.318,4,9.656,8.337,6.306,14.691z"/>
-                <path fill="#4CAF50" d="M24,44c5.166,0,9.86-1.977,13.409-5.192l-6.19-5.238C29.211,35.091,26.715,36,24,36c-5.202,0-9.619-3.317-11.283-7.946l-6.522,5.025C9.505,39.556,16.227,44,24,44z"/>
-                <path fill="#1976D2" d="M43.611,20.083H42V20H24v8h11.303c-0.792,2.237-2.231,4.166-4.087,5.571c0.001-0.001,0.002-0.001,0.003-0.002l6.19,5.238C36.971,39.205,44,34,44,24C44,22.659,43.862,21.35,43.611,20.083z"/>
-              </svg>
-            </span>
-            <span data-i18n="auth.continue_google">Continue with Google</span>
-          </button>
-          <button class="auth-social-btn" onclick="socialLogin('apple')" data-i18n="auth.apple">
-            <span class="s-icon" style="font-size:1.3rem;">
-              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="#000">
-                <path d="M17.05 20.28c-.98.95-2.05.8-3.08.35-1.09-.46-2.09-.48-3.24 0-1.44.62-2.2.44-3.06-.35C2.79 15.25 3.51 7.59 9.05 7.31c1.35.07 2.29.74 3.08.8 1.18-.24 2.31-.93 3.57-.84 1.51.12 2.65.72 3.4 1.8-3.12 1.87-2.38 5.98.48 7.13-.57 1.5-1.31 2.99-2.54 4.09zM12.03 7.25c-.15-2.23 1.66-4.07 3.74-4.25.29 2.58-2.34 4.5-3.74 4.25z"/>
-              </svg>
-            </span>
-            <span data-i18n="auth.continue_apple">Continue with Apple</span>
-          </button>
-          <button class="auth-social-btn" onclick="phoneLogin()" data-i18n="auth.phone">
-            <span class="s-icon" style="font-size:1.3rem;">
-              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
-              </svg>
-            </span>
-            <span data-i18n="auth.continue_phone">Continue with Phone</span>
-          </button>
-          <div class="auth-divider" data-i18n="auth.divider">
-            <hr>
-            <span data-i18n="auth.or_email">or continue with email</span>
-            <hr>
-          </div>
-          <input type="email" class="auth-email-field" id="pl-email" placeholder="you@example.com" data-i18n="auth.email_placeholder" autocomplete="email" onkeydown="if(event.key==='Enter')continueWithEmail()">
-          <button class="auth-email-cta" onclick="continueWithEmail()" id="pl-email-btn" data-i18n="auth.continue_btn">Continue →</button>
-          <div class="auth-error" id="auth-error-main"></div>
-<div style="margin-top: 0.75rem; text-align: center;">
-                <a href="#" onclick="showRecoveryForm(); return false;" style="color: var(--accent); text-decoration: none; font-size: 0.85rem; font-weight: 500; opacity: 0.85; transition: opacity 0.15s;" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0.85'">Lost your account? Recover it here →</a>
-              </div>
-        </div>
-
-        <!-- Step 2: Phone input -->
-        <div id="auth-phone-step" class="auth-form">
-          <button class="back-link" onclick="showAuthOptions()" data-i18n="auth.back">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
-            Back
-          </button>
-          <div class="auth-code-info">
-            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
-            </svg>
-            <div class="auth-code-msg" data-i18n="auth.enter_phone">Enter your phone number</div>
-            <div style="font-size:0.8rem;color:var(--text-muted);margin-top:0.25rem;" data-i18n="auth.sms_notice">We'll send a 6-digit code via SMS</div>
-          </div>
-          <div class="auth-phone-input-row">
-            <div class="phone-country-select">
-              <select id="pl-country-code" onchange="updatePhoneFlag()">
-                <option value="93">🇦🇫 Afghanistan +93</option>
-                <option value="355">🇦🇱 Albania +355</option>
-                <option value="213">🇩🇿 Algeria +213</option>
-                <option value="376">🇦🇩 Andorra +376</option>
-                <option value="244">🇦🇴 Angola +244</option>
-                <option value="54">🇦🇷 Argentina +54</option>
-                <option value="374">🇦🇲 Armenia +374</option>
-                <option value="297">🇦🇼 Aruba +297</option>
-                <option value="61">🇦🇺 Australia +61</option>
-                <option value="43">🇦🇹 Austria +43</option>
-                <option value="994">🇦🇿 Azerbaijan +994</option>
-                <option value="973">🇧🇭 Bahrain +973</option>
-                <option value="880">🇧🇩 Bangladesh +880</option>
-                <option value="375">🇧🇾 Belarus +375</option>
-                <option value="32">🇧🇪 Belgium +32</option>
-                <option value="501">🇧🇿 Belize +501</option>
-                <option value="229">🇧🇯 Benin +229</option>
-                <option value="975">🇧🇹 Bhutan +975</option>
-                <option value="591">🇧🇴 Bolivia +591</option>
-                <option value="387">🇧🇦 Bosnia +387</option>
-                <option value="267">🇧🇼 Botswana +267</option>
-                <option value="55">🇧🇷 Brazil +55</option>
-                <option value="673">🇧🇳 Brunei +673</option>
-                <option value="359">🇧🇬 Bulgaria +359</option>
-                <option value="226">🇧🇫 Burkina Faso +226</option>
-                <option value="257">🇧🇮 Burundi +257</option>
-                <option value="855">🇰🇭 Cambodia +855</option>
-                <option value="237">🇨🇲 Cameroon +237</option>
-                <option value="1">🇨🇦 Canada +1</option>
-                <option value="238">🇨🇻 Cape Verde +238</option>
-                <option value="236">🇨🇫 CAR +236</option>
-                <option value="235">🇹🇩 Chad +235</option>
-                <option value="56">🇨🇱 Chile +56</option>
-                <option value="86">🇨🇳 China +86</option>
-                <option value="57">🇨🇴 Colombia +57</option>
-                <option value="269">🇰🇲 Comoros +269</option>
-                <option value="243">🇨🇩 Congo (DRC) +243</option>
-                <option value="242">🇨🇬 Congo +242</option>
-                <option value="506">🇨🇷 Costa Rica +506</option>
-                <option value="385">🇭🇷 Croatia +385</option>
-                <option value="53">🇨🇺 Cuba +53</option>
-                <option value="357">🇨🇾 Cyprus +357</option>
-                <option value="420">🇨🇿 Czechia +420</option>
-                <option value="45">🇩🇰 Denmark +45</option>
-                <option value="253">🇩🇯 Djibouti +253</option>
-                <option value="593">🇪🇨 Ecuador +593</option>
-                <option value="20">🇪🇬 Egypt +20</option>
-                <option value="503">🇸🇻 El Salvador +503</option>
-                <option value="372">🇪🇪 Estonia +372</option>
-                <option value="251">🇪🇹 Ethiopia +251</option>
-                <option value="679">🇫🇯 Fiji +679</option>
-                <option value="358">🇫🇮 Finland +358</option>
-                <option value="33">🇫🇷 France +33</option>
-                <option value="241">🇬🇦 Gabon +241</option>
-                <option value="220">🇬🇲 Gambia +220</option>
-                <option value="995">🇬🇪 Georgia +995</option>
-                <option value="49">🇩🇪 Germany +49</option>
-                <option value="233">🇬🇭 Ghana +233</option>
-                <option value="30">🇬🇷 Greece +30</option>
-                <option value="299">🇬🇱 Greenland +299</option>
-                <option value="502">🇬🇹 Guatemala +502</option>
-                <option value="224">🇬🇳 Guinea +224</option>
-                <option value="245">🇬🇼 Guinea-Bissau +245</option>
-                <option value="592">🇬🇾 Guyana +592</option>
-                <option value="509">🇭🇹 Haiti +509</option>
-                <option value="504">🇭🇳 Honduras +504</option>
-                <option value="852">🇭🇰 Hong Kong +852</option>
-                <option value="36">🇭🇺 Hungary +36</option>
-                <option value="354">🇮🇸 Iceland +354</option>
-                <option value="91">🇮🇳 India +91</option>
-                <option value="62">🇮🇩 Indonesia +62</option>
-                <option value="98">🇮🇷 Iran +98</option>
-                <option value="964">🇮🇶 Iraq +964</option>
-                <option value="353">🇮🇪 Ireland +353</option>
-                <option value="972">🇮🇱 Israel +972</option>
-                <option value="39">🇮🇹 Italy +39</option>
-                <option value="225">🇨🇮 Ivory Coast +225</option>
-                <option value="81">🇯🇵 Japan +81</option>
-                <option value="962">🇯🇴 Jordan +962</option>
-                <option value="7">🇰🇿 Kazakhstan +7</option>
-                <option value="254">🇰🇪 Kenya +254</option>
-                <option value="383">🇽🇰 Kosovo +383</option>
-                <option value="965">🇰🇼 Kuwait +965</option>
-                <option value="996">🇰🇬 Kyrgyzstan +996</option>
-                <option value="856">🇱🇦 Laos +856</option>
-                <option value="371">🇱🇻 Latvia +371</option>
-                <option value="961">🇱🇧 Lebanon +961</option>
-                <option value="266">🇱🇸 Lesotho +266</option>
-                <option value="231">🇱🇷 Liberia +231</option>
-                <option value="218">🇱🇾 Libya +218</option>
-                <option value="423">🇱🇮 Liechtenstein +423</option>
-                <option value="370">🇱🇹 Lithuania +370</option>
-                <option value="352">🇱🇺 Luxembourg +352</option>
-                <option value="853">🇲🇴 Macau +853</option>
-                <option value="389">🇲🇰 North Macedonia +389</option>
-                <option value="261">🇲🇬 Madagascar +261</option>
-                <option value="265">🇲🇼 Malawi +265</option>
-                <option value="60">🇲🇾 Malaysia +60</option>
-                <option value="960">🇲🇻 Maldives +960</option>
-                <option value="223">🇲🇱 Mali +223</option>
-                <option value="356">🇲🇹 Malta +356</option>
-                <option value="222">🇲🇷 Mauritania +222</option>
-                <option value="230">🇲🇺 Mauritius +230</option>
-                <option value="52">🇲🇽 Mexico +52</option>
-                <option value="373">🇲🇩 Moldova +373</option>
-                <option value="377">🇲🇨 Monaco +377</option>
-                <option value="976">🇲🇳 Mongolia +976</option>
-                <option value="382">🇲🇪 Montenegro +382</option>
-                <option value="212">🇲🇦 Morocco +212</option>
-                <option value="258">🇲🇿 Mozambique +258</option>
-                <option value="95">🇲🇲 Myanmar +95</option>
-                <option value="264">🇳🇦 Namibia +264</option>
-                <option value="977">🇳🇵 Nepal +977</option>
-                <option value="31">🇳🇱 Netherlands +31</option>
-                <option value="64">🇳🇿 New Zealand +64</option>
-                <option value="505">🇳🇮 Nicaragua +505</option>
-                <option value="227">🇳🇪 Niger +227</option>
-                <option value="234">🇳🇬 Nigeria +234</option>
-                <option value="47">🇳🇴 Norway +47</option>
-                <option value="968">🇴🇲 Oman +968</option>
-                <option value="92">🇵🇰 Pakistan +92</option>
-                <option value="680">🇵🇼 Palau +680</option>
-                <option value="970">🇵🇸 Palestine +970</option>
-                <option value="507">🇵🇦 Panama +507</option>
-                <option value="675">🇵🇬 Papua New Guinea +675</option>
-                <option value="595">🇵🇾 Paraguay +595</option>
-                <option value="51">🇵🇪 Peru +51</option>
-                <option value="63">🇵🇭 Philippines +63</option>
-                <option value="48">🇵🇱 Poland +48</option>
-                <option value="351">🇵🇹 Portugal +351</option>
-                <option value="974">🇶🇦 Qatar +974</option>
-                <option value="40">🇷🇴 Romania +40</option>
-                <option value="7">🇷🇺 Russia +7</option>
-                <option value="250">🇷🇼 Rwanda +250</option>
-                <option value="685">🇼🇸 Samoa +685</option>
-                <option value="378">🇸🇲 San Marino +378</option>
-                <option value="239">🇸🇹 São Tomé +239</option>
-                <option value="966">🇸🇦 Saudi Arabia +966</option>
-                <option value="221">🇸🇳 Senegal +221</option>
-                <option value="381">🇷🇸 Serbia +381</option>
-                <option value="248">🇸🇨 Seychelles +248</option>
-                <option value="232">🇸🇱 Sierra Leone +232</option>
-                <option value="65" selected>🇸🇬 Singapore +65</option>
-                <option value="421">🇸🇰 Slovakia +421</option>
-                <option value="386">🇸🇮 Slovenia +386</option>
-                <option value="677">🇸🇧 Solomon Islands +677</option>
-                <option value="252">🇸🇴 Somalia +252</option>
-                <option value="27">🇿🇦 South Africa +27</option>
-                <option value="82">🇰🇷 South Korea +82</option>
-                <option value="34">🇪🇸 Spain +34</option>
-                <option value="94">🇱🇰 Sri Lanka +94</option>
-                <option value="249">🇸🇩 Sudan +249</option>
-                <option value="597">🇸🇷 Suriname +597</option>
-                <option value="268">🇸🇿 Eswatini +268</option>
-                <option value="46">🇸🇪 Sweden +46</option>
-                <option value="41">🇨🇭 Switzerland +41</option>
-                <option value="963">🇸🇾 Syria +963</option>
-                <option value="886">🇹🇼 Taiwan +886</option>
-                <option value="992">🇹🇯 Tajikistan +992</option>
-                <option value="255">🇹🇿 Tanzania +255</option>
-                <option value="66">🇹🇭 Thailand +66</option>
-                <option value="670">🇹🇱 Timor-Leste +670</option>
-                <option value="228">🇹🇬 Togo +228</option>
-                <option value="676">🇹🇴 Tonga +676</option>
-                <option value="216">🇹🇳 Tunisia +216</option>
-                <option value="90">🇹🇷 Turkey +90</option>
-                <option value="993">🇹🇲 Turkmenistan +993</option>
-                <option value="256">🇺🇬 Uganda +256</option>
-                <option value="380">🇺🇦 Ukraine +380</option>
-                <option value="971">🇦🇪 UAE +971</option>
-                <option value="44">🇬🇧 UK +44</option>
-                <option value="1">🇺🇸 US +1</option>
-                <option value="598">🇺🇾 Uruguay +598</option>
-                <option value="998">🇺🇿 Uzbekistan +998</option>
-                <option value="678">🇻🇺 Vanuatu +678</option>
-                <option value="379">🇻🇦 Vatican +379</option>
-                <option value="58">🇻🇪 Venezuela +58</option>
-                <option value="84">🇻🇳 Vietnam +84</option>
-                <option value="967">🇾🇪 Yemen +967</option>
-                <option value="260">🇿🇲 Zambia +260</option>
-                <option value="263">🇿🇼 Zimbabwe +263</option>
-              </select>
-              <span class="phone-caret">▼</span>
-            </div>
-            <input type="tel" id="pl-phone" placeholder="8123 4567" autocomplete="tel" onkeydown="if(event.key==='Enter')sendPhoneCode()" data-i18n-placeholder="auth.phone_pl">
-          </div>
-          <button class="auth-email-cta" onclick="sendPhoneCode()" id="pl-phone-btn" data-i18n="auth.send_code">Send Code →</button>
-          <div class="auth-error" id="auth-error-phone"></div>
-        </div>
-
-        <!-- Step 3: Code verification -->
-        <div id="auth-code-step" class="auth-form">
-          <button class="back-link" onclick="showAuthOptions()" data-i18n="auth.back">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
-            <span id="code-back-label" data-i18n="auth.change_email">Change email</span>
-          </button>
-          <div class="auth-code-info">
-            <svg id="code-step-icon" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-              <rect x="2" y="4" width="20" height="16" rx="2"/>
-              <path d="M22 7l-10 7L2 7"/>
-            </svg>
-            <div class="auth-code-msg" data-i18n="auth.we_sent">We sent a code to</div>
-            <div class="auth-code-email" id="code-email-display">j***@example.com</div>
-          </div>
-          <div class="auth-code-input-row">
-            <input type="text" id="pl-code" placeholder="Enter 6-digit code" maxlength="6" inputmode="numeric" autocomplete="one-time-code" onkeydown="if(event.key==='Enter')verifyCode()" data-i18n-placeholder="auth.code_pl">
-          </div>
-          <button class="btn btn-primary" onclick="verifyCode()" id="pl-code-btn" data-i18n="auth.verify">Verify Code →</button>
-          <div class="auth-error" id="auth-error-code"></div>
-          <div class="auth-code-resend" data-i18n="auth.resend_text">
-            Didn't get it? <a onclick="resendCode()" data-i18n="auth.resend_link">Send new code</a>
-          </div>
-        </div>
-      <!-- Step 4: Recovery -->
-      <div id="auth-recovery-step" class="auth-form" style="display:none;">
-        <button class="back-link" onclick="showAuthOptions()">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
-          <span data-i18n="auth.back">Back</span>
-        </button>
-        <div class="auth-code-info">
-          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
-          </svg>
-          <div class="auth-code-msg">Recover Your Account</div>
-          <div style="font-size:0.8rem;color:var(--text-muted);margin-top:0.25rem;">Enter your email to recover your API keys and subscription.</div>
-        </div>
-        <input type="email" class="auth-email-field" id="recovery-email" placeholder="you@example.com" autocomplete="email" style="margin-bottom:0.5rem;" onkeydown="if(event.key==='Enter')recoverAccount(document.getElementById('recovery-email')?.value)">
-        <button class="btn-primary auth-submit" id="recovery-btn" onclick="recoverAccount(document.getElementById('recovery-email')?.value)" style="width:100%;">Recover Account →</button>
-        <div class="auth-error" id="auth-error-recovery" style="margin-top:0.5rem;"></div>
-      </div>
-      </div>
-    </div>
-
-    <style>
-      /* ── Auth Modal: Passwordless ────────────────────── */
-      .auth-email-field {
-        width: 100%;
-        padding: 0.7rem 1rem 0.7rem 2.5rem;
-        border-radius: var(--radius-sm);
-        border: 1px solid var(--border-primary);
-        background: var(--bg-glass);
-        color: var(--text-primary);
-        font-size: 0.88rem;
-        font-family: var(--font-sans);
-        transition: all var(--transition-fast);
-        outline: none;
-        box-sizing: border-box;
-        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23888888' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='2' y='4' width='20' height='16' rx='2'/%3E%3Cpath d='M22 7l-10 7L2 7'/%3E%3C/svg%3E");
-        background-repeat: no-repeat;
-        background-position: 0.75rem center;
-        background-size: 16px;
-      }
-      .auth-email-field:focus {
-        border-color: var(--accent);
-        box-shadow: 0 0 0 2px var(--accent-glow);
-      }
-      .auth-email-field::placeholder {
-        color: var(--text-faint);
-      }
-      .auth-email-cta {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        width: 100%;
-        padding: 0.7rem 1rem;
-        border-radius: var(--radius-sm);
-        border: none;
-        background: var(--accent-gradient);
-        color: #fff;
-        font-size: 0.88rem;
-        font-weight: 700;
-        font-family: var(--font-sans);
-        cursor: pointer;
-        transition: all var(--transition-fast);
-        gap: 0.4rem;
-      }
-      .auth-email-cta:hover {
-        opacity: 0.9;
-        transform: translateY(-1px);
-        box-shadow: var(--shadow-sm);
-      }
-      .auth-email-cta:active {
-        transform: translateY(0);
-      }
-      .auth-email-cta:disabled {
-        opacity: 0.5;
-        cursor: not-allowed;
-        transform: none;
-      }
-
-      /* ── User Avatar + Dropdown ─────────────────────── */
-      .user-avatar-btn {
-        display: inline-flex;
-        align-items: center;
-        gap: 0.5rem;
-        padding: 0.25rem 0.5rem 0.25rem 0.25rem;
-        border-radius: var(--radius-full);
-        border: 1px solid var(--border-primary);
-        background: transparent;
-        cursor: pointer;
-        transition: all var(--transition-fast);
-        font-family: var(--font-sans);
-        color: var(--text-primary);
-      }
-      .user-avatar-btn:hover {
-        border-color: var(--accent);
-        background: var(--accent-glow);
-      }
-      .user-avatar-circle {
-        width: 28px;
-        height: 28px;
-        border-radius: 50%;
-        background: var(--accent-gradient);
-        color: #fff;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 0.75rem;
-        font-weight: 700;
-        flex-shrink: 0;
-        overflow: hidden;
-      }
-      .user-avatar-name {
-        font-size: 0.82rem;
-        font-weight: 600;
-        max-width: 110px;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-      }
-      .user-chevron {
-        color: var(--text-faint);
-        transition: transform 0.2s;
-      }
-      .user-menu.open .user-chevron {
-        transform: rotate(180deg);
-      }
-      .user-menu {
-        position: relative;
-        display: inline-flex;
-      }
-      .user-dropdown {
-        display: none;
-        position: absolute;
-        top: calc(100% + 6px);
-        right: 0;
-        min-width: 220px;
-        background: var(--card-bg);
-        border: 1px solid var(--border-primary);
-        border-radius: var(--radius-md);
-        box-shadow: var(--shadow-xl);
-        z-index: 100;
-        overflow: hidden;
-        backdrop-filter: blur(16px);
-        animation: drop-in 0.15s ease;
-      }
-      @keyframes drop-in {
-        from { opacity: 0; transform: translateY(-6px); }
-        to { opacity: 1; transform: translateY(0); }
-      }
-      .user-menu.open .user-dropdown { display: block; }
-      .user-dropdown-header {
-        padding: 0.75rem 1rem;
-        display: flex;
-        flex-direction: column;
-        gap: 0.2rem;
-      }
-      .user-dropdown-email {
-        font-size: 0.85rem;
-        font-weight: 600;
-        color: var(--text-primary);
-        word-break: break-all;
-      }
-      .user-dropdown-plan {
-        font-size: 0.72rem;
-        color: var(--text-muted);
-        font-weight: 500;
-      }
-      .user-dropdown-divider {
-        height: 1px;
-        background: var(--border-subtle);
-        margin: 0;
-      }
-      .user-dropdown-item {
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-        padding: 0.65rem 1rem;
-        font-size: 0.85rem;
-        color: var(--text-secondary);
-        text-decoration: none;
-        transition: background var(--transition-fast);
-      }
-      .user-dropdown-item svg {
-        flex-shrink: 0;
-        color: var(--text-muted);
-      }
-      .user-dropdown-item:hover {
-        background: var(--btn-secondary-hover);
-        color: var(--text-primary);
-      }
-      .user-dropdown-item:last-child:hover {
-        color: var(--red);
-      }
-      .user-dropdown-item:last-child:hover svg {
-        color: var(--red);
-      }
-
-      /* ── Logout Confirm Modal ────────────────────────── */
-      .logout-modal-overlay {
-        display: none;
-        position: fixed;
-        inset: 0;
-        background: rgba(0,0,0,0.6);
-        z-index: 1001;
-        backdrop-filter: blur(6px);
-      }
-      .logout-modal-overlay.open { display: block; }
-      .logout-modal {
-        display: none;
-        position: fixed;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%) scale(0.96);
-        z-index: 1002;
-        background: var(--card-bg);
-        border: 1px solid var(--border-primary);
-        border-radius: var(--radius-lg);
-        padding: 2rem;
-        min-width: 360px;
-        max-width: 90vw;
-        box-shadow: var(--shadow-xl);
-        text-align: center;
-        opacity: 0;
-        transition: all 0.2s ease;
-      }
-      .logout-modal.open {
-        display: block;
-        opacity: 1;
-        transform: translate(-50%, -50%) scale(1);
-      }
-      .logout-modal .logout-icon {
-        width: 56px;
-        height: 56px;
-        border-radius: 50%;
-        background: var(--red-bg, rgba(239,68,68,0.12));
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        margin: 0 auto 1rem;
-        font-size: 1.6rem;
-      }
-      .logout-modal .logout-title {
-        font-size: 1.15rem;
-        font-weight: 700;
-        margin-bottom: 0.5rem;
-        color: var(--text-primary);
-      }
-      .logout-modal .logout-text {
-        font-size: 0.88rem;
-        color: var(--text-muted);
-        line-height: 1.55;
-        margin-bottom: 1.5rem;
-        max-width: 320px;
-        margin-left: auto;
-        margin-right: auto;
-      }
-      .logout-modal .logout-btns {
-        display: flex;
-        gap: 0.65rem;
-        justify-content: center;
-      }
-      .logout-modal .logout-btns .btn {
-        min-width: 120px;
-        padding: 0.6rem 1.2rem;
-        font-size: 0.9rem;
-      }
-      @media (max-width: 520px) {
-        .logout-modal {
-          min-width: unset;
-          width: 88vw;
-          padding: 1.5rem;
-        }
-        .logout-modal .logout-title { font-size: 1rem; }
-        .logout-modal .logout-text { font-size: 0.82rem; }
-        .logout-modal .logout-btns { flex-direction: column; align-items: stretch; }
-        .logout-modal .logout-btns .btn { width: 100%; text-align: center; justify-content: center; }
-        .user-dropdown { right: -40px; }
-      }
-      .auth-phone-input-row {
-        display: flex;
-        flex-direction: column;
-        gap: 0.5rem;
-        margin: 1rem 0;
-      }
-      .phone-country-select {
-        position: relative;
-        width: 100%;
-      }
-      .phone-country-select select {
-        appearance: none;
-        -webkit-appearance: none;
-        padding: 0.7rem 2rem 0.7rem 0.75rem;
-        border-radius: var(--radius-sm);
-        border: 1px solid var(--border-primary);
-        background: var(--bg-glass);
-        color: var(--text-primary);
-        font-size: 0.88rem;
-        font-family: var(--font-sans);
-        cursor: pointer;
-        outline: none;
-        width: 100%;
-        transition: all var(--transition-fast);
-      }
-      .phone-country-select select:focus {
-        border-color: var(--accent);
-        box-shadow: 0 0 0 2px var(--accent-glow);
-      }
-      .phone-country-select .phone-caret {
-        position: absolute;
-        right: 0.5rem;
-        top: 50%;
-        transform: translateY(-50%);
-        pointer-events: none;
-        color: var(--text-muted);
-        font-size: 0.6rem;
-      }
-      @media (max-width: 520px) {
-        .phone-country-select {
-          flex-shrink: 1;
-          width: 100%;
-        }
-        .phone-country-select select {
-          width: 100%;
-          min-width: auto;
-          padding: 0.7rem 2rem 0.7rem 0.75rem;
-          font-size: 0.88rem;
-        }
-        .phone-country-select .phone-caret {
-          right: 0.5rem;
-        }
-        .auth-phone-input-row input {
-          width: 100%;
-          flex: none;
-          font-size: 1rem;
-          padding: 0.7rem 0.75rem;
-        }
-      }
-      .auth-phone-input-row input {
-        flex: 1;
-        min-width: 0;
-        padding: 0.7rem 1rem;
-        border-radius: var(--radius-sm);
-        border: 1px solid var(--border-primary);
-        background: var(--bg-glass);
-        color: var(--text-primary);
-        font-size: 0.95rem;
-        font-family: var(--font-sans);
-        text-align: center;
-        outline: none;
-        box-sizing: border-box;
-        transition: all var(--transition-fast);
-      }
-      .auth-phone-input-row input:focus {
-        border-color: var(--accent);
-        box-shadow: 0 0 0 2px var(--accent-glow);
-      }
-      .auth-phone-input-row input::placeholder {
-        color: var(--text-faint);
-      }
-      .auth-code-info {
-        text-align: center;
-        padding: 1rem 0 0.75rem;
-      }
-      .auth-code-info svg {
-        margin-bottom: 0.75rem;
-      }
-      .auth-code-msg {
-        color: var(--text-secondary);
-        font-size: 0.9rem;
-      }
-      .auth-code-email {
-        font-weight: 700;
-        font-size: 1.05rem;
-        color: var(--text-primary);
-        margin-top: 0.2rem;
-      }
-      .auth-code-input-row {
-        margin: 1rem 0;
-      }
-      .auth-code-input-row input {
-        text-align: center;
-        font-size: 1.5rem;
-        font-family: var(--font-mono);
-        letter-spacing: 0.5em;
-        padding: 0.75rem 0.5rem;
-      }
-      .auth-code-resend {
-        text-align: center;
-        margin-top: 0.75rem;
-        font-size: 0.85rem;
-        color: var(--text-muted);
-      }
-      .auth-code-resend a {
-        color: var(--accent);
-        cursor: pointer;
-        text-decoration: underline;
-        text-underline-offset: 2px;
-      }
-      .auth-code-resend a:hover {
-        color: var(--accent-hover);
-      }
-      @media (max-width: 768px) {
-        .auth-btn-container { display: inline-flex !important; }
-        .nav-cta { display: none !important; }
-      }
-    </style>
-
-    <!-- Logout Confirm Modal -->
-    <div class="logout-modal-overlay" id="logout-overlay" onclick="closeLogoutConfirm()"></div>
-    <div class="logout-modal" id="logout-modal">
-        <div class="logout-icon">🚪</div>
-        <div class="logout-title" data-i18n="logout.title">Sign out of Memory Bridge?</div>
-        <div class="logout-text" data-i18n="logout.text">
-            You'll need to sign in again to manage API keys, view subscription details, or access your dashboard.
-        </div>
-        <div class="logout-btns">
-            <button class="btn btn-secondary" onclick="closeLogoutConfirm()" data-i18n="logout.cancel">Cancel</button>
-            <button class="btn btn-danger" id="logout-confirm-btn" onclick="logout()" data-i18n="logout.sign_out">Sign Out</button>
-        </div>
-    </div>
-
-    <script>
-        // ── Shared Auth ──────────────────────────────────────────────
-        let currentApiKey = '';
-        let pendingEmail = '';
-        let pendingPhone = '';
-        let pendingMethod = 'email'; // 'email' or 'phone'
-
-        function openAuth(tab) {
-            document.getElementById('auth-overlay').classList.add('open');
-selectAuthTab(tab === 'signup' ? 'signup' : 'signin');
-            showAuthOptions();
-        }
-
-        function socialLogin(connection) {
-            window.location.href = '/auth/auth0/login?connection=' + connection + (authMode === 'signup' ? '&screen_hint=signup' : '');
-        }
-
-        function closeAuth() {
-            document.getElementById('auth-overlay').classList.remove('open');
-            document.body.style.overflow = '';
-            pendingEmail = '';
-            pendingPhone = '';
-        }
-
-        let authMode = 'signin'; // 'signin' or 'signup'
-
-        function selectAuthTab(mode) {
-            authMode = mode;
-            const signinTab = document.getElementById('auth-tab-signin');
-            const signupTab = document.getElementById('auth-tab-signup');
-            if (!signinTab || !signupTab) return;
-            const subtitle = document.getElementById('auth-subtitle');
-
-            if (mode === 'signin') {
-                signinTab.style.background = 'var(--accent)';
-                signinTab.style.color = '#fff';
-                signupTab.style.background = 'transparent';
-                signupTab.style.color = 'var(--text-muted)';
-                subtitle.textContent = 'Sign in to access your account.';
-            } else {
-                signupTab.style.background = 'var(--accent)';
-                signupTab.style.color = '#fff';
-                signinTab.style.background = 'transparent';
-                signinTab.style.color = 'var(--text-muted)';
-                subtitle.textContent = 'Create an account to get started.';
-            }
-        }
-
-
-        function showAuthOptions() {
-            document.querySelectorAll('.auth-form').forEach(el => el.classList.remove('active'));
-            const opts = document.getElementById('auth-options');
-            opts.style.display = '';
-            // Reset code step
-            document.getElementById('pl-code').value = '';
-            document.getElementById('pl-email').value = '';
-            document.getElementById('pl-phone').value = '';
-            document.getElementById('auth-code-step').classList.remove('active');
-            document.getElementById('auth-phone-step').classList.remove('active');
-            document.getElementById('auth-recovery-step').style.display = 'none';
-            // Clear all errors
-            document.querySelectorAll('.auth-error').forEach(el => el.textContent = '');
-            // Re-enable buttons
-            document.getElementById('pl-email-btn').disabled = false;
-            document.getElementById('pl-code-btn').disabled = false;
-            document.getElementById('pl-phone-btn').disabled = false;
-            pendingMethod = 'email';
-            pendingPhone = '';
-        }
-
-        function phoneLogin() {
-            pendingMethod = 'phone';
-            document.getElementById('auth-options').style.display = 'none';
-            document.querySelectorAll('.auth-form').forEach(el => el.classList.remove('active'));
-            document.getElementById('auth-phone-step').classList.add('active');
-            document.getElementById('pl-phone').value = '';
-            document.getElementById('auth-error-phone').textContent = '';
-            document.getElementById('pl-phone-btn').disabled = false;
-            setTimeout(() => document.getElementById('pl-phone').focus(), 150);
-        }
-
-        function updatePhoneFlag() {
-            // Placeholder — the select handles display natively with emoji flags
-        }
-
-        async function sendPhoneCode() {
-            const countryCode = document.getElementById('pl-country-code').value;
-            const localNum = document.getElementById('pl-phone').value.trim().replace(/[^0-9]/g, '');
-            const errorEl = document.getElementById('auth-error-phone');
-            const btn = document.getElementById('pl-phone-btn');
-            if (!localNum) {
-                errorEl.innerHTML = '⚠️ Enter your phone number';
-                return;
-            }
-            const fullPhone = '+' + countryCode + localNum;
-            const originalBtnHTML = btn.innerHTML;
-            btn.innerHTML = '<span class="spinner-sm"></span> Sending...';
-            btn.disabled = true;
-            try {
-
-                const res = await fetch('/auth/auth0/passwordless/start-sms', {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({phone: fullPhone}),
-                });
-                if (!res.ok) {
-                    let errMsg = 'Failed to send code';
-                    try {
-                        const err = await res.json();
-                        errMsg = err.detail || err.message || errMsg;
-                    } catch {
-                        try {
-                            const text = await res.text();
-                            if (text) errMsg = text.slice(0, 200);
-                        } catch {}
-                    }
-                    errorEl.innerHTML = '❌ ' + errMsg;
-                    btn.innerHTML = originalBtnHTML;
-                    btn.disabled = false;
-                    return;
-                }
-                const data = await res.json();
-                pendingPhone = fullPhone;
-                // Show code verification step with phone icon
-                document.getElementById('code-back-label').textContent = 'Change phone';
-                document.getElementById('code-step-icon').innerHTML = '<path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>';
-                document.getElementById('code-email-display').textContent = data.phone || '*******' + fullPhone.slice(-4);
-                document.getElementById('auth-phone-step').classList.remove('active');
-                document.getElementById('auth-code-step').classList.add('active');
-                document.getElementById('pl-code').value = '';
-                document.getElementById('auth-error-code').textContent = '';
-                setTimeout(() => document.getElementById('pl-code').focus(), 150);
-                btn.disabled = false;
-            } catch (e) {
-                                const isNetwork = e.message === 'Failed to fetch' || e.name === 'TypeError' || e.message === 'NetworkError';
-                errorEl.innerHTML = isNetwork
-                    ? '❌ Could not reach server. Check your connection.'
-                    : '❌ ' + e.message;
-                btn.disabled = false;
-            }
-        }
-
-        async function continueWithEmail() {
-            const email = document.getElementById('pl-email').value.trim();
-            const errorEl = document.getElementById('auth-error-main');
-            const btn = document.getElementById('pl-email-btn');
-            if (!email || !email.includes('@')) {
-                errorEl.innerHTML = '⚠️ Enter a valid email address';
-                return;
-            }
-            const originalBtnHTML = btn.innerHTML;
-            btn.innerHTML = '<span class="spinner-sm"></span> Sending...';
-            btn.disabled = true;
-            try {
-                const res = await fetch('/auth/auth0/passwordless/start', {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({email}),
-                });
-                if (!res.ok) {
-                    const err = await res.json().catch(() => ({}));
-                    errorEl.innerHTML = '❌ ' + (err.detail || 'Failed to send code');
-                    btn.disabled = false;
-                    return;
-                }
-                const data = await res.json();
-                pendingEmail = email;
-                pendingMethod = 'email';
-                document.getElementById('code-back-label').textContent = 'Change email';
-                document.getElementById('code-step-icon').innerHTML = '<rect x="2" y="4" width="20" height="16" rx="2"/><path d="M22 7l-10 7L2 7"/>';
-                document.getElementById('code-email-display').textContent = data.email || email[0] + '***' + email.substring(email.indexOf('@'));
-                // Show code verification step
-                document.getElementById('auth-options').style.display = 'none';
-                document.getElementById('auth-code-step').classList.add('active');
-                document.getElementById('pl-code').value = '';
-                document.getElementById('auth-error-code').textContent = '';
-                setTimeout(() => document.getElementById('pl-code').focus(), 150);
-                btn.disabled = false;
-            } catch (e) {
-                                const isNetwork = e.message === 'Failed to fetch' || e.name === 'TypeError' || e.message === 'NetworkError';
-                errorEl.innerHTML = isNetwork
-                    ? '❌ Could not reach server. Check your connection.'
-                    : '❌ ' + e.message;
-                btn.innerHTML = originalBtnHTML;
-                btn.disabled = false;
-            }
-        }
-
-        async function verifyCode() {
-            const code = document.getElementById('pl-code').value.trim();
-            const errorEl = document.getElementById('auth-error-code');
-            const btn = document.getElementById('pl-code-btn');
-            if (!code || code.length < 4) {
-                errorEl.innerHTML = '⚠️ Enter your 6-digit verification code';
-                return;
-            }
-            const originalBtnHTML = btn.innerHTML;
-            btn.innerHTML = '<span class="spinner-sm"></span> Verifying...';
-            btn.disabled = true;
-            try {
-                const body = pendingMethod === 'phone'
-                    ? {phone: pendingPhone, code}
-                    : {email: pendingEmail, code};
-                const res = await fetch('/auth/auth0/passwordless/verify', {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify(body),
-                });
-                if (!res.ok) {
-                    const err = await res.json().catch(() => ({}));
-                    errorEl.innerHTML = '❌ ' + (err.detail || 'Verification failed');
-                    btn.innerHTML = originalBtnHTML;
-                    btn.disabled = false;
-                    return;
-                }
-                const data = await res.json();
-                localStorage.setItem('mb_jwt', data.token);
-                if (data.api_key) {
-                    localStorage.setItem('mb_api_key', data.api_key);
-                    currentApiKey = data.api_key;
-                }
-                updateAuthUI();
-                window.postAuthCallback?.();
-                window.postAuthCallback = null;
-                const _params = new URLSearchParams(window.location.search);
-                if (_params.has('pending_org_id')) {
-                    fetch('/auth/link-subscription', {
-                        method: 'POST',
-                        headers: { 'Authorization': 'Bearer ' + data.token, 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ pending_org_id: _params.get('pending_org_id') })
-                    }).catch(() => {});
-                }
-                closeAuth();
-                window.location.reload();
-            } catch (e) {
-                                const isNetwork = e.message === 'Failed to fetch' || e.name === 'TypeError' || e.message === 'NetworkError';
-                errorEl.innerHTML = isNetwork
-                    ? '❌ Could not reach server. Check your connection.'
-                    : '❌ ' + e.message;
-                btn.innerHTML = originalBtnHTML;
-                btn.disabled = false;
-            }
-        }
-
-        async function resendCode() {
-            const errorEl = document.getElementById('auth-error-code');
-            const btn = document.getElementById('pl-code-btn');
-            if (!pendingEmail && !pendingPhone) return;
-            errorEl.innerHTML = '<span class="auth-spinner"></span>';
-            btn.disabled = true;
-            try {
-                const url = pendingMethod === 'phone'
-                    ? '/auth/auth0/passwordless/start-sms'
-                    : '/auth/auth0/passwordless/start';
-                const body = pendingMethod === 'phone'
-                    ? JSON.stringify({phone: pendingPhone})
-                    : JSON.stringify({email: pendingEmail});
-                const res = await fetch(url, {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body,
-                });
-                if (!res.ok) {
-                    const err = await res.json().catch(() => ({}));
-                    errorEl.innerHTML = '❌ ' + (err.detail || 'Failed to resend code');
-                    btn.disabled = false;
-                    return;
-                }
-                errorEl.innerHTML = '✅ New code sent!';
-                document.getElementById('pl-code').value = '';
-                setTimeout(() => document.getElementById('pl-code').focus(), 150);
-                btn.disabled = false;
-            } catch (e) {
-                                const isNetwork = e.message === 'Failed to fetch' || e.name === 'TypeError' || e.message === 'NetworkError';
-                errorEl.innerHTML = isNetwork
-                    ? '❌ Could not reach server. Check your connection.'
-                    : '❌ ' + e.message;
-                btn.disabled = false;
-            }
-        }
-
-        function escapeHtml(str) {
-            const div = document.createElement('div');
-            div.textContent = str;
-            return div.innerHTML;
-        }
-
-        // ── Init ──────────────────────────────────────────────────
-        document.addEventListener('DOMContentLoaded', async () => {
-            await initAuth();
-        });
-    </script>
-    <footer class="footer" data-i18n="footer.text">© 2026 Memory Bridge — API for cross-agent memory</footer>
-</body>
-</html>
+     1|<!DOCTYPE html>
+     2|<html lang="en" data-theme="dark">
+     3|<head>
+     4|    <meta charset="UTF-8">
+     5|    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+     6|    <title data-i18n="api_docs.page_title">Memory Bridge — API Docs</title>
+     7|    <link rel="icon" href="/playground/logo.png" type="image/png">
+     8|    <link rel="stylesheet" href="/playground/style.css">
+     9|    <style>
+    10|        html, body { height: 100%; margin: 0; padding: 0; overflow: hidden; }
+    11|        body { display: flex; flex-direction: column; }
+    12|        iframe { flex: 1; border: none; width: 100%; }
+    13|    </style>
+    14|</head>
+    15|<body>
+    16|    <!-- Navbar -->
+    17|    <nav class="navbar">
+    18|        <a href="/" class="logo">
+    19|            <img src="/playground/logo.png" alt="Memory Bridge" data-i18n="nav.logo_alt">
+    20|            <span data-i18n="nav.logo">Memory </span><span class="logo-accent">Bridge</span>
+    21|        </a>
+    22|        <div class="nav-links">
+    23|            <a href="/" data-i18n="nav.home">Home</a>
+    24|            <a href="/playground/graph.html" data-i18n="nav.graph">Graph</a>
+    25|            <a href="/dashboard/" data-i18n="nav.dashboard">Dashboard</a>
+    26|            <a href="/pricing" data-i18n="nav.pricing">Pricing</a>
+    27|            <a href="/api-docs" class="active" data-i18n="nav.api_docs">API Docs</a>
+    28|        </div>
+    29|        <div class="nav-right">
+    30|            <div style="position:relative;display:inline-flex;">
+    31|                <button class="nav-icon-btn lang-toggle" onclick="toggleLang()" title="Switch language" aria-label="Switch language">
+    32|                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    33|                        <circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/>
+    34|                        <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+    35|                    </svg>
+    36|                </button>
+    37|                <div class="lang-dropdown" id="lang-dropdown">
+    38|                    <a href="javascript:void(0)" data-lang="en" class="lang-opt active" onclick="setLang('en')">🇬🇧 English</a>
+    39|                    <a href="javascript:void(0)" data-lang="zh" class="lang-opt" onclick="setLang('zh')">🇨🇳 中文</a>
+    40|                    <a href="javascript:void(0)" data-lang="ja" class="lang-opt" onclick="setLang('ja')">🇯🇵 日本語</a>
+    41|                    <a href="javascript:void(0)" data-lang="ko" class="lang-opt" onclick="setLang('ko')">🇰🇷 한국어</a>
+    42|                    <a href="javascript:void(0)" data-lang="es" class="lang-opt" onclick="setLang('es')">🇪🇸 Español</a>
+    43|                    <a href="javascript:void(0)" data-lang="fr" class="lang-opt" onclick="setLang('fr')">🇫🇷 Français</a>
+    44|                    <a href="javascript:void(0)" data-lang="de" class="lang-opt" onclick="setLang('de')">🇩🇪 Deutsch</a>
+    45|                </div>
+    46|            </div>
+    47|            <button class="nav-icon-btn theme-toggle-btn" onclick="toggleTheme()" title="Toggle theme">
+    48|                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="theme-sun">
+    49|                    <circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/>
+    50|                    <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+    51|                    <line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/>
+    52|                    <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+    53|                </svg>
+    54|                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="theme-moon" style="display:none">
+    55|                    <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+    56|                </svg>
+    57|            </button>
+    58|            <div class="auth-btn-container" id="auth-btn-container">
+    59|                <button class="auth-btn" id="auth-nav-btn" onclick="openAuth()" title="Sign in / Sign up">
+    60|                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+    61|                    <span id="auth-btn-label" data-i18n="nav.sign_in">Sign in</span>
+    62|                </button>
+    63|                <div class="user-menu" id="user-menu" style="display:none;">
+    64|                    <button class="user-avatar-btn" id="user-btn" onclick="toggleUserDropdown()" title="Account menu">
+    65|                        <span class="user-avatar-circle" id="user-avatar-circle">👤</span>
+    66|                        <span class="session-dot" id="session-dot"></span>
+    67|                        <span class="user-avatar-name" id="user-avatar-name"></span>
+    68|                        <span class="user-plan-badge" id="user-plan-badge"></span>
+    69|                        <svg class="user-chevron" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+    70|                    </button>
+    71|                    <div class="user-dropdown" id="user-dropdown">
+    72|                        <div class="user-dropdown-header">
+    73|                            <span class="user-dropdown-email" id="user-dropdown-email"></span>
+    74|                            <span class="user-dropdown-plan" id="user-dropdown-plan" data-i18n="dash.free_plan">Free Plan</span>
+    75|                            <span class="user-dropdown-since" id="user-dropdown-since"></span>
+    76|                        </div>
+    77|                        <div class="user-dropdown-divider"></div>
+    78|                        <a href="/pricing" class="user-dropdown-item" data-i18n="dash.manage_billing">
+    79|                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+    80|                            Manage Billing
+    81|                        </a>
+    82|                        <div class="user-dropdown-item sign-out" onclick="showLogoutConfirm()" style="cursor:pointer;" data-i18n="nav.sign_out">
+    83|                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+    84|                            Sign Out
+    85|                        </div>
+    86|                    </div>
+    87|                </div>
+    88|            </div>
+    89|            <a href="/playground/" class="nav-cta" data-i18n="nav.launch_playground">
+    90|                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+    91|                <span data-i18n="nav.launch_playground">Launch Playground</span>
+    92|            </a>
+    93|            <button class="nav-hamburger" onclick="toggleMobileNav()" aria-label="Open menu">
+    94|                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    95|                    <line x1="4" y1="6" x2="20" y2="6"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="18" x2="20" y2="18"/>
+    96|                </svg>
+    97|            </button>
+    98|        </div>
+    99|    </nav>
+   100|
+   101|    <!-- Mobile Nav Panel -->
+   102|    <div class="nav-mobile-backdrop" id="nav-backdrop" onclick="closeMobileNav()"></div>
+   103|    <div class="nav-mobile-panel" id="nav-mobile">
+   104|        <div class="nav-mobile-header">
+   105|            <div class="logo"><img src="/playground/logo.png" alt=""> <span data-i18n="nav.logo">Memory </span><span class="logo-accent">Bridge</span></div>
+   106|            <button class="nav-mobile-close" onclick="closeMobileNav()" aria-label="Close menu">
+   107|                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+   108|                    <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+   109|                </svg>
+   110|            </button>
+   111|        </div>
+   112|        <a href="/" onclick="closeMobileNav()" data-i18n="nav.home"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg> Home</a>
+   113|        <a href="/playground/graph.html" onclick="closeMobileNav()" data-i18n="nav.graph"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="5" cy="5" r="3"/><circle cx="19" cy="5" r="3"/><circle cx="12" cy="19" r="3"/><line x1="5" y1="5" x2="19" y2="5"/><line x1="5" y1="5" x2="12" y2="19"/><line x1="19" y1="5" x2="12" y2="19"/></svg> Graph</a>
+   114|        <a href="/dashboard/" onclick="closeMobileNav()" data-i18n="nav.dashboard"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg> Dashboard</a>
+   115|        <a href="javascript:void(0)" id="auth-mobile-btn" onclick="closeMobileNav();openAuth()" style="display:flex;align-items:center;gap:0.45rem;padding:0.7rem 1.25rem;border-radius:var(--radius-sm);font-size:0.88rem;font-weight:600;color:var(--accent);text-decoration:none;">
+   116|            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+   117|            <span id="auth-mobile-label" data-i18n="nav.sign_in">Sign in</span>
+   118|        </a>
+   119|        <!-- Mobile User Card (when signed in) -->
+   120|        <div id="mobile-user-card" style="display:none;">
+   121|            <div class="mobile-user-header">
+   122|                <div class="mobile-user-avatar">
+   123|                    <span class="mobile-user-circle" id="mobile-user-circle">👤</span>
+   124|                    <span class="session-dot" id="mobile-session-dot"></span>
+   125|                </div>
+   126|                <div class="mobile-user-info">
+   127|                    <span class="mobile-user-email" id="mobile-user-email"></span>
+   128|                    <span class="mobile-user-plan" id="mobile-user-plan" data-i18n="dash.free_plan">Free Plan</span>
+   129|                </div>
+   130|            </div>
+   131|            <div class="mobile-user-divider"></div>
+   132|            <a href="/pricing" class="mobile-user-action" onclick="closeMobileNav()">
+   133|                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+   134|                <span data-i18n="dash.manage_billing">Manage Billing</span>
+   135|            </a>
+   136|            <div class="mobile-user-divider"></div>
+   137|            <span class="mobile-user-since" id="mobile-user-since"></span>
+   138|            <a href="javascript:void(0)" class="mobile-user-action sign-out" id="mobile-sign-out-btn" onclick="closeMobileNav();showLogoutConfirm()">
+   139|                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+   140|                <span data-i18n="nav.sign_out">Sign Out</span>
+   141|            </a>
+   142|        </div>
+   143|        <a href="/pricing" onclick="closeMobileNav()" data-i18n="nav.pricing"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg> Pricing</a>
+   144|        <a href="/api-docs" class="active" onclick="closeMobileNav()" data-i18n="nav.api_docs"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg> API Docs</a>
+   145|        <div class="nav-mobile-divider"></div>
+   146|        <a href="/playground/" class="nav-mobile-cta" onclick="closeMobileNav()"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg> <span data-i18n="nav.launch_playground">Launch Playground</span></a>
+   147|    </div>
+   148|
+   149|    <iframe src="/docs" title="API Documentation" data-i18n="iframe.title"></iframe>
+   150|
+   151|<script src="/playground/i18n.js?v=3"></script>
+   152|<script src="/playground/auth.js?v=1"></script>
+   153|<script>
+   154|        // ── Theme ──────────────────────────────────────────────────
+   155|        (function initTheme() {
+   156|            const saved = localStorage.getItem('mb-theme');
+   157|            if (saved) document.documentElement.setAttribute('data-theme', saved);
+   158|            else {
+   159|                const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+   160|                document.documentElement.setAttribute('data-theme', prefersDark ? 'dark' : 'light');
+   161|            }
+   162|            updateThemeIcons();
+   163|        })();
+   164|        function toggleTheme() {
+   165|            const html = document.documentElement;
+   166|            const next = html.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+   167|            html.setAttribute('data-theme', next);
+   168|            localStorage.setItem('mb-theme', next);
+   169|            updateThemeIcons();
+   170|        }
+   171|        function updateThemeIcons() {
+   172|            const theme = document.documentElement.getAttribute('data-theme');
+   173|            const isDark = theme === 'dark';
+   174|            document.querySelectorAll('.theme-toggle-btn').forEach(btn => {
+   175|                const sun = btn.querySelector('.theme-sun');
+   176|                const moon = btn.querySelector('.theme-moon');
+   177|                if (sun) sun.style.display = isDark ? 'block' : 'none';
+   178|                if (moon) moon.style.display = isDark ? 'none' : 'block';
+   179|            });
+   180|        }
+   181|        // ── Mobile Nav ───────────────────────────────────────────
+   182|        function toggleMobileNav() {
+   183|            const panel = document.getElementById('nav-mobile');
+   184|            const backdrop = document.getElementById('nav-backdrop');
+   185|            const isOpen = panel.classList.toggle('open');
+   186|            backdrop.classList.toggle('open');
+   187|            document.body.style.overflow = isOpen ? 'hidden' : '';
+   188|        }
+   189|        function closeMobileNav() {
+   190|            const panel = document.getElementById('nav-mobile');
+   191|            const backdrop = document.getElementById('nav-backdrop');
+   192|            if (panel) panel.classList.remove('open');
+   193|            if (backdrop) backdrop.classList.remove('open');
+   194|            document.body.style.overflow = '';
+   195|        }
+   196|        // ── Language ────────────────────────────────────────────────
+   197|        function toggleLang() {
+   198|            document.getElementById('lang-dropdown').classList.toggle('open');
+   199|        }
+   200|        document.addEventListener('click', (e) => {
+   201|            if (!e.target.closest('.lang-toggle') && !e.target.closest('#lang-dropdown')) {
+   202|                document.getElementById('lang-dropdown')?.classList.remove('open');
+   203|            }
+   204|        });
+   205|        function setLang(code) {
+   206|            localStorage.setItem('mb-lang', code);
+   207|            document.querySelectorAll('.lang-opt').forEach(el => el.classList.remove('active'));
+   208|            const opt = document.querySelector(`.lang-opt[data-lang="${code}"]`);
+   209|            if (opt) opt.classList.add('active');
+   210|            document.getElementById('lang-dropdown').classList.remove('open');
+   211|        }
+   212|        (function initLang() {
+   213|            initLanguage();
+   214|        })();
+   215|    </script>
+   216|    <!-- Auth Modal -->
+   217|    <div class="auth-overlay" id="auth-overlay">
+   218|      <div class="auth-modal">
+   219|        <button class="auth-close" onclick="closeAuth()" aria-label="Close" >
+   220|          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+   221|        </button>
+   222|        <div class="auth-icon">🔑</div>
+   223|        <div class="auth-title" data-i18n="auth.title">Memory Bridge</div>
+   224|                    <!-- Sign In / Create Account tabs -->
+   225|            <div class="auth-tabs" style="display:flex;gap:0;margin:0.5rem 0 1rem;border:1px solid var(--border-primary);border-radius:var(--radius-md);overflow:hidden;width:100%;">
+   226|              <button class="auth-tab active" id="auth-tab-signin" onclick="selectAuthTab('signin')" style="flex:1;padding:0.5rem 0;border:none;background:var(--accent);color:#fff;font-size:0.88rem;font-weight:600;cursor:pointer;">Sign In</button>
+   227|              <button class="auth-tab" id="auth-tab-signup" onclick="selectAuthTab('signup')" style="flex:1;padding:0.5rem 0;border:none;background:transparent;color:var(--text-muted);font-size:0.88rem;font-weight:600;cursor:pointer;">Create Account</button>
+   228|            </div>
+   229|            <div class="auth-subtitle" id="auth-subtitle" data-i18n="auth.subtitle">Sign in to access your account.</div>
+   230|
+   231|        <!-- Step 1: Options (social + email) -->
+   232|        <div id="auth-options" class="auth-options">
+   233|          <button class="auth-social-btn" onclick="socialLogin('google-oauth2')" data-i18n="auth.google">
+   234|            <span class="s-icon google" style="background:transparent;border:none;font-size:1.2rem;">
+   235|              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 48 48">
+   236|                <path fill="#FFC107" d="M43.611,20.083H42V20H24v8h11.303c-1.649,4.657-6.08,8-11.303,8c-6.627,0-12-5.373-12-12c0-6.627,5.373-12,12-12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C12.955,4,4,12.955,4,24c0,11.045,8.955,20,20,20c11.045,0,20-8.955,20-20C44,22.659,43.862,21.35,43.611,20.083z"/>
+   237|                <path fill="#FF3D00" d="M6.306,14.691l6.571,4.819C14.655,15.108,18.961,12,24,12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C16.318,4,9.656,8.337,6.306,14.691z"/>
+   238|                <path fill="#4CAF50" d="M24,44c5.166,0,9.86-1.977,13.409-5.192l-6.19-5.238C29.211,35.091,26.715,36,24,36c-5.202,0-9.619-3.317-11.283-7.946l-6.522,5.025C9.505,39.556,16.227,44,24,44z"/>
+   239|                <path fill="#1976D2" d="M43.611,20.083H42V20H24v8h11.303c-0.792,2.237-2.231,4.166-4.087,5.571c0.001-0.001,0.002-0.001,0.003-0.002l6.19,5.238C36.971,39.205,44,34,44,24C44,22.659,43.862,21.35,43.611,20.083z"/>
+   240|              </svg>
+   241|            </span>
+   242|            <span data-i18n="auth.continue_google">Continue with Google</span>
+   243|          </button>
+   244|          <button class="auth-social-btn" onclick="socialLogin('apple')" data-i18n="auth.apple">
+   245|            <span class="s-icon apple" style="font-size:1.3rem;">
+   246|              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="#000">
+   247|                <path d="M17.05 20.28c-.98.95-2.05.8-3.08.35-1.09-.46-2.09-.48-3.24 0-1.44.62-2.2.44-3.06-.35C2.79 15.25 3.51 7.59 9.05 7.31c1.35.07 2.29.74 3.08.8 1.18-.24 2.31-.93 3.57-.84 1.51.12 2.65.72 3.4 1.8-3.12 1.87-2.38 5.98.48 7.13-.57 1.5-1.31 2.99-2.54 4.09zM12.03 7.25c-.15-2.23 1.66-4.07 3.74-4.25.29 2.58-2.34 4.5-3.74 4.25z"/>
+   248|              </svg>
+   249|            </span>
+   250|            <span data-i18n="auth.continue_apple">Continue with Apple</span>
+   251|          </button>
+   252|          <button class="auth-social-btn" onclick="phoneLogin()" data-i18n="auth.phone">
+   253|            <span class="s-icon phone" style="font-size:1.3rem;">
+   254|              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+   255|                <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
+   256|              </svg>
+   257|            </span>
+   258|            <span data-i18n="auth.continue_phone">Continue with Phone</span>
+   259|          </button>
+   260|          <div class="auth-divider" data-i18n="auth.divider">
+   261|            <hr>
+   262|            <span data-i18n="auth.or_email">or continue with email</span>
+   263|            <hr>
+   264|          </div>
+   265|          <input type="email" class="auth-email-field" id="pl-email" placeholder="you@example.com" data-i18n="auth.email_placeholder" autocomplete="email" onkeydown="if(event.key==='Enter')continueWithEmail()">
+   266|          <button class="auth-email-cta" onclick="continueWithEmail()" id="pl-email-btn" data-i18n="auth.continue_btn">Continue →</button>
+   267|          <div class="auth-error" id="auth-error-main"></div>
+   268|<div style="margin-top: 0.75rem; text-align: center;">
+   269|                <a href="#" onclick="showRecoveryForm(); return false;" style="color: var(--accent); text-decoration: none; font-size: 0.85rem; font-weight: 500; opacity: 0.85; transition: opacity 0.15s;" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0.85'">Lost your account? Recover it here →</a>
+   270|              </div>
+   271|        </div>
+   272|
+   273|        <!-- Step 2: Phone input -->
+   274|        <div id="auth-phone-step" class="auth-form">
+   275|          <button class="back-link" onclick="showAuthOptions()" data-i18n="auth.back">
+   276|            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+   277|            Back
+   278|          </button>
+   279|          <div class="auth-code-info">
+   280|            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+   281|              <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
+   282|            </svg>
+   283|            <div class="auth-code-msg" data-i18n="auth.enter_phone">Enter your phone number</div>
+   284|            <div style="font-size:0.8rem;color:var(--text-muted);margin-top:0.25rem;" data-i18n="auth.sms_notice">We'll send a 6-digit code via SMS</div>
+   285|          </div>
+   286|          <div class="auth-phone-input-row">
+   287|            <div class="phone-country-select">
+   288|              <select id="pl-country-code" onchange="updatePhoneFlag()">
+   289|                <option value="93">🇦🇫 Afghanistan +93</option>
+   290|                <option value="355">🇦🇱 Albania +355</option>
+   291|                <option value="213">🇩🇿 Algeria +213</option>
+   292|                <option value="376">🇦🇩 Andorra +376</option>
+   293|                <option value="244">🇦🇴 Angola +244</option>
+   294|                <option value="54">🇦🇷 Argentina +54</option>
+   295|                <option value="374">🇦🇲 Armenia +374</option>
+   296|                <option value="297">🇦🇼 Aruba +297</option>
+   297|                <option value="61">🇦🇺 Australia +61</option>
+   298|                <option value="43">🇦🇹 Austria +43</option>
+   299|                <option value="994">🇦🇿 Azerbaijan +994</option>
+   300|                <option value="973">🇧🇭 Bahrain +973</option>
+   301|                <option value="880">🇧🇩 Bangladesh +880</option>
+   302|                <option value="375">🇧🇾 Belarus +375</option>
+   303|                <option value="32">🇧🇪 Belgium +32</option>
+   304|                <option value="501">🇧🇿 Belize +501</option>
+   305|                <option value="229">🇧🇯 Benin +229</option>
+   306|                <option value="975">🇧🇹 Bhutan +975</option>
+   307|                <option value="591">🇧🇴 Bolivia +591</option>
+   308|                <option value="387">🇧🇦 Bosnia +387</option>
+   309|                <option value="267">🇧🇼 Botswana +267</option>
+   310|                <option value="55">🇧🇷 Brazil +55</option>
+   311|                <option value="673">🇧🇳 Brunei +673</option>
+   312|                <option value="359">🇧🇬 Bulgaria +359</option>
+   313|                <option value="226">🇧🇫 Burkina Faso +226</option>
+   314|                <option value="257">🇧🇮 Burundi +257</option>
+   315|                <option value="855">🇰🇭 Cambodia +855</option>
+   316|                <option value="237">🇨🇲 Cameroon +237</option>
+   317|                <option value="1">🇨🇦 Canada +1</option>
+   318|                <option value="238">🇨🇻 Cape Verde +238</option>
+   319|                <option value="236">🇨🇫 CAR +236</option>
+   320|                <option value="235">🇹🇩 Chad +235</option>
+   321|                <option value="56">🇨🇱 Chile +56</option>
+   322|                <option value="86">🇨🇳 China +86</option>
+   323|                <option value="57">🇨🇴 Colombia +57</option>
+   324|                <option value="269">🇰🇲 Comoros +269</option>
+   325|                <option value="243">🇨🇩 Congo (DRC) +243</option>
+   326|                <option value="242">🇨🇬 Congo +242</option>
+   327|                <option value="506">🇨🇷 Costa Rica +506</option>
+   328|                <option value="385">🇭🇷 Croatia +385</option>
+   329|                <option value="53">🇨🇺 Cuba +53</option>
+   330|                <option value="357">🇨🇾 Cyprus +357</option>
+   331|                <option value="420">🇨🇿 Czechia +420</option>
+   332|                <option value="45">🇩🇰 Denmark +45</option>
+   333|                <option value="253">🇩🇯 Djibouti +253</option>
+   334|                <option value="593">🇪🇨 Ecuador +593</option>
+   335|                <option value="20">🇪🇬 Egypt +20</option>
+   336|                <option value="503">🇸🇻 El Salvador +503</option>
+   337|                <option value="372">🇪🇪 Estonia +372</option>
+   338|                <option value="251">🇪🇹 Ethiopia +251</option>
+   339|                <option value="679">🇫🇯 Fiji +679</option>
+   340|                <option value="358">🇫🇮 Finland +358</option>
+   341|                <option value="33">🇫🇷 France +33</option>
+   342|                <option value="241">🇬🇦 Gabon +241</option>
+   343|                <option value="220">🇬🇲 Gambia +220</option>
+   344|                <option value="995">🇬🇪 Georgia +995</option>
+   345|                <option value="49">🇩🇪 Germany +49</option>
+   346|                <option value="233">🇬🇭 Ghana +233</option>
+   347|                <option value="30">🇬🇷 Greece +30</option>
+   348|                <option value="299">🇬🇱 Greenland +299</option>
+   349|                <option value="502">🇬🇹 Guatemala +502</option>
+   350|                <option value="224">🇬🇳 Guinea +224</option>
+   351|                <option value="245">🇬🇼 Guinea-Bissau +245</option>
+   352|                <option value="592">🇬🇾 Guyana +592</option>
+   353|                <option value="509">🇭🇹 Haiti +509</option>
+   354|                <option value="504">🇭🇳 Honduras +504</option>
+   355|                <option value="852">🇭🇰 Hong Kong +852</option>
+   356|                <option value="36">🇭🇺 Hungary +36</option>
+   357|                <option value="354">🇮🇸 Iceland +354</option>
+   358|                <option value="91">🇮🇳 India +91</option>
+   359|                <option value="62">🇮🇩 Indonesia +62</option>
+   360|                <option value="98">🇮🇷 Iran +98</option>
+   361|                <option value="964">🇮🇶 Iraq +964</option>
+   362|                <option value="353">🇮🇪 Ireland +353</option>
+   363|                <option value="972">🇮🇱 Israel +972</option>
+   364|                <option value="39">🇮🇹 Italy +39</option>
+   365|                <option value="225">🇨🇮 Ivory Coast +225</option>
+   366|                <option value="81">🇯🇵 Japan +81</option>
+   367|                <option value="962">🇯🇴 Jordan +962</option>
+   368|                <option value="7">🇰🇿 Kazakhstan +7</option>
+   369|                <option value="254">🇰🇪 Kenya +254</option>
+   370|                <option value="383">🇽🇰 Kosovo +383</option>
+   371|                <option value="965">🇰🇼 Kuwait +965</option>
+   372|                <option value="996">🇰🇬 Kyrgyzstan +996</option>
+   373|                <option value="856">🇱🇦 Laos +856</option>
+   374|                <option value="371">🇱🇻 Latvia +371</option>
+   375|                <option value="961">🇱🇧 Lebanon +961</option>
+   376|                <option value="266">🇱🇸 Lesotho +266</option>
+   377|                <option value="231">🇱🇷 Liberia +231</option>
+   378|                <option value="218">🇱🇾 Libya +218</option>
+   379|                <option value="423">🇱🇮 Liechtenstein +423</option>
+   380|                <option value="370">🇱🇹 Lithuania +370</option>
+   381|                <option value="352">🇱🇺 Luxembourg +352</option>
+   382|                <option value="853">🇲🇴 Macau +853</option>
+   383|                <option value="389">🇲🇰 North Macedonia +389</option>
+   384|                <option value="261">🇲🇬 Madagascar +261</option>
+   385|                <option value="265">🇲🇼 Malawi +265</option>
+   386|                <option value="60">🇲🇾 Malaysia +60</option>
+   387|                <option value="960">🇲🇻 Maldives +960</option>
+   388|                <option value="223">🇲🇱 Mali +223</option>
+   389|                <option value="356">🇲🇹 Malta +356</option>
+   390|                <option value="222">🇲🇷 Mauritania +222</option>
+   391|                <option value="230">🇲🇺 Mauritius +230</option>
+   392|                <option value="52">🇲🇽 Mexico +52</option>
+   393|                <option value="373">🇲🇩 Moldova +373</option>
+   394|                <option value="377">🇲🇨 Monaco +377</option>
+   395|                <option value="976">🇲🇳 Mongolia +976</option>
+   396|                <option value="382">🇲🇪 Montenegro +382</option>
+   397|                <option value="212">🇲🇦 Morocco +212</option>
+   398|                <option value="258">🇲🇿 Mozambique +258</option>
+   399|                <option value="95">🇲🇲 Myanmar +95</option>
+   400|                <option value="264">🇳🇦 Namibia +264</option>
+   401|                <option value="977">🇳🇵 Nepal +977</option>
+   402|                <option value="31">🇳🇱 Netherlands +31</option>
+   403|                <option value="64">🇳🇿 New Zealand +64</option>
+   404|                <option value="505">🇳🇮 Nicaragua +505</option>
+   405|                <option value="227">🇳🇪 Niger +227</option>
+   406|                <option value="234">🇳🇬 Nigeria +234</option>
+   407|                <option value="47">🇳🇴 Norway +47</option>
+   408|                <option value="968">🇴🇲 Oman +968</option>
+   409|                <option value="92">🇵🇰 Pakistan +92</option>
+   410|                <option value="680">🇵🇼 Palau +680</option>
+   411|                <option value="970">🇵🇸 Palestine +970</option>
+   412|                <option value="507">🇵🇦 Panama +507</option>
+   413|                <option value="675">🇵🇬 Papua New Guinea +675</option>
+   414|                <option value="595">🇵🇾 Paraguay +595</option>
+   415|                <option value="51">🇵🇪 Peru +51</option>
+   416|                <option value="63">🇵🇭 Philippines +63</option>
+   417|                <option value="48">🇵🇱 Poland +48</option>
+   418|                <option value="351">🇵🇹 Portugal +351</option>
+   419|                <option value="974">🇶🇦 Qatar +974</option>
+   420|                <option value="40">🇷🇴 Romania +40</option>
+   421|                <option value="7">🇷🇺 Russia +7</option>
+   422|                <option value="250">🇷🇼 Rwanda +250</option>
+   423|                <option value="685">🇼🇸 Samoa +685</option>
+   424|                <option value="378">🇸🇲 San Marino +378</option>
+   425|                <option value="239">🇸🇹 São Tomé +239</option>
+   426|                <option value="966">🇸🇦 Saudi Arabia +966</option>
+   427|                <option value="221">🇸🇳 Senegal +221</option>
+   428|                <option value="381">🇷🇸 Serbia +381</option>
+   429|                <option value="248">🇸🇨 Seychelles +248</option>
+   430|                <option value="232">🇸🇱 Sierra Leone +232</option>
+   431|                <option value="65" selected>🇸🇬 Singapore +65</option>
+   432|                <option value="421">🇸🇰 Slovakia +421</option>
+   433|                <option value="386">🇸🇮 Slovenia +386</option>
+   434|                <option value="677">🇸🇧 Solomon Islands +677</option>
+   435|                <option value="252">🇸🇴 Somalia +252</option>
+   436|                <option value="27">🇿🇦 South Africa +27</option>
+   437|                <option value="82">🇰🇷 South Korea +82</option>
+   438|                <option value="34">🇪🇸 Spain +34</option>
+   439|                <option value="94">🇱🇰 Sri Lanka +94</option>
+   440|                <option value="249">🇸🇩 Sudan +249</option>
+   441|                <option value="597">🇸🇷 Suriname +597</option>
+   442|                <option value="268">🇸🇿 Eswatini +268</option>
+   443|                <option value="46">🇸🇪 Sweden +46</option>
+   444|                <option value="41">🇨🇭 Switzerland +41</option>
+   445|                <option value="963">🇸🇾 Syria +963</option>
+   446|                <option value="886">🇹🇼 Taiwan +886</option>
+   447|                <option value="992">🇹🇯 Tajikistan +992</option>
+   448|                <option value="255">🇹🇿 Tanzania +255</option>
+   449|                <option value="66">🇹🇭 Thailand +66</option>
+   450|                <option value="670">🇹🇱 Timor-Leste +670</option>
+   451|                <option value="228">🇹🇬 Togo +228</option>
+   452|                <option value="676">🇹🇴 Tonga +676</option>
+   453|                <option value="216">🇹🇳 Tunisia +216</option>
+   454|                <option value="90">🇹🇷 Turkey +90</option>
+   455|                <option value="993">🇹🇲 Turkmenistan +993</option>
+   456|                <option value="256">🇺🇬 Uganda +256</option>
+   457|                <option value="380">🇺🇦 Ukraine +380</option>
+   458|                <option value="971">🇦🇪 UAE +971</option>
+   459|                <option value="44">🇬🇧 UK +44</option>
+   460|                <option value="1">🇺🇸 US +1</option>
+   461|                <option value="598">🇺🇾 Uruguay +598</option>
+   462|                <option value="998">🇺🇿 Uzbekistan +998</option>
+   463|                <option value="678">🇻🇺 Vanuatu +678</option>
+   464|                <option value="379">🇻🇦 Vatican +379</option>
+   465|                <option value="58">🇻🇪 Venezuela +58</option>
+   466|                <option value="84">🇻🇳 Vietnam +84</option>
+   467|                <option value="967">🇾🇪 Yemen +967</option>
+   468|                <option value="260">🇿🇲 Zambia +260</option>
+   469|                <option value="263">🇿🇼 Zimbabwe +263</option>
+   470|              </select>
+   471|              <span class="phone-caret">▼</span>
+   472|            </div>
+   473|            <input type="tel" id="pl-phone" placeholder="8123 4567" autocomplete="tel" onkeydown="if(event.key==='Enter')sendPhoneCode()" data-i18n-placeholder="auth.phone_pl">
+   474|          </div>
+   475|          <button class="auth-email-cta" onclick="sendPhoneCode()" id="pl-phone-btn" data-i18n="auth.send_code">Send Code →</button>
+   476|          <div class="auth-error" id="auth-error-phone"></div>
+   477|        </div>
+   478|
+   479|        <!-- Step 3: Code verification -->
+   480|        <div id="auth-code-step" class="auth-form">
+   481|          <button class="back-link" onclick="showAuthOptions()" data-i18n="auth.back">
+   482|            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+   483|            <span id="code-back-label" data-i18n="auth.change_email">Change email</span>
+   484|          </button>
+   485|          <div class="auth-code-info">
+   486|            <svg id="code-step-icon" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+   487|              <rect x="2" y="4" width="20" height="16" rx="2"/>
+   488|              <path d="M22 7l-10 7L2 7"/>
+   489|            </svg>
+   490|            <div class="auth-code-msg" data-i18n="auth.we_sent">We sent a code to</div>
+   491|            <div class="auth-code-email" id="code-email-display">j***@example.com</div>
+   492|          </div>
+   493|          <div class="auth-code-input-row">
+   494|            <input type="text" id="pl-code" placeholder="Enter 6-digit code" maxlength="6" inputmode="numeric" autocomplete="one-time-code" onkeydown="if(event.key==='Enter')verifyCode()" data-i18n-placeholder="auth.code_pl">
+   495|          </div>
+   496|          <button class="btn btn-primary" onclick="verifyCode()" id="pl-code-btn" data-i18n="auth.verify">Verify Code →</button>
+   497|          <div class="auth-error" id="auth-error-code"></div>
+   498|          <div class="auth-code-resend" data-i18n="auth.resend_text">
+   499|            Didn't get it? <a onclick="resendCode()" data-i18n="auth.resend_link">Send new code</a>
+   500|          </div>
+   501|        </div>
+   502|      <!-- Step 4: Recovery -->
+   503|      <div id="auth-recovery-step" class="auth-form" style="display:none;">
+   504|        <button class="back-link" onclick="showAuthOptions()">
+   505|          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+   506|          <span data-i18n="auth.back">Back</span>
+   507|        </button>
+   508|        <div class="auth-code-info">
+   509|          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+   510|            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+   511|          </svg>
+   512|          <div class="auth-code-msg">Recover Your Account</div>
+   513|          <div class="recovery-subtitle" style="font-size:0.8rem;color:var(--text-muted);margin-top:0.25rem;">Enter your email to recover your API keys and subscription.</div>
+   514|        </div>
+   515|        <div id="recovery-email-row">
+   516|          <input type="email" class="auth-email-field" id="recovery-email" placeholder="you@example.com" autocomplete="email" style="margin-bottom:0.5rem;" onkeydown="if(event.key==='Enter')recoverAccount(document.getElementById('recovery-email')?.value)">
+   517|          <button class="auth-email-cta" id="recovery-btn" onclick="recoverAccount(document.getElementById('recovery-email')?.value)">Recover Account →</button>
+   518|        </div>
+   519|        <div id="recovery-code-section" style="display:none;">
+   520|          <div class="auth-code-input-row">
+   521|
+   522|            <input type="text" id="recovery-code" placeholder="Enter 6-digit code" data-i18n="auth.code_placeholder" maxlength="6" inputmode="numeric" autocomplete="one-time-code" onkeydown="if(event.key==='Enter')recoverVerifyCode()">
+   523|
+   524|          </div>
+   525|
+   526|          <button class="btn btn-primary" id="recovery-verify-btn" onclick="recoverVerifyCode()" data-i18n="auth.verify_btn">Verify Code →</button>
+   527|          <div style="margin-top:0.5rem;text-align:center;font-size:0.78rem;color:var(--text-muted);">
+   528|            Didn't get it? <a href="#" onclick="recoverAccount(document.getElementById('recovery-email')?.value); return false;" style="color:var(--accent);text-decoration:none;">Send new code</a>
+   529|          </div>
+   530|        </div>
+   531|        <div class="auth-error" id="auth-error-recovery" style="margin-top:0.5rem;"></div>
+   532|      </div>
+   533|      </div>
+   534|    </div>
+   535|
+   536|    <style>
+   537|      /* ── Auth Modal: Passwordless ────────────────────── */
+   538|      .auth-email-field {
+   539|        width: 100%;
+   540|        padding: 0.7rem 1rem 0.7rem 2.5rem;
+   541|        border-radius: var(--radius-sm);
+   542|        border: 1px solid var(--border-primary);
+   543|        background: var(--bg-glass);
+   544|        color: var(--text-primary);
+   545|        font-size: 0.88rem;
+   546|        font-family: var(--font-sans);
+   547|        transition: all var(--transition-fast);
+   548|        outline: none;
+   549|        box-sizing: border-box;
+   550|        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23888888' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='2' y='4' width='20' height='16' rx='2'/%3E%3Cpath d='M22 7l-10 7L2 7'/%3E%3C/svg%3E");
+   551|        background-repeat: no-repeat;
+   552|        background-position: 0.75rem center;
+   553|        background-size: 16px;
+   554|      }
+   555|      .auth-email-field:focus {
+   556|        border-color: var(--accent);
+   557|        box-shadow: 0 0 0 2px var(--accent-glow);
+   558|      }
+   559|      .auth-email-field::placeholder {
+   560|        color: var(--text-faint);
+   561|      }
+   562|      .auth-email-cta {
+   563|        display: flex;
+   564|        align-items: center;
+   565|        justify-content: center;
+   566|        width: 100%;
+   567|        padding: 0.7rem 1rem;
+   568|        border-radius: var(--radius-sm);
+   569|        border: none;
+   570|        background: var(--accent-gradient);
+   571|        color: #fff;
+   572|        font-size: 0.88rem;
+   573|        font-weight: 700;
+   574|        font-family: var(--font-sans);
+   575|        cursor: pointer;
+   576|        transition: all var(--transition-fast);
+   577|        gap: 0.4rem;
+   578|      }
+   579|      .auth-email-cta:hover {
+   580|        opacity: 0.9;
+   581|        transform: translateY(-1px);
+   582|        box-shadow: var(--shadow-sm);
+   583|      }
+   584|      .auth-email-cta:active {
+   585|        transform: translateY(0);
+   586|      }
+   587|      .auth-email-cta:disabled {
+   588|        opacity: 0.5;
+   589|        cursor: not-allowed;
+   590|        transform: none;
+   591|      }
+   592|
+   593|      /* ── User Avatar + Dropdown ─────────────────────── */
+   594|      .user-avatar-btn {
+   595|        display: inline-flex;
+   596|        align-items: center;
+   597|        gap: 0.5rem;
+   598|        padding: 0.25rem 0.5rem 0.25rem 0.25rem;
+   599|        border-radius: var(--radius-full);
+   600|        border: 1px solid var(--border-primary);
+   601|        background: transparent;
+   602|        cursor: pointer;
+   603|        transition: all var(--transition-fast);
+   604|        font-family: var(--font-sans);
+   605|        color: var(--text-primary);
+   606|      }
+   607|      .user-avatar-btn:hover {
+   608|        border-color: var(--accent);
+   609|        background: var(--accent-glow);
+   610|      }
+   611|      .user-avatar-circle {
+   612|        width: 28px;
+   613|        height: 28px;
+   614|        border-radius: 50%;
+   615|        background: var(--accent-gradient);
+   616|        color: #fff;
+   617|        display: flex;
+   618|        align-items: center;
+   619|        justify-content: center;
+   620|        font-size: 0.75rem;
+   621|        font-weight: 700;
+   622|        flex-shrink: 0;
+   623|        overflow: hidden;
+   624|      }
+   625|      .user-avatar-name {
+   626|        font-size: 0.82rem;
+   627|        font-weight: 600;
+   628|        max-width: 110px;
+   629|        overflow: hidden;
+   630|        text-overflow: ellipsis;
+   631|        white-space: nowrap;
+   632|      }
+   633|      .user-chevron {
+   634|        color: var(--text-faint);
+   635|        transition: transform 0.2s;
+   636|      }
+   637|      .user-menu.open .user-chevron {
+   638|        transform: rotate(180deg);
+   639|      }
+   640|      .user-menu {
+   641|        position: relative;
+   642|        display: inline-flex;
+   643|      }
+   644|      .user-dropdown {
+   645|        display: none;
+   646|        position: absolute;
+   647|        top: calc(100% + 6px);
+   648|        right: 0;
+   649|        min-width: 220px;
+   650|        background: var(--card-bg);
+   651|        border: 1px solid var(--border-primary);
+   652|        border-radius: var(--radius-md);
+   653|        box-shadow: var(--shadow-xl);
+   654|        z-index: 100;
+   655|        overflow: hidden;
+   656|        backdrop-filter: blur(16px);
+   657|        animation: drop-in 0.15s ease;
+   658|      }
+   659|      @keyframes drop-in {
+   660|        from { opacity: 0; transform: translateY(-6px); }
+   661|        to { opacity: 1; transform: translateY(0); }
+   662|      }
+   663|      .user-menu.open .user-dropdown { display: block; }
+   664|      .user-dropdown-header {
+   665|        padding: 0.75rem 1rem;
+   666|        display: flex;
+   667|        flex-direction: column;
+   668|        gap: 0.2rem;
+   669|      }
+   670|      .user-dropdown-email {
+   671|        font-size: 0.85rem;
+   672|        font-weight: 600;
+   673|        color: var(--text-primary);
+   674|        word-break: break-all;
+   675|      }
+   676|      .user-dropdown-plan {
+   677|        font-size: 0.72rem;
+   678|        color: var(--text-muted);
+   679|        font-weight: 500;
+   680|      }
+   681|      .user-dropdown-divider {
+   682|        height: 1px;
+   683|        background: var(--border-subtle);
+   684|        margin: 0;
+   685|      }
+   686|      .user-dropdown-item {
+   687|        display: flex;
+   688|        align-items: center;
+   689|        gap: 0.5rem;
+   690|        padding: 0.65rem 1rem;
+   691|        font-size: 0.85rem;
+   692|        color: var(--text-secondary);
+   693|        text-decoration: none;
+   694|        transition: background var(--transition-fast);
+   695|      }
+   696|      .user-dropdown-item svg {
+   697|        flex-shrink: 0;
+   698|        color: var(--text-muted);
+   699|      }
+   700|      .user-dropdown-item:hover {
+   701|        background: var(--btn-secondary-hover);
+   702|        color: var(--text-primary);
+   703|      }
+   704|      .user-dropdown-item:last-child:hover {
+   705|        color: var(--red);
+   706|      }
+   707|      .user-dropdown-item:last-child:hover svg {
+   708|        color: var(--red);
+   709|      }
+   710|
+   711|      /* ── Logout Confirm Modal ────────────────────────── */
+   712|      .logout-modal-overlay {
+   713|        display: none;
+   714|        position: fixed;
+   715|        inset: 0;
+   716|        background: rgba(0,0,0,0.6);
+   717|        z-index: 1001;
+   718|        backdrop-filter: blur(6px);
+   719|      }
+   720|      .logout-modal-overlay.open { display: block; }
+   721|      .logout-modal {
+   722|        display: none;
+   723|        position: fixed;
+   724|        top: 50%;
+   725|        left: 50%;
+   726|        transform: translate(-50%, -50%) scale(0.96);
+   727|        z-index: 1002;
+   728|        background: var(--card-bg);
+   729|        border: 1px solid var(--border-primary);
+   730|        border-radius: var(--radius-lg);
+   731|        padding: 2rem;
+   732|        min-width: 360px;
+   733|        max-width: 90vw;
+   734|        box-shadow: var(--shadow-xl);
+   735|        text-align: center;
+   736|        opacity: 0;
+   737|        transition: all 0.2s ease;
+   738|      }
+   739|      .logout-modal.open {
+   740|        display: block;
+   741|        opacity: 1;
+   742|        transform: translate(-50%, -50%) scale(1);
+   743|      }
+   744|      .logout-modal .logout-icon {
+   745|        width: 56px;
+   746|        height: 56px;
+   747|        border-radius: 50%;
+   748|        background: var(--red-bg, rgba(239,68,68,0.12));
+   749|        display: flex;
+   750|        align-items: center;
+   751|        justify-content: center;
+   752|        margin: 0 auto 1rem;
+   753|        font-size: 1.6rem;
+   754|      }
+   755|      .logout-modal .logout-title {
+   756|        font-size: 1.15rem;
+   757|        font-weight: 700;
+   758|        margin-bottom: 0.5rem;
+   759|        color: var(--text-primary);
+   760|      }
+   761|      .logout-modal .logout-text {
+   762|        font-size: 0.88rem;
+   763|        color: var(--text-muted);
+   764|        line-height: 1.55;
+   765|        margin-bottom: 1.5rem;
+   766|        max-width: 320px;
+   767|        margin-left: auto;
+   768|        margin-right: auto;
+   769|      }
+   770|      .logout-modal .logout-btns {
+   771|        display: flex;
+   772|        gap: 0.65rem;
+   773|        justify-content: center;
+   774|      }
+   775|      .logout-modal .logout-btns .btn {
+   776|        min-width: 120px;
+   777|        padding: 0.6rem 1.2rem;
+   778|        font-size: 0.9rem;
+   779|      }
+   780|      @media (max-width: 520px) {
+   781|        .logout-modal {
+   782|          min-width: unset;
+   783|          width: 88vw;
+   784|          padding: 1.5rem;
+   785|        }
+   786|        .logout-modal .logout-title { font-size: 1rem; }
+   787|        .logout-modal .logout-text { font-size: 0.82rem; }
+   788|        .logout-modal .logout-btns { flex-direction: column; align-items: stretch; }
+   789|        .logout-modal .logout-btns .btn { width: 100%; text-align: center; justify-content: center; }
+   790|        .user-dropdown { right: -40px; }
+   791|      }
+   792|      .auth-phone-input-row {
+   793|        display: flex;
+   794|        flex-direction: column;
+   795|        gap: 0.5rem;
+   796|        margin: 1rem 0;
+   797|      }
+   798|      .phone-country-select {
+   799|        position: relative;
+   800|        width: 100%;
+   801|      }
+   802|      .phone-country-select select {
+   803|        appearance: none;
+   804|        -webkit-appearance: none;
+   805|        padding: 0.7rem 2rem 0.7rem 0.75rem;
+   806|        border-radius: var(--radius-sm);
+   807|        border: 1px solid var(--border-primary);
+   808|        background: var(--bg-glass);
+   809|        color: var(--text-primary);
+   810|        font-size: 0.88rem;
+   811|        font-family: var(--font-sans);
+   812|        cursor: pointer;
+   813|        outline: none;
+   814|        width: 100%;
+   815|        transition: all var(--transition-fast);
+   816|      }
+   817|      .phone-country-select select:focus {
+   818|        border-color: var(--accent);
+   819|        box-shadow: 0 0 0 2px var(--accent-glow);
+   820|      }
+   821|      .phone-country-select .phone-caret {
+   822|        position: absolute;
+   823|        right: 0.5rem;
+   824|        top: 50%;
+   825|        transform: translateY(-50%);
+   826|        pointer-events: none;
+   827|        color: var(--text-muted);
+   828|        font-size: 0.6rem;
+   829|      }
+   830|      @media (max-width: 520px) {
+   831|        .phone-country-select {
+   832|          flex-shrink: 1;
+   833|          width: 100%;
+   834|        }
+   835|        .phone-country-select select {
+   836|          width: 100%;
+   837|          min-width: auto;
+   838|          padding: 0.7rem 2rem 0.7rem 0.75rem;
+   839|          font-size: 0.88rem;
+   840|        }
+   841|        .phone-country-select .phone-caret {
+   842|          right: 0.5rem;
+   843|        }
+   844|        .auth-phone-input-row input {
+   845|          width: 100%;
+   846|          flex: none;
+   847|          font-size: 1rem;
+   848|          padding: 0.7rem 0.75rem;
+   849|        }
+   850|      }
+   851|      .auth-phone-input-row input {
+   852|        flex: 1;
+   853|        min-width: 0;
+   854|        padding: 0.7rem 1rem;
+   855|        border-radius: var(--radius-sm);
+   856|        border: 1px solid var(--border-primary);
+   857|        background: var(--bg-glass);
+   858|        color: var(--text-primary);
+   859|        font-size: 0.95rem;
+   860|        font-family: var(--font-sans);
+   861|        text-align: center;
+   862|        outline: none;
+   863|        box-sizing: border-box;
+   864|        transition: all var(--transition-fast);
+   865|      }
+   866|      .auth-phone-input-row input:focus {
+   867|        border-color: var(--accent);
+   868|        box-shadow: 0 0 0 2px var(--accent-glow);
+   869|      }
+   870|      .auth-phone-input-row input::placeholder {
+   871|        color: var(--text-faint);
+   872|      }
+   873|      .auth-code-info {
+   874|        text-align: center;
+   875|        padding: 1rem 0 0.75rem;
+   876|      }
+   877|      .auth-code-info svg {
+   878|        margin-bottom: 0.75rem;
+   879|      }
+   880|      .auth-code-msg {
+   881|        color: var(--text-secondary);
+   882|        font-size: 0.9rem;
+   883|      }
+   884|      .auth-code-email {
+   885|        font-weight: 700;
+   886|        font-size: 1.05rem;
+   887|        color: var(--text-primary);
+   888|        margin-top: 0.2rem;
+   889|      }
+   890|      .auth-code-input-row {
+   891|        margin: 1rem 0;
+   892|      }
+   893|      .auth-code-input-row input {
+   894|        text-align: center;
+   895|        font-size: 1.5rem;
+   896|        font-family: var(--font-mono);
+   897|        letter-spacing: 0.5em;
+   898|        padding: 0.75rem 0.5rem;
+   899|      }
+   900|      .auth-code-resend {
+   901|        text-align: center;
+   902|        margin-top: 0.75rem;
+   903|        font-size: 0.85rem;
+   904|        color: var(--text-muted);
+   905|      }
+   906|      .auth-code-resend a {
+   907|        color: var(--accent);
+   908|        cursor: pointer;
+   909|        text-decoration: underline;
+   910|        text-underline-offset: 2px;
+   911|      }
+   912|      .auth-code-resend a:hover {
+   913|        color: var(--accent-hover);
+   914|      }
+   915|      @media (max-width: 768px) {
+   916|        .auth-btn-container { display: inline-flex !important; }
+   917|        .nav-cta { display: none !important; }
+   918|      }
+   919|    </style>
+   920|
+   921|    <!-- Logout Confirm Modal -->
+   922|    <div class="logout-modal-overlay" id="logout-overlay" onclick="closeLogoutConfirm()"></div>
+   923|    <div class="logout-modal" id="logout-modal">
+   924|        <div class="logout-icon">🚪</div>
+   925|        <div class="logout-title" data-i18n="logout.title">Sign out of Memory Bridge?</div>
+   926|        <div class="logout-text" data-i18n="logout.text">
+   927|            You'll need to sign in again to manage API keys, view subscription details, or access your dashboard.
+   928|        </div>
+   929|        <div class="logout-btns">
+   930|            <button class="btn btn-secondary" onclick="closeLogoutConfirm()" data-i18n="logout.cancel">Cancel</button>
+   931|            <button class="btn btn-danger" id="logout-confirm-btn" onclick="logout()" data-i18n="logout.sign_out">Sign Out</button>
+   932|        </div>
+   933|    </div>
+   934|
+   935|    <script>
+   936|        // ── Shared Auth ──────────────────────────────────────────────
+   937|        let currentApiKey = '';
+   938|        let pendingEmail = '';
+   939|        let pendingPhone = '';
+   940|        let pendingMethod = 'email'; // 'email' or 'phone'
+   941|
+   942|        function openAuth(tab) {
+   943|            document.getElementById('auth-overlay').classList.add('open');
+   944|            document.body.style.overflow = 'hidden';
+   945|selectAuthTab(tab === 'signup' ? 'signup' : 'signin');
+   946|            showAuthOptions();
+   947|        }
+   948|
+   949|        function socialLogin(connection) {
+   950|            window.location.href = '/auth/auth0/login?connection=' + connection + (authMode === 'signup' ? '&screen_hint=signup' : '');
+   951|        }
+   952|
+   953|        function closeAuth() {
+   954|            document.getElementById('auth-overlay').classList.remove('open');
+   955|            document.body.style.overflow = '';
+   956|            pendingEmail = '';
+   957|            pendingPhone = '';
+   958|        }
+   959|
+   960|        let authMode = 'signin'; // 'signin' or 'signup'
+   961|
+   962|        function selectAuthTab(mode) {
+   963|            authMode = mode;
+   964|            const signinTab = document.getElementById('auth-tab-signin');
+   965|            const signupTab = document.getElementById('auth-tab-signup');
+   966|            if (!signinTab || !signupTab) return;
+   967|            const subtitle = document.getElementById('auth-subtitle');
+   968|
+   969|            if (mode === 'signin') {
+   970|                signinTab.style.background = 'var(--accent)';
+   971|                signinTab.style.color = '#fff';
+   972|                signupTab.style.background = 'transparent';
+   973|                signupTab.style.color = 'var(--text-muted)';
+   974|                subtitle.textContent = 'Sign in to access your account.';
+   975|            } else {
+   976|                signupTab.style.background = 'var(--accent)';
+   977|                signupTab.style.color = '#fff';
+   978|                signinTab.style.background = 'transparent';
+   979|                signinTab.style.color = 'var(--text-muted)';
+   980|                subtitle.textContent = 'Create an account to get started.';
+   981|            }
+   982|        }
+   983|
+   984|
+   985|        function showAuthOptions() {
+   986|            document.querySelectorAll('.auth-form').forEach(el => el.classList.remove('active'));
+   987|            const opts = document.getElementById('auth-options');
+   988|            opts.style.display = '';
+   989|            // Reset code step
+   990|            document.getElementById('pl-code').value = '';
+   991|            document.getElementById('pl-email').value = '';
+   992|            document.getElementById('pl-phone').value = '';
+   993|            document.getElementById('auth-code-step').classList.remove('active');
+   994|            document.getElementById('auth-phone-step').classList.remove('active');
+   995|            document.getElementById('auth-recovery-step').style.display = 'none';
+   996|            // Clear all errors
+   997|            document.querySelectorAll('.auth-error').forEach(el => el.textContent = '');
+   998|            // Re-enable buttons
+   999|            document.getElementById('pl-email-btn').disabled = false;
+  1000|            document.getElementById('pl-code-btn').disabled = false;
+  1001|            document.getElementById('pl-phone-btn').disabled = false;
+  1002|            pendingMethod = 'email';
+  1003|            pendingPhone = '';
+  1004|            // Reset recovery code section
+  1005|            const recoveryCodeSection = document.getElementById('recovery-code-section');
+  1006|            if (recoveryCodeSection) recoveryCodeSection.style.display = 'none';
+  1007|            const recoveryEmailRow = document.getElementById('recovery-email-row');
+  1008|            if (recoveryEmailRow) recoveryEmailRow.style.display = '';
+  1009|            const recoveryBtn = document.getElementById('recovery-btn');
+  1010|            if (recoveryBtn) recoveryBtn.style.display = '';
+  1011|            // Reset buttons
+  1012|            const continueBtn = document.getElementById('pl-email-btn');
+  1013|            if (continueBtn) { continueBtn.innerHTML = 'Continue →'; continueBtn.disabled = false; }
+  1014|            const recoveryResetBtn = document.getElementById('recovery-btn');
+  1015|            if (recoveryResetBtn) { recoveryResetBtn.innerHTML = 'Recover Account →'; recoveryResetBtn.disabled = false; }
+  1016|            const recoveryVerifyBtn = document.getElementById('recovery-verify-btn');
+  1017|            if (recoveryVerifyBtn) { recoveryVerifyBtn.innerHTML = 'Verify Code →'; recoveryVerifyBtn.disabled = false; }
+  1018|        }
+  1019|
+  1020|        function phoneLogin() {
+  1021|            pendingMethod = 'phone';
+  1022|            document.getElementById('auth-options').style.display = 'none';
+  1023|            document.querySelectorAll('.auth-form').forEach(el => el.classList.remove('active'));
+  1024|            document.getElementById('auth-phone-step').classList.add('active');
+  1025|            document.getElementById('pl-phone').value = '';
+  1026|            document.getElementById('auth-error-phone').textContent = '';
+  1027|            document.getElementById('pl-phone-btn').disabled = false;
+  1028|            setTimeout(() => document.getElementById('pl-phone').focus(), 150);
+  1029|        }
+  1030|
+  1031|        function updatePhoneFlag() {
+  1032|            // Placeholder — the select handles display natively with emoji flags
+  1033|        }
+  1034|
+  1035|        async function sendPhoneCode() {
+  1036|            const countryCode = document.getElementById('pl-country-code').value;
+  1037|            const localNum = document.getElementById('pl-phone').value.trim().replace(/[^0-9]/g, '');
+  1038|            const errorEl = document.getElementById('auth-error-phone');
+  1039|            const btn = document.getElementById('pl-phone-btn');
+  1040|            if (!localNum) {
+  1041|                errorEl.innerHTML = '⚠️ Enter your phone number';
+  1042|                return;
+  1043|            }
+  1044|            const fullPhone = '+' + countryCode + localNum;
+  1045|            const originalBtnHTML = btn.innerHTML;
+  1046|            btn.innerHTML = '<span class="spinner-sm"></span> Sending...';
+  1047|            btn.disabled = true;
+  1048|            try {
+  1049|
+  1050|                const res = await fetch('/auth/auth0/passwordless/start-sms', {
+  1051|                    method: 'POST',
+  1052|                    headers: {'Content-Type': 'application/json'},
+  1053|                    body: JSON.stringify({phone: fullPhone}),
+  1054|                });
+  1055|                if (!res.ok) {
+  1056|                    let errMsg = 'Failed to send code';
+  1057|                    try {
+  1058|                        const err = await res.json();
+  1059|                        errMsg = err.detail || err.message || errMsg;
+  1060|                    } catch {
+  1061|                        try {
+  1062|                            const text = await res.text();
+  1063|                            if (text) errMsg = text.slice(0, 200);
+  1064|                        } catch {}
+  1065|                    }
+  1066|                    errorEl.innerHTML = '' + errMsg;
+  1067|                    btn.innerHTML = originalBtnHTML;
+  1068|                    btn.disabled = false;
+  1069|                    return;
+  1070|                }
+  1071|                const data = await res.json();
+  1072|                pendingPhone = fullPhone;
+  1073|                // Show code verification step with phone icon
+  1074|                document.getElementById('code-back-label').textContent = 'Change phone';
+  1075|                document.getElementById('code-step-icon').innerHTML = '<path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>';
+  1076|                document.getElementById('code-email-display').textContent = data.phone || '*******' + fullPhone.slice(-4);
+  1077|                document.getElementById('auth-phone-step').classList.remove('active');
+  1078|                document.getElementById('auth-code-step').classList.add('active');
+  1079|                document.getElementById('pl-code').value = '';
+  1080|                document.getElementById('auth-error-code').textContent = '';
+  1081|                setTimeout(() => document.getElementById('pl-code').focus(), 150);
+  1082|                btn.disabled = false;
+  1083|            } catch (e) {
+  1084|                                const isNetwork = e.message === 'Failed to fetch' || e.name === 'TypeError' || e.message === 'NetworkError';
+  1085|                errorEl.innerHTML = isNetwork
+  1086|                    ? 'Could not reach server. Check your connection.'
+  1087|                    : '' + e.message;
+  1088|                btn.disabled = false;
+  1089|            }
+  1090|        }
+  1091|
+  1092|        async function continueWithEmail() {
+  1093|            const email = document.getElementById('pl-email').value.trim();
+  1094|            const errorEl = document.getElementById('auth-error-main');
+  1095|            const btn = document.getElementById('pl-email-btn');
+  1096|            if (!email || !email.includes('@')) {
+  1097|                errorEl.innerHTML = '⚠️ Enter a valid email address';
+  1098|                return;
+  1099|            }
+  1100|            const originalBtnHTML = btn.innerHTML;
+  1101|            btn.innerHTML = '<span class="spinner-sm"></span> Sending...';
+  1102|            btn.disabled = true;
+  1103|            try {
+  1104|                // Check if email exists before sending a code
+  1105|                const checkRes = await fetch('/auth/check-email', {
+  1106|                    method: 'POST',
+  1107|                    headers: {'Content-Type': 'application/json'},
+  1108|                    body: JSON.stringify({email}),
+  1109|                });
+  1110|                const checkData = checkRes.ok ? await checkRes.json() : {exists: false};
+  1111|                if (!checkData.exists) {
+  1112|                    if (authMode === 'signin') {
+  1113|                        errorEl.innerHTML = '<span class="auth-notice">No account found. Try the Create Account tab.</span>';
+  1114|                        btn.innerHTML = originalBtnHTML;
+  1115|                        btn.disabled = false;
+  1116|                        return;
+  1117|                    }
+  1118|                    // authMode === 'signup' — allow through, new user registering
+  1119|                }
+  1120|                const res = await fetch('/auth/auth0/passwordless/start', {
+  1121|                    method: 'POST',
+  1122|                    headers: {'Content-Type': 'application/json'},
+  1123|                    body: JSON.stringify({email}),
+  1124|                });
+  1125|                if (!res.ok) {
+  1126|                    const err = await res.json().catch(() => ({}));
+  1127|                    errorEl.innerHTML = '' + (err.detail || 'Failed to send code');
+  1128|                    btn.innerHTML = originalBtnHTML;
+  1129|                    btn.disabled = false;
+  1130|                    return;
+  1131|                }
+  1132|                const data = await res.json();
+  1133|                pendingEmail = email;
+  1134|                pendingMethod = 'email';
+  1135|                document.getElementById('code-back-label').textContent = 'Change email';
+  1136|                document.getElementById('code-step-icon').innerHTML = '<rect x="2" y="4" width="20" height="16" rx="2"/><path d="M22 7l-10 7L2 7"/>';
+  1137|                document.getElementById('code-email-display').textContent = data.email || email[0] + '***' + email.substring(email.indexOf('@'));
+  1138|                // Show code verification step
+  1139|                document.getElementById('auth-options').style.display = 'none';
+  1140|                document.getElementById('auth-code-step').classList.add('active');
+  1141|                document.getElementById('pl-code').value = '';
+  1142|                document.getElementById('auth-error-code').textContent = '';
+  1143|                setTimeout(() => document.getElementById('pl-code').focus(), 150);
+  1144|                btn.disabled = false;
+  1145|            } catch (e) {
+  1146|                                const isNetwork = e.message === 'Failed to fetch' || e.name === 'TypeError' || e.message === 'NetworkError';
+  1147|                errorEl.innerHTML = isNetwork
+  1148|                    ? 'Could not reach server. Check your connection.'
+  1149|                    : '' + e.message;
+  1150|                btn.innerHTML = originalBtnHTML;
+  1151|                btn.disabled = false;
+  1152|            }
+  1153|        }
+  1154|
+  1155|        async function verifyCode() {
+  1156|            const code = document.getElementById('pl-code').value.trim();
+  1157|            const errorEl = document.getElementById('auth-error-code');
+  1158|            const btn = document.getElementById('pl-code-btn');
+  1159|            if (!code || code.length < 4) {
+  1160|                errorEl.innerHTML = '⚠️ Enter your 6-digit verification code';
+  1161|                return;
+  1162|            }
+  1163|            const originalBtnHTML = btn.innerHTML;
+  1164|            btn.innerHTML = '<span class="spinner-sm"></span> Verifying...';
+  1165|            btn.disabled = true;
+  1166|            try {
+  1167|                const body = pendingMethod === 'phone'
+  1168|                    ? {phone: pendingPhone, code}
+  1169|                    : {email: pendingEmail, code};
+  1170|                const res = await fetch('/auth/auth0/passwordless/verify', {
+  1171|                    method: 'POST',
+  1172|                    headers: {'Content-Type': 'application/json'},
+  1173|                    body: JSON.stringify(body),
+  1174|                });
+  1175|                if (!res.ok) {
+  1176|                    const err = await res.json().catch(() => ({}));
+  1177|                    errorEl.innerHTML = '' + (err.detail || 'Verification failed');
+  1178|                    btn.innerHTML = originalBtnHTML;
+  1179|                    btn.disabled = false;
+  1180|                    return;
+  1181|                }
+  1182|                const data = await res.json();
+  1183|                localStorage.setItem('mb_jwt', data.token);
+  1184|                if (data.api_key) {
+  1185|                    localStorage.setItem('mb_api_key', data.api_key);
+  1186|                    currentApiKey = data.api_key;
+  1187|                }
+  1188|                updateAuthUI();
+  1189|                window.postAuthCallback?.();
+  1190|                window.postAuthCallback = null;
+  1191|                const _params = new URLSearchParams(window.location.search);
+  1192|                if (_params.has('pending_org_id')) {
+  1193|                    fetch('/auth/link-subscription', {
+  1194|                        method: 'POST',
+  1195|                        headers: { 'Authorization': 'Bearer ' + data.token, 'Content-Type': 'application/json' },
+  1196|                        body: JSON.stringify({ pending_org_id: _params.get('pending_org_id') })
+  1197|                    }).catch(() => {});
+  1198|                }
+  1199|                closeAuth();
+  1200|                window.location.reload();
+  1201|            } catch (e) {
+  1202|                                const isNetwork = e.message === 'Failed to fetch' || e.name === 'TypeError' || e.message === 'NetworkError';
+  1203|                errorEl.innerHTML = isNetwork
+  1204|                    ? 'Could not reach server. Check your connection.'
+  1205|                    : '' + e.message;
+  1206|                btn.innerHTML = originalBtnHTML;
+  1207|                btn.disabled = false;
+  1208|            }
+  1209|        }
+  1210|
+  1211|        async function resendCode() {
+  1212|            const errorEl = document.getElementById('auth-error-code');
+  1213|            const btn = document.getElementById('pl-code-btn');
+  1214|            if (!pendingEmail && !pendingPhone) return;
+  1215|            errorEl.innerHTML = '<span class="auth-spinner"></span>';
+  1216|            btn.disabled = true;
+  1217|            try {
+  1218|                const url = pendingMethod === 'phone'
+  1219|                    ? '/auth/auth0/passwordless/start-sms'
+  1220|                    : '/auth/auth0/passwordless/start';
+  1221|                const body = pendingMethod === 'phone'
+  1222|                    ? JSON.stringify({phone: pendingPhone})
+  1223|                    : JSON.stringify({email: pendingEmail});
+  1224|                const res = await fetch(url, {
+  1225|                    method: 'POST',
+  1226|                    headers: {'Content-Type': 'application/json'},
+  1227|                    body,
+  1228|                });
+  1229|                if (!res.ok) {
+  1230|                    const err = await res.json().catch(() => ({}));
+  1231|                    errorEl.innerHTML = '' + (err.detail || 'Failed to resend code');
+  1232|                    btn.disabled = false;
+  1233|                    return;
+  1234|                }
+  1235|                errorEl.innerHTML = '✅ New code sent!';
+  1236|                document.getElementById('pl-code').value = '';
+  1237|                setTimeout(() => document.getElementById('pl-code').focus(), 150);
+  1238|                btn.disabled = false;
+  1239|            } catch (e) {
+  1240|                                const isNetwork = e.message === 'Failed to fetch' || e.name === 'TypeError' || e.message === 'NetworkError';
+  1241|                errorEl.innerHTML = isNetwork
+  1242|                    ? 'Could not reach server. Check your connection.'
+  1243|                    : '' + e.message;
+  1244|                btn.disabled = false;
+  1245|            }
+  1246|        }
+  1247|
+  1248|        function escapeHtml(str) {
+  1249|            const div = document.createElement('div');
+  1250|            div.textContent = str;
+  1251|            return div.innerHTML;
+  1252|        }
+  1253|
+  1254|        // ── Init ──────────────────────────────────────────────────
+  1255|        document.addEventListener('DOMContentLoaded', async () => {
+  1256|            await initAuth();
+  1257|        });
+  1258|    </script>
+  1259|    <footer class="footer" data-i18n="footer.text">© 2026 Memory Bridge — API for cross-agent memory</footer>
+  1260|</body>
+  1261|</html>
+  1262|
