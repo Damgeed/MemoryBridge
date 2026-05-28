@@ -67,7 +67,7 @@ def is_token_revoked(claims: dict) -> bool:
 DEMO_API_KEY = "mb_demo_public_test"
 
 
-EXEMPT_PATHS = {"/", "/health", "/docs", "/openapi.json", "/redoc", "/playground", "/badge", "/graph", "/billing/webhook", "/pricing", "/concept", "/concept/", "/dashboard", "/dashboard/", "/dashboard/recover", "/dashboard/free-signup", "/dashboard/stripe-welcome", "/auth/register", "/auth/login", "/auth/oauth", "/auth/auth0/login", "/auth/auth0/callback", "/auth/auth0/passwordless/start", "/auth/auth0/passwordless/start-sms", "/auth/auth0/passwordless/verify", "/demo", "/api-docs", "/faq"}
+EXEMPT_PATHS = {"/", "/health", "/docs", "/openapi.json", "/redoc", "/playground", "/badge", "/billing/webhook", "/pricing", "/concept", "/concept/", "/dashboard", "/dashboard/", "/dashboard/recover", "/dashboard/free-signup", "/dashboard/stripe-welcome", "/auth/register", "/auth/login", "/auth/oauth", "/auth/auth0/login", "/auth/auth0/callback", "/auth/auth0/passwordless/start", "/auth/auth0/passwordless/start-sms", "/auth/auth0/passwordless/verify", "/demo", "/api-docs", "/faq"}
 
 
 class APIKeyMiddleware(BaseHTTPMiddleware):
@@ -102,7 +102,7 @@ class APIKeyMiddleware(BaseHTTPMiddleware):
 
     async def dispatch(self, request: Request, call_next):
         path = request.url.path
-        if path in EXEMPT_PATHS or path.startswith("/playground/") or path.startswith("/graph/"):
+        if path in EXEMPT_PATHS or path.startswith("/playground/"):
             return await call_next(request)
 
         # Determine if auth is enforced

@@ -7,7 +7,7 @@ nodes and edges from stored memories and their metadata.
 import logging
 import os
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from fastapi.responses import HTMLResponse
 
 from ..dependencies import get_storage
@@ -19,6 +19,7 @@ router = APIRouter(prefix="/graph", tags=["graph"])
 
 @router.get("/data")
 async def get_memory_graph(
+    request: Request,
     session_id: str = Query(None),
     project: str = Query(None),
     limit: int = Query(50, ge=1, le=500),
@@ -43,12 +44,19 @@ async def get_memory_graph(
     edges = []
     seen_ids = set()
 
+    # --- Auth check: enforce user-scoped filtering ---
+    auth = getattr(request.state, "auth", None)
+    if auth is None:
+        return {"nodes": [], "edges": [], "detail": "Authentication required. Sign in to view your memory graph."}
+
+    effective_project = project or auth.get("project_id")
+
     # Fetch memories
     memories = await storage.query_memories(
         session_id=session_id,
         limit=limit,
         offset=0,
-        project=project,
+        project=effective_project,
     )
 
     if not memories:

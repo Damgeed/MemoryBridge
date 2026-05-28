@@ -67,7 +67,8 @@
         }
 
         #graph {
-            width: 100vw;
+            width: 100%;
+            overflow: hidden;
             height: calc(100vh - 56px);
             position: relative;
             background: var(--bg-primary);
@@ -421,7 +422,12 @@
 
                 const controller = new AbortController();
                 const timeout = setTimeout(() => controller.abort(), 10000);
-                const response = await fetch(url, { signal: controller.signal });
+                const headers = {};
+                const jwt = localStorage.getItem('mb_jwt');
+                const apiKey = localStorage.getItem('mb_api_key');
+                if (jwt) headers['Authorization'] = 'Bearer ' + jwt;
+                else if (apiKey) headers['Authorization'] = 'Bearer ' + apiKey;
+                const response = await fetch(url, { signal: controller.signal, headers });
                 clearTimeout(timeout);
                 if (!response.ok) throw new Error(`HTTP ${response.status}: ${response.statusText}`);
 
@@ -437,6 +443,7 @@
                 }
 
                 renderGraph(graphData);
+                startPolling();
             } catch (e) {
                 container.innerHTML = '';
                 const errorDiv = document.createElement('div');
@@ -445,7 +452,18 @@
                 const p = errorDiv.appendChild(document.createElement('p'));
                 p.textContent = e.message || 'Unknown error';
                 container.appendChild(errorDiv);
+                stopPolling();
             }
+        }
+
+        // ── Polling ────────────────────────────────────────────────
+        let pollInterval;
+        function startPolling() {
+            stopPolling();
+            pollInterval = setInterval(loadGraph, 30000);
+        }
+        function stopPolling() {
+            if (pollInterval) { clearInterval(pollInterval); pollInterval = null; }
         }
 
         // ── Render D3 Force-Directed Graph ────────────────────────
@@ -554,6 +572,9 @@
                         .attr('y2', d => d.target.y);
                     nodeElements.attr('cx', d => d.x).attr('cy', d => d.y);
                     labelElements.attr('x', d => d.x).attr('y', d => d.y);
+                })
+                .on('end', () => {
+                    nodeElements.each(d => { d.fx = d.x; d.fy = d.y; });
                 });
 
             setTimeout(() => {
@@ -567,7 +588,8 @@
                         d3.zoomIdentity.translate(tx, ty).scale(scale)
                     );
                 }
-            }, 100);
+                simulation.stop();
+            }, 500);
         }
 
         // ── Filter Nodes ──────────────────────────────────────────
@@ -626,8 +648,6 @@
                     const width = container.clientWidth;
                     const height = container.clientHeight;
                     svg.attr('width', width).attr('height', height);
-                    simulation.force('center', d3.forceCenter(width / 2, height / 2));
-                    simulation.alpha(0.3).restart();
                 }
             }, 200);
         });
