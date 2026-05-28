@@ -65,6 +65,33 @@ class MemoryRepository(ABC):
         """
         raise NotImplementedError("Semantic search not supported by this backend")
 
+    # ── Embedding Storage ────────────────────────────────────────────────────
+
+    async def store_embedding(
+        self, memory_id: str, embedding: list[float]
+    ) -> None:
+        """Store an embedding vector for a memory entry."""
+        raise NotImplementedError("Embedding storage not supported by this backend")
+
+    async def get_embedding(self, memory_id: str) -> Optional[list[float]]:
+        """Retrieve the stored embedding for a memory entry.
+
+        Returns None if no embedding has been stored.
+        """
+        raise NotImplementedError("Embedding retrieval not supported by this backend")
+
+    async def search_by_vector(
+        self, embedding: list[float], limit: int = 10
+    ) -> list[str]:
+        """Search memory IDs by vector similarity.
+
+        Returns memory IDs ordered by cosine similarity descending
+        (most similar first). Only returns IDs with stored embeddings.
+
+        Default implementation raises NotImplementedError.
+        """
+        raise NotImplementedError("Vector search not supported by this backend")
+
     @abstractmethod
     async def delete_memory(self, memory_id: str) -> bool:
         """Delete a memory by ID. Returns True if deleted."""

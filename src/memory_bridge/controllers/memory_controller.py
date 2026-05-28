@@ -15,6 +15,7 @@ from ..config import get_settings
 from ..dependencies import get_storage
 from ..models import MemoryCreate, MemoryEntry, MemoryQuery
 from ..repository.s3_store import S3Store
+from ..services.embedding_service import EmbeddingService
 from ..services.memory_service import MemoryService
 
 logger = logging.getLogger(__name__)
@@ -67,24 +68,111 @@ async def create_memory(
 @router.get("/search")
 async def search_memories(
     request: Request,
-    q: str = Query(..., description="Full-text search query"),
+    q: str = Query(..., description="Natural language search query"),
     session_id: Optional[str] = Query(None),
     agent_id: Optional[str] = Query(None),
-    limit: int = Query(50, ge=1, le=500),
-    offset: int = Query(0, ge=0),
+    project: Optional[str] = Query(None, description="Project filter (admin use)"),
+    limit: int = Query(10, ge=1, le=50),
     service: MemoryService = Depends(get_memory_service),
 ):
-    """Full-text search across memories."""
-    project = getattr(request.state, "project_id", None)
-    entries = await service.search_memories(
-        query=q,
+    """Semantic / natural language search across memories.
+
+    Uses the configured embedding provider (sentence-transformers, OpenAI,
+    or keyword fallback). Returns results sorted by relevance (score
+    descending) with indicators showing whether each match was found
+    via semantic vector similarity or keyword fallback.
+
+    Falls back to full-text search when:
+    - No embedding model is available (keyword-only provider)
+    - No stored embeddings exist yet
+    """
+    embedding_service = EmbeddingService()
+    auth_project = getattr(request.state, "project_id", None)
+    resolved_project = project or auth_project
+
+    query_vector = await embedding_service.embed(q)
+    provider = embedding_service.provider_name
+
+    if query_vector is None or len(query_vector) == 0:
+        # Keyword fallback — use existing FTS / key-based search
+        logger.info(
+            "Semantic search unavailable (provider=%s), falling back to FTS",
+            provider,
+        )
+        entries = await service.search_memories(
+            query=q,
+            limit=limit,
+            session_id=session_id,
+            agent_id=agent_id,
+            project=resolved_project,
+        )
+        results = [
+            {
+                "memory": e.model_dump(),
+                "score": 1.0,
+                "matched_by": "keyword",
+            }
+            for e in entries
+        ]
+        return {"results": results, "provider": provider}
+
+    # Vector search
+    matched_ids = await service.repo.search_by_vector(
+        embedding=query_vector,
         limit=limit,
-        offset=offset,
-        session_id=session_id,
-        agent_id=agent_id,
-        project=project,
     )
-    return {"entries": [e.model_dump() for e in entries], "total": len(entries)}
+
+    if not matched_ids:
+        # No embeddings stored yet — fall back to FTS
+        logger.info("No stored embeddings found, falling back to FTS")
+        entries = await service.search_memories(
+            query=q,
+            limit=limit,
+            session_id=session_id,
+            agent_id=agent_id,
+            project=resolved_project,
+        )
+        results = [
+            {
+                "memory": e.model_dump(),
+                "score": 1.0,
+                "matched_by": "keyword",
+            }
+            for e in entries
+        ]
+        return {"results": results, "provider": provider}
+
+    # Fetch full memory entries for matched IDs
+    results = []
+    for mem_id in matched_ids:
+        entry = await service.get_memory(mem_id)
+        if entry is None:
+            continue
+
+        # Apply session/agent/project filters
+        if session_id and entry.session_id != session_id:
+            continue
+        if agent_id and entry.agent_id != agent_id:
+            continue
+        if resolved_project and entry.project != resolved_project:
+            continue
+
+        # Compute similarity score
+        stored_emb = await service.repo.get_embedding(mem_id)
+        score = 1.0
+        if stored_emb:
+            score = embedding_service.cosine_similarity(query_vector, stored_emb)
+
+        results.append({
+            "memory": entry.model_dump(),
+            "score": round(score, 4),
+            "matched_by": "semantic",
+        })
+
+    # Sort by score descending
+    results.sort(key=lambda r: -r["score"])
+
+    return {"results": results, "provider": provider}
 
 
 @router.post("/semantic_search")

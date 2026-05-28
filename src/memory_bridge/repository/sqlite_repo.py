@@ -117,6 +117,13 @@ _SCHEMA_MIGRATIONS: dict[int, str] = {
         ")"
     ),
     13: "ALTER TABLE users ADD COLUMN stripe_customer_id TEXT NOT NULL DEFAULT ''",
+    14: (
+        "CREATE TABLE IF NOT EXISTS memory_embeddings ("
+        "memory_id TEXT PRIMARY KEY REFERENCES memories(id) ON DELETE CASCADE, "
+        "embedding TEXT NOT NULL, "
+        "updated_at TEXT NOT NULL"
+        ")"
+    ),
 }
 # ──────────────────────────────────────────────────────────────────────────────
 
@@ -576,6 +583,57 @@ class SQLiteMemoryRepository(MemoryRepository):
         if norm_a == 0 or norm_b == 0:
             return 0.0
         return dot / (norm_a * norm_b)
+
+    # ── Embedding Storage ──────────────────────────────────────────────────
+
+    async def store_embedding(self, memory_id: str, embedding: list[float]) -> None:
+        """Store an embedding vector for a memory entry."""
+        async with aiosqlite.connect(self.db_path) as db:
+            await db.execute(
+                "INSERT OR REPLACE INTO memory_embeddings "
+                "(memory_id, embedding, updated_at) VALUES (?, ?, ?)",
+                (memory_id, json.dumps(embedding), datetime.now(timezone.utc).isoformat()),
+            )
+            await db.commit()
+
+    async def get_embedding(self, memory_id: str) -> Optional[list[float]]:
+        """Retrieve the stored embedding for a memory entry."""
+        async with aiosqlite.connect(self.db_path) as db:
+            cursor = await db.execute(
+                "SELECT embedding FROM memory_embeddings WHERE memory_id = ?",
+                (memory_id,),
+            )
+            row = await cursor.fetchone()
+            if row is None:
+                return None
+            return json.loads(row[0])
+
+    async def search_by_vector(
+        self, embedding: list[float], limit: int = 10
+    ) -> list[str]:
+        """Search memory IDs by vector similarity using brute-force cosine.
+
+        Loads all stored embeddings into memory and returns top-K memory IDs
+        ordered by cosine similarity descending.
+        """
+        async with aiosqlite.connect(self.db_path) as db:
+            cursor = await db.execute(
+                "SELECT memory_id, embedding FROM memory_embeddings"
+            )
+            rows = await cursor.fetchall()
+
+        if not rows:
+            return []
+
+        scored: list[tuple[float, str]] = []
+        for row in rows:
+            mem_id = row[0]
+            stored_emb = json.loads(row[1])
+            sim = self._cosine_similarity(embedding, stored_emb)
+            scored.append((sim, mem_id))
+
+        scored.sort(key=lambda x: -x[0])
+        return [mem_id for _, mem_id in scored[:limit]]
 
     async def delete_memory(self, memory_id: str) -> bool:
         """Delete a memory entry by ID. Returns True if a row was deleted."""

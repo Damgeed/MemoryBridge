@@ -13,6 +13,7 @@ import asyncpg
 
 from ..models import MemoryEntry, Session, Subscription
 from ..config import get_settings
+from ..services.embedding_service import EmbeddingService
 
 logger = logging.getLogger(__name__)
 
@@ -643,6 +644,99 @@ class PostgresMemoryRepository(MemoryRepository):
                 )
 
             return results
+
+    # ── Embedding Storage ──────────────────────────────────────────────────
+
+    async def store_embedding(self, memory_id: str, embedding: list[float]) -> None:
+        """Store an embedding vector for a memory entry.
+
+        Uses the existing 'embedding' column on the memories table
+        (added by schema migration v10). If the column doesn't exist
+        (pgvector not available), falls back silently.
+        """
+        vec_str = "[" + ",".join(str(v) for v in embedding) + "]"
+        async with self.pool.acquire() as conn:
+            try:
+                await conn.execute(
+                    f"UPDATE {self.schema}.memories SET embedding = $1::vector "
+                    f"WHERE id = $2",
+                    vec_str, memory_id,
+                )
+            except Exception as exc:
+                logger.warning(
+                    "Failed to store embedding for %s (pgvector may not be installed): %s",
+                    memory_id, exc,
+                )
+
+    async def get_embedding(self, memory_id: str) -> Optional[list[float]]:
+        """Retrieve the stored embedding for a memory entry."""
+        async with self.pool.acquire() as conn:
+            try:
+                row = await conn.fetchrow(
+                    f"SELECT embedding FROM {self.schema}.memories WHERE id = $1",
+                    memory_id,
+                )
+                if row is None or row["embedding"] is None:
+                    return None
+                return list(row["embedding"])
+            except Exception as exc:
+                logger.warning(
+                    "Failed to get embedding for %s (pgvector may not be installed): %s",
+                    memory_id, exc,
+                )
+                return None
+
+    async def search_by_vector(
+        self, embedding: list[float], limit: int = 10
+    ) -> list[str]:
+        """Search memory IDs by vector similarity.
+
+        Tries pgvector cosine distance (<=>) first. If pgvector is not
+        available, falls back to loading all embeddings and computing
+        cosine similarity in Python.
+        """
+        vec_str = "[" + ",".join(str(v) for v in embedding) + "]"
+        async with self.pool.acquire() as conn:
+            try:
+                # Try pgvector
+                rows = await conn.fetch(
+                    f"SELECT id FROM {self.schema}.memories "
+                    f"WHERE embedding IS NOT NULL "
+                    f"ORDER BY embedding <=> $1::vector "
+                    f"LIMIT $2",
+                    vec_str, limit,
+                )
+                return [row["id"] for row in rows]
+            except Exception:
+                # pgvector not available — fall back to brute-force in Python
+                logger.info("pgvector not available, falling back to Python brute-force search")
+                pass
+
+        # Brute-force fallback: load all embeddings
+        async with self.pool.acquire() as conn:
+            try:
+                rows = await conn.fetch(
+                    f"SELECT id, embedding FROM {self.schema}.memories "
+                    f"WHERE embedding IS NOT NULL"
+                )
+            except Exception as exc:
+                logger.warning(
+                    "Failed to read embeddings for vector search: %s", exc
+                )
+                return []
+
+        if not rows:
+            return []
+
+        scored: list[tuple[float, str]] = []
+        for row in rows:
+            mem_id = row["id"]
+            stored_emb = list(row["embedding"])
+            sim = EmbeddingService.cosine_similarity(embedding, stored_emb)
+            scored.append((sim, mem_id))
+
+        scored.sort(key=lambda x: -x[0])
+        return [mem_id for _, mem_id in scored[:limit]]
 
     async def delete_memory(self, memory_id: str) -> bool:
         """Delete a memory entry by ID. Returns True if a row was deleted."""

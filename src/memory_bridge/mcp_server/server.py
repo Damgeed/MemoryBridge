@@ -174,6 +174,32 @@ TOOL_DEFINITIONS: list[dict[str, Any]] = [
             "required": ["memory_id"],
         },
     },
+    {
+        "name": "search_semantic",
+        "description": (
+            "Natural language semantic search across all memories. "
+            "Returns relevant memories sorted by relevance score, "
+            "using the configured embedding model for vector similarity. "
+            "Use this instead of search_memories when you have a natural "
+            "language query and want meaning-based matching rather than "
+            "exact key/tag filtering."
+        ),
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "query": {
+                    "type": "string",
+                    "description": "Natural language search query",
+                },
+                "limit": {
+                    "type": "integer",
+                    "description": "Maximum number of results (default: 10, max: 50)",
+                    "default": 10,
+                },
+            },
+            "required": ["query"],
+        },
+    },
 ]
 
 
@@ -201,6 +227,7 @@ class MCPServer:
             "handoff_memories": self._handle_handoff_memories,
             "list_sessions": self._handle_list_sessions,
             "delete_memory": self._handle_delete_memory,
+            "search_semantic": self._handle_search_semantic,
         }
 
     # ── Auth helpers ──────────────────────────────────────────────────
@@ -392,6 +419,52 @@ class MCPServer:
         return {
             "content": [{"type": "text", "text": f"Memory {mid} deleted successfully."}],
         }
+
+    def _handle_search_semantic(self, args: dict) -> dict:
+        """Natural language semantic search."""
+        query = args["query"]
+        limit = min(args.get("limit", 10), 50)
+
+        params = {
+            "q": query,
+            "limit": str(limit),
+        }
+        result = self._api_call("GET", "/memories/search", params=params)
+
+        results = result.get("results", []) if isinstance(result, dict) else []
+        provider = result.get("provider", "unknown") if isinstance(result, dict) else "unknown"
+
+        if not results:
+            return {
+                "content": [{"type": "text", "text": "No relevant memories found."}],
+            }
+
+        lines = [
+            f"Semantic search results ({provider}):",
+            f"Found {len(results)} relevant memory(ies):",
+            "",
+        ]
+        for r in results:
+            m = r.get("memory", {})
+            score = r.get("score", 0)
+            matched_by = r.get("matched_by", "unknown")
+            created = m.get("created_at", "")[:19] if m.get("created_at") else ""
+            tags_str = (
+                f"  tags: {', '.join(m.get('tags', []))}"
+                if m.get("tags") else ""
+            )
+            val = m.get("value", "")
+            val_str = json.dumps(val, indent=2) if not isinstance(val, str) else val
+            lines.append(f"  [{m.get('id', '')[:8]}…] score={score:.4f} ({matched_by})")
+            lines.append(f"        key={m.get('key', '')}  agent={m.get('agent_id', '')}")
+            if created:
+                lines.append(f"        created: {created}")
+            if tags_str:
+                lines.append(tags_str)
+            lines.append(f"        value: {val_str[:300]}")
+            lines.append("")
+
+        return {"content": [{"type": "text", "text": "\n".join(lines)}]}
 
     # ── JSON-RPC Message Handling ─────────────────────────────────────
 
