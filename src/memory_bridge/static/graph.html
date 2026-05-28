@@ -127,8 +127,14 @@
         .link.dimmed { stroke-opacity: 0.05; }
 
         .label {
-            font-size: 10px;
-            fill: var(--text-muted);
+            font-size: 11px;
+            font-weight: 600;
+            fill: var(--text-primary);
+            paint-order: stroke;
+            stroke: var(--bg-primary);
+            stroke-width: 3px;
+            stroke-linecap: round;
+            stroke-linejoin: round;
             pointer-events: none;
             font-family: var(--font-sans);
         }
@@ -505,7 +511,7 @@
                 .data(data.nodes)
                 .join('circle')
                 .attr('class', 'node')
-                .attr('r', d => d.type === 'session' ? 10 : d.type === 'agent' ? 9 : 7)
+                .attr('r', d => d.type === 'session' ? 12 : d.type === 'agent' ? 11 : 9)
                 .attr('fill', d => COLORS[d.type] || '#888')
                 .call(d3.drag()
                     .on('start', (event, d) => {
@@ -546,8 +552,19 @@
                 .join('text')
                 .text(d => d.label)
                 .attr('class', 'label')
-                .attr('dx', d => d.type === 'memory' ? 10 : 12)
-                .attr('dy', 4);
+                .attr('dx', (d, i) => {
+                    if (d.type === 'memory') return 12;
+                    if (d.type === 'tag') return -12;
+                    return i % 2 === 0 ? 14 : -14;
+                })
+                .attr('dy', (d, i) => {
+                    if (d.type === 'tag') return -6;
+                    return i % 2 === 0 ? 5 : -8;
+                })
+                .attr('text-anchor', (d, i) => {
+                    const dx = (d.type === 'memory' ? 12 : d.type === 'tag' ? -12 : i % 2 === 0 ? 14 : -14);
+                    return dx > 0 ? 'start' : 'end';
+                });
 
             const tooltip = d3.select('#tooltip');
             const tooltipEl = document.getElementById('tooltip');
@@ -587,24 +604,24 @@
             simulation = d3.forceSimulation(data.nodes)
                 .force('link', d3.forceLink(data.edges)
                     .id(d => d.id)
-                    .distance(d => d.type === 'tagged' ? 80 : 140)
+                    .distance(d => d.type === 'tagged' ? 100 : 160)
                     .strength(0.02)
                 )
                 .force('charge', d3.forceManyBody()
-                    .strength(-800)
+                    .strength(-1000)
                 )
                 .force('x', d3.forceX(d => {
                     if (d.type === 'agent') return width * 0.85;
                     if (d.type === 'session') return width * 0.15;
                     if (d.type === 'tag') return width * 0.5;
                     return width * 0.5;
-                }).strength(0.35))
+                }).strength(0.4))
                 .force('y', d3.forceY(d => {
                     if (d.type === 'tag') return height * 0.8;
                     return height * 0.45;
-                }).strength(0.3))
-                .force('collision', d3.forceCollide().radius(40))
-                .alphaDecay(0.02)
+                }).strength(0.35))
+                .force('collision', d3.forceCollide().radius(50))
+                .alphaDecay(0.015)
                 .alphaMin(0.001)
                 .on('tick', () => {
                     linkElements
