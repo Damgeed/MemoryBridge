@@ -25,6 +25,7 @@ dependencies = [
 
 [project.scripts]
 memory-bridge = "memory_bridge.cli:main"
+memory-bridge-mcp = "memory_bridge.mcp_server.server:main"
 
 [project.optional-dependencies]
 dev = [
