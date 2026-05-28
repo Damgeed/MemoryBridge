@@ -337,12 +337,20 @@ async def get_dashboard_data(
     if not sub and user_email:
         try:
             user_record = await storage.get_user_by_email(user_email)
-            if user_record and 'organization_id' in user_record and user_record.get('organization_id'):
-                org_id = user_record.get('organization_id')
-                try:
+            if user_record:
+                # User found — if they have an org_id, try that
+                user_org_id = user_record.get('organization_id')
+                if user_org_id:
+                    org_id = user_org_id
                     sub = await storage.get_subscription_by_org(org_id)
-                except Exception:
-                    pass
+                # If still no sub, try looking up by stripe_customer_id on the user record
+                if not sub:
+                    stripe_customer_id = user_record.get('stripe_customer_id', '')
+                    if stripe_customer_id:
+                        try:
+                            sub = await storage.get_subscription_by_stripe_customer(stripe_customer_id)
+                        except Exception:
+                            pass
         except Exception:
             pass
 
@@ -949,9 +957,34 @@ async def _check_stripe_fallback(user_email: str, org_id: str, storage):
             if active_sub.get("current_period_end"):
                 period_end = datetime.fromtimestamp(active_sub["current_period_end"], tz=timezone.utc)
         stripe_customer_id = stripe_customer.id if hasattr(stripe_customer, "id") else stripe_customer.get("id", "")
+
+        # If org_id looks like a user key (e.g. "user:email"), generate a proper UUID
+        import uuid
+        real_org_id = org_id
+        if org_id.startswith("user:") or org_id == "default":
+            real_org_id = str(uuid.uuid4())
+
+        # Update the user record with the real org_id
+        try:
+            user_record = await storage.get_user_by_email(user_email)
+            if user_record:
+                user_id = user_record.get("id")
+                if user_id:
+                    if not user_record.get("organization_id"):
+                        await storage.update_user_organization_id(user_id, real_org_id)
+                    # Always link stripe_customer_id
+                    if stripe_customer_id:
+                        await storage.update_user_stripe_customer(user_id, stripe_customer_id)
+                    logger.info(
+                        "Stripe fallback: linked org=%s to user=%s",
+                        real_org_id, user_email,
+                    )
+        except Exception as e:
+            logger.warning("Stripe fallback: could not link user: %s", e)
+
         sub = Subscription(
-            id=sub_id or f"stripe-{org_id[:8]}",
-            organization_id=org_id,
+            id=sub_id or f"stripe-{real_org_id[:8]}",
+            organization_id=real_org_id,
             stripe_customer_id=stripe_customer_id,
             tier=resolved_tier,
             status=sub_status,
