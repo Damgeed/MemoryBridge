@@ -2407,7 +2407,7 @@
 
         // ── Init ──────────────────────────────────────────────────
         document.addEventListener('DOMContentLoaded', async () => {
-            await initAuth();
+            const authResult = await initAuth();
             currentApiKey = localStorage.getItem('mb_api_key') || '';
             let jwt = localStorage.getItem('mb_jwt');
 
@@ -2439,7 +2439,9 @@
                 updateAuthUI();
                 reloadDashboard();
             } else if (jwt) {
-                // Has JWT — no stored API key, but can still access dashboard via JWT
+                // Has JWT — token may be expired; initAuth already tried to refresh it.
+                // If refresh succeeded, authResult will have data. If not, we still try
+                // the API call — it will 401 and we'll show the gate gracefully.
                 showAuthenticatedContent(true);
                 updateAuthUI();
                 reloadDashboard();

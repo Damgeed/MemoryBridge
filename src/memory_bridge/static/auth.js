@@ -46,7 +46,23 @@
       const payload = JSON.parse(atob(parts[1]));
       const now = Date.now();
       const expMs = payload.exp * 1000;
-      if (expMs < now) { clearJWT(); return false; }
+      if (expMs < now) {
+        // Token expired — try to refresh before giving up
+        try {
+          const res = await fetch('/auth/refresh', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ token: jwt }),
+          });
+          if (res.ok) {
+            const data = await res.json();
+            if (data.token) { setJWT(data.token); return true; }
+          }
+        } catch (e) {
+          // Refresh failed — keep the old JWT so pages can show a meaningful state
+        }
+        return false;
+      }
       if (expMs - now < 300000) {
         try {
           const res = await fetch('/auth/refresh', {
