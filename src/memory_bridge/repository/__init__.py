@@ -226,6 +226,11 @@ class MemoryRepository(ABC):
         """Update the stripe_customer_id for a user. Returns True if updated."""
         ...
 
+    @abstractmethod
+    async def update_user_organization_id(self, user_id: str, organization_id: str) -> bool:
+        """Update organization_id for a user. Returns True if updated."""
+        ...
+
     # ── Audit Log ───────────────────────────────────────────────────────────
 
     @abstractmethod

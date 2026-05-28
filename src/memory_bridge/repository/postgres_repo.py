@@ -1300,6 +1300,16 @@ class PostgresMemoryRepository(MemoryRepository):
             count = int(result.split()[-1]) if result else 0
             return count > 0
 
+    async def update_user_organization_id(self, user_id: str, organization_id: str) -> bool:
+        """Update organization_id for a user. Returns True if updated."""
+        async with self.pool.acquire() as conn:
+            result = await conn.execute(
+                f"UPDATE {self.schema}.users SET organization_id = $1, updated_at = NOW() WHERE id = $2",
+                organization_id, user_id,
+            )
+            count = int(result.split()[-1]) if result else 0
+            return count > 0
+
     async def get_user_by_oauth(self, provider: str, provider_user_id: str):
         """Look up user by OAuth provider + user ID."""
         async with self.pool.acquire() as conn:

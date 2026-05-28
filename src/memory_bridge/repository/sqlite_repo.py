@@ -1191,6 +1191,16 @@ class SQLiteMemoryRepository(MemoryRepository):
             await db.commit()
             return cursor.rowcount > 0
 
+    async def update_user_organization_id(self, user_id: str, organization_id: str) -> bool:
+        """Update organization_id for a user. Returns True if updated."""
+        async with aiosqlite.connect(self.db_path) as db:
+            cursor = await db.execute(
+                "UPDATE users SET organization_id = ?, updated_at = datetime('now') WHERE id = ?",
+                (organization_id, user_id),
+            )
+            await db.commit()
+            return cursor.rowcount > 0
+
     async def get_user_by_oauth(self, provider: str, provider_user_id: str):
         """Look up user by OAuth provider + user ID."""
         async with aiosqlite.connect(self.db_path) as db:

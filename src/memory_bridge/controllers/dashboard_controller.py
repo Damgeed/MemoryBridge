@@ -833,9 +833,22 @@ async def stripe_welcome(
         if email:
             try:
                 user_dict = await storage.get_user_by_email(email)
-                if user_dict and not user_dict.get("organization_id"):
-                    # Link org to user
-                    pass  # Already handled by signup flow
+                if user_dict:
+                    user_id = user_dict.get("id")
+                    if not user_dict.get("organization_id") and user_id:
+                        # Link org to user — user existed but had no org_id
+                        # This happens when user signed up via Auth0 before subscribing
+                        try:
+                            await storage.update_user_organization_id(user_id, org_id)
+                            user_dict["organization_id"] = org_id
+                            logger.info("Linked org %s to user %s (%s)", org_id, user_id, email)
+                        except Exception as e:
+                            logger.warning("Could not link org %s to user %s: %s", org_id, email, e)
+                    if stripe_customer_id and user_id:
+                        try:
+                            await storage.update_user_stripe_customer(user_id, stripe_customer_id)
+                        except Exception as e:
+                            logger.warning("Could not link stripe customer to user: %s", e)
             except Exception:
                 pass
 
