@@ -443,7 +443,6 @@
                 }
 
                 renderGraph(graphData);
-                startPolling();
             } catch (e) {
                 container.innerHTML = '';
                 const errorDiv = document.createElement('div');
@@ -452,18 +451,7 @@
                 const p = errorDiv.appendChild(document.createElement('p'));
                 p.textContent = e.message || 'Unknown error';
                 container.appendChild(errorDiv);
-                stopPolling();
             }
-        }
-
-        // ── Polling ────────────────────────────────────────────────
-        let pollInterval;
-        function startPolling() {
-            stopPolling();
-            pollInterval = setInterval(loadGraph, 30000);
-        }
-        function stopPolling() {
-            if (pollInterval) { clearInterval(pollInterval); pollInterval = null; }
         }
 
         // ── Render D3 Force-Directed Graph ────────────────────────
@@ -557,17 +545,16 @@
             simulation = d3.forceSimulation(data.nodes)
                 .force('link', d3.forceLink(data.edges)
                     .id(d => d.id)
-                    .distance(d => d.type === 'tagged' ? 30 : 50)
-                    .strength(0.4)
+                    .distance(d => d.type === 'tagged' ? 80 : 120)
+                    .strength(0.2)
                 )
                 .force('charge', d3.forceManyBody()
-                    .strength(d => d.type === 'session' ? -100 : d.type === 'agent' ? -80 : -50)
+                    .strength(d => d.type === 'session' ? -400 : d.type === 'agent' ? -300 : -200)
                 )
-                .force('x', d3.forceX(width / 2).strength(0.02))
-                .force('y', d3.forceY(height / 2).strength(0.02))
-                .force('collision', d3.forceCollide().radius(12))
-                .alphaDecay(0.15)
-                .velocityDecay(0.4)
+                .force('center', d3.forceCenter(width / 2, height / 2))
+                .force('collision', d3.forceCollide().radius(24))
+                .alphaDecay(0.08)
+                .velocityDecay(0.3)
                 .on('tick', () => {
                     linkElements
                         .attr('x1', d => d.source.x)
