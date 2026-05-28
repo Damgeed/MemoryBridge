@@ -569,7 +569,7 @@
                 </div>
             </div>
             <div class="faq-item fade-up">
-                <div class="faq-q" data-i18n="pricing.faq2_q"><span class="q-icon">⚠️</span> What happens if I exceed my tier?</div>
+                <div class="faq-q" data-i18n="pricing.faq2_q"><span class="q-icon"></span> What happens if I exceed my tier?</div>
                 <div class="faq-a" data-i18n="pricing.faq2_a">
                     API calls above the rate limit return <code>429</code>. We store all memories until you hit the cap, then new storage fails. Upgrade to unlock higher limits.
                 </div>
@@ -752,7 +752,7 @@
             } catch (e) {
                 const statusEl = document.getElementById('dash-status') || document.querySelector('.section-subtitle');
                 if (statusEl) {
-                    statusEl.textContent = '' + (e.message || 'Please try again.');
+                    statusEl.textContent = e.message || 'Please try again.';
                     statusEl.style.color = 'var(--red)';
                     setTimeout(() => { statusEl.style.color = ''; }, 5000);
                 } else {
@@ -1603,7 +1603,7 @@
             const errorEl = document.getElementById('auth-error-phone');
             const btn = document.getElementById('pl-phone-btn');
             if (!localNum) {
-                errorEl.innerHTML = '⚠️ Enter your phone number';
+                errorEl.innerHTML = 'Enter your phone number';
                 return;
             }
             const fullPhone = '+' + countryCode + localNum;
@@ -1628,7 +1628,7 @@
                             if (text) errMsg = text.slice(0, 200);
                         } catch {}
                     }
-                    errorEl.innerHTML = '' + errMsg;
+                    errorEl.innerHTML = errMsg;
                     btn.innerHTML = originalBtnHTML;
                     btn.disabled = false;
                     return;
@@ -1649,7 +1649,7 @@
                                 const isNetwork = e.message === 'Failed to fetch' || e.name === 'TypeError' || e.message === 'NetworkError';
                 errorEl.innerHTML = isNetwork
                     ? 'Could not reach server. Check your connection.'
-                    : '' + e.message;
+                    : e.message;
                 btn.disabled = false;
             }
         }
@@ -1659,7 +1659,7 @@
             const errorEl = document.getElementById('auth-error-main');
             const btn = document.getElementById('pl-email-btn');
             if (!email || !email.includes('@')) {
-                errorEl.innerHTML = '⚠️ Enter a valid email address';
+                errorEl.innerHTML = 'Enter a valid email address';
                 return;
             }
             const originalBtnHTML = btn.innerHTML;
@@ -1689,7 +1689,7 @@
                 });
                 if (!res.ok) {
                     const err = await res.json().catch(() => ({}));
-                    errorEl.innerHTML = '' + (err.detail || 'Failed to send code');
+                    errorEl.innerHTML = (err.detail || 'Failed to send code');
                     btn.innerHTML = originalBtnHTML;
                     btn.disabled = false;
                     return;
@@ -1711,7 +1711,7 @@
                                 const isNetwork = e.message === 'Failed to fetch' || e.name === 'TypeError' || e.message === 'NetworkError';
                 errorEl.innerHTML = isNetwork
                     ? 'Could not reach server. Check your connection.'
-                    : '' + e.message;
+                    : e.message;
                 btn.innerHTML = originalBtnHTML;
                 btn.disabled = false;
             }
@@ -1722,7 +1722,7 @@
             const errorEl = document.getElementById('auth-error-code');
             const btn = document.getElementById('pl-code-btn');
             if (!code || code.length < 4) {
-                errorEl.innerHTML = '⚠️ Enter your 6-digit verification code';
+                errorEl.innerHTML = 'Enter your 6-digit verification code';
                 return;
             }
             const originalBtnHTML = btn.innerHTML;
@@ -1739,7 +1739,7 @@
                 });
                 if (!res.ok) {
                     const err = await res.json().catch(() => ({}));
-                    errorEl.innerHTML = '' + (err.detail || 'Verification failed');
+                    errorEl.innerHTML = (err.detail || 'Verification failed');
                     btn.innerHTML = originalBtnHTML;
                     btn.disabled = false;
                     return;
@@ -1767,7 +1767,7 @@
                                 const isNetwork = e.message === 'Failed to fetch' || e.name === 'TypeError' || e.message === 'NetworkError';
                 errorEl.innerHTML = isNetwork
                     ? 'Could not reach server. Check your connection.'
-                    : '' + e.message;
+                    : e.message;
                 btn.innerHTML = originalBtnHTML;
                 btn.disabled = false;
             }
@@ -1793,7 +1793,7 @@
                 });
                 if (!res.ok) {
                     const err = await res.json().catch(() => ({}));
-                    errorEl.innerHTML = '' + (err.detail || 'Failed to resend code');
+                    errorEl.innerHTML = (err.detail || 'Failed to resend code');
                     btn.disabled = false;
                     return;
                 }
@@ -1805,7 +1805,7 @@
                                 const isNetwork = e.message === 'Failed to fetch' || e.name === 'TypeError' || e.message === 'NetworkError';
                 errorEl.innerHTML = isNetwork
                     ? 'Could not reach server. Check your connection.'
-                    : '' + e.message;
+                    : e.message;
                 btn.disabled = false;
             }
         }

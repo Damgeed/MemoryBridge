@@ -111,7 +111,7 @@ async def lifespan(app: FastAPI):
         env_key = os.environ.get("MEMORY_BRIDGE_API_KEY")
         if env_key or not _settings.allow_open:
             logger.warning(
-                "⚠️  JWT_SECRET is not configured (MEMORY_BRIDGE_JWT_SECRET not set). "
+                "  JWT_SECRET is not configured (MEMORY_BRIDGE_JWT_SECRET not set). "
                 "JWT-based authentication and token refresh will fail with a RuntimeError. "
                 "For API-key-only operation this is fine; set MEMORY_BRIDGE_JWT_SECRET if you "
                 "need JWT authentication."

@@ -1455,7 +1455,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const errorEl = document.getElementById('auth-error-phone');
             const btn = document.getElementById('pl-phone-btn');
             if (!localNum) {
-                errorEl.innerHTML = '⚠️ Enter your phone number';
+                errorEl.innerHTML = 'Enter your phone number';
                 return;
             }
             const fullPhone = '+' + countryCode + localNum;
@@ -1501,7 +1501,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const errorEl = document.getElementById('auth-error-main');
             const btn = document.getElementById('pl-email-btn');
             if (!email || !email.includes('@')) {
-                errorEl.innerHTML = '⚠️ Enter a valid email address';
+                errorEl.innerHTML = 'Enter a valid email address';
                 return;
             }
             const originalBtnHTML = btn.innerHTML;
@@ -1561,7 +1561,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const errorEl = document.getElementById('auth-error-code');
             const btn = document.getElementById('pl-code-btn');
             if (!code || code.length < 4) {
-                errorEl.innerHTML = '⚠️ Enter your 6-digit verification code';
+                errorEl.innerHTML = 'Enter your 6-digit verification code';
                 return;
             }
             const originalBtnHTML = btn.innerHTML;

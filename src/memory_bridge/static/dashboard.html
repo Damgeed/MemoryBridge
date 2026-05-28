@@ -1509,7 +1509,7 @@
     <!-- Confirm Modal (existing) -->
     <div class="modal-overlay" id="confirm-overlay" onclick="closeConfirm()"></div>
     <div class="modal" id="confirm-modal">
-        <div class="modal-icon" id="confirm-icon">⚠️</div>
+        <div class="modal-icon" id="confirm-icon"></div>
         <div class="modal-title" id="confirm-title">Are you sure?</div>
         <div class="modal-text" id="confirm-text">This action cannot be undone.</div>
         <div class="modal-btns">
@@ -1767,7 +1767,7 @@
                     document.getElementById('dash-status').textContent = '';
                     document.getElementById('sub-content').innerHTML = `
                         <div style="border:1px solid var(--orange);border-radius:var(--radius-md);padding:1rem;background:var(--bg-secondary);text-align:left;">
-                            <div style="font-weight:700;font-size:0.9rem;color:var(--orange);margin-bottom:0.4rem;">⚠️ Rate Limit Reached</div>
+                            <div style="font-weight:700;font-size:0.9rem;color:var(--orange);margin-bottom:0.4rem;"> Rate Limit Reached</div>
                             <div style="font-size:0.82rem;color:var(--text-muted);">Free plan: 300 requests/min. Upgrade for higher limits to continue using the API.</div>
                             <div style="margin-top:0.75rem;"><a href="/pricing" class="btn btn-primary btn-sm">Upgrade Plan →</a></div>
                         </div>`;
@@ -1777,7 +1777,7 @@
                     await new Promise(r => setTimeout(r, 1000));
                     return loadDashboard(retries - 1);
                 } else {
-                    document.getElementById('dash-status').textContent = '⚠️ ' + (msg || 'Could not load dashboard data.');
+                    document.getElementById('dash-status').textContent = (msg || 'Could not load dashboard data.');
                     document.getElementById('sub-content').innerHTML = `<div style="color:var(--text-muted);font-size:0.85rem;">Sign in to view your subscription details.</div>`;
                 }
             }
@@ -1817,7 +1817,7 @@
                     statusEl.textContent = fallback;
                 }
             }).catch(e => {
-                statusEl.textContent = '⚠️ ' + (e.message || 'Refresh failed');
+                statusEl.textContent = e.message || 'Refresh failed';
                 setTimeout(() => { statusEl.textContent = fallback; }, 3000);
             });
         }
@@ -1953,10 +1953,10 @@
                     <div class="key-reveal">
                         <div style="margin-bottom:0.5rem;font-weight:700;font-size:0.85rem;">🎉 New API Key Created</div>
                         <div class="key-plaintext">${escapeHtml(result.key)}</div>
-                        <div class="key-warning">⚠️ This is the only time you'll see this key. Copy it now.</div>
+                        <div class="key-warning"> This is the only time you'll see this key. Copy it now.</div>
                         <div style="margin-top:0.75rem;display:flex;gap:0.5rem;">
                             <button class="btn btn-primary btn-sm" onclick="copyText(this, '${result.key}')">📋 Copy Key</button>
-                            <button class="btn btn-secondary btn-sm" onclick="document.getElementById('key-reveal-area').innerHTML='';loadKeys();">Dismiss</button>
+                            <button class="btn btn-secondary btn-sm" onclick="document.getElementById('key-reveal-area').innerHTML = '';loadKeys();">Dismiss</button>
                         </div>
                     </div>`;
                 loadKeys();
@@ -1966,25 +1966,25 @@
                 if (msg.includes('max') && msg.includes('API keys')) {
                     document.getElementById('key-reveal-area').innerHTML = `
                         <div class="key-reveal" style="border-color:var(--orange);">
-                            <div style="margin-bottom:0.5rem;font-weight:700;font-size:0.85rem;color:var(--orange);">⚠️ Key Limit Reached</div>
+                            <div style="margin-bottom:0.5rem;font-weight:700;font-size:0.85rem;color:var(--orange);"> Key Limit Reached</div>
                             <div style="font-size:0.82rem;color:var(--text-muted);margin-bottom:0.75rem;">
                                 You've generated all 5 API keys allowed on the Free plan.
                                 Delete an existing key below to create a new one, or upgrade for unlimited keys.
                             </div>
                             <div style="display:flex;gap:0.5rem;flex-wrap:wrap;">
                                 <a href="/pricing" class="btn btn-primary btn-sm">Upgrade Plan →</a>
-                                <button class="btn btn-secondary btn-sm" onclick="document.getElementById('key-reveal-area').innerHTML='';">Dismiss</button>
+                                <button class="btn btn-secondary btn-sm" onclick="document.getElementById('key-reveal-area').innerHTML = '';">Dismiss</button>
                             </div>
                         </div>`;
                 } else if (msg.includes('Too many requests') || msg.includes('Rate limit exceeded')) {
                     document.getElementById('key-reveal-area').innerHTML = `
                         <div style="border:1px solid var(--orange);border-radius:var(--radius-md);padding:0.85rem;background:var(--bg-secondary);">
-                            <div style="font-weight:700;font-size:0.85rem;color:var(--orange);margin-bottom:0.4rem;">⚠️ Rate Limit Reached</div>
+                            <div style="font-weight:700;font-size:0.85rem;color:var(--orange);margin-bottom:0.4rem;"> Rate Limit Reached</div>
                             <div style="font-size:0.82rem;color:var(--text-muted);">Free plan: 300 requests/min. Upgrade for higher limits to continue using the API.</div>
                             <div style="margin-top:0.6rem;"><a href="/pricing" class="btn btn-primary btn-sm" style="font-size:0.75rem;padding:0.25rem 0.7rem;">Upgrade Plan →</a></div>
                         </div>`;
                 } else {
-                    document.getElementById('key-reveal-area').innerHTML = `<div class="status error" style="margin-top:0.5rem;">⚠️ ${escapeHtml(msg || 'Something went wrong.')}</div>`;
+                    document.getElementById('key-reveal-area').innerHTML = `<div class="status error" style="margin-top:0.5rem;"> ${escapeHtml(msg || 'Something went wrong.')}</div>`;
                 }
             } finally {
                 btn.innerHTML = original;
@@ -2005,9 +2005,9 @@
                 } catch (e) {
                     const msg = e.message || '';
                     if (msg.includes('Too many requests') || msg.includes('Rate limit exceeded')) {
-                        showToast('⚠️ Upgrade your plan for higher rate limits.');
+                        showToast(' Upgrade your plan for higher rate limits.');
                     } else {
-                        showToast('⚠️ ' + msg);
+                        showToast(' ' + msg);
                     }
                 }
             });
@@ -2113,7 +2113,7 @@
             const errorEl = document.getElementById('auth-error-phone');
             const btn = document.getElementById('pl-phone-btn');
             if (!localNum) {
-                errorEl.innerHTML = '⚠️ Enter your phone number';
+                errorEl.innerHTML = 'Enter your phone number';
                 return;
             }
             const fullPhone = '+' + countryCode + localNum;
@@ -2137,7 +2137,7 @@
                             if (text) errMsg = text.slice(0, 200);
                         } catch {}
                     }
-                    errorEl.innerHTML = '' + errMsg;
+                    errorEl.innerHTML = errMsg;
                     btn.innerHTML = originalBtnHTML;
                     btn.disabled = false;
                     return;
@@ -2158,7 +2158,7 @@
                 const isNetwork = e.message === 'Failed to fetch' || e.name === 'TypeError' || e.message === 'NetworkError';
                 errorEl.innerHTML = isNetwork
                     ? 'Could not reach server. Check your connection.'
-                    : '' + e.message;
+                    : e.message;
                 btn.disabled = false;
             }
         }
@@ -2168,7 +2168,7 @@
             const errorEl = document.getElementById('auth-error-main');
             const btn = document.getElementById('pl-email-btn');
             if (!email || !email.includes('@')) {
-                errorEl.innerHTML = '⚠️ Enter a valid email address';
+                errorEl.innerHTML = 'Enter a valid email address';
                 return;
             }
             const originalBtnHTML = btn.innerHTML;
@@ -2204,7 +2204,7 @@
                 });
                 if (!res.ok) {
                     const err = await res.json().catch(() => ({}));
-                    errorEl.innerHTML = '' + (err.detail || 'Failed to send code');
+                    errorEl.innerHTML = (err.detail || 'Failed to send code');
                     btn.innerHTML = originalBtnHTML;
                     btn.disabled = false;
                     return;
@@ -2226,7 +2226,7 @@
                 const isNetwork = e.message === 'Failed to fetch' || e.name === 'TypeError' || e.message === 'NetworkError';
                 errorEl.innerHTML = isNetwork
                     ? 'Could not reach server. Check your connection.'
-                    : '' + e.message;
+                    : e.message;
                 btn.innerHTML = originalBtnHTML;
                 btn.disabled = false;
             }
@@ -2237,7 +2237,7 @@
             const errorEl = document.getElementById('auth-error-code');
             const btn = document.getElementById('pl-code-btn');
             if (!code || code.length < 4) {
-                errorEl.innerHTML = '⚠️ Enter your 6-digit verification code';
+                errorEl.innerHTML = 'Enter your 6-digit verification code';
                 return;
             }
             const originalBtnHTML = btn.innerHTML;
@@ -2254,7 +2254,7 @@
                 });
                 if (!res.ok) {
                     const err = await res.json().catch(() => ({}));
-                    errorEl.innerHTML = '' + (err.detail || 'Verification failed');
+                    errorEl.innerHTML = (err.detail || 'Verification failed');
                     btn.innerHTML = originalBtnHTML;
                     btn.disabled = false;
                     return;
@@ -2282,7 +2282,7 @@
                 const isNetwork = e.message === 'Failed to fetch' || e.name === 'TypeError' || e.message === 'NetworkError';
                 errorEl.innerHTML = isNetwork
                     ? 'Could not reach server. Check your connection.'
-                    : '' + e.message;
+                    : e.message;
                 btn.innerHTML = originalBtnHTML;
                 btn.disabled = false;
             }
@@ -2308,7 +2308,7 @@
                 });
                 if (!res.ok) {
                     const err = await res.json().catch(() => ({}));
-                    errorEl.innerHTML = '' + (err.detail || 'Failed to resend code');
+                    errorEl.innerHTML = (err.detail || 'Failed to resend code');
                     btn.disabled = false;
                     return;
                 }
@@ -2320,7 +2320,7 @@
                 const isNetwork = e.message === 'Failed to fetch' || e.name === 'TypeError' || e.message === 'NetworkError';
                 errorEl.innerHTML = isNetwork
                     ? 'Could not reach server. Check your connection.'
-                    : '' + e.message;
+                    : e.message;
                 btn.disabled = false;
             }
         }
@@ -2329,7 +2329,7 @@
         let _confirmCallback = null;
 
         function showConfirm(icon, title, text, okLabel, callback) {
-            document.getElementById('confirm-icon').textContent = icon || '⚠️';
+            document.getElementById('confirm-icon').textContent = icon || '';
             document.getElementById('confirm-title').textContent = title || 'Are you sure?';
             document.getElementById('confirm-text').innerHTML = text || 'This action cannot be undone.';
             document.getElementById('confirm-ok-btn').textContent = okLabel || 'Delete';
@@ -2540,7 +2540,7 @@
                         }).catch(() => {});
                     }
                 } catch (e) {
-                    statusEl.textContent = '⚠️ ' + (e.message || 'Checking subscription...');
+                    statusEl.textContent = e.message || 'Checking subscription...';
                     if (attempts >= maxAttempts) {
                         clearInterval(poll);
                         statusEl.textContent = '⏳ Loading your dashboard...';

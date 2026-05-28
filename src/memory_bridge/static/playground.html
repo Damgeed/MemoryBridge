@@ -596,7 +596,7 @@
         // ── Store Memory ──────────────────────────────────────────
         async function storeMemory() {
             const apiKey = getApiKey();
-            if (!apiKey) { showStatus('store-result', '⚠️ Please insert an api key and click save', 'error'); return; }
+            if (!apiKey) { showStatus('store-result', ' Please insert an api key and click save', 'error'); return; }
 
             const sessionId = document.getElementById('session-id').value.trim() || 'demo-session';
             const agentId = document.getElementById('agent-id').value.trim() || 'agent-alice';
@@ -604,8 +604,8 @@
             const value = document.getElementById('mem-value').value.trim();
             const tagsStr = document.getElementById('mem-tags').value.trim();
 
-            if (!key) { showStatus('store-result', '⚠️ Please fill in the Memory Key field', 'error'); return; }
-            if (!value) { showStatus('store-result', '⚠️ Please fill in the Memory Value field', 'error'); return; }
+            if (!key) { showStatus('store-result', ' Please fill in the Memory Key field', 'error'); return; }
+            if (!value) { showStatus('store-result', ' Please fill in the Memory Value field', 'error'); return; }
 
             let parsedValue;
             try { parsedValue = JSON.parse(value); } catch { parsedValue = value; }
@@ -631,7 +631,7 @@
                 if (msg.includes('Too many requests') || msg.includes('Rate limit exceeded')) {
                     showStatus('store-result', `
                         <div style="border:1px solid var(--orange);border-radius:var(--radius-md);padding:0.85rem;background:var(--bg-secondary);">
-                            <div style="font-weight:700;font-size:0.85rem;color:var(--orange);margin-bottom:0.4rem;">⚠️ Rate Limit Reached</div>
+                            <div style="font-weight:700;font-size:0.85rem;color:var(--orange);margin-bottom:0.4rem;"> Rate Limit Reached</div>
                             <div style="font-size:0.82rem;color:var(--text-muted);">Free plan: 300 requests/min. Upgrade for higher limits to continue using the API.</div>
                             <div style="margin-top:0.6rem;"><a href="/pricing" class="btn btn-primary btn-sm" style="font-size:0.75rem;padding:0.25rem 0.7rem;">Upgrade Plan →</a></div>
                         </div>
@@ -678,12 +678,12 @@
                 const searchMsg = e.message || '';
                 if (searchMsg.includes('Too many requests') || searchMsg.includes('Rate limit exceeded')) {
                     resultsDiv.innerHTML = `<div class="status error" style="border:1px solid var(--orange);border-radius:var(--radius-md);padding:0.85rem;background:var(--bg-secondary);">
-                        <div style="font-weight:700;font-size:0.85rem;color:var(--orange);margin-bottom:0.4rem;">⚠️ Rate Limit Reached</div>
+                        <div style="font-weight:700;font-size:0.85rem;color:var(--orange);margin-bottom:0.4rem;"> Rate Limit Reached</div>
                         <div style="font-size:0.82rem;color:var(--text-muted);">Free plan: 300 requests/min. Upgrade for higher limits to continue using the API.</div>
                         <div style="margin-top:0.6rem;"><a href="/pricing" class="btn btn-primary btn-sm" style="font-size:0.75rem;padding:0.25rem 0.7rem;">Upgrade Plan →</a></div>
                     </div>`;
                 } else {
-                    resultsDiv.innerHTML = `<div class="status error">⚠️ ${escapeHtml(searchMsg || 'Search failed')}</div>`;
+                    resultsDiv.innerHTML = `<div class="status error"> ${escapeHtml(searchMsg || 'Search failed')}</div>`;
                 }
             }
         }
@@ -1667,7 +1667,7 @@ selectAuthTab(tab === 'signup' ? 'signup' : 'signin');
             const errorEl = document.getElementById('auth-error-phone');
             const btn = document.getElementById('pl-phone-btn');
             if (!localNum) {
-                errorEl.innerHTML = '⚠️ Enter your phone number';
+                errorEl.innerHTML = 'Enter your phone number';
                 return;
             }
             const fullPhone = '+' + countryCode + localNum;
@@ -1692,7 +1692,7 @@ selectAuthTab(tab === 'signup' ? 'signup' : 'signin');
                             if (text) errMsg = text.slice(0, 200);
                         } catch {}
                     }
-                    errorEl.innerHTML = '' + errMsg;
+                    errorEl.innerHTML = errMsg;
                     btn.innerHTML = originalBtnHTML;
                     btn.disabled = false;
                     return;
@@ -1713,7 +1713,7 @@ selectAuthTab(tab === 'signup' ? 'signup' : 'signin');
                                 const isNetwork = e.message === 'Failed to fetch' || e.name === 'TypeError' || e.message === 'NetworkError';
                 errorEl.innerHTML = isNetwork
                     ? 'Could not reach server. Check your connection.'
-                    : '' + e.message;
+                    : e.message;
                 btn.disabled = false;
             }
         }
@@ -1723,7 +1723,7 @@ selectAuthTab(tab === 'signup' ? 'signup' : 'signin');
             const errorEl = document.getElementById('auth-error-main');
             const btn = document.getElementById('pl-email-btn');
             if (!email || !email.includes('@')) {
-                errorEl.innerHTML = '⚠️ Enter a valid email address';
+                errorEl.innerHTML = 'Enter a valid email address';
                 return;
             }
             const originalBtnHTML = btn.innerHTML;
@@ -1753,7 +1753,7 @@ selectAuthTab(tab === 'signup' ? 'signup' : 'signin');
                 });
                 if (!res.ok) {
                     const err = await res.json().catch(() => ({}));
-                    errorEl.innerHTML = '' + (err.detail || 'Failed to send code');
+                    errorEl.innerHTML = (err.detail || 'Failed to send code');
                     btn.innerHTML = originalBtnHTML;
                     btn.disabled = false;
                     return;
@@ -1775,7 +1775,7 @@ selectAuthTab(tab === 'signup' ? 'signup' : 'signin');
                                 const isNetwork = e.message === 'Failed to fetch' || e.name === 'TypeError' || e.message === 'NetworkError';
                 errorEl.innerHTML = isNetwork
                     ? 'Could not reach server. Check your connection.'
-                    : '' + e.message;
+                    : e.message;
                 btn.innerHTML = originalBtnHTML;
                 btn.disabled = false;
             }
@@ -1786,7 +1786,7 @@ selectAuthTab(tab === 'signup' ? 'signup' : 'signin');
             const errorEl = document.getElementById('auth-error-code');
             const btn = document.getElementById('pl-code-btn');
             if (!code || code.length < 4) {
-                errorEl.innerHTML = '⚠️ Enter your 6-digit verification code';
+                errorEl.innerHTML = 'Enter your 6-digit verification code';
                 return;
             }
             const originalBtnHTML = btn.innerHTML;
@@ -1803,7 +1803,7 @@ selectAuthTab(tab === 'signup' ? 'signup' : 'signin');
                 });
                 if (!res.ok) {
                     const err = await res.json().catch(() => ({}));
-                    errorEl.innerHTML = '' + (err.detail || 'Verification failed');
+                    errorEl.innerHTML = (err.detail || 'Verification failed');
                     btn.innerHTML = originalBtnHTML;
                     btn.disabled = false;
                     return;
@@ -1831,7 +1831,7 @@ selectAuthTab(tab === 'signup' ? 'signup' : 'signin');
                                 const isNetwork = e.message === 'Failed to fetch' || e.name === 'TypeError' || e.message === 'NetworkError';
                 errorEl.innerHTML = isNetwork
                     ? 'Could not reach server. Check your connection.'
-                    : '' + e.message;
+                    : e.message;
                 btn.innerHTML = originalBtnHTML;
                 btn.disabled = false;
             }
@@ -1857,7 +1857,7 @@ selectAuthTab(tab === 'signup' ? 'signup' : 'signin');
                 });
                 if (!res.ok) {
                     const err = await res.json().catch(() => ({}));
-                    errorEl.innerHTML = '' + (err.detail || 'Failed to resend code');
+                    errorEl.innerHTML = (err.detail || 'Failed to resend code');
                     btn.disabled = false;
                     return;
                 }
@@ -1869,7 +1869,7 @@ selectAuthTab(tab === 'signup' ? 'signup' : 'signin');
                                 const isNetwork = e.message === 'Failed to fetch' || e.name === 'TypeError' || e.message === 'NetworkError';
                 errorEl.innerHTML = isNetwork
                     ? 'Could not reach server. Check your connection.'
-                    : '' + e.message;
+                    : e.message;
                 btn.disabled = false;
             }
         }
@@ -2013,7 +2013,7 @@ selectAuthTab(tab === 'signup' ? 'signup' : 'signin');
                 expiryToast = document.createElement('div');
                 expiryToast.className = 'session-expiry-toast';
                 expiryToast.id = 'session-expiry-toast';
-                expiryToast.innerHTML = '<span>⚠️ Your session will expire soon</span><button class="expiry-btn" onclick="handleSessionKeepAlive()">Stay signed in</button>';
+                expiryToast.innerHTML = '<span> Your session will expire soon</span><button class="expiry-btn" onclick="handleSessionKeepAlive()">Stay signed in</button>';
                 document.body.appendChild(expiryToast);
             }
             return expiryToast;
@@ -2021,8 +2021,8 @@ selectAuthTab(tab === 'signup' ? 'signup' : 'signin');
         function showSessionExpiryWarning(remaining) {
             const toast = ensureExpiryToast();
             const msg = remaining <= 0
-                ? '⚠️ Your session has expired. Please sign in again.'
-                : '⚠️ Your session expires in ' + Math.ceil(remaining / 60) + ' min';
+                ? ' Your session has expired. Please sign in again.'
+                : ' Your session expires in ' + Math.ceil(remaining / 60) + ' min';
             toast.querySelector('span').textContent = msg;
             toast.classList.add('show');
         }
