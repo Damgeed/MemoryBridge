@@ -821,9 +821,9 @@
                 const msg = targetTier === 'free'
                     ? 'Subscription will switch to Free at the end of your billing period.'
                     : 'Switched to the ' + targetTier.charAt(0).toUpperCase() + targetTier.slice(1) + ' plan — takes effect at the end of your current billing cycle.';
-                showInfoModal('Plan Updated', msg, targetTier === 'free' ? function() {
+                showInfoModal('Plan Updated', msg, function() {
                     window.location.href = '/dashboard';
-                } : null);
+                });
                 closeDowngradeModal();
             } catch (e) {
                 const statusEl = document.querySelector('.section-subtitle');
