@@ -504,17 +504,6 @@ class BillingService:
                 organization_id,
             )
 
-            # Update local status
-            sub.status = "canceled"
-            sub.updated_at = datetime.now(timezone.utc)
-            await self.repo.store_subscription(sub)
-
-            # Deactivate excess API keys — keep only Free tier limit
-            free_limit = TIER_LIMITS.get("free", {}).get("max_api_keys", 5)
-            deactivated = await self.repo.deactivate_excess_keys(organization_id, free_limit)
-            if deactivated:
-                logger.info("Deactivated %d excess API keys for org %s", deactivated, organization_id)
-
             return True
         except stripe.error.StripeError as e:
             logger.error(
