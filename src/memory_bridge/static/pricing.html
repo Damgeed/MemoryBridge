@@ -637,8 +637,8 @@
         <div class="logout-icon">✅</div>
         <div class="logout-title" id="info-title">Plan Updated</div>
         <div class="logout-text" id="info-text"></div>
-        <div class="logout-btns">
-            <button class="btn btn-primary" onclick="closeInfoModal()">OK</button>
+        <div class="logout-btns" style="justify-content:center;">
+            <button class="btn btn-primary" onclick="closeInfoModal()" style="min-width:unset;padding:0.6rem 2rem;">OK</button>
         </div>
     </div>
 
@@ -789,7 +789,7 @@
                         const err = await res.json().catch(() => ({}));
                         throw new Error(err.detail || 'Could not cancel subscription.');
                     }
-                    showInfoModal('Plan Updated', '✅ Subscription will switch to Free at the end of your billing period.');
+                    showInfoModal('Plan Updated', 'Subscription will switch to Free at the end of your billing period.');
                     closeDowngradeModal();
                 } else {
                     // Downgrade to another paid plan — close modal, then proceed with upgrade
@@ -910,7 +910,7 @@
                     window.location.href = data.checkout_url;
                 } else {
                     // Inline upgrade via Subscription.modify succeeded
-                    showInfoModal('Plan Updated', '✅ Upgraded to ' + tier.charAt(0).toUpperCase() + tier.slice(1) + ' plan!', function() {
+                    showInfoModal('Plan Updated', 'Upgraded to ' + tier.charAt(0).toUpperCase() + tier.slice(1) + ' plan!', function() {
                         window.location.href = '/dashboard';
                     });
                 }
