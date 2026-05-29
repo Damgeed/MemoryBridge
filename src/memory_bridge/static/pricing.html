@@ -747,6 +747,9 @@
             try {
                 if (_pendingDowngradeTier === 'free') {
                     // Cancel subscription at period end
+                    if (!_pendingDowngradeOrgId) {
+                        throw new Error('Could not determine your organization. Please try refreshing the page.');
+                    }
                     const jwt = localStorage.getItem('mb_jwt');
                     const res = await fetch('/billing/cancel/' + _pendingDowngradeOrgId, {
                         method: 'POST',
@@ -756,8 +759,7 @@
                         const err = await res.json().catch(() => ({}));
                         throw new Error(err.detail || 'Could not cancel subscription.');
                     }
-                    // Show success toast and close modal
-                    showToast('✅ Subscription will switch to Free at the end of your billing period.');
+                    alert('✅ Subscription will switch to Free at the end of your billing period.');
                     closeDowngradeModal();
                 } else {
                     // Downgrade to another paid plan — close modal, then proceed with upgrade
@@ -772,7 +774,7 @@
                     statusEl.style.color = 'var(--red)';
                     setTimeout(() => { statusEl.style.color = ''; }, 5000);
                 } else {
-                    showToast('⚠️ ' + e.message);
+                    alert(e.message);
                 }
             }
             btn.disabled = false;
