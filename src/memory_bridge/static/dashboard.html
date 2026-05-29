@@ -2020,9 +2020,6 @@
             // ── Active keys ──
             html += `<div class="keys-divider" style="justify-content:space-between;">
                 <span>Active Keys (${active.length})</span>
-                <label style="display:flex;align-items:center;gap:0.3rem;font-size:0.72rem;cursor:pointer;color:var(--text-muted);" onclick="event.stopPropagation();selectAllKeys()">
-                    <input type="checkbox" class="key-select-all" onchange="selectAllKeys()"> Select All
-                </label>
             </div>`;
             for (const k of active) {
                 const created = k.created_at ? new Date(k.created_at).toLocaleDateString() : '—';
@@ -2049,10 +2046,7 @@
                 html += `<div class="keys-divider" style="cursor:pointer;" onclick="toggleDeactivatedKeys(this)">
                     <span>🔽 Deactivated Keys (${deactivated.length})</span>
                 </div>
-                <div id="deactivated-keys-list" style="display:none;">
-                    <label style="display:flex;align-items:center;gap:0.3rem;font-size:0.72rem;cursor:pointer;color:var(--text-muted);padding:0.3rem 0.75rem;" onclick="event.stopPropagation();selectAllDeactivated()">
-                        <input type="checkbox" class="key-select-all-deactivated" onchange="selectAllDeactivated()"> Select All
-                    </label>`;
+                <div id="deactivated-keys-list" style="display:none;">`;
                 for (const k of deactivated) {
                     const created = k.created_at ? new Date(k.created_at).toLocaleDateString() : '—';
                     const label = k.label || 'default';
@@ -2164,70 +2158,6 @@
                     loadKeys();
                     loadDashboard();
                 });
-        }
-
-        function selectAllKeys() {
-            const el = document.getElementById('keys-list');
-            // Only select active keys (those NOT inside #deactivated-keys-list)
-            const activeItems = el.querySelectorAll('.key-item:not(#deactivated-keys-list .key-item)');
-            const allSelected = activeItems.length > 0 && [...activeItems].every(item => {
-                const cb = item.querySelector('.key-select');
-                return cb && cb.checked;
-            });
-            
-            const visibleIds = [];
-            activeItems.forEach(item => {
-                const cb = item.querySelector('.key-select');
-                if (cb && cb.dataset.keyId) visibleIds.push(cb.dataset.keyId);
-            });
-            
-            if (allSelected) {
-                visibleIds.forEach(id => _selectedKeyIds.delete(id));
-            } else {
-                visibleIds.forEach(id => _selectedKeyIds.add(id));
-            }
-            
-            // Update active section checkboxes
-            activeItems.forEach(item => {
-                const cb = item.querySelector('.key-select');
-                if (cb && cb.dataset.keyId) {
-                    cb.checked = _selectedKeyIds.has(cb.dataset.keyId);
-                }
-            });
-            
-            updateBulkActions();
-        }
-
-        function selectAllDeactivated() {
-            const el = document.querySelector('#deactivated-keys-list');
-            if (!el) return;
-            const items = el.querySelectorAll('.key-item');
-            const allSelected = items.length > 0 && [...items].every(item => {
-                const cb = item.querySelector('.key-select');
-                return cb && cb.checked;
-            });
-            
-            const ids = [];
-            items.forEach(item => {
-                const cb = item.querySelector('.key-select');
-                if (cb && cb.dataset.keyId) ids.push(cb.dataset.keyId);
-            });
-            
-            if (allSelected) {
-                ids.forEach(id => _selectedKeyIds.delete(id));
-            } else {
-                ids.forEach(id => _selectedKeyIds.add(id));
-            }
-            
-            // Update deactivated section checkboxes
-            items.forEach(item => {
-                const cb = item.querySelector('.key-select');
-                if (cb && cb.dataset.keyId) {
-                    cb.checked = _selectedKeyIds.has(cb.dataset.keyId);
-                }
-            });
-            
-            updateBulkActions();
         }
 
         async function generateKey() {
