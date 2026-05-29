@@ -642,6 +642,18 @@
         </div>
     </div>
 
+    <!-- Generic confirm modal -->
+    <div class="logout-modal-overlay" id="confirm-overlay" onclick=""></div>
+    <div class="logout-modal" id="confirm-modal">
+        <div class="logout-icon" id="confirm-icon">⬆️</div>
+        <div class="logout-title" id="confirm-title">Confirm</div>
+        <div class="logout-text" id="confirm-text"></div>
+        <div class="logout-btns">
+            <button class="btn btn-secondary" id="confirm-cancel-btn" onclick="closeConfirmModal()">Cancel</button>
+            <button class="btn btn-primary" id="confirm-ok-btn">Confirm</button>
+        </div>
+    </div>
+
     <footer class="footer" data-i18n="footer.text">© 2026 Memory Bridge — API for cross-agent memory</footer>
 
     <script>
@@ -770,6 +782,24 @@
             document.querySelector('#info-modal .btn-primary').onclick = closeInfoModal;
         }
 
+        function showConfirmModal(icon, title, text, confirmText, onConfirm) {
+            document.getElementById('confirm-icon').textContent = icon || '⬆️';
+            document.getElementById('confirm-title').textContent = title || 'Confirm';
+            document.getElementById('confirm-text').innerHTML = text || '';
+            document.getElementById('confirm-ok-btn').textContent = confirmText || 'Confirm';
+            document.getElementById('confirm-ok-btn').onclick = function() {
+                closeConfirmModal();
+                if (onConfirm) onConfirm();
+            };
+            document.getElementById('confirm-overlay').classList.add('open');
+            document.getElementById('confirm-modal').classList.add('open');
+        }
+
+        function closeConfirmModal() {
+            document.getElementById('confirm-overlay').classList.remove('open');
+            document.getElementById('confirm-modal').classList.remove('open');
+        }
+
         async function confirmDowngrade() {
             const btn = document.getElementById('downgrade-confirm-btn');
             btn.disabled = true;
@@ -791,7 +821,9 @@
                 const msg = targetTier === 'free'
                     ? 'Subscription will switch to Free at the end of your billing period.'
                     : 'Switched to the ' + targetTier.charAt(0).toUpperCase() + targetTier.slice(1) + ' plan — takes effect at the end of your current billing cycle.';
-                showInfoModal('Plan Updated', msg);
+                showInfoModal('Plan Updated', msg, targetTier === 'free' ? function() {
+                    window.location.href = '/dashboard';
+                } : null);
                 closeDowngradeModal();
             } catch (e) {
                 const statusEl = document.querySelector('.section-subtitle');
@@ -855,7 +887,30 @@
             }
 
             // Proceed with upgrade (existing subscription, higher tier)
-            upgrade(tier);
+            // First show cost preview
+            try {
+                const jwt = localStorage.getItem('mb_jwt');
+                const previewRes = await fetch('/billing/upgrade-preview?tier=' + tier, {
+                    headers: { 'Authorization': 'Bearer ' + jwt },
+                });
+                if (previewRes.ok) {
+                    const preview = await previewRes.json();
+                    const prevAmount = preview.amount_due || 0;
+                    const tierName = tier.charAt(0).toUpperCase() + tier.slice(1);
+                    const currentName = preview.current_plan || 'Current';
+                    const costMsg = prevAmount > 0
+                        ? `Prorated charge: <strong>$${prevAmount.toFixed(2)}</strong> today.`
+                        : `No immediate charge — credit covers the upgrade.`;
+                    showConfirmModal('⬆️', 'Upgrade to ' + tierName + '?',
+                        'Upgrade from <strong>' + currentName + '</strong> to <strong>' + tierName + '</strong>.<br><br>' + costMsg + '<br><br>Your next billing date stays the same.',
+                        'Upgrade Now', () => upgrade(tier));
+                } else {
+                    // Preview failed — proceed directly
+                    upgrade(tier);
+                }
+            } catch {
+                upgrade(tier);
+            }
         }
 
         async function checkout(tier) {

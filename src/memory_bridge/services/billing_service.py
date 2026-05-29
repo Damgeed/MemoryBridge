@@ -564,6 +564,67 @@ class BillingService:
             return False
 
 
+    async def preview_upgrade_cost(self, organization_id: str, target_tier: str) -> dict:
+        """Preview the prorated cost of upgrading without making changes."""
+        target_price_id = PRICE_IDS.get(target_tier)
+        if not target_price_id:
+            return {"can_upgrade": False, "error": f"No price configured for tier '{target_tier}'."}
+
+        try:
+            sub = await self.repo.get_subscription_by_org(organization_id)
+        except Exception as e:
+            return {"can_upgrade": False, "error": f"Failed to look up subscription: {e}"}
+
+        if not sub or not sub.id:
+            return {"can_upgrade": False, "error": "No active subscription found."}
+
+        try:
+            stripe_sub = stripe.Subscription.retrieve(sub.id)
+            items = stripe_sub.items.data if hasattr(stripe_sub, 'items') else []
+            if not items:
+                return {"can_upgrade": False, "error": "No items on existing subscription."}
+
+            item_id = items[0].id
+
+            # Preview via upcoming invoice
+            upcoming = stripe.Invoice.upcoming(
+                subscription=sub.id,
+                subscription_items=[{
+                    'id': item_id,
+                    'price': target_price_id,
+                }],
+                subscription_proration_behavior='create_prorations',
+            )
+
+            upcoming_data = upcoming.to_dict() if hasattr(upcoming, 'to_dict') else upcoming
+            amount_due = upcoming_data.get('amount_due', 0) / 100.0
+            amount_remaining = upcoming_data.get('amount_remaining', 0) / 100.0
+            credit_note = upcoming_data.get('starting_balance', 0) / 100.0
+
+            tier_names = {'free': 'Free', 'starter': 'Starter', 'pro': 'Pro', 'enterprise': 'Enterprise'}
+            old_name = tier_names.get(sub.tier, sub.tier.title())
+            new_name = tier_names.get(target_tier, target_tier.title())
+
+            # Calculate proration breakdown
+            lines = upcoming_data.get('lines', {}).get('data', [])
+            proration_details = []
+            for line in lines:
+                if line.get('proration'):
+                    desc = line.get('description', '')
+                    amt = line.get('amount', 0) / 100.0
+                    proration_details.append({"description": desc, "amount": amt})
+
+            return {
+                "can_upgrade": True,
+                "current_plan": old_name,
+                "new_plan": new_name,
+                "amount_due": round(amount_due, 2),
+                "proration_details": proration_details,
+                "message": f"Upgrade from {old_name} to {new_name}: prorated charge of ${amount_due:.2f} today. Your next billing date stays the same."
+            }
+        except Exception as e:
+            return {"can_upgrade": False, "error": f"Could not preview: {e}"}
+
     async def upgrade_subscription(self, organization_id: str, target_tier: str) -> tuple[bool, str]:
         """Upgrade an existing subscription to a higher tier with proration.
 

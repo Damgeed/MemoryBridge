@@ -109,6 +109,27 @@ async def create_checkout_auth(
     return {"checkout_url": url, "organization_id": org_id}
 
 
+@router.get("/upgrade-preview")
+async def preview_upgrade(
+    request: Request,
+    tier: str = "pro",
+    billing: BillingService = Depends(_get_billing_service),
+):
+    """Preview the cost of upgrading without making any changes."""
+    auth = getattr(request.state, "auth", None)
+    if not auth:
+        raise HTTPException(status_code=401, detail="You must be signed in.")
+
+    org_id = auth.get("project_id") or auth.get("key_id", "")
+    if not org_id:
+        raise HTTPException(status_code=401, detail="Could not resolve your account.")
+
+    result = await billing.preview_upgrade_cost(org_id, tier)
+    if not result.get("can_upgrade"):
+        raise HTTPException(status_code=400, detail=result.get("error", "Could not preview upgrade."))
+    return result
+
+
 @router.post("/cancel/{org_id}")
 async def cancel_subscription(
     org_id: str,
