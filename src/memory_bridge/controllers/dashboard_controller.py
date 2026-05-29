@@ -357,19 +357,26 @@ async def get_dashboard_data(
     # If STILL no subscription found, synchronously check Stripe — this blocks the
     # response but ensures paid users don't see "Free Plan" on first load.
     if not sub and user_email:
-        await _check_stripe_fallback(user_email, org_id, storage)
+        stored = await _check_stripe_fallback(user_email, org_id, storage)
         # Retry subscription lookup after fallback
-        # Fallback may have stored sub with a new UUID org_id — find it via user record
-        try:
-            user_record = await storage.get_user_by_email(user_email)
-            if user_record:
-                user_org_id = user_record.get('organization_id')
-                if user_org_id:
-                    sub = await storage.get_subscription_by_org(user_org_id)
-                    if sub:
-                        org_id = user_org_id
-        except Exception:
-            pass
+        if stored:
+            # Fallback may have updated the user's org_id — look up by email
+            try:
+                user_record = await storage.get_user_by_email(user_email)
+                if user_record:
+                    user_org_id = user_record.get('organization_id')
+                    if user_org_id:
+                        sub = await storage.get_subscription_by_org(user_org_id)
+                        if sub:
+                            org_id = user_org_id
+            except Exception:
+                pass
+            # Also try by original org_id (fallback stores sub with it)
+            if not sub:
+                try:
+                    sub = await storage.get_subscription_by_org(org_id)
+                except Exception:
+                    pass
 
     # Get key count
     try:
@@ -912,12 +919,23 @@ async def stripe_welcome(
 
 
 async def _check_stripe_fallback(user_email: str, org_id: str, storage):
-    """Background task: check Stripe for a subscription by email and store it locally."""
+    """Check Stripe for a subscription and store it locally. Returns True if stored."""
     try:
         import stripe as stripe_mod
+        import uuid
         stripe_mod.api_key = os.environ.get("STRIPE_SECRET_KEY", "")
         if not stripe_mod.api_key:
-            return
+            return False
+
+        # Use the JWT's project_id as the org_id (don't generate new UUID)
+        real_org_id = org_id
+        if not real_org_id or real_org_id in ("default", "demo", ""):
+            real_org_id = str(uuid.uuid4())
+
+        if not user_email:
+            return False
+
+        # Find Stripe customer by email
         customers = await asyncio.wait_for(
             asyncio.to_thread(
                 stripe_mod.Customer.list,
@@ -928,7 +946,9 @@ async def _check_stripe_fallback(user_email: str, org_id: str, storage):
             timeout=5.0,
         )
         if not customers or not customers.data:
-            return
+            # No customer found — subscription might not exist for this email
+            return False
+
         stripe_customer = customers.data[0]
         subs_list = None
         if hasattr(stripe_customer, "subscriptions") and stripe_customer.subscriptions:
@@ -937,7 +957,8 @@ async def _check_stripe_fallback(user_email: str, org_id: str, storage):
             subs_list = stripe_customer.get("subscriptions", {}) or {}
             subs_list = subs_list.get("data", []) if isinstance(subs_list, dict) else []
         if not subs_list:
-            return
+            return False
+
         active_sub = subs_list[0]
         price_id = ""
         items_list = []
@@ -965,19 +986,13 @@ async def _check_stripe_fallback(user_email: str, org_id: str, storage):
             if hasattr(active_sub, "current_period_end") and active_sub.current_period_end:
                 period_end = datetime.fromtimestamp(active_sub.current_period_end, tz=timezone.utc)
         else:
-            sub_id = active_sub.get("id", f"stripe-{org_id[:8]}")
+            sub_id = active_sub.get("id", f"stripe-{real_org_id[:8]}")
             sub_status = active_sub.get("status", "active")
             if active_sub.get("current_period_end"):
                 period_end = datetime.fromtimestamp(active_sub["current_period_end"], tz=timezone.utc)
         stripe_customer_id = stripe_customer.id if hasattr(stripe_customer, "id") else stripe_customer.get("id", "")
 
-        # If org_id looks like a user key (e.g. "user:email"), generate a proper UUID
-        import uuid
-        real_org_id = org_id
-        if org_id.startswith("user:") or org_id == "default":
-            real_org_id = str(uuid.uuid4())
-
-        # Update the user record with the real org_id
+        # Create or update a local user record so email → org_id lookup works
         try:
             user_record = await storage.get_user_by_email(user_email)
             if user_record:
@@ -985,16 +1000,27 @@ async def _check_stripe_fallback(user_email: str, org_id: str, storage):
                 if user_id:
                     if not user_record.get("organization_id"):
                         await storage.update_user_organization_id(user_id, real_org_id)
-                    # Always link stripe_customer_id
                     if stripe_customer_id:
                         await storage.update_user_stripe_customer(user_id, stripe_customer_id)
-                    logger.info(
-                        "Stripe fallback: linked org=%s to user=%s",
-                        real_org_id, user_email,
-                    )
+            else:
+                # Create a minimal user record for this email
+                from ..models import User as UserModel
+                new_user = UserModel(
+                    id=f"stripe-{real_org_id[:8]}",
+                    email=user_email,
+                    password_hash="",
+                    name=user_email.split("@")[0],
+                    organization_id=real_org_id,
+                    stripe_customer_id=stripe_customer_id,
+                    created_at=datetime.now(timezone.utc),
+                    updated_at=datetime.now(timezone.utc),
+                )
+                await storage.create_user(new_user.dict() if hasattr(new_user, 'dict') else new_user.model_dump())
+                logger.info("Stripe fallback: created user for %s with org=%s", user_email, real_org_id)
         except Exception as e:
-            logger.warning("Stripe fallback: could not link user: %s", e)
+            logger.warning("Stripe fallback: user setup failed: %s", e)
 
+        # Store subscription
         sub = Subscription(
             id=sub_id or f"stripe-{real_org_id[:8]}",
             organization_id=real_org_id,
@@ -1004,12 +1030,11 @@ async def _check_stripe_fallback(user_email: str, org_id: str, storage):
             current_period_start=datetime.now(timezone.utc),
             current_period_end=period_end,
         )
-        try:
-            await storage.store_subscription(sub)
-            logger.info("Stripe fallback: restored subscription for org=%s tier=%s", org_id, resolved_tier)
-        except Exception as e:
-            logger.warning("Stripe fallback: store failed %s", e)
+        await storage.store_subscription(sub)
+        logger.info("Stripe fallback: restored subscription for org=%s tier=%s", real_org_id, resolved_tier)
+        return True
     except ImportError:
-        pass
+        return False
     except Exception as e:
         logger.warning("Stripe fallback error: %s", e)
+        return False
