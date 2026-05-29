@@ -2062,77 +2062,9 @@ selectAuthTab(tab === 'signup' ? 'signup' : 'signin');
             }
         }
 
-        // ── Periodic Session Health Check ────────────────────────
-        let sessionCheckInterval = null;
-        function startSessionCheck() {
-            if (sessionCheckInterval) clearInterval(sessionCheckInterval);
-            sessionCheckInterval = setInterval(() => {
-                const jwt = localStorage.getItem('mb_jwt');
-                if (!jwt) return;
-                const claims = decodeJWT(jwt);
-                if (!claims || !claims.exp) return;
-                const now = Math.floor(Date.now() / 1000);
-                const remaining = claims.exp - now;
-                const sessionDot = document.getElementById('session-dot');
-                if (sessionDot) {
-                    if (remaining <= 0) {
-                        sessionDot.className = 'session-dot red';
-                        showSessionExpiryWarning(0);
-                    } else if (remaining < 300) {
-                        sessionDot.className = 'session-dot amber';
-                        showSessionExpiryWarning(remaining);
-                    } else {
-                        sessionDot.className = 'session-dot green';
-                        hideSessionExpiryWarning();
-                    }
-                }
-                // Sync mobile session dot
-                const mobileSessionDot = document.getElementById('mobile-session-dot');
-                if (mobileSessionDot) mobileSessionDot.className = sessionDot ? sessionDot.className : 'session-dot green';
-            }, 30000); // Every 30 seconds
-        }
+        // ── Session health handled by global auth.js ─────────────────
+        // (startSessionHealthCheck runs automatically from initAuth())
 
-        // ── Session Expiry Warning Toast ─────────────────────────
-        let expiryToast = null;
-        function ensureExpiryToast() {
-            if (!expiryToast) {
-                expiryToast = document.createElement('div');
-                expiryToast.className = 'session-expiry-toast';
-                expiryToast.id = 'session-expiry-toast';
-                expiryToast.innerHTML = '<span> Your session will expire soon</span><button class="expiry-btn" onclick="handleSessionKeepAlive()">Stay signed in</button>';
-                document.body.appendChild(expiryToast);
-            }
-            return expiryToast;
-        }
-        function showSessionExpiryWarning(remaining) {
-            const toast = ensureExpiryToast();
-            const msg = remaining <= 0
-                ? ' Your session has expired. Please sign in again.'
-                : ' Your session expires in ' + Math.ceil(remaining / 60) + ' min';
-            toast.querySelector('span').textContent = msg;
-            toast.classList.add('show');
-        }
-        function hideSessionExpiryWarning() {
-            if (expiryToast) expiryToast.classList.remove('show');
-        }
-        async function handleSessionKeepAlive() {
-            const jwt = localStorage.getItem('mb_jwt');
-            if (!jwt) return;
-            try {
-                const res = await fetch('/auth/refresh', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ token: jwt }),
-                });
-                if (res.ok) {
-                    const data = await res.json();
-                    if (data.token) localStorage.setItem('mb_jwt', data.token);
-                    if (data.api_key) localStorage.setItem('mb_api_key', data.api_key);
-                    updateAuthUI();
-                    hideSessionExpiryWarning();
-                }
-            } catch {}
-        }
 
         // ── Cross-Tab Session Sync ───────────────────────────────
         window.addEventListener('storage', (e) => {
@@ -2143,15 +2075,8 @@ selectAuthTab(tab === 'signup' ? 'signup' : 'signin');
                     location.reload();
                 }
                 updateAuthUI();
-                if (e.newValue === null) {
-                    // Signed out in another tab
-                    const toast = document.getElementById('session-expiry-toast');
-                    if (toast) toast.remove();
-                    expiryToast = null;
-                }
             }
         });
-
 
 
         function logout() {
@@ -2159,8 +2084,9 @@ selectAuthTab(tab === 'signup' ? 'signup' : 'signin');
             localStorage.removeItem('mb_jwt');
             localStorage.removeItem('mb_api_key');
             currentApiKey = '';
-            if (sessionCheckInterval) { clearInterval(sessionCheckInterval); sessionCheckInterval = null; }
-            hideSessionExpiryWarning();
+            if (typeof window.startSessionHealthCheck === 'function') {
+                // Global auth.js handles timer cleanup in window.logout
+            }
             updateAuthUI();
         }
 
@@ -2173,8 +2099,7 @@ selectAuthTab(tab === 'signup' ? 'signup' : 'signin');
 
         // ── Init ──────────────────────────────────────────────────
         document.addEventListener('DOMContentLoaded', async () => {
-            await initAuth();
-            if (localStorage.getItem('mb_jwt')) startSessionCheck();
+            await initAuth();  // startSessionHealthCheck runs automatically via initAuth
             initLanguage();
         });
     </script>
