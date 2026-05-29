@@ -880,14 +880,9 @@
                     window.location.href = data.checkout_url;
                 } else {
                     // Inline upgrade via Subscription.modify succeeded
-                    const statusEl = document.querySelector('.section-subtitle') || document.getElementById('dash-status');
-                    if (statusEl) {
-                        statusEl.textContent = '✅ Upgraded to ' + tier.charAt(0).toUpperCase() + tier.slice(1) + ' plan!';
-                        statusEl.style.color = 'var(--green)';
-                        setTimeout(() => { statusEl.style.color = ''; }, 6000);
-                    }
-                    // Refresh the page to reflect changes
-                    setTimeout(() => window.location.reload(), 1500);
+                    alert('✅ Upgraded to ' + tier.charAt(0).toUpperCase() + tier.slice(1) + ' plan!');
+                    // Redirect to dashboard so user can see their new plan
+                    window.location.href = '/dashboard';
                 }
             } catch (e) {
                 const statusEl = document.getElementById('dash-status') || document.querySelector('.section-subtitle');
