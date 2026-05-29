@@ -506,6 +506,7 @@ async def get_dashboard_data(
         "organization_id": org_id,
         "tier": tier,
         "status": sub.status if sub else "active",
+        "pending_tier": sub.pending_tier if sub and sub.pending_tier else "",
         "active_keys": len(active_keys),
         "total_keys": len(user_keys),
         "current_period_end": sub.current_period_end.isoformat() if sub and sub.current_period_end else None,

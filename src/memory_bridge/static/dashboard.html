@@ -688,6 +688,22 @@
             font-size: 0.78rem;
             color: var(--text-muted);
         }
+        .sub-pending-badge {
+            font-size: 0.72rem;
+            color: #c97d0d;
+            background: #fff3e0;
+            border: 1px solid #ffd54f;
+            border-radius: 4px;
+            padding: 0.15rem 0.45rem;
+            margin-top: 0.3rem;
+            display: inline-block;
+            font-weight: 500;
+        }
+        [data-theme="dark"] .sub-pending-badge {
+            background: #3a2a0a;
+            color: #ffb74d;
+            border-color: #6d4c00;
+        }
         .sub-cta-btn {
             display: inline-flex;
             align-items: center;
@@ -2022,6 +2038,7 @@
                         <div>
                             <div class="sub-plan-name">${tierLabel} Plan</div>
                             <div class="sub-plan-status">${statusText || (isFree ? 'Full API access · Auto-cutoff at limit' : '')}</div>
+                            ${data.pending_tier ? `<div class="sub-pending-badge">⏳ Switching to ${data.pending_tier.charAt(0).toUpperCase() + data.pending_tier.slice(1)} ${periodEnd ? 'on ' + periodEnd : ''}</div>` : ''}
                         </div>
                     </div>
                     <div style="display:flex;gap:0.5rem;flex-wrap:wrap;justify-content:center;">
