@@ -2108,7 +2108,12 @@
                 }
             } catch (e) {
                 const msg = (e.message || '').replace(/^\[\d+\]\s*/, '');
-                showConfirm('⚠️', 'Could Not Reactivate Key', escapeHtml(msg || 'Could not reactivate key.'), 'OK', () => {}, true);
+                const isLimitError = msg.toLowerCase().includes('limit') || msg.toLowerCase().includes('max');
+                const modalText = isLimitError
+                    ? `<div style="font-size:0.9rem;color:var(--text-muted);margin-bottom:0.5rem;">${escapeHtml(msg)}</div>
+                       <div style="margin-top:0.75rem;"><a href="/pricing" class="btn btn-primary btn-sm" style="font-size:0.85rem;">Upgrade Plan →</a></div>`
+                    : escapeHtml(msg || 'Could not reactivate key.');
+                showConfirm('⚠️', 'Could Not Reactivate Key', modalText, 'OK', () => {}, true);
             }
         }
 
