@@ -779,6 +779,46 @@
         }
         .sub-period strong { color: var(--text-muted); }
 
+        /* ── Agent Analytics Card ──────────────────────────── */
+        .agent-list { display:flex; flex-direction:column; gap:0.5rem; }
+        .agent-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0.4rem 0;
+            border-bottom: 1px solid var(--border-subtle);
+            font-size: 0.82rem;
+        }
+        .agent-row:last-child { border-bottom: none; }
+        .agent-row .agent-name {
+            font-weight: 600;
+            color: var(--text-primary);
+            font-family: var(--font-mono);
+            font-size: 0.78rem;
+            max-width: 140px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .agent-row .agent-metrics {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+        .agent-row .agent-metrics span {
+            font-size: 0.72rem;
+            color: var(--text-muted);
+            white-space: nowrap;
+        }
+        .agent-row .agent-metrics strong {
+            color: var(--text-primary);
+        }
+        .agent-empty {
+            text-align: center;
+            padding: 1.5rem 0;
+            color: var(--text-muted);
+            font-size: 0.85rem;
+        }
+
         @media (max-width: 600px) {
             .sub-hero { flex-direction: column; align-items: stretch; }
             .sub-hero-left { justify-content: center; }
@@ -1477,6 +1517,14 @@
                 <div id="deactivated-keys-container"></div>
             </div>
 
+            <!-- Agent Analytics Card -->
+            <div class="dash-card" id="agent-card" style="display:none;">
+                <div class="card-title">🤖 Agent Activity</div>
+                <div id="agent-content">
+                    <div class="flex-center" style="gap:0.5rem;padding:1rem 0;"><span class="spinner-sm"></span> Loading agents...</div>
+                </div>
+            </div>
+
             <!-- Setup Guide -->
             <div class="dash-card" id="setup-card">
                 <div class="card-title" data-i18n="dash.setup_card">🚀 Setup Guide</div>
@@ -1975,6 +2023,7 @@
                 }
             }
             loadKeys();
+            loadAgentStats();
         }
 
         function renderProfile(data) {
@@ -2083,6 +2132,41 @@
         let _selectedKeyIds = new Set();
         let _planKeyLimit = 5;   // Default to Free, updated from dashboard data
         let _activeKeyCount = 0;
+
+        // ── Agent Analytics ──────────────────────────────────
+        async function loadAgentStats() {
+            const card = document.getElementById('agent-card');
+            const content = document.getElementById('agent-content');
+            if (!card || !content) return;
+            try {
+                const data = await api('GET', '/dashboard/agent-stats');
+                if (!data.agents || data.agents.length === 0) {
+                    card.style.display = 'none';
+                    return;
+                }
+                card.style.display = '';
+                let html = '<div class="agent-list">';
+                for (const agent of data.agents.slice(0, 10)) {
+                    const lastActive = agent.last_active
+                        ? new Date(agent.last_active).toLocaleDateString()
+                        : '—';
+                    html += `
+                        <div class="agent-row">
+                            <span class="agent-name" title="${escapeHtml(agent.agent_id)}">${escapeHtml(agent.agent_id)}</span>
+                            <div class="agent-metrics">
+                                <span><strong>${agent.memory_count}</strong> memories</span>
+                                <span><strong>${agent.unique_keys}</strong> keys</span>
+                                <span>last ${lastActive}</span>
+                            </div>
+                        </div>`;
+                }
+                html += '</div>';
+                html += `<div style="font-size:0.72rem;color:var(--text-faint);margin-top:0.5rem;text-align:center;">${data.total_operations} total operations · top ${Math.min(data.agents.length, 10)} agents shown</div>`;
+                content.innerHTML = html;
+            } catch (e) {
+                card.style.display = 'none';
+            }
+        }
 
         // ── API Key Management ─────────────────────────────────────
         async function loadKeys() {

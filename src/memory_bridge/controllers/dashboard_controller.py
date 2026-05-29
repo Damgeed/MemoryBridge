@@ -520,6 +520,67 @@ async def get_dashboard_data(
     }
 
 
+@router.get("/agent-stats")
+async def get_agent_stats(
+    request: Request,
+    storage: MemoryRepository = Depends(get_storage),
+):
+    """Get per-agent memory analytics for the dashboard."""
+    org_id = _resolve_org(request)
+    if not org_id or org_id == "demo" or org_id == "default":
+        return {"agents": [], "total_operations": 0}
+
+    try:
+        # Fetch recent memories for this org
+        memories = await storage.query_memories(
+            limit=500,
+            project=org_id,
+        )
+    except Exception as e:
+        logger.warning("Failed to query memories for agent stats: %s", e)
+        memories = []
+
+    # Aggregate by agent_id
+    agent_map: dict[str, dict] = {}
+    for m in memories:
+        aid = m.agent_id or "unknown"
+        if aid not in agent_map:
+            agent_map[aid] = {
+                "agent_id": aid,
+                "memory_count": 0,
+                "unique_keys": set(),
+                "last_active": None,
+            }
+        agent_map[aid]["memory_count"] += 1
+        agent_map[aid]["unique_keys"].add(m.key)
+        if m.created_at and (
+            agent_map[aid]["last_active"] is None
+            or m.created_at > agent_map[aid]["last_active"]
+        ):
+            agent_map[aid]["last_active"] = m.created_at
+
+    # Convert sets to counts and format timestamps
+    agents = []
+    for aid, data in agent_map.items():
+        agents.append({
+            "agent_id": aid,
+            "memory_count": data["memory_count"],
+            "unique_keys": len(data["unique_keys"]),
+            "last_active": data["last_active"].isoformat() if data["last_active"] else None,
+        })
+
+    # Sort by memory_count descending
+    agents.sort(key=lambda a: a["memory_count"], reverse=True)
+
+    # Get total operation counts from metering
+    total_ops = sum(a["memory_count"] for a in agents)
+
+    return {
+        "agents": agents,
+        "total_operations": total_ops,
+    }
+
+
 def _resolve_org(request: Request) -> str:
     """Resolve the organization ID from the authenticated request.
 
