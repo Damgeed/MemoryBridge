@@ -118,6 +118,37 @@
             color: var(--accent);
         }
 
+        /* ── Bulk Action Bar ─────────────────────────── */
+        .bulk-action-bar {
+            position: sticky;
+            bottom: 0;
+            background: var(--bg-secondary);
+            border: 1px solid var(--accent);
+            border-radius: var(--radius-md);
+            padding: 0.6rem 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 0.75rem;
+            margin-top: 0.75rem;
+            font-size: 0.85rem;
+            font-weight: 600;
+            box-shadow: 0 -2px 8px rgba(0,0,0,0.08);
+            z-index: 10;
+        }
+        .bulk-btns { display:flex; gap:0.5rem; align-items:center; }
+        .key-check-wrap {
+            display: flex;
+            align-items: center;
+            padding: 0 0.25rem;
+            cursor: pointer;
+        }
+        .key-check-wrap input[type="checkbox"] {
+            cursor: pointer;
+            width: 16px;
+            height: 16px;
+        }
+
         /* ── Deactivated key styles ──────────────────── */
         .key-item.deactivated {
             opacity: 0.65;
@@ -1338,6 +1369,14 @@
                 <div style="margin-bottom:1rem;">
                     <button class="btn btn-primary btn-sm" onclick="generateKey()" data-i18n="dash.keys_generate">+ Generate New Key</button>
                 </div>
+                <div id="bulk-action-bar" class="bulk-action-bar" style="display:none;">
+                    <span id="bulk-count">0 selected</span>
+                    <div class="bulk-btns">
+                        <button class="btn btn-sm btn-secondary" onclick="bulkReactivate()">Reactivate All</button>
+                        <button class="btn btn-sm btn-danger" onclick="bulkRevoke()">Delete All</button>
+                        <button class="btn btn-sm" onclick="_selectedKeyIds=new Set();updateBulkActions();loadKeys();" style="color:var(--text-muted);">Cancel</button>
+                    </div>
+                </div>
                 <div id="keys-list">
                     <div class="flex-center" style="gap:0.5rem;" data-i18n="dash.keys_loading"><span class="spinner-sm"></span> Loading keys...</div>
                 </div>
@@ -1942,6 +1981,9 @@
             `;
         }
 
+        // ── Bulk selection state ──────────────────────────────────────
+        let _selectedKeyIds = new Set();
+
         // ── API Key Management ─────────────────────────────────────
         async function loadKeys() {
             try {
@@ -1976,11 +2018,20 @@
             let html = '';
 
             // ── Active keys ──
+            html += `<div class="keys-divider" style="justify-content:space-between;">
+                <span>Active Keys (${active.length})</span>
+                <label style="display:flex;align-items:center;gap:0.3rem;font-size:0.72rem;cursor:pointer;color:var(--text-muted);" onclick="event.stopPropagation();selectAllKeys()">
+                    <input type="checkbox" class="key-select-all" onchange="selectAllKeys()"> Select All
+                </label>
+            </div>`;
             for (const k of active) {
                 const created = k.created_at ? new Date(k.created_at).toLocaleDateString() : '—';
                 const label = k.label || 'default';
                 html += `
                     <div class="key-item">
+                        <label class="key-check-wrap" onclick="event.stopPropagation()">
+                            <input type="checkbox" class="key-select" data-key-id="${k.id}" onchange="toggleKeySelection('${k.id}')">
+                        </label>
                         <span class="key-label">${escapeHtml(label)}</span>
                         <span class="key-value">••••••••${k.id ? k.id.slice(-6) : ''}</span>
                         <span class="key-date">${created}</span>
@@ -2004,6 +2055,9 @@
                     const label = k.label || 'default';
                     html += `
                     <div class="key-item deactivated">
+                        <label class="key-check-wrap" onclick="event.stopPropagation()">
+                            <input type="checkbox" class="key-select" data-key-id="${k.id}" onchange="toggleKeySelection('${k.id}')">
+                        </label>
                         <span class="key-label">${escapeHtml(label)}</span>
                         <span class="key-value">••••••••${k.id ? k.id.slice(-6) : ''}</span>
                         <span class="key-date">${created}</span>
@@ -2017,6 +2071,111 @@
             }
 
             el.innerHTML = html;
+        }
+
+        function toggleKeySelection(keyId) {
+            if (_selectedKeyIds.has(keyId)) {
+                _selectedKeyIds.delete(keyId);
+            } else {
+                _selectedKeyIds.add(keyId);
+            }
+            updateBulkActions();
+        }
+
+        function updateBulkActions() {
+            const bar = document.getElementById('bulk-action-bar');
+            const count = document.getElementById('bulk-count');
+            const reactivateBtn = document.getElementById('bulk-reactivate-btn');
+            const deleteBtn = document.getElementById('bulk-delete-btn');
+            if (!bar) return;
+            
+            if (_selectedKeyIds.size === 0) {
+                bar.style.display = 'none';
+                return;
+            }
+            bar.style.display = 'flex';
+            count.textContent = _selectedKeyIds.size + ' selected';
+        }
+
+        async function bulkRevoke() {
+            const ids = [..._selectedKeyIds];
+            if (ids.length === 0) return;
+            showConfirm('🗑️', 'Revoke ' + ids.length + ' API keys?', 
+                'The selected API keys will stop working <strong>immediately</strong>. Any services using them will lose access.',
+                'Revoke All', async () => {
+                    let success = 0, fail = 0;
+                    for (const id of ids) {
+                        try {
+                            await api('DELETE', '/dashboard/keys/' + id);
+                            success++;
+                        } catch (e) {
+                            fail++;
+                        }
+                    }
+                    _selectedKeyIds = new Set();
+                    updateBulkActions();
+                    showToast('🗑️ Revoked ' + success + ' key' + (success !== 1 ? 's' : '') + (fail ? ' (' + fail + ' failed)' : ''));
+                    loadKeys();
+                    loadDashboard();
+                });
+        }
+
+        async function bulkReactivate() {
+            const ids = [..._selectedKeyIds];
+            if (ids.length === 0) return;
+            showConfirm('🔄', 'Reactivate ' + ids.length + ' API keys?',
+                'The selected API keys will be reactivated and start working again.',
+                'Reactivate All', async () => {
+                    let success = 0, fail = 0;
+                    for (const id of ids) {
+                        try {
+                            const result = await api('POST', '/dashboard/keys/' + id + '/reactivate');
+                            if (result.status === 'reactivated') success++;
+                            else fail++;
+                        } catch (e) {
+                            fail++;
+                        }
+                    }
+                    _selectedKeyIds = new Set();
+                    updateBulkActions();
+                    showToast('✅ Reactivated ' + success + ' key' + (success !== 1 ? 's' : '') + (fail ? ' (' + fail + ' failed)' : ''));
+                    loadKeys();
+                    loadDashboard();
+                });
+        }
+
+        function selectAllKeys() {
+            const el = document.getElementById('keys-list');
+            const allKeyItems = el.querySelectorAll('.key-item');
+            const allSelected = allKeyItems.length > 0 && [...allKeyItems].every(item => {
+                const cb = item.querySelector('.key-select');
+                return cb && cb.checked;
+            });
+            
+            // Collect all visible key IDs
+            const visibleIds = [];
+            allKeyItems.forEach(item => {
+                const cb = item.querySelector('.key-select');
+                if (cb && cb.dataset.keyId) visibleIds.push(cb.dataset.keyId);
+            });
+            
+            if (allSelected) {
+                // Deselect all visible
+                visibleIds.forEach(id => _selectedKeyIds.delete(id));
+            } else {
+                // Select all visible
+                visibleIds.forEach(id => _selectedKeyIds.add(id));
+            }
+            
+            // Update checkboxes
+            allKeyItems.forEach(item => {
+                const cb = item.querySelector('.key-select');
+                if (cb && cb.dataset.keyId) {
+                    cb.checked = _selectedKeyIds.has(cb.dataset.keyId);
+                }
+            });
+            
+            updateBulkActions();
         }
 
         async function generateKey() {
