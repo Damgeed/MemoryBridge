@@ -631,6 +631,17 @@
         </div>
     </div>
 
+    <!-- Info modal for plan change confirmations -->
+    <div class="logout-modal-overlay" id="info-overlay" onclick="closeInfoModal()"></div>
+    <div class="logout-modal" id="info-modal">
+        <div class="logout-icon">✅</div>
+        <div class="logout-title" id="info-title">Plan Updated</div>
+        <div class="logout-text" id="info-text"></div>
+        <div class="logout-btns">
+            <button class="btn btn-primary" onclick="closeInfoModal()">OK</button>
+        </div>
+    </div>
+
     <footer class="footer" data-i18n="footer.text">© 2026 Memory Bridge — API for cross-agent memory</footer>
 
     <script>
@@ -740,6 +751,25 @@
             _pendingDowngradeOrgId = '';
         }
 
+        function showInfoModal(title, text, onClose) {
+            document.getElementById('info-title').textContent = title;
+            document.getElementById('info-text').textContent = text;
+            const okBtn = document.querySelector('#info-modal .btn-primary');
+            okBtn.onclick = function() {
+                closeInfoModal();
+                if (onClose) onClose();
+            };
+            document.getElementById('info-overlay').classList.add('open');
+            document.getElementById('info-modal').classList.add('open');
+        }
+
+        function closeInfoModal() {
+            document.getElementById('info-overlay').classList.remove('open');
+            document.getElementById('info-modal').classList.remove('open');
+            // Reset OK button onclick to just close
+            document.querySelector('#info-modal .btn-primary').onclick = closeInfoModal;
+        }
+
         async function confirmDowngrade() {
             const btn = document.getElementById('downgrade-confirm-btn');
             btn.disabled = true;
@@ -759,7 +789,7 @@
                         const err = await res.json().catch(() => ({}));
                         throw new Error(err.detail || 'Could not cancel subscription.');
                     }
-                    alert('✅ Subscription will switch to Free at the end of your billing period.');
+                    showInfoModal('Plan Updated', '✅ Subscription will switch to Free at the end of your billing period.');
                     closeDowngradeModal();
                 } else {
                     // Downgrade to another paid plan — close modal, then proceed with upgrade
@@ -880,9 +910,9 @@
                     window.location.href = data.checkout_url;
                 } else {
                     // Inline upgrade via Subscription.modify succeeded
-                    alert('✅ Upgraded to ' + tier.charAt(0).toUpperCase() + tier.slice(1) + ' plan!');
-                    // Redirect to dashboard so user can see their new plan
-                    window.location.href = '/dashboard';
+                    showInfoModal('Plan Updated', '✅ Upgraded to ' + tier.charAt(0).toUpperCase() + tier.slice(1) + ' plan!', function() {
+                        window.location.href = '/dashboard';
+                    });
                 }
             } catch (e) {
                 const statusEl = document.getElementById('dash-status') || document.querySelector('.section-subtitle');
