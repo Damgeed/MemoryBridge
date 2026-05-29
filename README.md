@@ -4,15 +4,20 @@
 [![Python 3.9+](https://img.shields.io/badge/python-3.9%20|%203.10%20|%203.11%20|%203.12-blue)](https://www.python.org/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Docker](https://img.shields.io/badge/docker-ready-2496ED?logo=docker)](https://hub.docker.com/)
+[![MCP](https://img.shields.io/badge/MCP-ready-8B5CF6)](https://modelcontextprotocol.io)
 
-**Cross-session memory persistence for multi-agent AI teams.**
+**Your AI agents have amnesia. Memory Bridge is the shared workspace for your AI workforce.**
 
-Memory Bridge is a middleware layer that lets AI agents share context across sessions. It provides:
+Memory Bridge is a middleware layer that lets AI agents share context across sessions, frameworks, and servers. One API key per agent gives your entire ecosystem a unified, permanent corporate brain.
 
-- **Session Persistence** — Store and retrieve agent context across sessions
-- **Memory Tagging** — Organize memories with tags for selective retrieval
-- **Agent Handoff** — Pass context between agents with guardrails
-- **Pluggable Storage** — SQLite out of the box, upgrade to PostgreSQL/Redis later
+### What it is
+
+- **Shared Memory** — Agents store and retrieve context across sessions
+- **Cross-Framework Handoff** — Pass context between LangGraph, AutoGen, CrewAI agents
+- **Semantic Search + Fact Extraction** — Find memories by meaning, not just keywords
+- **Per-Agent Permissions** — Read/write/delete control per API key
+- **MCP Native** — Drop-in integration with Claude Code, Cursor, and AutoGen
+- **Self-Hostable** — SQLite out of the box, PostgreSQL for production
 
 ---
 
@@ -30,6 +35,26 @@ memory-bridge
 ```
 
 > **Full setup guide:** [CONTRIBUTING.md](./CONTRIBUTING.md#2-development-setup)
+
+---
+
+## 🤖 MCP Integration (Claude Code, Cursor, AutoGen)
+
+Add one line to `claude_desktop_config.json` or `.cursor/mcp.json`:
+
+```json
+{
+  "mcpServers": {
+    "memory-bridge": {
+      "command": "memory-bridge-mcp",
+      "args": ["--api-url", "https://your-instance.up.railway.app"],
+      "env": { "MEMORY_BRIDGE_API_KEY": "your-api-key" }
+    }
+  }
+}
+```
+
+Your agents now share memory across sessions. 11 tools included — [full MCP docs](./src/memory_bridge/mcp_server/README.md).
 
 ---
 
