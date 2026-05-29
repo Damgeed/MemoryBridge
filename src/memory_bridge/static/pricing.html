@@ -756,13 +756,14 @@
                         const err = await res.json().catch(() => ({}));
                         throw new Error(err.detail || 'Could not cancel subscription.');
                     }
-                    const statusEl = document.querySelector('.section-subtitle');
-                    statusEl.textContent = '✅ Subscription will switch to Free at the end of your billing period.';
-                    statusEl.style.color = 'var(--green)';
-                    setTimeout(() => { statusEl.style.color = ''; }, 6000);
+                    // Show success toast and close modal
+                    showToast('✅ Subscription will switch to Free at the end of your billing period.');
+                    closeDowngradeModal();
                 } else {
-                    // Downgrade to another paid plan — proceed with upgrade (Stripe handles the price switch)
+                    // Downgrade to another paid plan — close modal, then proceed with upgrade
+                    closeDowngradeModal();
                     upgrade(_pendingDowngradeTier);
+                    return;
                 }
             } catch (e) {
                 const statusEl = document.querySelector('.section-subtitle');
@@ -770,9 +771,10 @@
                     statusEl.textContent = e.message;
                     statusEl.style.color = 'var(--red)';
                     setTimeout(() => { statusEl.style.color = ''; }, 5000);
+                } else {
+                    showToast('⚠️ ' + e.message);
                 }
             }
-            closeDowngradeModal();
             btn.disabled = false;
             btn.innerHTML = 'Switch Plan';
         }
@@ -871,7 +873,19 @@
                     throw new Error(err.detail || 'Could not upgrade subscription. Try again later.');
                 }
                 const data = await res.json();
-                if (data.checkout_url) { window.location.href = data.checkout_url; }
+                if (data.checkout_url) {
+                    window.location.href = data.checkout_url;
+                } else {
+                    // Inline upgrade via Subscription.modify succeeded
+                    const statusEl = document.querySelector('.section-subtitle') || document.getElementById('dash-status');
+                    if (statusEl) {
+                        statusEl.textContent = '✅ Upgraded to ' + tier.charAt(0).toUpperCase() + tier.slice(1) + ' plan!';
+                        statusEl.style.color = 'var(--green)';
+                        setTimeout(() => { statusEl.style.color = ''; }, 6000);
+                    }
+                    // Refresh the page to reflect changes
+                    setTimeout(() => window.location.reload(), 1500);
+                }
             } catch (e) {
                 const statusEl = document.getElementById('dash-status') || document.querySelector('.section-subtitle');
                 if (statusEl) {
