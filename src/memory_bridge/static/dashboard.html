@@ -2498,6 +2498,10 @@
                     // with the correct org_id and subscription info from Stripe
                     if (welcomeData.token) {
                         localStorage.setItem('mb_jwt', welcomeData.token);
+                        // Clear API key — force subsequent calls to use JWT
+                        // which carries user_email + org_id for subscription lookup
+                        localStorage.removeItem('mb_api_key');
+                        localStorage.removeItem('mb_key_exists');
                         jwt = welcomeData.token;
                         currentApiKey = '';
                     }
