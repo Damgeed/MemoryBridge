@@ -717,7 +717,10 @@
                 'Switch from ' + fromTier.charAt(0).toUpperCase() + fromTier.slice(1) + ' to ' + toTier.charAt(0).toUpperCase() + toTier.slice(1) + '?';
             const textEl = document.getElementById('downgrade-text');
             if (toTier === 'free') {
-                textEl.textContent = 'Are you sure you want to switch to the Free plan? Your current plan\'s features will remain available until the end of your billing period. You can always upgrade again later.';
+                textEl.innerHTML = `Are you sure you want to switch to the Free plan?
+                    Your current plan's features will remain available until the end of your billing period.
+                    When the billing period ends, any API keys beyond the Free limit (5) will be deactivated.
+                    You can always upgrade again later.`;
             } else {
                 textEl.textContent = 'Are you sure you want to switch to the ' + toTier.charAt(0).toUpperCase() + toTier.slice(1) + ' plan? Your subscription will be updated immediately with any applicable proration.';
             }
