@@ -1848,6 +1848,10 @@
                 }
                 renderSubscription(data);
                 renderProfile(data);
+                // Store plan data for bulk selection limit
+                const tierKeyLimit = {free: 5, starter: 25, pro: 100}[data.tier] || 5;
+                _planKeyLimit = tierKeyLimit;
+                _activeKeyCount = data.active_keys || 0;
                 const tierIcon = data.tier === 'free' ? '🔷' : data.tier === 'starter' ? '💎' : data.tier === 'pro' ? '⚡' : '🏢';
                 const tierLabel = data.tier === 'demo' ? 'Demo' : data.tier.charAt(0).toUpperCase() + data.tier.slice(1) + ' Plan';
                 document.getElementById('dash-status').textContent = `${tierIcon} ${tierLabel}`;
@@ -1983,6 +1987,8 @@
 
         // ── Bulk selection state ──────────────────────────────────────
         let _selectedKeyIds = new Set();
+        let _planKeyLimit = 5;   // Default to Free, updated from dashboard data
+        let _activeKeyCount = 0;
 
         // ── API Key Management ─────────────────────────────────────
         async function loadKeys() {
@@ -2043,7 +2049,10 @@
                 html += `<div class="keys-divider" style="cursor:pointer;" onclick="toggleDeactivatedKeys(this)">
                     <span>🔽 Deactivated Keys (${deactivated.length})</span>
                 </div>
-                <div id="deactivated-keys-list" style="display:none;">`;
+                <div id="deactivated-keys-list" style="display:none;">
+                    <label style="display:flex;align-items:center;gap:0.3rem;font-size:0.72rem;cursor:pointer;color:var(--text-muted);padding:0.3rem 0.75rem;" onclick="event.stopPropagation();selectAllDeactivated()">
+                        <input type="checkbox" class="key-select-all-deactivated" onchange="selectAllDeactivated()"> <span id="deactivated-select-all-label">Select All</span>
+                    </label>`;
                 for (const k of deactivated) {
                     const created = k.created_at ? new Date(k.created_at).toLocaleDateString() : '—';
                     const label = k.label || 'default';
@@ -2065,6 +2074,50 @@
             }
 
             el.innerHTML = html;
+        }
+
+        function selectAllDeactivated() {
+            const el = document.querySelector('#deactivated-keys-list');
+            if (!el) return;
+            const items = el.querySelectorAll('.key-item');
+            // Calculate how many deactivated keys we can actually reactivate
+            const maxCanReactivate = Math.max(0, _planKeyLimit - _activeKeyCount);
+            
+            // Check if already all selected
+            const allSelected = items.length > 0 && [...items].every(item => {
+                const cb = item.querySelector('.key-select');
+                return cb && cb.checked;
+            });
+            
+            const deactivatedIds = [];
+            items.forEach(item => {
+                const cb = item.querySelector('.key-select');
+                if (cb && cb.dataset.keyId) deactivatedIds.push(cb.dataset.keyId);
+            });
+            
+            if (allSelected) {
+                // Deselect all
+                deactivatedIds.forEach(id => _selectedKeyIds.delete(id));
+            } else {
+                // Select only as many as plan allows (newest first — items are in creation order)
+                const selectCount = Math.min(deactivatedIds.length, maxCanReactivate);
+                // Clear any existing selection first
+                _selectedKeyIds = new Set();
+                // Select the first N (front = newest in the rendered order)
+                for (let i = 0; i < selectCount; i++) {
+                    _selectedKeyIds.add(deactivatedIds[i]);
+                }
+            }
+            
+            // Update checkboxes
+            items.forEach(item => {
+                const cb = item.querySelector('.key-select');
+                if (cb && cb.dataset.keyId) {
+                    cb.checked = _selectedKeyIds.has(cb.dataset.keyId);
+                }
+            });
+            
+            updateBulkActions();
         }
 
         function toggleKeySelection(keyId) {
@@ -2126,14 +2179,31 @@
         }
 
         async function bulkReactivate() {
-            const ids = [..._selectedKeyIds].filter(id => {
+            let ids = [..._selectedKeyIds].filter(id => {
                 const cb = document.querySelector(`.key-select[data-key-id="${id}"]`);
                 return cb && cb.dataset.keyStatus === 'deactivated';
             });
             if (ids.length === 0) return;
+            
+            // Cap to plan limit on the frontend
+            const maxCanReactivate = Math.max(0, _planKeyLimit - _activeKeyCount);
+            if (maxCanReactivate <= 0) {
+                showToast('Your plan is already at the limit. Upgrade to reactivate more keys.');
+                _selectedKeyIds = new Set();
+                updateBulkActions();
+                return;
+            }
+            
+            const wasTrimmed = ids.length > maxCanReactivate;
+            if (wasTrimmed) ids = ids.slice(0, maxCanReactivate);
+            
+            const confirmMsg = wasTrimmed
+                ? 'Your plan allows up to ' + _planKeyLimit + ' active keys. You currently have ' + _activeKeyCount + ' active, so only ' + ids.length + ' can be reactivated.'
+                : 'The selected API keys will be reactivated and start working again.';
+            
             showConfirm('🔄', 'Reactivate ' + ids.length + ' API keys?',
-                'The selected API keys will be reactivated and start working again.',
-                'Reactivate All', async () => {
+                confirmMsg,
+                'Reactivate' + (wasTrimmed ? ' (' + ids.length + ')' : ' All'), async () => {
                     let success = 0, fail = 0, limitHits = 0;
                     for (const id of ids) {
                         try {
