@@ -1742,6 +1742,16 @@
         async function loadDashboard(retries = 2) {
             try {
                 const data = await api('GET', '/dashboard/data');
+                // If tier is free but user has auth credentials, retry a few times
+                // (backend may be checking Stripe synchronously)
+                if (data.tier === 'free' && retries > 0) {
+                    const hasAuth = currentApiKey || localStorage.getItem('mb_jwt');
+                    if (hasAuth) {
+                        document.getElementById('dash-status').textContent = '⏳ Checking subscription...';
+                        await new Promise(r => setTimeout(r, 1000));
+                        return loadDashboard(retries - 1);
+                    }
+                }
                 renderSubscription(data);
                 renderProfile(data);
                 const tierIcon = data.tier === 'free' ? '🔷' : data.tier === 'starter' ? '💎' : data.tier === 'pro' ? '⚡' : '🏢';

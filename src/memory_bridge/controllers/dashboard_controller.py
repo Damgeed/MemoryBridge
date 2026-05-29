@@ -354,9 +354,22 @@ async def get_dashboard_data(
         except Exception:
             pass
 
-    # If STILL no subscription found, kick off async Stripe fallback (don't block the response)
+    # If STILL no subscription found, synchronously check Stripe — this blocks the
+    # response but ensures paid users don't see "Free Plan" on first load.
     if not sub and user_email:
-        asyncio.ensure_future(_check_stripe_fallback(user_email, org_id, storage))
+        await _check_stripe_fallback(user_email, org_id, storage)
+        # Retry subscription lookup after fallback
+        # Fallback may have stored sub with a new UUID org_id — find it via user record
+        try:
+            user_record = await storage.get_user_by_email(user_email)
+            if user_record:
+                user_org_id = user_record.get('organization_id')
+                if user_org_id:
+                    sub = await storage.get_subscription_by_org(user_org_id)
+                    if sub:
+                        org_id = user_org_id
+        except Exception:
+            pass
 
     # Get key count
     try:
