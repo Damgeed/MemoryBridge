@@ -67,8 +67,8 @@ def test_fallback_returns_single_fact():
 
     assert len(result) == 1
     assert result[0]["fact"] == "We decided to push the deadline."
-    assert result[0]["category"] == "other"
-    assert result[0]["confidence"] == 1.0
+    assert result[0]["category"] == "decision"  # rule-based categorizes 'decided' correctly
+    assert result[0]["confidence"] == 0.6
     assert result[0]["entities"] == []
 
     os.environ.pop("MEMORY_BRIDGE_FACT_EXTRACTOR", None)
@@ -134,7 +134,7 @@ def test_parse_openai_response_invalid_fallback():
     result = service._parse_openai_response("not valid json at all", 10)
     assert len(result) == 1
     assert result[0]["fact"] == "not valid json at all"
-    assert result[0]["category"] == "other"
+    assert result[0]["category"] == "fact"  # default category when no keyword matches
 
 
 def test_parse_openai_response_empty_facts():

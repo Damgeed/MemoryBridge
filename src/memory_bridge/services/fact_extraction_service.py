@@ -114,7 +114,147 @@ class FactExtractionService:
         return self._fallback(text)
 
     def _fallback(self, text: str) -> list[dict]:
-        """Return raw text as a single fact when no LLM provider is configured."""
+        """Rule-based fact extraction when no LLM provider is configured.
+
+        Splits text into sentences, tags entities (capitalized phrases,
+        dates, URLs), and assigns basic categories based on keywords.
+        No external dependencies required.
+        """
+        import re
+
+        text = text.strip()
+        if not text:
+            return []
+
+        # ── Split into sentences ──────────────────────────────
+        # Split on sentence-ending punctuation, keeping delimiter
+        raw_sentences = re.split(r'(?<=[.!?])\s+', text)
+        sentences = []
+        for s in raw_sentences:
+            s = s.strip()
+            if not s:
+                continue
+            # Remove empty brackets/parens
+            s = re.sub(r'\s*\(\)', '', s)
+            s = re.sub(r'\s*\[\]', '', s)
+            if s:
+                sentences.append(s)
+
+        if not sentences:
+            return self._fallback_raw(text)
+
+        # ── Entity extraction ─────────────────────────────────
+        # Proper nouns: capitalized words (2+ chars) in sequence
+        proper_nouns = set()
+        for s in sentences:
+            matches = re.findall(
+                r'\b[A-Z][a-z]+(?:\s+[A-Z][a-z]+)*\b', s
+            )
+            for m in matches:
+                # Filter out sentence-start words and common words
+                word = m.strip()
+                if word.lower() in {
+                    'the', 'this', 'that', 'these', 'those',
+                    'when', 'where', 'what', 'how', 'why',
+                    'our', 'my', 'your', 'its', 'his', 'her',
+                    'there', 'their', 'they', 'we', 'it', 'he', 'she',
+                    'also', 'then', 'than', 'some', 'can', 'will',
+                    'but', 'and', 'not', 'all', 'each', 'every',
+                }:
+                    continue
+                proper_nouns.add(word)
+
+        # Date patterns
+        date_pattern = re.compile(
+            r'\b(\d{4}[-/]\d{1,2}[-/]\d{1,2}|'
+            r'(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]* \d{1,2},?\s*\d{4}|'
+            r'\d{1,2}[-/]\d{1,2}[-/]\d{2,4})\b',
+            re.IGNORECASE
+        )
+        dates = set()
+        for s in sentences:
+            for m in date_pattern.finditer(s):
+                dates.add(m.group(0))
+
+        # URL detection
+        url_pattern = re.compile(r'https?://\S+')
+        urls = set()
+        for s in sentences:
+            for m in url_pattern.finditer(s):
+                urls.add(m.group(0))
+
+        # ── Category detection ────────────────────────────────
+        def categorize(s: str) -> str:
+            sl = s.lower()
+            # Decision indicators
+            if any(w in sl for w in (
+                'decided', 'decision', 'agreed', 'approved',
+                'scheduled', 'moved', 'changed', 'switched',
+                'upgraded', 'downgraded', 'cancelled', 'canceled',
+                'chose', 'choose', 'set to', 'configured',
+            )):
+                return 'decision'
+            # Preference indicators
+            if any(w in sl for w in (
+                'prefer', 'like', 'love', 'hate', 'dislike',
+                'favorite', 'favourite', 'want', 'wish',
+                'would rather', 'better', 'worse',
+            )):
+                return 'preference'
+            # Log indicators
+            if any(w in sl for w in (
+                'log', 'note', 'update', 'status', 'progress',
+                'completed', 'finished', 'done', 'started',
+                'running', 'error', 'failed', 'success',
+            )):
+                return 'log'
+            # Default
+            return 'fact'
+
+        # ── Build fact list ───────────────────────────────────
+        facts = []
+        for s in sentences:
+            entities = list(proper_nouns)
+            if dates:
+                entities.extend(dates)
+            if urls:
+                entities.extend(urls)
+
+            category = categorize(s)
+
+            # Simpler entities for short facts
+            if len(s) < 60:
+                local_ents = []
+                for pn in proper_nouns:
+                    if pn.lower() in s.lower():
+                        local_ents.append(pn)
+                for d in dates:
+                    if d in s:
+                        local_ents.append(d)
+                for u in urls:
+                    if u in s:
+                        local_ents.append(u)
+                facts.append({
+                    "fact": s,
+                    "category": category,
+                    "confidence": 0.6,
+                    "entities": list(set(local_ents)),
+                })
+            else:
+                facts.append({
+                    "fact": s,
+                    "category": category,
+                    "confidence": 0.5,
+                    "entities": list(set(entities)),
+                })
+
+        if not facts:
+            return self._fallback_raw(text)
+
+        return facts[:25]
+
+    def _fallback_raw(self, text: str) -> list[dict]:
+        """Return raw text as a single fact (ultimate fallback)."""
         return [
             {
                 "fact": text.strip(),
