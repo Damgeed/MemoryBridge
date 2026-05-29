@@ -722,12 +722,12 @@
             if (toTier === 'free') {
                 textEl.innerHTML = `Are you sure you want to switch to the Free plan?
                     Your current plan's features will remain available until the end of your billing period.
-                    When the billing period ends, any API keys beyond the ${tierName} limit (${limit}) will be deactivated.
+                    When the billing period ends, any API keys beyond the <strong>${tierName} limit (${limit})</strong> will be <strong>deactivated</strong>.
                     You can always upgrade again later.`;
             } else {
                 textEl.innerHTML = `Are you sure you want to switch to the ${tierName} plan?
                     Your subscription will be updated immediately with any applicable proration.
-                    Any API keys beyond the ${tierName} limit (${limit}) will be deactivated.`;
+                    Any API keys beyond the <strong>${tierName} limit (${limit})</strong> will be <strong>deactivated</strong>.`;
             }
             document.getElementById('downgrade-overlay').classList.add('open');
             document.getElementById('downgrade-modal').classList.add('open');
@@ -782,7 +782,8 @@
             if (!jwt) {
                 // Not signed in — open auth modal with sign-up option
                 window.postAuthCallback = () => checkout(tier);
-                document.getElementById('auth-subtitle').textContent = 'Create an account to subscribe to the ' + tier + ' plan.';
+                const sub = document.getElementById('auth-subtitle');
+                if (sub) sub.textContent = 'Create an account to subscribe to the ' + tier + ' plan.';
                 openAuth();
                 return;
             }
@@ -793,7 +794,8 @@
                 if (!valid) {
                     localStorage.removeItem('mb_jwt');
                     window.postAuthCallback = () => checkout(tier);
-                    document.getElementById('auth-subtitle').textContent = 'Your session expired. Sign in again to subscribe to the ' + tier + ' plan.';
+                    const sub = document.getElementById('auth-subtitle');
+                    if (sub) sub.textContent = 'Your session expired. Sign in again to subscribe to the ' + tier + ' plan.';
                     openAuth();
                     return;
                 }
@@ -804,10 +806,13 @@
 
             if (currentTier && (currentTier.tier === tier || currentTier === tier)) {
                 // Already on this tier — show a helpful message
-                document.querySelector('.section-subtitle').textContent =
+                const subtitle = document.querySelector('.section-subtitle');
+                if (subtitle) {
+                    subtitle.textContent =
                     `✅ You're already on the ${tier.charAt(0).toUpperCase() + tier.slice(1)} plan.`;
-                document.querySelector('.section-subtitle').style.color = 'var(--green)';
-                setTimeout(() => { document.querySelector('.section-subtitle').style.color = ''; }, 5000);
+                    subtitle.style.color = 'var(--green)';
+                    setTimeout(() => { subtitle.style.color = ''; }, 5000);
+                }
                 return;
             }
 
