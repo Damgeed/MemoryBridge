@@ -441,6 +441,21 @@ async def get_dashboard_data(
     if sub and sub.status == "canceled":
         tier = "free"
 
+    # Auto-trim excess API keys to tier limit (handles existing users)
+    from ..services.metering_service import TIER_LIMITS
+    tier_limits = TIER_LIMITS.get(tier, TIER_LIMITS["free"])
+    max_allowed = tier_limits.get("max_api_keys", 5)
+    if len(active_keys) > max_allowed:
+        try:
+            deactivated = await storage.deactivate_excess_keys(org_id, max_allowed)
+            if deactivated:
+                logger.info("Auto-trimmed %d excess keys for org %s (tier=%s, limit=%d)",
+                           deactivated, org_id, tier, max_allowed)
+                # Re-count after trimming
+                active_keys = active_keys[:max_allowed]
+        except Exception as e:
+            logger.warning("Failed to auto-trim keys for org %s: %s", org_id, e)
+
     # Per-tier rate limits
     rate_limits = {"free": 300, "starter": 600, "pro": 1200, "enterprise": 6000}
 
