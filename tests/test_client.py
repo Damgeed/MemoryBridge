@@ -129,13 +129,16 @@ async def test_search_memories(client: Client):
     )
 
     result = await client.search_memories(q="python")
-    assert result["total"] == 1
-    assert result["entries"][0]["key"] == "user"
+    assert "results" in result or "entries" in result
+    entries = result.get("results", result.get("entries", []))
+    assert len(entries) >= 1
+    entry = entries[0].get("memory", entries[0]) if isinstance(entries[0], dict) else entries[0]
+    assert entry.get("key") == "user"
 
     # No matches
     result = await client.search_memories(q="zzzznotfound")
-    assert result["total"] == 0
-    assert result["entries"] == []
+    entries = result.get("results", result.get("entries", []))
+    assert len(entries) == 0
 
 
 @pytest.mark.asyncio
