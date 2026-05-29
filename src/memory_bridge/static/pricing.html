@@ -617,6 +617,20 @@
         </div>
     </div>
 
+    <!-- Downgrade Confirm Modal -->
+    <div class="logout-modal-overlay" id="downgrade-overlay" onclick="closeDowngradeModal()"></div>
+    <div class="logout-modal" id="downgrade-modal">
+        <div class="logout-icon">⬇️</div>
+        <div class="logout-title" id="downgrade-title">Switch to Free?</div>
+        <div class="logout-text" id="downgrade-text">
+            Are you sure you want to switch to the Free plan? Your current plan's features will remain available until the end of your billing period.
+        </div>
+        <div class="logout-btns">
+            <button class="btn btn-secondary" onclick="closeDowngradeModal()">Cancel</button>
+            <button class="btn btn-danger" id="downgrade-confirm-btn" onclick="confirmDowngrade()">Switch Plan</button>
+        </div>
+    </div>
+
     <footer class="footer" data-i18n="footer.text">© 2026 Memory Bridge — API for cross-agent memory</footer>
 
     <script>
@@ -686,10 +700,73 @@
                 });
                 if (res.ok) {
                     const data = await res.json();
-                    return data.tier || 'free';
+                    return { tier: data.tier || 'free', organization_id: data.organization_id || '' };
                 }
             } catch {}
             return null;
+        }
+
+        // ── Downgrade modal state ──
+        let _pendingDowngradeTier = null;
+        let _pendingDowngradeOrgId = '';
+
+        function openDowngradeModal(fromTier, toTier, orgId) {
+            _pendingDowngradeTier = toTier;
+            _pendingDowngradeOrgId = orgId;
+            document.getElementById('downgrade-title').textContent =
+                'Switch from ' + fromTier.charAt(0).toUpperCase() + fromTier.slice(1) + ' to ' + toTier.charAt(0).toUpperCase() + toTier.slice(1) + '?';
+            const textEl = document.getElementById('downgrade-text');
+            if (toTier === 'free') {
+                textEl.textContent = 'Are you sure you want to switch to the Free plan? Your current plan\'s features will remain available until the end of your billing period. You can always upgrade again later.';
+            } else {
+                textEl.textContent = 'Are you sure you want to switch to the ' + toTier.charAt(0).toUpperCase() + toTier.slice(1) + ' plan? Your subscription will be updated immediately with any applicable proration.';
+            }
+            document.getElementById('downgrade-overlay').classList.add('open');
+            document.getElementById('downgrade-modal').classList.add('open');
+        }
+
+        function closeDowngradeModal() {
+            document.getElementById('downgrade-overlay').classList.remove('open');
+            document.getElementById('downgrade-modal').classList.remove('open');
+            _pendingDowngradeTier = null;
+            _pendingDowngradeOrgId = '';
+        }
+
+        async function confirmDowngrade() {
+            const btn = document.getElementById('downgrade-confirm-btn');
+            btn.disabled = true;
+            btn.innerHTML = '<span class=\"spinner-sm\"></span> Switching...';
+            try {
+                if (_pendingDowngradeTier === 'free') {
+                    // Cancel subscription at period end
+                    const jwt = localStorage.getItem('mb_jwt');
+                    const res = await fetch('/billing/cancel/' + _pendingDowngradeOrgId, {
+                        method: 'POST',
+                        headers: { 'Authorization': 'Bearer ' + jwt, 'Content-Type': 'application/json' },
+                    });
+                    if (!res.ok) {
+                        const err = await res.json().catch(() => ({}));
+                        throw new Error(err.detail || 'Could not cancel subscription.');
+                    }
+                    const statusEl = document.querySelector('.section-subtitle');
+                    statusEl.textContent = '✅ Subscription will switch to Free at the end of your billing period.';
+                    statusEl.style.color = 'var(--green)';
+                    setTimeout(() => { statusEl.style.color = ''; }, 6000);
+                } else {
+                    // Downgrade to another paid plan — proceed with Stripe checkout
+                    checkout(_pendingDowngradeTier);
+                }
+            } catch (e) {
+                const statusEl = document.querySelector('.section-subtitle');
+                if (statusEl) {
+                    statusEl.textContent = e.message;
+                    statusEl.style.color = 'var(--red)';
+                    setTimeout(() => { statusEl.style.color = ''; }, 5000);
+                }
+            }
+            closeDowngradeModal();
+            btn.disabled = false;
+            btn.innerHTML = 'Switch Plan';
         }
 
         async function pricingCta(tier) {
@@ -717,7 +794,7 @@
             // Fetch current tier
             const currentTier = await fetchCurrentTier();
 
-            if (currentTier === tier) {
+            if (currentTier && (currentTier.tier === tier || currentTier === tier)) {
                 // Already on this tier — show a helpful message
                 document.querySelector('.section-subtitle').textContent =
                     `✅ You're already on the ${tier.charAt(0).toUpperCase() + tier.slice(1)} plan.`;
@@ -726,11 +803,12 @@
                 return;
             }
 
-            if (currentTier && getTierOrder(tier) < getTierOrder(currentTier)) {
-                // Downgrade — confirm
-                if (!confirm(`Switch from ${currentTier.charAt(0).toUpperCase() + currentTier.slice(1)} to ${tier.charAt(0).toUpperCase() + tier.slice(1)}?`)) {
-                    return;
-                }
+            if (currentTier && getTierOrder(tier) < getTierOrder(currentTier.tier || currentTier)) {
+                // Downgrade — show custom modal instead of browser confirm
+                const fromTier = currentTier.tier || currentTier;
+                const orgId = currentTier.organization_id || '';
+                openDowngradeModal(fromTier, tier, orgId);
+                return;
             }
 
             // Proceed with checkout
@@ -789,22 +867,23 @@
             }
 
             // Signed in — fetch tier and update CTAs
-            const tier = await fetchCurrentTier();
-            if (!tier) return;
+            const tierData = await fetchCurrentTier();
+            if (!tierData) return;
+            const currentTierName = tierData.tier || tierData || 'free';
 
             document.querySelectorAll('.pricing-card').forEach(card => {
                 const cardTier = card.dataset.tier;
                 const cta = card.querySelector('.pricing-cta');
                 if (!cta) return;
 
-                if (cardTier === tier) {
+                if (cardTier === currentTierName) {
                     // Current plan
                     cta.textContent = '✓ Your Plan';
                     cta.classList.remove('btn-primary');
                     cta.classList.add('btn-secondary');
                     cta.style.opacity = '0.7';
                     cta.style.pointerEvents = 'none';
-                } else if (getTierOrder(cardTier) > getTierOrder(tier)) {
+                } else if (getTierOrder(cardTier) > getTierOrder(currentTierName)) {
                     // Higher tier — upgrade
                     cta.textContent = 'Upgrade →';
                     cta.classList.add('btn-primary');
