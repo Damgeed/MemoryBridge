@@ -2090,8 +2090,6 @@
             const el = document.querySelector('#deactivated-keys-list');
             if (!el) return;
             const items = el.querySelectorAll('.key-item');
-            // Calculate how many deactivated keys we can actually reactivate
-            const maxCanReactivate = Math.max(0, _planKeyLimit - _activeKeyCount);
             
             // Check if already all selected
             const allSelected = items.length > 0 && [...items].every(item => {
@@ -2109,14 +2107,8 @@
                 // Deselect all
                 deactivatedIds.forEach(id => _selectedKeyIds.delete(id));
             } else {
-                // Select only as many as plan allows (newest first — items are in creation order)
-                const selectCount = Math.min(deactivatedIds.length, maxCanReactivate);
-                // Clear any existing selection first
-                _selectedKeyIds = new Set();
-                // Select the first N (front = newest in the rendered order)
-                for (let i = 0; i < selectCount; i++) {
-                    _selectedKeyIds.add(deactivatedIds[i]);
-                }
+                // Select ALL deactivated keys — let bulkReactivate() cap to plan limit
+                deactivatedIds.forEach(id => _selectedKeyIds.add(id));
             }
             
             // Update checkboxes
