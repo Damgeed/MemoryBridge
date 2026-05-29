@@ -783,25 +783,27 @@ async def stripe_welcome(
             ),
             timeout=10.0,
         )
+        # StripeObject → dict so all .get() calls work
+        session = session.to_dict()
     except Exception as e:
         raise HTTPException(status_code=502, detail=f"Could not verify payment: {e}")
 
-    if session.status != "complete":
+    if session.get("status") != "complete":
         raise HTTPException(status_code=400, detail="Payment not completed")
 
-    # Resolve org_id from session metadata (StripeObject — no .get(), use getattr)
-    session_meta = getattr(session, "metadata", None) or {}
-    org_id = getattr(session_meta, "organization_id", "") or ""
+    # Resolve org_id from session metadata
+    org_id = session.get("metadata", {}).get("organization_id", "")
     if not org_id:
         raise HTTPException(status_code=400, detail="No organization linked to this session")
 
     # Resolve tier from the subscription or metadata
-    tier = getattr(session_meta, "tier", "free") or "free"
+    tier = session.get("metadata", {}).get("tier", "free")
     try:
-        if session.subscription:
+        sub_from_session = session.get("subscription")
+        if sub_from_session:
             items = []
-            if hasattr(session.subscription, "items") and session.subscription.items:
-                items = session.subscription.items.get("data", [])
+            if isinstance(sub_from_session, dict) and sub_from_session.get("items"):
+                items = sub_from_session["items"].get("data", [])
             if items and items[0].get("price"):
                 from ..services.billing_service import PRICE_IDS
                 price_id = items[0]["price"].get("id", "")
@@ -812,26 +814,22 @@ async def stripe_welcome(
     except Exception:
         pass
 
-    # Log the Stripe customer ID if available (StripeObject — use getattr)
-    stripe_customer_id = getattr(session, "customer", "") or ""
+    # Log the Stripe customer ID if available
+    stripe_customer_id = session.get("customer", "") or ""
 
     # Store the subscription locally immediately — don't wait for webhook
     try:
         from ..models import Subscription as SubModel
         from datetime import datetime, timezone
-        sub_data_obj = session.subscription
+        sub_data_obj = session.get("subscription")
         if sub_data_obj:
-            sub_id = sub_data_obj.id if hasattr(sub_data_obj, "id") else sub_data_obj.get("id", "")
-            sub_status = sub_data_obj.status if hasattr(sub_data_obj, "status") else sub_data_obj.get("status", "active")
+            sub_id = sub_data_obj.get("id", "")
+            sub_status = sub_data_obj.get("status", "active")
             period_end = None
             period_start = None
-            if hasattr(sub_data_obj, "current_period_end") and sub_data_obj.current_period_end:
-                period_end = datetime.fromtimestamp(sub_data_obj.current_period_end, tz=timezone.utc)
-            elif isinstance(sub_data_obj, dict) and sub_data_obj.get("current_period_end"):
+            if sub_data_obj.get("current_period_end"):
                 period_end = datetime.fromtimestamp(sub_data_obj["current_period_end"], tz=timezone.utc)
-            if hasattr(sub_data_obj, "current_period_start") and sub_data_obj.current_period_start:
-                period_start = datetime.fromtimestamp(sub_data_obj.current_period_start, tz=timezone.utc)
-            elif isinstance(sub_data_obj, dict) and sub_data_obj.get("current_period_start"):
+            if sub_data_obj.get("current_period_start"):
                 period_start = datetime.fromtimestamp(sub_data_obj["current_period_start"], tz=timezone.utc)
 
             sub = SubModel(
@@ -857,9 +855,9 @@ async def stripe_welcome(
         pass
 
     # If no user found by org, check session for email
-    session_customer_details = getattr(session, "customer_details", None)
+    session_customer_details = session.get("customer_details")
     if not user_dict and session_customer_details:
-        email = getattr(session_customer_details, "email", "") or ""
+        email = session_customer_details.get("email", "")
         if email:
             try:
                 user_dict = await storage.get_user_by_email(email)
@@ -886,7 +884,7 @@ async def stripe_welcome(
         # Create a minimal user record for this org
         customer_email = ""
         if session_customer_details:
-            customer_email = getattr(session_customer_details, "email", "") or ""
+            customer_email = session_customer_details.get("email", "")
         try:
             from ..models import User as UserModel
             from datetime import datetime, timezone

@@ -169,6 +169,8 @@ class BillingService:
         the subscription record to the local database.
         """
         session = event.data.object
+        # StripeObject → dict so all .get() calls work
+        session = session.to_dict()
         org_id = session.get("client_reference_id")
         subscription_id = session.get("subscription")
         customer_id = session.get("customer")
@@ -187,7 +189,8 @@ class BillingService:
 
         # Fetch full subscription details from Stripe
         try:
-            sub_data = stripe.Subscription.retrieve(subscription_id)
+            sub_data_raw = stripe.Subscription.retrieve(subscription_id)
+            sub_data = sub_data_raw.to_dict()  # StripeObject → dict
         except stripe.error.StripeError as e:
             logger.error("Failed to retrieve subscription %s: %s", subscription_id, e)
             return {"status": "error", "event": "checkout.session.completed", "reason": str(e)}
@@ -239,7 +242,7 @@ class BillingService:
 
         Store or update the subscription record in the local database.
         """
-        sub_data = event.data.object
+        sub_data = event.data.object.to_dict()  # StripeObject → dict
         return await self._upsert_subscription_from_event(sub_data, "customer.subscription.created")
 
     async def _handle_subscription_updated(self, event) -> dict:
@@ -247,7 +250,7 @@ class BillingService:
 
         Update subscription tier and status in the local database.
         """
-        sub_data = event.data.object
+        sub_data = event.data.object.to_dict()  # StripeObject → dict
         return await self._upsert_subscription_from_event(sub_data, "customer.subscription.updated")
 
     async def _upsert_subscription_from_event(self, sub_data, event_type: str) -> dict:
@@ -308,7 +311,7 @@ class BillingService:
 
         Updates the subscription period on successful payment.
         """
-        invoice = event.data.object
+        invoice = event.data.object.to_dict()  # StripeObject → dict
         subscription_id = invoice.get("subscription")
         amount = invoice.get("amount_paid", 0)
 
@@ -318,7 +321,8 @@ class BillingService:
 
         # Fetch the subscription from Stripe to get updated period dates
         try:
-            sub_data = stripe.Subscription.retrieve(subscription_id)
+            sub_data_raw = stripe.Subscription.retrieve(subscription_id)
+            sub_data = sub_data_raw.to_dict()  # StripeObject → dict
         except stripe.error.StripeError as e:
             logger.error("Failed to retrieve subscription %s: %s", subscription_id, e)
             return {"status": "error", "event": "invoice.paid", "reason": str(e)}
@@ -367,7 +371,7 @@ class BillingService:
 
         Downgrades the subscription to free tier in the local database.
         """
-        sub_data = event.data.object
+        sub_data = event.data.object.to_dict()  # StripeObject → dict
         sub_id = sub_data.get("id")
 
         if not sub_id:
