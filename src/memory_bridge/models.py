@@ -36,11 +36,12 @@ class Subscription(BaseModel):
     id: str = ""
     """Stripe subscription ID."""
     organization_id: str
-    """The org that holds this subscription."""
     stripe_customer_id: str = ""
     """Stripe customer ID."""
     tier: str = "free"
     """Tier name: free, starter, pro, enterprise."""
+    pending_tier: str = ""
+    """If set, the tier to switch to when the current billing period ends."""
     status: str = "active"
     """Subscription status: active, past_due, canceled, incomplete."""
     current_period_start: Optional[datetime] = None

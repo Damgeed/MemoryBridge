@@ -112,16 +112,18 @@ async def create_checkout_auth(
 @router.post("/cancel/{org_id}")
 async def cancel_subscription(
     org_id: str,
+    request: Request,
+    target_tier: str = "free",
     billing: BillingService = Depends(_get_billing_service),
 ):
-    """Cancel a subscription (at period end)."""
-    success = await billing.cancel_subscription(org_id)
+    """Cancel a subscription (at period end), optionally with a target tier to switch to."""
+    success = await billing.cancel_subscription(org_id, target_tier=target_tier)
     if not success:
         raise HTTPException(
             status_code=400,
             detail="Could not cancel subscription. Is Stripe configured?",
         )
-    return {"status": "canceled", "organization_id": org_id}
+    return {"status": "scheduled", "target_tier": target_tier, "organization_id": org_id}
 
 
 @router.post("/upgrade")

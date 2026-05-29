@@ -381,7 +381,9 @@ class BillingService:
     async def _handle_subscription_deleted(self, event) -> dict:
         """Handle customer.subscription.deleted.
 
-        Downgrades the subscription to free tier in the local database.
+        If the subscription had a pending_tier set, create a new subscription
+        at that tier (Netflix-style downgrade at period end).
+        Otherwise, downgrade to free tier.
         """
         sub_data = event.data.object.to_dict()  # StripeObject → dict
         sub_id = sub_data.get("id")
@@ -391,24 +393,64 @@ class BillingService:
             return {"status": "received", "event": "customer.subscription.deleted", "reason": "Missing subscription id"}
 
         if self.repo:
+            # Check for pending tier on the local record
+            existing = await self.repo.get_subscription_by_id(sub_id)
+            pending_tier = existing.pending_tier if existing else ""
+            org_id = existing.organization_id if existing else sub_data.get("metadata", {}).get("organization_id", "")
+            customer_id = existing.stripe_customer_id if existing else sub_data.get("customer", "")
+
+            if pending_tier and pending_tier != "free":
+                # Auto-create a new subscription at the downgraded tier
+                try:
+                    target_price_id = PRICE_IDS.get(pending_tier)
+                    if target_price_id and customer_id:
+                        new_sub = stripe.Subscription.create(
+                            customer=customer_id,
+                            items=[{"price": target_price_id}],
+                            metadata={"organization_id": org_id, "tier": pending_tier},
+                        )
+                        logger.info(
+                            "Auto-created subscription %s for org %s at tier %s (downgrade from period end)",
+                            new_sub.id,
+                            org_id,
+                            pending_tier,
+                        )
+                        # Update local record with new sub
+                        if existing:
+                            new_sub_data = new_sub.to_dict() if hasattr(new_sub, 'to_dict') else new_sub
+                            existing.id = new_sub.id
+                            existing.tier = pending_tier
+                            existing.status = new_sub_data.get('status', 'active')
+                            existing.pending_tier = ""
+                            existing.current_period_start = datetime.fromtimestamp(
+                                new_sub_data['current_period_start'], tz=timezone.utc
+                            ) if new_sub_data.get('current_period_start') else None
+                            existing.current_period_end = datetime.fromtimestamp(
+                                new_sub_data['current_period_end'], tz=timezone.utc
+                            ) if new_sub_data.get('current_period_end') else None
+                            existing.updated_at = datetime.now(timezone.utc)
+                            await self.repo.store_subscription(existing)
+                        return {"status": "processed", "event": "customer.subscription.deleted", "tier": pending_tier}
+                except Exception as e:
+                    logger.error("Failed to auto-create subscription for org %s at tier %s: %s", org_id, pending_tier, e)
+                    # Fall through to free tier downgrade
+
             # Downgrade to free tier
-            updated = await self.repo.update_subscription_tier(sub_id, "free")
+            updated = await self.repo.update_subscription_tier(sub_id, "free") if sub_id else None
             if updated:
-                # Also update status to canceled
                 updated.status = "canceled"
+                updated.tier = "free"
+                updated.pending_tier = ""
                 updated.updated_at = datetime.now(timezone.utc)
                 await self.repo.store_subscription(updated)
-            else:
-                # Subscription not in local DB yet — try to find by org metadata
-                metadata = sub_data.get("metadata", {})
-                org_id = metadata.get("organization_id")
-                if org_id:
-                    existing = await self.repo.get_subscription_by_org(org_id)
-                    if existing:
-                        existing.tier = "free"
-                        existing.status = "canceled"
-                        existing.updated_at = datetime.now(timezone.utc)
-                        await self.repo.store_subscription(existing)
+            elif org_id:
+                alt = await self.repo.get_subscription_by_org(org_id)
+                if alt:
+                    alt.tier = "free"
+                    alt.status = "canceled"
+                    alt.pending_tier = ""
+                    alt.updated_at = datetime.now(timezone.utc)
+                    await self.repo.store_subscription(alt)
 
         logger.info("Subscription cancelled: sub=%s — downgraded to free", sub_id)
         return {"status": "processed", "event": "customer.subscription.deleted", "tier": "free"}
@@ -469,14 +511,15 @@ class BillingService:
             "updated_at": sub.updated_at.isoformat(),
         }
 
-    async def cancel_subscription(self, organization_id: str) -> bool:
+    async def cancel_subscription(self, organization_id: str, target_tier: str = "free") -> bool:
         """Cancel a subscription at period end via Stripe API.
 
         Args:
             organization_id: The organization whose subscription to cancel.
+            target_tier: The tier to switch to at period end (default: "free").
 
         Returns:
-            True if the subscription was successfully canceled, False otherwise.
+            True if the subscription was successfully scheduled for cancellation.
         """
         if not self.enabled:
             logger.warning("Stripe not configured. Cannot cancel subscription.")
@@ -499,10 +542,16 @@ class BillingService:
         try:
             stripe.Subscription.modify(sub.id, cancel_at_period_end=True)
             logger.info(
-                "Subscription %s for org %s set to cancel at period end",
+                "Subscription %s for org %s set to cancel at period end; pending tier = %s",
                 sub.id,
                 organization_id,
+                target_tier,
             )
+
+            # Store the pending tier so the webhook can create the new subscription
+            sub.pending_tier = target_tier
+            sub.updated_at = datetime.now(timezone.utc)
+            await self.repo.store_subscription(sub)
 
             return True
         except stripe.error.StripeError as e:

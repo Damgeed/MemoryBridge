@@ -773,31 +773,26 @@
         async function confirmDowngrade() {
             const btn = document.getElementById('downgrade-confirm-btn');
             btn.disabled = true;
-            btn.innerHTML = '<span class=\"spinner-sm\"></span> Switching...';
+            btn.innerHTML = '<span class=\\"spinner-sm\\"></span> Switching...';
             try {
-                if (_pendingDowngradeTier === 'free') {
-                    // Cancel subscription at period end
-                    if (!_pendingDowngradeOrgId) {
-                        throw new Error('Could not determine your organization. Please try refreshing the page.');
-                    }
-                    const jwt = localStorage.getItem('mb_jwt');
-                    const res = await fetch('/billing/cancel/' + _pendingDowngradeOrgId, {
-                        method: 'POST',
-                        headers: { 'Authorization': 'Bearer ' + jwt, 'Content-Type': 'application/json' },
-                    });
-                    if (!res.ok) {
-                        const err = await res.json().catch(() => ({}));
-                        throw new Error(err.detail || 'Could not cancel subscription.');
-                    }
-                    showInfoModal('Plan Updated', 'Subscription will switch to Free at the end of your billing period.');
-                    closeDowngradeModal();
-                } else {
-                    // Downgrade to another paid plan — close modal, then proceed with upgrade
-                    const targetTier = _pendingDowngradeTier;
-                    closeDowngradeModal();
-                    upgrade(targetTier);
-                    return;
+                if (!_pendingDowngradeOrgId) {
+                    throw new Error('Could not determine your organization. Please try refreshing the page.');
                 }
+                const jwt = localStorage.getItem('mb_jwt');
+                const targetTier = _pendingDowngradeTier;
+                const res = await fetch('/billing/cancel/' + _pendingDowngradeOrgId + '?target_tier=' + targetTier, {
+                    method: 'POST',
+                    headers: { 'Authorization': 'Bearer ' + jwt, 'Content-Type': 'application/json' },
+                });
+                if (!res.ok) {
+                    const err = await res.json().catch(() => ({}));
+                    throw new Error(err.detail || 'Could not schedule downgrade.');
+                }
+                const msg = targetTier === 'free'
+                    ? 'Subscription will switch to Free at the end of your billing period.'
+                    : 'Switched to the ' + targetTier.charAt(0).toUpperCase() + targetTier.slice(1) + ' plan — takes effect at the end of your current billing cycle.';
+                showInfoModal('Plan Updated', msg);
+                closeDowngradeModal();
             } catch (e) {
                 const statusEl = document.querySelector('.section-subtitle');
                 if (statusEl) {
