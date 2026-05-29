@@ -2026,9 +2026,6 @@
                 const label = k.label || 'default';
                 html += `
                     <div class="key-item">
-                        <label class="key-check-wrap" onclick="event.stopPropagation()">
-                            <input type="checkbox" class="key-select" data-key-id="${k.id}" data-key-status="active" onchange="toggleKeySelection('${k.id}')">
-                        </label>
                         <span class="key-label">${escapeHtml(label)}</span>
                         <span class="key-value">••••••••${k.id ? k.id.slice(-6) : ''}</span>
                         <span class="key-date">${created}</span>
