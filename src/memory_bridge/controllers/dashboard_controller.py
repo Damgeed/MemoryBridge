@@ -886,16 +886,17 @@ async def stripe_welcome(
         if session.get("customer_details"):
             customer_email = (session.get("customer_details") or {}).get("email", "")
         try:
+            from ..models import User as UserModel
             from datetime import datetime, timezone
-            user_data = {
-                "id": f"stripe-{org_id[:8]}",
-                "email": customer_email or f"user-{org_id[:8]}@memorybridge.io",
-                "name": customer_email.split("@")[0] if customer_email else "User",
-                "organization_id": org_id,
-                "role": "member",
-                "created_at": datetime.now(timezone.utc),
-            }
-            user_dict = await storage.create_user(user_data)
+            user_model = UserModel(
+                id=f"stripe-{org_id[:8]}",
+                email=customer_email or f"user-{org_id[:8]}@memorybridge.io",
+                password_hash="",
+                name=customer_email.split("@")[0] if customer_email else "User",
+                organization_id=org_id,
+                created_at=datetime.now(timezone.utc),
+            )
+            user_dict = await storage.create_user(user_model)
         except Exception as e:
             logger.warning("Could not create user for stripe welcome: %s", e)
 
