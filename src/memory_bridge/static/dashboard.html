@@ -1369,14 +1369,6 @@
                 <div style="margin-bottom:1rem;">
                     <button class="btn btn-primary btn-sm" onclick="generateKey()" data-i18n="dash.keys_generate">+ Generate New Key</button>
                 </div>
-                <div id="bulk-action-bar" class="bulk-action-bar" style="display:none;">
-                    <span id="bulk-count">0 selected</span>
-                    <div class="bulk-btns">
-                        <button class="btn btn-sm btn-secondary" onclick="bulkReactivate()">Reactivate All</button>
-                        <button class="btn btn-sm btn-danger" onclick="bulkRevoke()">Delete All</button>
-                        <button class="btn btn-sm" onclick="_selectedKeyIds=new Set();updateBulkActions();loadKeys();" style="color:var(--text-muted);">Cancel</button>
-                    </div>
-                </div>
                 <div id="keys-list">
                     <div class="flex-center" style="gap:0.5rem;" data-i18n="dash.keys_loading"><span class="spinner-sm"></span> Loading keys...</div>
                 </div>
@@ -2037,6 +2029,14 @@
                     </button>
                 </div>`;
             }
+            html += `<div id="bulk-action-bar" class="bulk-action-bar" style="display:none;">
+                <span id="bulk-count">0 selected</span>
+                <div class="bulk-btns">
+                    <button class="btn btn-sm btn-secondary" onclick="bulkReactivate()">Reactivate All</button>
+                    <button class="btn btn-sm btn-danger" onclick="bulkRevoke()">Delete All</button>
+                    <button class="btn btn-sm" onclick="_selectedKeyIds=new Set();updateBulkActions();loadKeys();" style="color:var(--text-muted);">Cancel</button>
+                </div>
+            </div>`;
             html += `</div>`;
             container.innerHTML = html;
         }
