@@ -120,7 +120,7 @@
 
         /* ── Deactivated key styles ──────────────────── */
         .key-item.deactivated {
-            opacity: 0.6;
+            opacity: 0.65;
         }
         .key-item.deactivated .key-label {
             text-decoration: line-through;
@@ -131,24 +131,29 @@
             font-weight: 600;
             padding: 0.2rem 0.5rem;
             border-radius: 4px;
-            background: var(--bg-tertiary);
-            color: var(--text-faint);
-            border: 1px solid var(--border-subtle);
+            background: #fff3e0;
+            color: #c97d0d;
+            border: 1px solid #ffd54f;
             white-space: nowrap;
             flex-shrink: 0;
+        }
+        [data-theme="dark"] .badge-deactivated {
+            background: #3a2a0a;
+            color: #ffb74d;
+            border-color: #6d4c00;
         }
         .keys-divider {
             display: flex;
             align-items: center;
             gap: 0.75rem;
-            padding: 0.5rem 0;
-            margin-top: 0.25rem;
+            padding: 0.6rem 0;
+            margin-top: 0.5rem;
             border-top: 1px solid var(--border-subtle);
         }
         .keys-divider span {
-            font-size: 0.72rem;
-            font-weight: 600;
-            color: var(--text-faint);
+            font-size: 0.78rem;
+            font-weight: 700;
+            color: var(--orange);
             text-transform: uppercase;
             letter-spacing: 0.05em;
         }
@@ -157,6 +162,15 @@
             flex: 1;
             height: 1px;
             background: var(--border-subtle);
+        }
+        /* Hover effect for the clickable divider */
+        .keys-divider[style*="cursor:pointer"]:hover {
+            background: var(--bg-tertiary);
+            border-radius: var(--radius-sm);
+            padding-left: 0.5rem;
+            padding-right: 0.5rem;
+            margin-left: -0.5rem;
+            margin-right: -0.5rem;
         }
 
         .key-reveal {
