@@ -2035,28 +2035,25 @@
             } catch (e) {
                 const msg = (e.message || '').replace(/^\[\d+\]\s*/, '');
                 if (msg.includes('max') && msg.includes('API keys')) {
-                    // Extract tier name and count from backend message for the modal
-                    const tierMatch = msg.match(/(\w+)\s*tier/i);
-                    const tierName = tierMatch ? tierMatch[1] : 'current';
                     showConfirm(
                         '🔑',
                         'Key Limit Reached',
-                        `<div style="font-size:0.9rem;color:var(--text-muted);margin-bottom:0.5rem;">${escapeHtml(msg)}</div>
-                         <div style="margin-top:0.75rem;"><a href="/pricing" class="btn btn-primary btn-sm" style="font-size:0.85rem;">Upgrade Plan →</a></div>`,
-                        'Dismiss',
-                        () => {},
-                        true
+                        `<div style="font-size:0.9rem;color:var(--text-muted);">${escapeHtml(msg)}</div>`,
+                        'Upgrade Plan →',
+                        () => { window.location.href = '/pricing'; },
+                        false,
+                        'Dismiss'
                     );
                 } else if (msg.includes('Too many requests') || msg.includes('Rate limit exceeded')) {
                     showConfirm(
                         '⏳',
                         'Rate Limit Reached',
                         `<div style="font-size:0.9rem;color:var(--text-muted);margin-bottom:0.5rem;">${escapeHtml(msg)}</div>
-                         <div style="font-size:0.82rem;color:var(--text-muted);margin-top:0.5rem;">Free plan: 300 requests/min. Upgrade for higher limits to continue using the API.</div>
-                         <div style="margin-top:0.75rem;"><a href="/pricing" class="btn btn-primary btn-sm" style="font-size:0.85rem;">Upgrade Plan →</a></div>`,
-                        'Dismiss',
-                        () => {},
-                        true
+                         <div style="font-size:0.82rem;color:var(--text-muted);">Free plan: 300 requests/min. Upgrade for higher limits.</div>`,
+                        'Upgrade Plan →',
+                        () => { window.location.href = '/pricing'; },
+                        false,
+                        'Dismiss'
                     );
                 } else {
                     showConfirm('⚠️', 'Error', escapeHtml(msg || 'Something went wrong.'), 'OK', () => {}, true);
@@ -2110,10 +2107,13 @@
                 const msg = (e.message || '').replace(/^\[\d+\]\s*/, '');
                 const isLimitError = msg.toLowerCase().includes('limit') || msg.toLowerCase().includes('max');
                 const modalText = isLimitError
-                    ? `<div style="font-size:0.9rem;color:var(--text-muted);margin-bottom:0.5rem;">${escapeHtml(msg)}</div>
-                       <div style="margin-top:0.75rem;"><a href="/pricing" class="btn btn-primary btn-sm" style="font-size:0.85rem;">Upgrade Plan →</a></div>`
+                    ? escapeHtml(msg)
                     : escapeHtml(msg || 'Could not reactivate key.');
-                showConfirm('⚠️', 'Could Not Reactivate Key', modalText, 'OK', () => {}, true);
+                showConfirm('⚠️', 'Could Not Reactivate Key', modalText,
+                    isLimitError ? 'Upgrade Plan →' : 'OK',
+                    isLimitError ? () => { window.location.href = '/pricing'; } : () => {},
+                    !isLimitError,
+                    isLimitError ? 'Dismiss' : undefined);
             }
         }
 
@@ -2440,11 +2440,12 @@
         // ── Confirm Modal ─────────────────────────────────────────
         let _confirmCallback = null;
 
-        function showConfirm(icon, title, text, okLabel, callback, hideCancel) {
+        function showConfirm(icon, title, text, okLabel, callback, hideCancel, cancelLabel) {
             document.getElementById('confirm-icon').textContent = icon || '';
             document.getElementById('confirm-title').textContent = title || 'Are you sure?';
             document.getElementById('confirm-text').innerHTML = text || 'This action cannot be undone.';
             document.getElementById('confirm-ok-btn').textContent = okLabel || 'OK';
+            document.getElementById('confirm-cancel-btn').textContent = cancelLabel || 'Cancel';
             document.getElementById('confirm-cancel-btn').style.display = hideCancel ? 'none' : '';
             _confirmCallback = callback;
             document.getElementById('confirm-overlay').classList.add('open');
