@@ -1985,6 +1985,7 @@
 
         // ── API Key Management ─────────────────────────────────────
         async function loadKeys() {
+            _selectedKeyIds = new Set();
             try {
                 const data = await api('GET', '/dashboard/keys');
                 renderKeys(data.keys || []);
@@ -2009,8 +2010,8 @@
                 <span>🔽 Deactivated Keys (${deactivated.length})</span>
             </div>
             <div id="deactivated-keys-list" style="display:none;">
-                <label style="display:flex;align-items:center;gap:0.3rem;font-size:0.72rem;cursor:pointer;color:var(--text-muted);padding:0.3rem 0.75rem;" onclick="event.stopPropagation();selectAllDeactivated()">
-                    <input type="checkbox" class="key-select-all-deactivated" onchange="selectAllDeactivated()"> <span id="deactivated-select-all-label">Select All</span>
+                <label style="display:flex;align-items:center;gap:0.3rem;font-size:0.72rem;cursor:pointer;color:var(--text-muted);padding:0.3rem 0.75rem;user-select:none;">
+                    <input type="checkbox" class="key-select-all-deactivated" onclick="selectAllDeactivated()"> <span id="deactivated-select-all-label">Select All</span>
                 </label>`;
             for (const k of deactivated) {
                 const created = k.created_at ? new Date(k.created_at).toLocaleDateString() : '—';
