@@ -1847,9 +1847,8 @@
                         if (typeof updateAuthUI === 'function') updateAuthUI();
                         throw new Error(errMsg);
                     }
-                    const dot = document.getElementById('session-dot');
-                    const dotIsRed = dot && dot.classList.contains('red');
-                    // If the session dot is red or refresh failed — JWT is truly expired
+                    // JWT expired mid-session — try refresh as last resort
+                    // (global sessionHealthCheck already handles proactive refresh)
                     const jwt = localStorage.getItem('mb_jwt');
                     if (jwt) {
                         try {

@@ -85,10 +85,139 @@
   /* ── Cross‑Tab Sync ──────────────────────────────────── */
 
   window.addEventListener('storage', (e) => {
-    if ((e.key === JWT_KEY || e.key === API_KEY) && !e.newValue) {
-      if (typeof updateAuthUI === 'function') updateAuthUI();
+    if (e.key === JWT_KEY || e.key === API_KEY) {
+      if (!e.newValue) {
+        if (typeof updateAuthUI === 'function') updateAuthUI();
+      } else if (e.key === JWT_KEY && e.oldValue !== e.newValue) {
+        // JWT was refreshed in another tab — update dot to green
+        if (typeof updateAuthUI === 'function') updateAuthUI();
+      }
     }
   });
+
+  /* ── Activity Tracking ──────────────────────────────── */
+  let _lastActivity = Date.now();
+  let _activityPending = false;
+
+  function _scheduleActivityCheck() {
+    if (_activityPending) return;
+    _activityPending = true;
+    setTimeout(function () {
+      _activityPending = false;
+      _lastActivity = Date.now();
+      // Dot gets checked via the periodic health timer — no need to force-update here
+    }, 10000);
+  }
+
+  // Passive listeners — never block scroll/input
+  document.addEventListener('mousemove', _scheduleActivityCheck, { passive: true });
+  document.addEventListener('click', _scheduleActivityCheck, { passive: true });
+  document.addEventListener('keydown', _scheduleActivityCheck, { passive: true });
+  document.addEventListener('touchstart', _scheduleActivityCheck, { passive: true });
+
+  /* ── Session Health Check (auto-refresh + dot) ──────── */
+  let _sessionHealthTimer = null;
+  let _lastRefreshAttempt = 0;
+
+  async function _silentRefresh() {
+    const jwt = getJWT();
+    if (!jwt) return false;
+    // Rate-limit: once per 30s max
+    const now = Date.now();
+    if (now - _lastRefreshAttempt < 30000) return false;
+    _lastRefreshAttempt = now;
+    try {
+      const res = await fetch('/auth/refresh', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token: jwt }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.token) {
+          setJWT(data.token);
+          if (data.api_key) setApiKey(data.api_key);
+          return true;
+        }
+      }
+    } catch (e) { /* network error — try again next cycle */ }
+    return false;
+  }
+
+  function _applyDotClass(className) {
+    const dot = document.getElementById('session-dot');
+    if (dot) dot.className = 'session-dot ' + className;
+    const mobileDot = document.getElementById('mobile-session-dot');
+    if (mobileDot) mobileDot.className = 'session-dot ' + className;
+  }
+
+  async function _refreshAndUpdateDot() {
+    const refreshed = await _silentRefresh();
+    if (refreshed) {
+      _applyDotClass('green');
+    } else {
+      _applyDotClass('amber');
+    }
+    return refreshed;
+  }
+
+  async function checkSessionHealth() {
+    const jwt = getJWT();
+    if (!jwt) {
+      // No JWT — check if using an API key (never expires this way)
+      const key = getApiKey();
+      if (key && !isDemoKey(key)) {
+        _applyDotClass('green');
+        return true;
+      }
+      _applyDotClass('red');
+      return false;
+    }
+    const claims = decodeJWT(jwt);
+    if (!claims || !claims.exp) {
+      _applyDotClass('red');
+      return false;
+    }
+    const now = Math.floor(Date.now() / 1000);
+    const remaining = claims.exp - now;
+
+    if (remaining <= 0) {
+      // Expired — try one last refresh before going red
+      const refreshed = await _silentRefresh();
+      if (refreshed) {
+        _applyDotClass('green');
+        return true;
+      }
+      _applyDotClass('red');
+      return false;
+    }
+
+    if (remaining < 600) {
+      // < 10 min — auto-refresh silently
+      // User is active? bump threshold to be more aggressive
+      const inactiveFor = Date.now() - _lastActivity;
+      const threshold = inactiveFor < 120000 ? 600 : 300; // active user: refresh at 10 min, idle: 5 min
+      if (remaining < threshold) {
+        const refreshed = await _silentRefresh();
+        if (refreshed) {
+          _applyDotClass('green');
+          return true;
+        }
+      }
+      _applyDotClass('amber');
+    } else {
+      // Plenty of time — green
+      _applyDotClass('green');
+    }
+    return true;
+  }
+
+  function startSessionHealthCheck() {
+    if (_sessionHealthTimer) clearInterval(_sessionHealthTimer);
+    // Run immediately, then every 60s
+    checkSessionHealth();
+    _sessionHealthTimer = setInterval(checkSessionHealth, 60000);
+  }
 
   /* ── Auth UI ─────────────────────────────────────────── */
 
@@ -246,6 +375,7 @@
     try {
       fetch('/auth/logout', { method: 'POST', headers: { 'Authorization': 'Bearer ' + getJWT() } });
     } catch (e) { /* ignore */ }
+    if (_sessionHealthTimer) { clearInterval(_sessionHealthTimer); _sessionHealthTimer = null; }
     clearJWT();
     clearApiKey();
     localStorage.removeItem('mb_key_exists');
@@ -425,33 +555,38 @@
   /* ── Simple Init (for most pages) ────────────────────── */
 
   async function initAuth() {
-    if (!await ensureValidJWT()) {
-      updateAuthUI();
-      return null;
-    }
+    const result = await ensureValidJWT();
     updateAuthUI();
-    return { jwt: getJWT(), apiKey: getApiKey() };
+    if (result && getJWT()) {
+      startSessionHealthCheck();
+    }
+    return result ? { jwt: getJWT(), apiKey: getApiKey() } : null;
   }
+
+  /* ── Cross-tab session sync: when another tab refreshes JWT, sync dot ── */
+  // (The storage listener above handles this — no extra code needed here)
 
   /* ── Expose ──────────────────────────────────────────── */
 
-  window.decodeJWT         = decodeJWT;
-  window.ensureValidJWT    = ensureValidJWT;
-  window.updateAuthUI      = updateAuthUI;
-  window.toggleUserDropdown = toggleUserDropdown;
-  window.showLogoutConfirm  = showLogoutConfirm;
-  window.closeLogoutConfirm = closeLogoutConfirm;
-  window.logout             = logout;
-  window.getAuthHeaders     = getAuthHeaders;
-  window.initAuth           = initAuth;
-  window.getJWT             = getJWT;
-  window.setJWT             = setJWT;
-  window.getApiKey          = getApiKey;
-  window.setApiKey          = setApiKey;
-  window.clearJWT           = clearJWT;
-  window.clearApiKey        = clearApiKey;
-  window.showSignInToast    = showSignInToast;
-  window.recoverAccount     = recoverAccount;
-  window.recoverVerifyCode  = recoverVerifyCode;
-  window.showRecoveryForm   = showRecoveryForm;
+  window.decodeJWT             = decodeJWT;
+  window.ensureValidJWT        = ensureValidJWT;
+  window.updateAuthUI          = updateAuthUI;
+  window.toggleUserDropdown    = toggleUserDropdown;
+  window.showLogoutConfirm     = showLogoutConfirm;
+  window.closeLogoutConfirm    = closeLogoutConfirm;
+  window.logout                = logout;
+  window.getAuthHeaders        = getAuthHeaders;
+  window.initAuth              = initAuth;
+  window.getJWT                = getJWT;
+  window.setJWT                = setJWT;
+  window.getApiKey             = getApiKey;
+  window.setApiKey             = setApiKey;
+  window.clearJWT              = clearJWT;
+  window.clearApiKey           = clearApiKey;
+  window.showSignInToast       = showSignInToast;
+  window.recoverAccount        = recoverAccount;
+  window.recoverVerifyCode     = recoverVerifyCode;
+  window.showRecoveryForm      = showRecoveryForm;
+  window.startSessionHealthCheck = startSessionHealthCheck;
+  window.checkSessionHealth    = checkSessionHealth;
 })();
