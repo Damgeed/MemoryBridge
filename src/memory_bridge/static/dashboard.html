@@ -2126,19 +2126,24 @@
             showConfirm('🔄', 'Reactivate ' + ids.length + ' API keys?',
                 'The selected API keys will be reactivated and start working again.',
                 'Reactivate All', async () => {
-                    let success = 0, fail = 0;
+                    let success = 0, fail = 0, limitHits = 0;
                     for (const id of ids) {
                         try {
                             const result = await api('POST', '/dashboard/keys/' + id + '/reactivate');
                             if (result.status === 'reactivated') success++;
                             else fail++;
                         } catch (e) {
+                            const msg = (e.message || '').toLowerCase();
+                            if (msg.includes('limit') || msg.includes('max')) limitHits++;
                             fail++;
                         }
                     }
                     _selectedKeyIds = new Set();
                     updateBulkActions();
-                    showToast('✅ Reactivated ' + success + ' key' + (success !== 1 ? 's' : '') + (fail ? ' (' + fail + ' failed)' : ''));
+                    let toast = '✅ Reactivated ' + success + ' key' + (success !== 1 ? 's' : '');
+                    if (limitHits > 0) toast += ' (' + limitHits + ' skipped — plan limit reached)';
+                    else if (fail > 0) toast += ' (' + fail + ' failed)';
+                    showToast(toast);
                     loadKeys();
                     loadDashboard();
                 });
