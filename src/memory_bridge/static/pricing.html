@@ -716,13 +716,18 @@
             document.getElementById('downgrade-title').textContent =
                 'Switch from ' + fromTier.charAt(0).toUpperCase() + fromTier.slice(1) + ' to ' + toTier.charAt(0).toUpperCase() + toTier.slice(1) + '?';
             const textEl = document.getElementById('downgrade-text');
+            const tierLimits = { free: 5, starter: 25, pro: 100 };
+            const limit = tierLimits[toTier] || 5;
+            const tierName = toTier.charAt(0).toUpperCase() + toTier.slice(1);
             if (toTier === 'free') {
                 textEl.innerHTML = `Are you sure you want to switch to the Free plan?
                     Your current plan's features will remain available until the end of your billing period.
-                    When the billing period ends, any API keys beyond the Free limit (5) will be deactivated.
+                    When the billing period ends, any API keys beyond the ${tierName} limit (${limit}) will be deactivated.
                     You can always upgrade again later.`;
             } else {
-                textEl.textContent = 'Are you sure you want to switch to the ' + toTier.charAt(0).toUpperCase() + toTier.slice(1) + ' plan? Your subscription will be updated immediately with any applicable proration.';
+                textEl.innerHTML = `Are you sure you want to switch to the ${tierName} plan?
+                    Your subscription will be updated immediately with any applicable proration.
+                    Any API keys beyond the ${tierName} limit (${limit}) will be deactivated.`;
             }
             document.getElementById('downgrade-overlay').classList.add('open');
             document.getElementById('downgrade-modal').classList.add('open');
