@@ -789,13 +789,14 @@ async def stripe_welcome(
     if session.status != "complete":
         raise HTTPException(status_code=400, detail="Payment not completed")
 
-    # Resolve org_id from session metadata
-    org_id = (session.metadata or {}).get("organization_id", "")
+    # Resolve org_id from session metadata (StripeObject — no .get(), use getattr)
+    session_meta = getattr(session, "metadata", None) or {}
+    org_id = getattr(session_meta, "organization_id", "") or ""
     if not org_id:
         raise HTTPException(status_code=400, detail="No organization linked to this session")
 
     # Resolve tier from the subscription or metadata
-    tier = (session.metadata or {}).get("tier", "free")
+    tier = getattr(session_meta, "tier", "free") or "free"
     try:
         if session.subscription:
             items = []
@@ -811,8 +812,8 @@ async def stripe_welcome(
     except Exception:
         pass
 
-    # Log the Stripe customer ID if available
-    stripe_customer_id = session.get("customer", "") or ""
+    # Log the Stripe customer ID if available (StripeObject — use getattr)
+    stripe_customer_id = getattr(session, "customer", "") or ""
 
     # Store the subscription locally immediately — don't wait for webhook
     try:
@@ -855,9 +856,10 @@ async def stripe_welcome(
     except Exception:
         pass
 
-    # If no user found by org, check session metadata for email
-    if not user_dict and session.get("customer_details"):
-        email = (session.get("customer_details") or {}).get("email", "")
+    # If no user found by org, check session for email
+    session_customer_details = getattr(session, "customer_details", None)
+    if not user_dict and session_customer_details:
+        email = getattr(session_customer_details, "email", "") or ""
         if email:
             try:
                 user_dict = await storage.get_user_by_email(email)
@@ -883,8 +885,8 @@ async def stripe_welcome(
     if not user_dict:
         # Create a minimal user record for this org
         customer_email = ""
-        if session.get("customer_details"):
-            customer_email = (session.get("customer_details") or {}).get("email", "")
+        if session_customer_details:
+            customer_email = getattr(session_customer_details, "email", "") or ""
         try:
             from ..models import User as UserModel
             from datetime import datetime, timezone
