@@ -2327,6 +2327,11 @@
         }
 
         async function reactivateKey(keyId) {
+            const btn = document.querySelector(`.key-item.deactivated .btn-icon[onclick*="reactivateKey('${keyId}')"]`);
+            if (btn) {
+                btn.disabled = true;
+                btn.innerHTML = '<span class="spinner-sm"></span>';
+            }
             try {
                 const result = await api('POST', `/dashboard/keys/${keyId}/reactivate`);
                 if (result.status === 'reactivated') {
@@ -2334,6 +2339,7 @@
                     loadKeys();
                 } else {
                     showToast('⚠️ Unexpected response when reactivating key.');
+                    if (btn) { btn.disabled = false; btn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>'; }
                 }
             } catch (e) {
                 const msg = (e.message || '').replace(/^\[\d+\]\s*/, '');
@@ -2346,6 +2352,7 @@
                     isLimitError ? () => { window.location.href = '/pricing'; } : () => {},
                     !isLimitError,
                     isLimitError ? 'Dismiss' : undefined);
+                if (btn) { btn.disabled = false; btn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>'; }
             }
         }
 
