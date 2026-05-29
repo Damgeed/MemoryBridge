@@ -1320,10 +1320,13 @@ async function sendPhoneCode() {
     }
             const fullPhone = '+' + countryCode + localNum;
             const originalBtnHTML = btn.innerHTML;
-            btn.innerHTML = '<span class="spinner-sm"></span> Sending...';
-            btn.disabled = true;
-            try {
-                const res = await fetch('/auth/auth0/passwordless/start-sms', {
+    btn.innerHTML = '<span class="spinner-sm"></span> Sending...';
+    btn.disabled = true;
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 25000);
+    try {
+        const res = await fetch('/auth/auth0/passwordless/start-sms', {
+            signal: controller.signal,
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
             body: JSON.stringify({phone: fullPhone}),
@@ -1361,6 +1364,7 @@ async function sendPhoneCode() {
         errorEl.innerHTML = isNetwork
             ? 'Could not reach server. Check your connection.'
             : e.message;
+        btn.innerHTML = originalBtnHTML;
         btn.disabled = false;
     }
 }
@@ -1519,6 +1523,7 @@ async function resendCode() {
         errorEl.innerHTML = isNetwork
             ? 'Could not reach server. Check your connection.'
             : e.message;
+        btn.innerHTML = originalBtnHTML;
         btn.disabled = false;
     }
 }

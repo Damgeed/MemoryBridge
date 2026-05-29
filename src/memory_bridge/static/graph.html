@@ -1598,6 +1598,7 @@
                 errorEl.innerHTML = isNetwork
                     ? 'Could not reach server. Check your connection.'
                     : e.message;
+                btn.innerHTML = originalBtnHTML;
                 btn.disabled = false;
             }
         }
@@ -1754,6 +1755,7 @@
                 errorEl.innerHTML = isNetwork
                     ? 'Could not reach server. Check your connection.'
                     : e.message;
+                btn.innerHTML = originalBtnHTML;
                 btn.disabled = false;
             }
         }

@@ -1460,10 +1460,13 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             const fullPhone = '+' + countryCode + localNum;
             const originalBtnHTML = btn.innerHTML;
-            btn.innerHTML = '<span class="spinner-sm"></span> Sending...';
-            btn.disabled = true;
-            try {
-                const res = await fetch('/auth/auth0/passwordless/start-sms', {
+    btn.innerHTML = '<span class="spinner-sm"></span> Sending...';
+    btn.disabled = true;
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 25000);
+    try {
+        const res = await fetch('/auth/auth0/passwordless/start-sms', {
+            signal: controller.signal,
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
                     body: JSON.stringify({phone: fullPhone}),
@@ -1491,6 +1494,7 @@ document.addEventListener('DOMContentLoaded', () => {
     errorEl.innerHTML = isNetwork
         ? 'Could not reach server. Check your connection.'
         : e.message;
+  btn.innerHTML = originalBtnHTML;
   btn.disabled = false;
         function updatePhoneFlag() {
             // Placeholder — the select handles display natively with emoji flags
@@ -1632,6 +1636,7 @@ document.addEventListener('DOMContentLoaded', () => {
     errorEl.innerHTML = isNetwork
         ? 'Could not reach server. Check your connection.'
         : e.message;
+  btn.innerHTML = originalBtnHTML;
   btn.disabled = false;
         function escapeHtml(str) {
             const div = document.createElement('div');
