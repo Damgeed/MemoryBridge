@@ -129,7 +129,7 @@ async def reactivate_api_key(
     if len(active_keys) >= max_keys:
         raise HTTPException(
             status_code=429,
-            detail=f"Already at the {tier.title()} plan limit of {max_keys} active keys. Deactivate another key first.",
+            detail=f"Already at the {tier.title()} plan limit of {max_keys} active keys. Deactivate another key first or upgrade.",
         )
 
     success = await storage.reactivate_api_key(key_id)
