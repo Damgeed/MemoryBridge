@@ -763,8 +763,9 @@
                     closeDowngradeModal();
                 } else {
                     // Downgrade to another paid plan — close modal, then proceed with upgrade
+                    const targetTier = _pendingDowngradeTier;
                     closeDowngradeModal();
-                    upgrade(_pendingDowngradeTier);
+                    upgrade(targetTier);
                     return;
                 }
             } catch (e) {
