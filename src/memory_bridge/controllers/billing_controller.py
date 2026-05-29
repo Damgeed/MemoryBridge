@@ -122,3 +122,24 @@ async def cancel_subscription(
             detail="Could not cancel subscription. Is Stripe configured?",
         )
     return {"status": "canceled", "organization_id": org_id}
+
+
+@router.post("/upgrade")
+async def upgrade_subscription(
+    request: Request,
+    tier: str = "pro",
+    billing: BillingService = Depends(_get_billing_service),
+):
+    """Upgrade an existing subscription to a higher tier using Stripe Subscription.modify with proration."""
+    auth = getattr(request.state, "auth", None)
+    if not auth:
+        raise HTTPException(status_code=401, detail="You must be signed in.")
+
+    org_id = auth.get("project_id") or auth.get("key_id", "")
+    if not org_id:
+        raise HTTPException(status_code=401, detail="Could not resolve your account.")
+
+    success, detail = await billing.upgrade_subscription(org_id, tier)
+    if not success:
+        raise HTTPException(status_code=400, detail=detail or "Upgrade failed. Is Stripe configured?")
+    return {"status": "upgraded", "detail": detail}

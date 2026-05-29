@@ -15,6 +15,7 @@ from typing import Optional
 import stripe
 
 from ..models import Subscription
+from ..services.metering_service import TIER_LIMITS
 
 logger = logging.getLogger(__name__)
 
@@ -296,6 +297,17 @@ class BillingService:
         if self.repo:
             await self.repo.store_subscription(sub)
 
+        # If subscription is being set to free/canceled, trim excess API keys
+        if self.repo and (tier == "free" or status == "canceled" or status == "incomplete_expired"):
+            from ..services.metering_service import TIER_LIMITS
+            free_limit = TIER_LIMITS.get("free", {}).get("max_api_keys", 5)
+            try:
+                deactivated = await self.repo.deactivate_excess_keys(org_id, free_limit)
+                if deactivated:
+                    logger.info("Webhook: deactivated %d excess keys for org %s (tier=%s, status=%s)", deactivated, org_id, tier, status)
+            except Exception as e:
+                logger.warning("Webhook: failed to deactivate keys for org %s: %s", org_id, e)
+
         logger.info(
             "Subscription upserted from %s: sub=%s, org=%s, tier=%s, status=%s",
             event_type,
@@ -497,6 +509,12 @@ class BillingService:
             sub.updated_at = datetime.now(timezone.utc)
             await self.repo.store_subscription(sub)
 
+            # Deactivate excess API keys — keep only Free tier limit
+            free_limit = TIER_LIMITS.get("free", {}).get("max_api_keys", 5)
+            deactivated = await self.repo.deactivate_excess_keys(organization_id, free_limit)
+            if deactivated:
+                logger.info("Deactivated %d excess API keys for org %s", deactivated, organization_id)
+
             return True
         except stripe.error.StripeError as e:
             logger.error(
@@ -506,3 +524,80 @@ class BillingService:
                 e,
             )
             return False
+
+
+    async def upgrade_subscription(self, organization_id: str, target_tier: str) -> tuple[bool, str]:
+        """Upgrade an existing subscription to a higher tier with proration.
+
+        Returns (success, detail_message).
+        """
+        if not self.enabled:
+            return False, "Stripe not configured."
+
+        if not self.repo:
+            return False, "No database configured."
+
+        target_price_id = PRICE_IDS.get(target_tier)
+        if not target_price_id:
+            return False, f"No price configured for tier '{target_tier}'."
+
+        try:
+            sub = await self.repo.get_subscription_by_org(organization_id)
+        except Exception as e:
+            return False, f"Failed to look up subscription: {e}"
+
+        if not sub or not sub.id:
+            return False, "No active subscription found. Use checkout to subscribe."
+
+        try:
+            # Get the subscription from Stripe to get the subscription item ID
+            stripe_sub = stripe.Subscription.retrieve(sub.id)
+            sub_data = stripe_sub.to_dict() if hasattr(stripe_sub, 'to_dict') else stripe_sub
+            items = sub_data.get('items', {}).get('data', [])
+            if not items:
+                return False, "No items on existing subscription."
+
+            item_id = items[0].get('id')
+
+            # Modify subscription to switch price with proration
+            updated = stripe.Subscription.modify(
+                sub.id,
+                items=[{
+                    'id': item_id,
+                    'price': target_price_id,
+                }],
+                proration_behavior='create_prorations',
+                metadata={'organization_id': organization_id, 'tier': target_tier},
+            )
+
+            # Calculate prorated amount for message
+            latest_invoice = stripe.Invoice.list(subscription=sub.id, limit=1)
+            prorated_amount = 0
+            if latest_invoice.data:
+                prorated_amount = latest_invoice.data[0].amount_due / 100.0
+
+            tier_names = {'free': 'Free', 'starter': 'Starter', 'pro': 'Pro', 'enterprise': 'Enterprise'}
+            old_name = tier_names.get(sub.tier, sub.tier.title())
+            new_name = tier_names.get(target_tier, target_tier.title())
+
+            # Now update local record (after capturing old tier name)
+            updated_data = updated.to_dict() if hasattr(updated, 'to_dict') else updated
+            sub.tier = target_tier
+            sub.status = updated_data.get('status', 'active')
+            sub.updated_at = datetime.now(timezone.utc)
+            if updated_data.get('current_period_start'):
+                sub.current_period_start = datetime.fromtimestamp(updated_data.get('current_period_start'), tz=timezone.utc)
+            if updated_data.get('current_period_end'):
+                sub.current_period_end = datetime.fromtimestamp(updated_data.get('current_period_end'), tz=timezone.utc)
+            await self.repo.store_subscription(sub)
+
+            logger.info(
+                "Upgraded subscription %s from %s to %s — prorated charge ~$%.2f",
+                sub.id, old_name, new_name, prorated_amount,
+            )
+
+            return True, f"Upgraded from {old_name} to {new_name}. Prorated charge: ${prorated_amount:.2f}"
+
+        except stripe.error.StripeError as e:
+            logger.error("Stripe upgrade failed for org %s: %s", organization_id, e)
+            return False, f"Stripe error: {e}"

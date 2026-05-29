@@ -963,6 +963,31 @@ class PostgresMemoryRepository(MemoryRepository):
             count = int(result.split()[-1]) if result else 0
             return count > 0
 
+    async def reactivate_api_key(self, key_id: str) -> bool:
+        """Reactivate a previously deactivated API key."""
+        async with self.pool.acquire() as conn:
+            result = await conn.execute(
+                f"UPDATE {self.schema}.api_keys SET is_active = TRUE WHERE id = $1",
+                key_id,
+            )
+            count = int(result.split()[-1]) if result else 0
+            return count > 0
+
+    async def deactivate_excess_keys(self, project_id: str, max_allowed: int) -> int:
+        """Deactivate excess API keys for an org, keeping the newest max_allowed active."""
+        keys = await self.list_api_keys()
+        org_active = [k for k in keys if k.get('project_id') == project_id and k.get('is_active') is True]
+        if len(org_active) <= max_allowed:
+            return 0
+        # Sort by created_at desc, keep max_allowed, deactivate rest
+        org_active.sort(key=lambda k: k.get('created_at', ''), reverse=True)
+        to_deactivate = org_active[max_allowed:]
+        deactivated = 0
+        for k in to_deactivate:
+            if await self.revoke_api_key(k['id']):
+                deactivated += 1
+        return deactivated
+
     async def authenticate_key(self, plain_key: str) -> Optional[dict]:
         """Authenticate a plaintext API key. Returns key info or None if invalid."""
         async with self.pool.acquire() as conn:

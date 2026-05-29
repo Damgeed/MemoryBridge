@@ -63,6 +63,11 @@ async def create_api_key(
         sub = await storage.get_subscription_by_org(org_id)
         tier = sub.tier if sub else "free"
     except Exception:
+        sub = None
+        tier = "free"
+
+    # If subscription is canceled, fall back to free tier limits
+    if sub and sub.status == "canceled":
         tier = "free"
 
     limits = TIER_LIMITS.get(tier, TIER_LIMITS["free"])
@@ -89,6 +94,48 @@ async def create_api_key(
         "label": result["label"],
         "created_at": result["created_at"],
     }
+
+
+@router.post("/keys/{key_id}/reactivate")
+async def reactivate_api_key(
+    key_id: str,
+    request: Request,
+    storage: MemoryRepository = Depends(get_storage),
+):
+    """Reactivate a previously deactivated API key."""
+    org_id = _resolve_org(request)
+
+    # Verify the key belongs to this org
+    keys = await storage.list_api_keys()
+    key = next((k for k in keys if k.get('id') == key_id and k.get('project_id') == org_id), None)
+    if not key:
+        raise HTTPException(status_code=404, detail="API key not found.")
+
+    # Check tier limit
+    from ..services.metering_service import TIER_LIMITS
+    try:
+        sub = await storage.get_subscription_by_org(org_id)
+        tier = sub.tier if sub else "free"
+        if sub and sub.status == "canceled":
+            tier = "free"
+    except Exception:
+        tier = "free"
+
+    limits = TIER_LIMITS.get(tier, TIER_LIMITS["free"])
+    max_keys = limits.get("max_api_keys", 5)
+
+    # Count currently active keys
+    active_keys = [k for k in keys if k.get('project_id') == org_id and k.get('is_active') is True]
+    if len(active_keys) >= max_keys:
+        raise HTTPException(
+            status_code=429,
+            detail=f"Already at the {tier.title()} plan limit of {max_keys} active keys. Deactivate another key first.",
+        )
+
+    success = await storage.reactivate_api_key(key_id)
+    if not success:
+        raise HTTPException(status_code=404, detail="Could not reactivate key.")
+    return {"status": "reactivated", "key_id": key_id}
 
 
 @router.get("/welcome")

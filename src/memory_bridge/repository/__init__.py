@@ -148,6 +148,16 @@ class MemoryRepository(ABC):
         ...
 
     @abstractmethod
+    async def reactivate_api_key(self, key_id: str) -> bool:
+        """Reactivate a previously deactivated/revoked API key. Returns True if reactivated."""
+        ...
+
+    @abstractmethod
+    async def deactivate_excess_keys(self, project_id: str, max_allowed: int) -> int:
+        """Deactivate API keys beyond max_allowed for an org. Keeps newest keys active. Returns count deactivated."""
+        ...
+
+    @abstractmethod
     async def record_metric(self, key: str, value) -> None:
         ...
 

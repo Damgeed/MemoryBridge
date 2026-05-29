@@ -753,8 +753,8 @@
                     statusEl.style.color = 'var(--green)';
                     setTimeout(() => { statusEl.style.color = ''; }, 6000);
                 } else {
-                    // Downgrade to another paid plan — proceed with Stripe checkout
-                    checkout(_pendingDowngradeTier);
+                    // Downgrade to another paid plan — proceed with upgrade (Stripe handles the price switch)
+                    upgrade(_pendingDowngradeTier);
                 }
             } catch (e) {
                 const statusEl = document.querySelector('.section-subtitle');
@@ -811,8 +811,8 @@
                 return;
             }
 
-            // Proceed with checkout
-            checkout(tier);
+            // Proceed with upgrade (existing subscription, higher tier)
+            upgrade(tier);
         }
 
         async function checkout(tier) {
@@ -828,6 +828,34 @@
                 if (!res.ok) {
                     const err = await res.json().catch(() => ({}));
                     throw new Error(err.detail || 'Could not start subscription. Try again later.');
+                }
+                const data = await res.json();
+                if (data.checkout_url) { window.location.href = data.checkout_url; }
+            } catch (e) {
+                const statusEl = document.getElementById('dash-status') || document.querySelector('.section-subtitle');
+                if (statusEl) {
+                    statusEl.textContent = e.message || 'Please try again.';
+                    statusEl.style.color = 'var(--red)';
+                    setTimeout(() => { statusEl.style.color = ''; }, 5000);
+                } else {
+                    alert(e.message || 'Please try again.');
+                }
+            }
+        }
+
+        async function upgrade(tier) {
+            const jwt = localStorage.getItem('mb_jwt');
+            try {
+                const res = await fetch('/billing/upgrade?tier=' + tier, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': 'Bearer ' + jwt,
+                        'Content-Type': 'application/json',
+                    },
+                });
+                if (!res.ok) {
+                    const err = await res.json().catch(() => ({}));
+                    throw new Error(err.detail || 'Could not upgrade subscription. Try again later.');
                 }
                 const data = await res.json();
                 if (data.checkout_url) { window.location.href = data.checkout_url; }

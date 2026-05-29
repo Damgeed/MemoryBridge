@@ -118,6 +118,47 @@
             color: var(--accent);
         }
 
+        /* ── Deactivated key styles ──────────────────── */
+        .key-item.deactivated {
+            opacity: 0.6;
+        }
+        .key-item.deactivated .key-label {
+            text-decoration: line-through;
+        }
+        .badge-deactivated {
+            display: inline-block;
+            font-size: 0.68rem;
+            font-weight: 600;
+            padding: 0.2rem 0.5rem;
+            border-radius: 4px;
+            background: var(--bg-tertiary);
+            color: var(--text-faint);
+            border: 1px solid var(--border-subtle);
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+        .keys-divider {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.5rem 0;
+            margin-top: 0.25rem;
+            border-top: 1px solid var(--border-subtle);
+        }
+        .keys-divider span {
+            font-size: 0.72rem;
+            font-weight: 600;
+            color: var(--text-faint);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        .keys-divider::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: var(--border-subtle);
+        }
+
         .key-reveal {
             margin-top: 1rem;
             background: var(--bg-tertiary);
@@ -1904,9 +1945,11 @@
 
         function renderKeys(keys) {
             const el = document.getElementById('keys-list');
-            // Only show active (non-revoked) keys
-            const active = (keys || []).filter(k => k.is_active !== false);
-            if (!active || active.length === 0) {
+            const allKeys = keys || [];
+            const active = allKeys.filter(k => k.is_active !== false);
+            const deactivated = allKeys.filter(k => k.is_active === false);
+
+            if (active.length === 0 && deactivated.length === 0) {
                 el.innerHTML = `
                     <div class="empty-keys">
                         <div class="icon">🔑</div>
@@ -1917,6 +1960,8 @@
             }
 
             let html = '';
+
+            // ── Active keys ──
             for (const k of active) {
                 const created = k.created_at ? new Date(k.created_at).toLocaleDateString() : '—';
                 const label = k.label || 'default';
@@ -1933,6 +1978,26 @@
                         </button>
                     </div>`;
             }
+
+            // ── Deactivated keys ──
+            if (deactivated.length > 0) {
+                html += `<div class="keys-divider"><span>Deactivated Keys</span></div>`;
+                for (const k of deactivated) {
+                    const created = k.created_at ? new Date(k.created_at).toLocaleDateString() : '—';
+                    const label = k.label || 'default';
+                    html += `
+                    <div class="key-item deactivated">
+                        <span class="key-label">${escapeHtml(label)}</span>
+                        <span class="key-value">••••••••${k.id ? k.id.slice(-6) : ''}</span>
+                        <span class="key-date">${created}</span>
+                        <span class="badge-deactivated">Deactivated</span>
+                        <button class="btn-icon" onclick="reactivateKey('${k.id}')" title="Reactivate key" style="color:var(--green);">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+                        </button>
+                    </div>`;
+                }
+            }
+
             el.innerHTML = html;
         }
 
@@ -2012,6 +2077,20 @@
                     }
                 }
             });
+        }
+
+        async function reactivateKey(keyId) {
+            try {
+                const result = await api('POST', `/dashboard/keys/${keyId}/reactivate`);
+                if (result.status === 'reactivated') {
+                    showToast('✅ API key reactivated successfully.');
+                    loadKeys();
+                } else {
+                    showToast('⚠️ Unexpected response when reactivating key.');
+                }
+            } catch (e) {
+                showToast(e.message || 'Could not reactivate key.');
+            }
         }
 
         // ── Auth Modal ──────────────────────────────────────────────
