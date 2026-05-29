@@ -991,9 +991,9 @@
 
             <!-- Step 2: Phone input -->
             <div id="auth-phone-step" class="auth-form">
-              <button class="back-link" onclick="showAuthOptions()" data-i18n="auth.back">
+              <button class="back-link" onclick="showAuthOptions()">
             <span style="font-size:0.9rem;margin-right:0.1rem;">←</span>
-            <spandata-i18n="auth.back">Back</span>
+            <span data-i18n="auth.back">Back</span>
               </button>
               <div class="auth-code-info">
                 <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
@@ -1197,9 +1197,9 @@
 
             <!-- Step 3: Code verification -->
             <div id="auth-code-step" class="auth-form">
-              <button class="back-link" onclick="showAuthOptions()" data-i18n="auth.back">
+              <button class="back-link" onclick="showAuthOptions()">
             <span style="font-size:0.9rem;margin-right:0.1rem;">←</span>
-            <spanid="code-back-label" data-i18n="auth.back">Back</span>
+            <span id="code-back-label" data-i18n="auth.back">Back</span>
               </button>
               <div class="auth-code-info">
                 <svg id="code-step-icon" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
@@ -1223,7 +1223,7 @@
             <div id="auth-recovery-step" class="auth-form" style="display:none;">
               <button class="back-link" onclick="showAuthOptions()">
             <span style="font-size:0.9rem;margin-right:0.1rem;">←</span>
-            <spandata-i18n="auth.back">Back</span>
+            <span data-i18n="auth.back">Back</span>
               </button>
               <div class="auth-code-info">
                 <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
@@ -1970,8 +1970,7 @@
                         <div class="key-reveal" style="border-color:var(--orange);">
                             <div style="margin-bottom:0.5rem;font-weight:700;font-size:0.85rem;color:var(--orange);"> Key Limit Reached</div>
                             <div style="font-size:0.82rem;color:var(--text-muted);margin-bottom:0.75rem;">
-                                You've generated all 5 API keys allowed on the Free plan.
-                                Delete an existing key below to create a new one, or upgrade for unlimited keys.
+                                ${escapeHtml(msg)}
                             </div>
                             <div style="display:flex;gap:0.5rem;flex-wrap:wrap;">
                                 <a href="/pricing" class="btn btn-primary btn-sm">Upgrade Plan →</a>
