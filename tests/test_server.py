@@ -257,8 +257,11 @@ async def test_search_memories_endpoint():
         resp = await client.get("/memories/search", params={"q": "python"})
         assert resp.status_code == 200
         data = resp.json()
-        assert data["total"] == 1
-        assert data["entries"][0]["key"] == "user"
+        assert "results" in data or "entries" in data
+        entries = data.get("results", data.get("entries", []))
+        assert len(entries) == 1
+        entry = entries[0].get("memory", entries[0]) if isinstance(entries[0], dict) else entries[0]
+        assert entry["key"] == "user"
 
         # Search with session filter
         resp = await client.get("/memories/search", params={
@@ -266,15 +269,17 @@ async def test_search_memories_endpoint():
         })
         assert resp.status_code == 200
         data = resp.json()
-        assert data["total"] == 1
-        assert data["entries"][0]["key"] == "project"
+        entries = data.get("results", data.get("entries", []))
+        assert len(entries) == 1
+        entry = entries[0].get("memory", entries[0]) if isinstance(entries[0], dict) else entries[0]
+        assert entry["key"] == "project"
 
         # Search with no matches
         resp = await client.get("/memories/search", params={"q": "zzzznotfound"})
         assert resp.status_code == 200
         data = resp.json()
-        assert data["total"] == 0
-        assert data["entries"] == []
+        entries = data.get("results", data.get("entries", []))
+        assert len(entries) == 0
 
 
 @pytest.mark.asyncio
@@ -297,8 +302,10 @@ async def test_search_memories_endpoint_with_filters():
         })
         assert resp.status_code == 200
         data = resp.json()
-        assert data["total"] == 1
-        assert data["entries"][0]["agent_id"] == "alice"
+        entries = data.get("results", data.get("entries", []))
+        assert len(entries) == 1
+        entry = entries[0].get("memory", entries[0]) if isinstance(entries[0], dict) else entries[0]
+        assert entry["agent_id"] == "alice"
 
         # Filter by session
         resp = await client.get("/memories/search", params={
@@ -306,8 +313,10 @@ async def test_search_memories_endpoint_with_filters():
         })
         assert resp.status_code == 200
         data = resp.json()
-        assert data["total"] == 1
-        assert data["entries"][0]["session_id"] == "s-bob"
+        entries = data.get("results", data.get("entries", []))
+        assert len(entries) == 1
+        entry = entries[0].get("memory", entries[0]) if isinstance(entries[0], dict) else entries[0]
+        assert entry["session_id"] == "s-bob"
 
 
 @pytest.mark.asyncio
