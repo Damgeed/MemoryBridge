@@ -308,6 +308,17 @@ class BillingService:
             except Exception as e:
                 logger.warning("Webhook: failed to deactivate keys for org %s: %s", org_id, e)
 
+        # Also trim keys to the new tier's limit for any tier change (e.g. Pro→Starter)
+        if self.repo and tier and tier != "free":
+            from ..services.metering_service import TIER_LIMITS
+            tier_limit = TIER_LIMITS.get(tier, {}).get("max_api_keys", 25)
+            try:
+                deactivated = await self.repo.deactivate_excess_keys(org_id, tier_limit)
+                if deactivated:
+                    logger.info("Webhook: deactivated %d excess keys for org %s (tier=%s, limit=%d)", deactivated, org_id, tier, tier_limit)
+            except Exception as e:
+                logger.warning("Webhook: failed to deactivate keys for org %s: %s", org_id, e)
+
         logger.info(
             "Subscription upserted from %s: sub=%s, org=%s, tier=%s, status=%s",
             event_type,
@@ -682,6 +693,7 @@ class BillingService:
             # Now update local record (after capturing old tier name)
             updated_data = updated.to_dict() if hasattr(updated, 'to_dict') else updated
             sub.tier = target_tier
+            sub.pending_tier = ""
             sub.status = updated_data.get('status', 'active')
             sub.updated_at = datetime.now(timezone.utc)
             if updated_data.get('current_period_start'):

@@ -138,6 +138,17 @@ async def cancel_subscription(
     billing: BillingService = Depends(_get_billing_service),
 ):
     """Cancel a subscription (at period end), optionally with a target tier to switch to."""
+    auth = getattr(request.state, "auth", None)
+    if not auth:
+        raise HTTPException(status_code=401, detail="You must be signed in.")
+
+    user_org_id = auth.get("project_id") or auth.get("key_id", "")
+    if not user_org_id:
+        raise HTTPException(status_code=401, detail="Could not resolve your account.")
+
+    if user_org_id != org_id:
+        raise HTTPException(status_code=403, detail="You can only cancel your own organization's subscription.")
+
     success = await billing.cancel_subscription(org_id, target_tier=target_tier)
     if not success:
         raise HTTPException(

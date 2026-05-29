@@ -749,8 +749,8 @@
                     You can always upgrade again later.`;
             } else {
                 textEl.innerHTML = `Are you sure you want to switch to the ${tierName} plan?
-                    Your subscription will be updated immediately with any applicable proration.
-                    Any API keys beyond the <strong>${tierName} limit (${limit})</strong> will be <strong>deactivated</strong>.`;
+                    Your subscription will switch to the ${tierName} plan at the end of your current billing cycle.
+                    Any API keys beyond the <strong>${tierName} limit (${limit})</strong> will be <strong>deactivated</strong> at that time.`;
             }
             document.getElementById('downgrade-overlay').classList.add('open');
             document.getElementById('downgrade-modal').classList.add('open');
