@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#0a0a0f" media="(prefers-color-scheme: dark)">
-<title>Memory Bridge — Forgetful Agent Demo</title>
+<title data-i18n="demo.watch_title">Memory Bridge — Watch Demo</title>
 <link rel="icon" href="/playground/logo.png" type="image/png">
 <link rel="stylesheet" href="/playground/style.css">
 <style>
@@ -21,10 +21,8 @@
     --green: #4ade80;
     --pink: #e879f9;
     --orange: #fb923c;
-    --red: #ef4444;
     --blue: #60a5fa;
     --font: 'SF Mono', 'Menlo', 'Monaco', 'Courier New', monospace;
-    --log-bg: rgba(30, 30, 42, 0.5);
   }
   [data-theme="light"] {
     --bg: #d4d4e6;
@@ -37,273 +35,116 @@
     --green: #22c55e;
     --pink: #d946ef;
     --orange: #ea580c;
-    --red: #dc2626;
     --blue: #3b82f6;
-    --log-bg: rgba(200, 200, 220, 0.6);
+  }
+  html, body {
+    height: 100%;
+    overflow: hidden;
   }
   body {
     background: var(--bg);
     color: var(--text);
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
-    overflow: hidden;
-    height: 100vh;
     display: flex;
     flex-direction: column;
   }
 
-  /* ── Split Screen Layout ────────────────────────────── */
-  .split-main {
-    display: flex;
-    flex-direction: row;
+  /* ── Page Layout ─────────────────────────── */
+  .watch-container {
     flex: 1;
+    display: flex;
+    flex-direction: column;
     overflow: hidden;
+  }
+
+  /* ── Tabs ────────────────────────────────── */
+  .watch-tabs {
+    display: flex;
     gap: 0;
-    position: relative;
-  }
-
-  /* Divider line between panels */
-  .split-drag {
-    width: 3px;
-    background: var(--border);
-    cursor: col-resize;
-    flex-shrink: 0;
-    position: relative;
-    z-index: 5;
-    transition: background 0.2s;
-  }
-  .split-drag:hover { background: var(--accent); }
-
-  /* ── Split Panels ──────────────────────────────────── */
-  .split-panel {
-    flex: 1;
-    min-width: 0;
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-    position: relative;
-  }
-
-  /* Panel Header */
-  .panel-header {
-    padding: 0.7rem 1rem;
-    border-bottom: 1px solid var(--border);
-    display: flex;
-    align-items: center;
-    gap: 0.6rem;
-    flex-shrink: 0;
-  }
-  .panel-header .status-dot {
-    width: 10px;
-    height: 10px;
-    border-radius: 50%;
-    flex-shrink: 0;
-  }
-  .panel-header .status-dot.bad { background: var(--red); box-shadow: 0 0 8px rgba(239,68,68,0.4); }
-  .panel-header .status-dot.good { background: var(--green); box-shadow: 0 0 8px rgba(74,222,128,0.4); }
-  .panel-header h3 {
-    font-size: 0.85rem;
-    font-weight: 700;
-    letter-spacing: -0.01em;
-    flex: 1;
-  }
-  .panel-header .panel-badge {
-    font-size: 0.65rem;
-    font-weight: 600;
-    padding: 0.15rem 0.5rem;
-    border-radius: 4px;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-  }
-  .panel-header .panel-badge.bad {
-    background: rgba(239,68,68,0.15);
-    color: var(--red);
-    border: 1px solid rgba(239,68,68,0.2);
-  }
-  .panel-header .panel-badge.good {
-    background: rgba(74,222,128,0.15);
-    color: var(--green);
-    border: 1px solid rgba(74,222,128,0.2);
-  }
-
-  /* Left panel specific */
-  .panel-left {
-    border-right: none;
-  }
-  .panel-left .panel-header {
-    border-bottom-color: rgba(239,68,68,0.15);
-  }
-
-  /* Right panel specific */
-  .panel-right {
-    border-left: none;
-  }
-  .panel-right .panel-header {
-    border-bottom-color: rgba(74,222,128,0.15);
-  }
-
-  /* Log area */
-  .panel-logs {
-    flex: 1;
-    overflow-y: auto;
-    padding: 0.7rem 0.8rem;
-    display: flex;
-    flex-direction: column;
-    gap: 0.4rem;
-  }
-  .panel-logs::-webkit-scrollbar { width: 5px; }
-  .panel-logs::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
-
-  /* Log entry */
-  .log {
-    font-family: var(--font);
-    font-size: 0.78rem;
-    line-height: 1.55;
-    padding: 0.45rem 0.6rem;
-    border-radius: 6px;
-    background: var(--log-bg);
-    border-left: 3px solid transparent;
-    opacity: 0;
-    transform: translateY(8px);
-    animation: logIn 0.35s ease forwards;
-    word-break: break-word;
-  }
-  .log.user { border-left-color: var(--blue); }
-  .log.agent { border-left-color: var(--accent); }
-  .log.system { border-left-color: var(--muted); }
-  .log.error { border-left-color: var(--red); }
-  .log.success { border-left-color: var(--green); }
-  .log.memory { border-left-color: var(--pink); }
-  .log.frustration { border-left-color: var(--orange); }
-
-  .log .agent-tag {
-    display: inline-block;
-    font-weight: 700;
-    font-size: 0.68rem;
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
-    padding: 0.08rem 0.35rem;
-    border-radius: 3px;
-    margin-right: 0.35rem;
-  }
-  .log.user .agent-tag { background: rgba(96,165,250,0.15); color: var(--blue); }
-  .log.agent .agent-tag { background: rgba(124,92,252,0.15); color: var(--accent); }
-  .log.system .agent-tag { background: rgba(108,112,134,0.15); color: var(--muted); }
-  .log.error .agent-tag { background: rgba(239,68,68,0.15); color: var(--red); }
-  .log.success .agent-tag { background: rgba(74,222,128,0.15); color: var(--green); }
-  .log.memory .agent-tag { background: rgba(232,121,249,0.15); color: var(--pink); }
-  .log.frustration .agent-tag { background: rgba(251,146,60,0.15); color: var(--orange); }
-
-  .log .arrow { color: var(--muted); font-size: 0.7rem; }
-  .log .key { color: var(--accent2); }
-  .log .val { color: var(--text); }
-  .log .status-good { color: var(--green); font-weight: 600; }
-  .log .status-bad { color: var(--red); font-weight: 600; }
-  .log .status-warn { color: var(--orange); }
-
-  @keyframes logIn {
-    to { opacity: 1; transform: translateY(0); }
-  }
-
-  /* Phase labels */
-  .phase-label {
-    font-family: var(--font);
-    font-size: 0.65rem;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.06em;
-    padding: 0.2rem 0.5rem;
-    border-radius: 3px;
-    text-align: center;
-    margin: 0.2rem 0;
-    opacity: 0;
-    animation: logIn 0.3s ease forwards;
-  }
-  .phase-label.phase-start { background: rgba(96,165,250,0.1); color: var(--blue); }
-  .phase-label.phase-store { background: rgba(232,121,249,0.1); color: var(--pink); }
-  .phase-label.phase-end { background: rgba(251,146,60,0.1); color: var(--orange); }
-  .phase-label.phase-resume { background: rgba(74,222,128,0.1); color: var(--green); }
-
-  /* ── Bottom Controls ────────────────────────────────── */
-  .global-controls {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 0.6rem;
-    padding: 0.6rem 1rem;
-    border-top: 1px solid var(--border);
-    background: var(--bg);
-    flex-shrink: 0;
-  }
-  .global-controls button {
-    background: var(--card);
     border: 1px solid var(--border);
-    color: var(--text);
-    padding: 0.4rem 0.9rem;
-    border-radius: 6px;
-    cursor: pointer;
-    font-size: 0.78rem;
-    font-weight: 600;
-    font-family: inherit;
-    transition: all 0.2s;
-    display: inline-flex;
-    align-items: center;
-    gap: 0.35rem;
-  }
-  .global-controls button:hover {
-    border-color: var(--accent);
-    color: var(--accent);
-  }
-  .global-controls button:active {
-    transform: scale(0.97);
-  }
-  .global-controls .status-text {
-    font-size: 0.72rem;
-    color: var(--muted);
-    font-family: var(--font);
-    min-width: 120px;
-    text-align: center;
-  }
-  .global-controls .counter {
-    font-size: 0.7rem;
-    color: var(--muted);
-    font-family: var(--font);
-  }
-
-  /* ── Summary bar at bottom of panels ────────────────── */
-  .panel-summary {
-    padding: 0.45rem 0.8rem;
-    border-top: 1px solid var(--border);
-    font-size: 0.68rem;
-    font-family: var(--font);
-    color: var(--muted);
-    text-align: center;
+    border-radius: var(--radius-md, 12px);
+    overflow: hidden;
+    margin: 1rem auto;
+    max-width: 460px;
+    width: 100%;
     flex-shrink: 0;
   }
+  .watch-tab {
+    flex: 1;
+    padding: 0.7rem 0;
+    border: none;
+    background: transparent;
+    color: var(--muted);
+    font-weight: 600;
+    font-size: 0.88rem;
+    cursor: pointer;
+    font-family: var(--font-sans, -apple-system, sans-serif);
+    transition: all 0.15s ease;
+    white-space: nowrap;
+  }
+  .watch-tab.active {
+    background: var(--accent);
+    color: #fff;
+    font-weight: 700;
+  }
+  .watch-tab:hover:not(.active) {
+    color: var(--text);
+    background: rgba(124, 92, 252, 0.08);
+  }
 
-  @media (max-width: 768px) {
-    .split-main { flex-direction: column; }
-    .split-drag { width: 100%; height: 3px; cursor: row-resize; }
-    .split-panel { max-height: 50vh; }
-    .panel-header h3 { font-size: 0.78rem; }
-    .log { font-size: 0.72rem; }
+  /* ── Iframe Panels ───────────────────────── */
+  .watch-panel {
+    flex: 1;
+    display: none;
+    overflow: hidden;
+  }
+  .watch-panel.active {
+    display: flex;
+  }
+  .watch-panel iframe {
+    width: 100%;
+    height: 100%;
+    border: none;
+    background: var(--bg);
+  }
+
+  /* ── Mobile Responsive ───────────────────── */
+  @media (max-width: 640px) {
+    .watch-tabs {
+      flex-direction: column;
+      max-width: calc(100% - 1rem);
+      margin: 0.5rem auto;
+      border-radius: var(--radius-sm, 8px);
+    }
+    .watch-tab {
+      font-size: 0.8rem;
+      padding: 0.55rem 0;
+    }
+  }
+  @media (max-width: 480px) {
+    .watch-tabs {
+      flex-direction: row;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: none;
+      max-width: 100%;
+      border-radius: 0;
+      border-left: none;
+      border-right: none;
+      margin: 0;
+    }
+    .watch-tabs::-webkit-scrollbar { display: none; }
+    .watch-tab {
+      flex: 0 0 auto;
+      padding: 0.6rem 1rem;
+      font-size: 0.78rem;
+    }
   }
 </style>
 <script src="/playground/i18n.js"></script>
 <script src="/playground/auth.js?v=1"></script>
 </head>
 <body>
-<script>
-  // Hide nav when embedded in an iframe on the demo page
-  if (window.top !== window) {
-    document.documentElement.classList.add('in-iframe');
-  }
-</script>
-<style>
-  .in-iframe .navbar,
-  .in-iframe .nav-mobile-backdrop,
-  .in-iframe .nav-mobile-panel { display: none !important; }
-  .in-iframe body { padding-top: 0; }
-</style>
 <!-- Navbar (matches site theme) -->
 <nav class="navbar">
   <a href="/" class="logo">
@@ -342,7 +183,7 @@
             <a href="javascript:void(0)" data-lang="de" class="lang-opt" onclick="setLang('de')">🇩🇪 Deutsch</a>
         </div>
     </div>
-    <button class="nav-icon-btn theme-toggle-btn" onclick="toggleDemoTheme()" title="Toggle theme" aria-label="Toggle theme">
+    <button class="nav-icon-btn theme-toggle-btn" onclick="toggleWatchTheme()" title="Toggle theme" aria-label="Toggle theme">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="theme-sun">
         <circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/>
         <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
@@ -378,7 +219,7 @@
                     Manage Billing
                 </a>
                 <div class="user-dropdown-item sign-out" onclick="showLogoutConfirm()" style="cursor:pointer;" data-i18n="nav.sign_out">
-                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1-2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
                     Sign Out
                 </div>
             </div>
@@ -420,8 +261,8 @@
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg><span data-i18n="nav.dashboard">Dashboard</span></a>
   <a href="/pricing" onclick="closeMobileNav()" >
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg><span data-i18n="nav.pricing">Pricing</span></a>
-        <a href="/playground/integrations.html" onclick="closeMobileNav()" >
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg><span>Integrations</span></a>
+  <a href="/playground/integrations.html" onclick="closeMobileNav()" >
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg><span>Integrations</span></a>
   <a href="javascript:void(0)" id="auth-mobile-btn" onclick="closeMobileNav();openAuth()" style="display:flex;align-items:center;gap:0.45rem;padding:0.7rem 1.25rem;border-radius:var(--radius-sm);font-size:0.88rem;font-weight:600;color:var(--accent);text-decoration:none;">
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
     <span id="auth-mobile-label" data-i18n="nav.sign_out">Sign in</span>
@@ -431,66 +272,178 @@
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
     Launch Playground
   </a>
+
 </div>
 
-<!-- ── Split View Demo ──────────────────────────── -->
-<div class="split-main" id="demo-split">
+<!-- Logout Confirm Modal -->
+<div class="logout-modal-overlay" id="logout-overlay" onclick="closeLogoutConfirm()"></div>
+<div class="logout-modal" id="logout-modal">
+    <div class="logout-icon">🚪</div>
+    <div class="logout-title" data-i18n="logout.title">Sign out of Memory Bridge?</div>
+    <div class="logout-text" data-i18n="logout.text">
+        You'll need to sign in again to manage API keys, view subscription details, or access your dashboard.
+    </div>
+    <div class="logout-btns">
+        <button class="btn btn-secondary" onclick="closeLogoutConfirm()" style="display:inline-flex;align-items:center;justify-content:center;gap:0.4rem;padding:0.6rem 1.2rem;font-size:0.9rem;font-weight:600;border:1px solid var(--border);border-radius:8px;cursor:pointer;font-family:inherit;background:var(--card);color:var(--text);transition:all 0.2s;" data-i18n="logout.cancel">Cancel</button>
+        <button class="btn btn-danger" id="logout-confirm-btn" onclick="logout()" style="display:inline-flex;align-items:center;justify-content:center;gap:0.4rem;padding:0.6rem 1.2rem;font-size:0.9rem;font-weight:700;border:none;border-radius:8px;cursor:pointer;font-family:inherit;background:#ef4444;color:#fff;transition:all 0.2s;" data-i18n="logout.sign_out">Sign Out</button>
+    </div>
+</div>
 
-  <!-- LEFT PANEL: No Memory -->
-  <div class="split-panel panel-left">
-    <div class="panel-header">
-      <span class="status-dot bad"></span>
-      <h3 data-i18n="demo.no_memory_title">No Memory</h3>
-      <span class="panel-badge bad" data-i18n="demo.forgetful_badge">FORGETFUL</span>
-    </div>
-    <div class="panel-logs" id="left-logs">
-      <div class="log system">
-        <span class="agent-tag">SYSTEM</span>
-        <span class="arrow">→</span>
-        <span data-i18n="demo.agent_no_memory">Agent: NO memory — each session starts fresh.</span>
-      </div>
-    </div>
-    <div class="panel-summary" id="left-summary" data-i18n="demo.left_summary">Sessions: 0 &nbsp;|&nbsp; Retained: 0 &nbsp;|&nbsp; Success: —</div>
+<!-- ═══ Watch Demo Content ═══ -->
+<div class="watch-container">
+
+  <div class="watch-tabs">
+    <button class="watch-tab active" id="tab-multi" onclick="switchWatchTab('multi')" data-i18n="demo.multi_agent_tab">
+      🤖 Multi-Agent Team
+    </button>
+    <button class="watch-tab" id="tab-forgetful" onclick="switchWatchTab('forgetful')" data-i18n="demo.forgetful_tab">
+      🧠 Forgetful Agent
+    </button>
   </div>
 
-  <!-- DIVIDER -->
-  <div class="split-drag" id="split-drag"></div>
-
-  <!-- VS BADGE (centered over divider) -->
-  <div class="vs-badge" style="position:absolute; left:50%; top:50%; transform:translate(-50%,-50%); z-index:10; display:flex; flex-direction:column; align-items:center; gap:4px; pointer-events:none;">
-    <span style="font-size:0.6rem; font-weight:700; text-transform:uppercase; letter-spacing:0.08em; color:var(--red); background:var(--card); padding:2px 10px; border-radius:4px; border:1px solid var(--border);">Without</span>
-    <span style="font-size:0.5rem; font-weight:600; color:var(--muted);">▼</span>
-    <span style="font-size:0.6rem; font-weight:700; text-transform:uppercase; letter-spacing:0.08em; color:var(--green); background:var(--card); padding:2px 10px; border-radius:4px; border:1px solid var(--border);">With</span>
+  <div class="watch-panel active" id="panel-multi">
+    <iframe src="/demo" title="Multi-Agent Team Demo"></iframe>
   </div>
 
-  <!-- RIGHT PANEL: With Memory Bridge -->
-  <div class="split-panel panel-right">
-    <div class="panel-header">
-      <span class="status-dot good"></span>
-      <h3 data-i18n="demo.with_memory_title">With Memory Bridge</h3>
-      <span class="panel-badge good" data-i18n="demo.persistent_badge">PERSISTENT</span>
-    </div>
-    <div class="panel-logs" id="right-logs">
-      <div class="log system">
-        <span class="agent-tag">SYSTEM</span>
-        <span class="arrow">→</span>
-        <span data-i18n="demo.agent_with_memory">Agent: WITH Memory Bridge — remembers across sessions.</span>
-      </div>
-    </div>
-    <div class="panel-summary" id="right-summary" data-i18n="demo.right_summary">Sessions: 0 &nbsp;|&nbsp; Retained: 0 &nbsp;|&nbsp; Success: —</div>
+  <div class="watch-panel" id="panel-forgetful">
+    <iframe src="/forgetful-demo" title="Forgetful Agent Demo"></iframe>
   </div>
 
 </div>
 
-<!-- ── Global Controls ──────────────────────────── -->
-<div class="global-controls">
-  <button id="run-demo-btn" onclick="window.runDemo &amp;&amp; runDemo()">▶ <span data-i18n="demo.run_demo">Run Demo</span></button>
-  <button id="replay-btn" onclick="window.replayDemo &amp;&amp; replayDemo()">⟳ Replay</button>
-  <span class="status-text" id="demo-status" data-i18n="demo.ready">Ready</span>
-  <span class="counter" id="step-counter">Step 0 / 0</span>
-</div>
+<script>
+// ── Theme ──────────────────────────────────────────────
+(function initWatchTheme() {
+  const saved = localStorage.getItem('mb-theme');
+  const html = document.documentElement;
+  if (saved) html.setAttribute('data-theme', saved);
+  else {
+    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    html.setAttribute('data-theme', prefersDark ? 'dark' : 'light');
+  }
+})();
+function toggleWatchTheme() {
+  const html = document.documentElement;
+  const next = html.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+  html.setAttribute('data-theme', next);
+  localStorage.setItem('mb-theme', next);
+}
 
-    </script>
+// ── Mobile Nav ─────────────────────────────────────────
+function toggleMobileNav() {
+  document.getElementById('nav-backdrop').classList.toggle('open');
+  document.getElementById('nav-mobile').classList.toggle('open');
+  document.body.style.overflow = document.getElementById('nav-mobile').classList.contains('open') ? 'hidden' : '';
+}
+function closeMobileNav() {
+  document.getElementById('nav-backdrop').classList.remove('open');
+  document.getElementById('nav-mobile').classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+// ── Tab Switcher ────────────────────────────────────────
+function switchWatchTab(tab) {
+  // Update tab buttons
+  document.querySelectorAll('.watch-tab').forEach(b => {
+    b.classList.remove('active');
+  });
+  document.getElementById('tab-' + tab).classList.add('active');
+
+  // Update panels
+  document.querySelectorAll('.watch-panel').forEach(p => {
+    p.classList.remove('active');
+  });
+  document.getElementById('panel-' + tab).classList.add('active');
+}
+
+// ── Auth helpers ────────────────────────────────────────
+function decodeJWT(token) {
+  try {
+    const payload = token.split('.')[1];
+    return JSON.parse(atob(payload.replace(/-/g, '+').replace(/_/g, '/')));
+  } catch { return null; }
+}
+
+function updateAuthUI() {
+  const jwt = localStorage.getItem('mb_jwt');
+  const key = localStorage.getItem('mb_api_key');
+  const signInBtn = document.getElementById('auth-nav-btn');
+  const userMenu = document.getElementById('user-menu');
+  const mobileLabel = document.getElementById('auth-mobile-label');
+  const avatarName = document.getElementById('user-avatar-name');
+  const avatarCircle = document.getElementById('user-avatar-circle');
+  const dropdownEmail = document.getElementById('user-dropdown-email');
+
+  if (jwt && userMenu && signInBtn) {
+    signInBtn.style.display = 'none';
+    userMenu.style.display = 'inline-flex';
+
+    const claims = decodeJWT(jwt);
+    const displayName = claims?.email || claims?.name || claims?.sub || '';
+    const initial = (displayName && displayName.length > 0) ? displayName[0].toUpperCase() : '?';
+
+    if (avatarName) avatarName.textContent = displayName.length > 16 ? displayName.slice(0, 14) + '…' : displayName;
+    if (avatarCircle) avatarCircle.textContent = initial;
+    if (dropdownEmail) dropdownEmail.textContent = displayName;
+
+    if (mobileLabel) mobileLabel.textContent = 'Sign out';
+    const mobileBtn = document.getElementById('auth-mobile-btn');
+    if (mobileBtn) mobileBtn.onclick = function() { closeMobileNav(); showLogoutConfirm(); };
+  } else if (userMenu && signInBtn) {
+    signInBtn.style.display = 'inline-flex';
+    userMenu.style.display = 'none';
+    if (mobileLabel) mobileLabel.textContent = 'Sign in';
+    const mobileBtn = document.getElementById('auth-mobile-btn');
+    if (mobileBtn) mobileBtn.onclick = function() { closeMobileNav(); openAuth(); };
+  }
+}
+
+function toggleUserDropdown() {
+  const menu = document.getElementById('user-menu');
+  menu.classList.toggle('open');
+}
+document.addEventListener('click', (e) => {
+  const menu = document.getElementById('user-menu');
+  if (menu && menu.classList.contains('open') && !e.target.closest('#user-menu')) {
+    menu.classList.remove('open');
+  }
+});
+
+function showLogoutConfirm() {
+  document.getElementById('user-menu')?.classList.remove('open');
+  document.getElementById('logout-overlay').classList.add('open');
+  document.getElementById('logout-modal').classList.add('open');
+}
+function closeLogoutConfirm() {
+  document.getElementById('logout-overlay').classList.remove('open');
+  document.getElementById('logout-modal').classList.remove('open');
+}
+
+function logout() {
+  closeLogoutConfirm();
+  localStorage.removeItem('mb_jwt');
+  localStorage.removeItem('mb_api_key');
+  currentApiKey = '';
+  updateAuthUI();
+}
+
+// ── Init ────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', () => {
+  currentApiKey = localStorage.getItem('mb_api_key') || '';
+  const jwt = localStorage.getItem('mb_jwt');
+  if (jwt && !currentApiKey) {
+    (async () => {
+      try {
+        const kvRes = await fetch('/auth/my-key-value', { headers: {'Authorization': 'Bearer ' + jwt, 'Content-Type': 'application/json'} });
+        if (kvRes.ok) { const data = await kvRes.json(); localStorage.setItem('mb_api_key', data.key); currentApiKey = data.key; }
+      } catch (e) { localStorage.removeItem('mb_jwt'); }
+      updateAuthUI();
+    })();
+  } else {
+    updateAuthUI();
+  }
+});
+</script>
 
 </body>
 </html>

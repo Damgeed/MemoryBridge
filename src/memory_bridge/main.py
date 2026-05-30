@@ -418,6 +418,22 @@ def create_app() -> FastAPI:
             )
         return Response(content="Page not found", status_code=404)
 
+    # ── Watch Demo (tabbed: multi-agent + forgetful) ──
+    @app.get("/watch-demo", include_in_schema=False)
+    async def watch_demo_page():
+        """Serve the tabbed watch-demo page with both demos."""
+        static_dir = os.path.join(os.path.dirname(__file__), "static")
+        html_path = os.path.join(static_dir, "watch-demo.html")
+        if os.path.exists(html_path):
+            with open(html_path) as f:
+                content = f.read()
+            return Response(
+                content=content,
+                media_type="text/html",
+                headers={"Cache-Control": "no-cache, no-store, must-revalidate"},
+            )
+        return Response(content="Page not found", status_code=404)
+
     # ── Integrations Index ─────────────────────────
     @app.get("/integrations", include_in_schema=False)
     async def integrations_page():
