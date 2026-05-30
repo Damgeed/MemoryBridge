@@ -19,12 +19,13 @@
         .back-link:hover { opacity: 0.8; }
 
         /* ── Integration Cards ─────────────────────────────── */
-        .int-grid { display: grid; gap: 1.25rem; grid-template-columns: repeat(auto-fill, minmax(380px, 1fr)); }
+        .int-grid { display: grid; gap: 1.25rem; grid-template-columns: repeat(auto-fill, minmax(380px, 1fr)); justify-items: center; }
         .int-card {
             background: var(--card-bg); border: 1px solid var(--border-primary);
             border-radius: var(--radius-lg); padding: 1.75rem;
             transition: all var(--transition-fast); position: relative; overflow: hidden;
             text-decoration: none; display: flex; flex-direction: column;
+            max-width: min(420px, 100%);
         }
         .int-card:hover { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent-glow), var(--shadow-md); transform: translateY(-2px); }
         .int-card-icon { font-size: 2rem; margin-bottom: 0.75rem; }
