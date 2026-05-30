@@ -345,6 +345,23 @@ class PostgresMemoryRepository(MemoryRepository):
                         created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
                         updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
                     );
+
+                    CREATE TABLE IF NOT EXISTS {self.schema}.scratchpads (
+                        id TEXT PRIMARY KEY,
+                        session_id TEXT NOT NULL,
+                        agent_id TEXT NOT NULL,
+                        project_id TEXT NOT NULL DEFAULT '',
+                        content JSONB NOT NULL DEFAULT '[]'::jsonb,
+                        contributors JSONB NOT NULL DEFAULT '[]'::jsonb,
+                        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+                        expires_at TIMESTAMPTZ NOT NULL,
+                        ttl_seconds INTEGER NOT NULL DEFAULT 1800
+                    );
+
+                    CREATE INDEX IF NOT EXISTS idx_{self.schema}_scratchpads_project
+                        ON {self.schema}.scratchpads(project_id);
+                    CREATE INDEX IF NOT EXISTS idx_{self.schema}_scratchpads_expires
+                        ON {self.schema}.scratchpads(expires_at);
                 """
                 await conn.execute(base_ddl)
 
