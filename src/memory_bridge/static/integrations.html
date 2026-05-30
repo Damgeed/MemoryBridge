@@ -400,6 +400,107 @@
             Drop-in adapters for the most popular AI agent frameworks. Add persistent memory to any agent in minutes.
         </p>
 
+        <!-- ═══ Installation Options ═══ -->
+        <div class="install-section" style="margin:2.5rem 0;padding:1.5rem;background:var(--bg-surface);border:1px solid var(--border-primary);border-radius:var(--radius-lg);">
+            <div style="text-align:center;margin-bottom:1.5rem;">
+                <span class="chip chip-active">🚀 Quick Start</span>
+                <h2 style="margin-top:0.5rem;font-size:1.2rem;">Get Memory Bridge Running in Seconds</h2>
+            </div>
+
+            <div class="setup-tabs" style="display:flex;gap:0;margin-bottom:1rem;border:1px solid var(--border-primary);border-radius:var(--radius-md);overflow:hidden;">
+                <button class="setup-tab active" onclick="switchInstallTab('hosted',this)" style="flex:1;padding:0.5rem 0;border:none;background:var(--accent);color:#fff;font-weight:700;font-size:0.82rem;cursor:pointer;transition:all 0.15s;">
+                    ☁️ Hosted (cloud)
+                </button>
+                <button class="setup-tab" onclick="switchInstallTab('docker',this)" style="flex:1;padding:0.5rem 0;border:none;background:transparent;color:var(--text-muted);font-weight:600;font-size:0.82rem;cursor:pointer;transition:all 0.15s;">
+                    🐳 Docker
+                </button>
+                <button class="setup-tab" onclick="switchInstallTab('pip',this)" style="flex:1;padding:0.5rem 0;border:none;background:transparent;color:var(--text-muted);font-weight:600;font-size:0.82rem;cursor:pointer;transition:all 0.15s;">
+                    📦 pip install
+                </button>
+                <button class="setup-tab" onclick="switchInstallTab('npx',this)" style="flex:1;padding:0.5rem 0;border:none;background:transparent;color:var(--text-muted);font-weight:600;font-size:0.82rem;cursor:pointer;transition:all 0.15s;">
+                    ⚡ npx
+                </button>
+                <button class="setup-tab" onclick="switchInstallTab('binary',this)" style="flex:1;padding:0.5rem 0;border:none;background:transparent;color:var(--text-muted);font-weight:600;font-size:0.82rem;cursor:pointer;transition:all 0.15s;">
+                    📥 Download
+                </button>
+            </div>
+
+            <!-- Hosted (cloud) -->
+            <div class="install-pane" id="install-hosted">
+                <p style="color:var(--text-muted);font-size:0.88rem;margin-bottom:0.75rem;">Use our hosted instance — zero setup, just add your API key.</p>
+                <div class="term-block">
+                    <button class="term-copy-btn" onclick="copyCmd(this,'Authorization: Bearer YOUR_API_KEY')" title="Copy">📋 Copy</button>
+                    <span class="term-comment"># Add to your Authorization header</span><br>
+                    <span class="term-line"><span class="term-prompt">$</span> curl -X POST https://memory-bridge-app-production.up.railway.app/memories \</span><br>
+                    <span class="term-line" style="padding-left:1.5rem;">-H "Authorization: Bearer <span style="color:var(--accent);">YOUR_API_KEY</span>" \</span><br>
+                    <span class="term-line" style="padding-left:1.5rem;">-H "Content-Type: application/json" \</span><br>
+                    <span class="term-line" style="padding-left:1.5rem;">-d '{"session_id":"my-session","agent_id":"henry","key":"hello","value":"Hello Memory Bridge!"}'</span>
+                </div>
+            </div>
+
+            <!-- Docker -->
+            <div class="install-pane" id="install-docker" style="display:none;">
+                <p style="color:var(--text-muted);font-size:0.88rem;margin-bottom:0.75rem;">Run your own instance locally or on any server with Docker.</p>
+                <div class="term-block">
+                    <button class="term-copy-btn" onclick="copyCmd(this,'docker run -p 8000:8000 memorybridge/memory-bridge:latest')" title="Copy">📋 Copy</button>
+                    <span class="term-comment"># Pull and run (SQLite by default)</span><br>
+                    <span class="term-line"><span class="term-prompt">$</span> docker run -p 8000:8000 memorybridge/memory-bridge</span>
+                </div>
+                <div class="term-block" style="margin-top:0.5rem;">
+                    <button class="term-copy-btn" onclick="copyCmd(this,'docker compose up')" title="Copy">📋 Copy</button>
+                    <span class="term-comment"># Or with docker-compose (PostgreSQL + Redis)</span><br>
+                    <span class="term-line"><span class="term-prompt">$</span> docker compose up</span>
+                </div>
+            </div>
+
+            <!-- pip -->
+            <div class="install-pane" id="install-pip" style="display:none;">
+                <p style="color:var(--text-muted);font-size:0.88rem;margin-bottom:0.75rem;">Install as a Python package — use it as a library or CLI.</p>
+                <div class="term-block">
+                    <button class="term-copy-btn" onclick="copyCmd(this,'pip install memory-bridge')" title="Copy">📋 Copy</button>
+                    <span class="term-comment"># Install the SDK</span><br>
+                    <span class="term-line"><span class="term-prompt">$</span> pip install memory-bridge</span>
+                </div>
+                <div class="term-block" style="margin-top:0.5rem;">
+                    <button class="term-copy-btn" onclick="copyCmd(this,'from memory_bridge_client import Client\n\nasync with Client(url=\"https://your-instance.com\", api_key=\"...\") as mb:\n    ctx = await mb.query_memories(agent_id=\"henry\", tags=[\"profile\"])')" title="Copy">📋 Copy</button>
+                    <span class="term-comment"># Or use it as a Python library</span><br>
+                    <span class="term-line"><span class="term-prompt">>>> </span>from memory_bridge_client import Client</span><br>
+                    <span class="term-line"><span class="term-prompt">>>> </span>async with Client(url="https://your-instance.com", api_key="...") as mb:</span><br>
+                    <span class="term-line" style="padding-left:1.2rem;">ctx = await mb.query_memories(agent_id="henry", tags=["profile"])</span>
+                </div>
+            </div>
+
+            <!-- npx / MCP -->
+            <div class="install-pane" id="install-npx" style="display:none;">
+                <p style="color:var(--text-muted);font-size:0.88rem;margin-bottom:0.75rem;">Use the MCP server — works with Claude Desktop, Cursor, Windsurf, and any MCP-compatible client.</p>
+                <div class="term-block">
+                    <button class="term-copy-btn" onclick="copyCmd(this,'npx -y @memory-bridge/mcp')" title="Copy">📋 Copy</button>
+                    <span class="term-comment"># Add to claude_desktop_config.json</span><br>
+                    <span class="term-line">{</span><br>
+                    <span class="term-line">  "mcpServers": {</span><br>
+                    <span class="term-line">    "memory-bridge": {</span><br>
+                    <span class="term-line">      "command": "npx",</span><br>
+                    <span class="term-line">      "args": ["-y", "@memory-bridge/mcp"],</span><br>
+                    <span class="term-line">      "env": { "MEMORY_BRIDGE_API_KEY": "<span style="color:var(--accent);">YOUR_API_KEY</span>" }</span><br>
+                    <span class="term-line">    }</span><br>
+                    <span class="term-line">  }</span><br>
+                    <span class="term-line">}</span>
+                </div>
+            </div>
+
+            <!-- Binary Download -->
+            <div class="install-pane" id="install-binary" style="display:none;">
+                <p style="color:var(--text-muted);font-size:0.88rem;margin-bottom:0.75rem;">Download a single-file binary — no dependencies required.</p>
+                <div style="display:flex;gap:0.75rem;flex-wrap:wrap;justify-content:center;margin:1rem 0;">
+                    <a href="#" class="btn btn-secondary" style="font-size:0.85rem;">🐧 Linux (x86_64)</a>
+                    <a href="#" class="btn btn-secondary" style="font-size:0.85rem;">🍎 macOS (ARM64)</a>
+                    <a href="#" class="btn btn-secondary" style="font-size:0.85rem;">🍎 macOS (x86_64)</a>
+                    <a href="#" class="btn btn-secondary" style="font-size:0.85rem;">🪟 Windows (x86_64)</a>
+                </div>
+                <p style="color:var(--text-muted);font-size:0.78rem;text-align:center;">Binaries are self-contained — just download, <code style="background:var(--bg-tertiary);padding:0.1rem 0.3rem;border-radius:4px;">chmod +x</code>, and run.</p>
+            </div>
+        </div>
+
         <div class="int-grid">
             <a href="/playground/integration-langchain.html" class="int-card">
                 <div class="int-card-icon">🦜🔗</div>
@@ -433,12 +534,70 @@
                 <span class="card-arrow">→</span>
             </a>
         </div>
+
+        <div class="int-grid" style="margin-top:1.5rem;">
+            <div class="int-card" style="opacity:0.6;cursor:default;">
+                <div class="int-card-icon">🦙</div>
+                <h2>LlamaIndex <span style="font-size:0.7rem;background:var(--accent);color:#fff;padding:0.1rem 0.4rem;border-radius:4px;vertical-align:middle;">Coming Soon</span></h2>
+                <p>Use Memory Bridge as an index store or chat memory backend for LlamaIndex agents and queries.</p>
+                <span class="card-tag" style="background:var(--bg-tertiary);">In Development</span>
+            </div>
+            <div class="int-card" style="opacity:0.6;cursor:default;">
+                <div class="int-card-icon">🧠</div>
+                <h2>Semantic Kernel <span style="font-size:0.7rem;background:var(--accent);color:#fff;padding:0.1rem 0.4rem;border-radius:4px;vertical-align:middle;">Coming Soon</span></h2>
+                <p>Plug Memory Bridge into Semantic Kernel's memory store for persistent AI plugin context.</p>
+                <span class="card-tag" style="background:var(--bg-tertiary);">In Development</span>
+            </div>
+            <div class="int-card" style="opacity:0.6;cursor:default;">
+                <div class="int-card-icon">🔗</div>
+                <h2>LangChain JS/TS <span style="font-size:0.7rem;background:var(--accent);color:#fff;padding:0.1rem 0.4rem;border-radius:4px;vertical-align:middle;">Coming Soon</span></h2>
+                <p>Memory Bridge as a BaseStore or Cache for JavaScript/TypeScript LangChain applications.</p>
+                <span class="card-tag" style="background:var(--bg-tertiary);">In Development</span>
+            </div>
+            <div class="int-card" style="opacity:0.6;cursor:default;">
+                <div class="int-card-icon">🔄</div>
+                <h2>Dify / n8n <span style="font-size:0.7rem;background:var(--accent);color:#fff;padding:0.1rem 0.4rem;border-radius:4px;vertical-align:middle;">Coming Soon</span></h2>
+                <p>Use Memory Bridge as a memory node in Dify workflows or n8n AI agent pipelines.</p>
+                <span class="card-tag" style="background:var(--bg-tertiary);">In Development</span>
+            </div>
+        </div>
     </div>
 
     <!-- Footer -->
     <footer class="footer" data-i18n="footer.text">© 2026 Memory Bridge — API for cross-agent memory</footer>
 
     <script>
+// ── Install Tab Switching ──────────────────────────────
+function switchInstallTab(tab, btn) {
+    document.querySelectorAll('.setup-tab').forEach(b => {
+        b.style.background = 'transparent';
+        b.style.color = 'var(--text-muted)';
+    });
+    btn.style.background = 'var(--accent)';
+    btn.style.color = '#fff';
+    document.querySelectorAll('.install-pane').forEach(p => p.style.display = 'none');
+    const pane = document.getElementById('install-' + tab);
+    if (pane) pane.style.display = '';
+}
+
+// ── Copy helpers ───────────────────────────────────────
+function copyCmd(btn, text) {
+    navigator.clipboard.writeText(text).then(() => {
+        const orig = btn.innerHTML;
+        btn.innerHTML = '✅ Copied!';
+        btn.style.color = 'var(--green)';
+        setTimeout(() => { btn.innerHTML = orig; btn.style.color = ''; }, 2000);
+    }).catch(() => {
+        // Fallback: select text from a temp textarea
+        const ta = document.createElement('textarea');
+        ta.value = text;
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand('copy');
+        document.body.removeChild(ta);
+    });
+}
+
 // ── Theme ──────────────────────────────────────────────
 (function initTheme() {
   const saved = localStorage.getItem('mb-theme');

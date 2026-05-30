@@ -993,11 +993,18 @@
             Memory <span class="logo-accent">Bridge</span>
         </a>
         <div class="nav-links">
+
             <a href="/" data-i18n="nav.home">Home</a>
+
             <a href="/playground/graph.html" data-i18n="nav.graph">Graph</a>
+
             <a href="/dashboard/" class="active" data-i18n="nav.dashboard">Dashboard</a>
+
             <a href="/pricing" data-i18n="nav.pricing">Pricing</a>
-        </div>
+
+            <a href="/playground/integrations.html" data-i18n="nav.integrations">Integrations</a>
+
+            </div>
         <div class="nav-right">
             <div style="position:relative;display:inline-flex;">
                 <button class="nav-icon-btn lang-toggle" onclick="toggleLang()" title="Switch language" aria-label="Switch language">
@@ -1096,6 +1103,8 @@
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg><span data-i18n="nav.dashboard">Dashboard</span></a>
         <a href="/pricing" onclick="closeMobileNav()" >
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg><span data-i18n="nav.pricing">Pricing</span></a>
+        <a href="/playground/integrations.html" onclick="closeMobileNav()" >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg><span>Integrations</span></a>
         <a href="javascript:void(0)" id="auth-mobile-btn" onclick="closeMobileNav();openAuth()" style="display:flex;align-items:center;gap:0.45rem;padding:0.7rem 1.25rem;border-radius:var(--radius-sm);font-size:0.88rem;font-weight:600;color:var(--accent);text-decoration:none;">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
             <span id="auth-mobile-label" data-i18n="auth.sign_in">Sign in</span>
@@ -1525,105 +1534,7 @@
                 </div>
             </div>
 
-            <!-- Setup Guide -->
-            <div class="dash-card" id="setup-card">
-                <div class="card-title" data-i18n="dash.setup_card">🚀 Setup Guide</div>
-                <p style="margin-bottom:1.25rem;color:var(--text-muted);font-size:0.88rem;" data-i18n="dash.setup_desc">
-                    Your API key goes in the <code style="background:var(--bg-tertiary);padding:0.1rem 0.35rem;border-radius:4px;color:var(--accent);">Authorization</code> header. Pick your path:
-                </p>
-
-                <!-- Path tabs -->
-                <div class="setup-tabs" style="display:flex;gap:0;margin-bottom:1rem;border:1px solid var(--border-primary);border-radius:var(--radius-md);overflow:hidden;">
-                    <button class="setup-tab active" onclick="switchSetupTab('hosted',this)" style="flex:1;padding:0.5rem 0;border:none;background:var(--accent);color:#fff;font-weight:700;font-size:0.82rem;cursor:pointer;font-family:var(--font-sans);transition:all var(--transition-fast);">
-                        ☁️ Hosted
-                    </button>
-                    <button class="setup-tab" onclick="switchSetupTab('selfhost',this)" style="flex:1;padding:0.5rem 0;border:none;background:transparent;color:var(--text-muted);font-weight:600;font-size:0.82rem;cursor:pointer;font-family:var(--font-sans);transition:all var(--transition-fast);">
-                        🐳 Self-Host
-                    </button>
-                </div>
-
-                <!-- Hosted path -->
-                <div class="setup-pane" id="setup-hosted">
-                    <div class="step-flow">
-                        <div class="step-num">1</div>
-                        <div class="step-content">
-                            <h3 data-i18n="dash.setup_mcp_title">Configure MCP (one line)</h3>
-                            <p data-i18n="dash.setup_mcp_desc">Add to your <code style="font-size:0.78rem;">claude_desktop_config.json</code> — Claude, Cursor, and AutoGen all support MCP.</p>
-                        </div>
-                    </div>
-                    <div class="term-block">
-                        <button class="term-copy-btn" onclick="copyCmd(this,JSON.stringify({mcpServers:{'memory-bridge':{command:'npx','args':['-y','@memory-bridge/mcp'],'env':{'MEMORY_BRIDGE_API_KEY':'YOUR_API_KEY'}}}},null,2))" title="Copy config">
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
-                            Copy
-                        </button>
-                        <span class="term-comment"># ~/Library/Application Support/Claude/claude_desktop_config.json</span><br>
-                        <span class="term-line">{</span><br>
-                        <span class="term-line">  "mcpServers": {</span><br>
-                        <span class="term-line">    "memory-bridge": {</span><br>
-                        <span class="term-line">      "command": "npx",</span><br>
-                        <span class="term-line">      "args": ["-y", "@memory-bridge/mcp"],</span><br>
-                        <span class="term-line">      "env": { "MEMORY_BRIDGE_API_KEY": "<span id="setup-mcp-key-placeholder" style="color:var(--accent);">YOUR_API_KEY</span>" }</span><br>
-                        <span class="term-line">    }</span><br>
-                        <span class="term-line">  }</span><br>
-                        <span class="term-line">}</span><br>
-                    </div>
-
-                    <div class="step-flow">
-                        <div class="step-num">2</div>
-                        <div class="step-content">
-                            <h3 data-i18n="dash.step2_title">Store your first memory</h3>
-                            <p data-i18n="dash.setup_step2_desc">Replace <code style="font-size:0.78rem;">YOUR_API_KEY</code> with your key from above.</p>
-                        </div>
-                    </div>
-                    <div class="term-block">
-                        <button class="term-copy-btn" onclick="copyPyCode(this)" title="Copy code">
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
-                            Copy
-                        </button>
-                        <span class="term-prompt">$</span> <span class="term-line" id="py-code-demo">curl -X POST <span class="setup-api-base">https://memory-bridge-app-production.up.railway.app</span>/memories \</span><br>
-                        <span class="term-line" style="padding-left:1.5rem;">-H "Authorization: Bearer YOUR_API_KEY" \</span><br>
-                        <span class="term-line" style="padding-left:1.5rem;">-H "Content-Type: application/json" \</span><br>
-                        <span class="term-line" style="padding-left:1.5rem;">-d '{"session_id":"my-session","agent_id":"henry","key":"hello","value":"Hello Memory Bridge!"}'</span>
-                    </div>
-                </div>
-
-                <!-- Self-host path -->
-                <div class="setup-pane" id="setup-selfhost" style="display:none;">
-                    <div class="step-flow">
-                        <div class="step-num">1</div>
-                        <div class="step-content">
-                            <h3 data-i18n="dash.step1_title">Run with Docker</h3>
-                            <p data-i18n="dash.step1_desc">Pull the image and start Memory Bridge on <strong>http://localhost:8000</strong>.</p>
-                        </div>
-                    </div>
-                    <div class="term-block">
-                        <button class="term-copy-btn" onclick="copyCmd(this,'docker run -p 8000:8000 memorybridge/memory-bridge:latest')" title="Copy command">
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
-                            Copy
-                        </button>
-                        <span class="term-prompt">$</span> <span class="term-line">docker run -p 8000:8000 memorybridge/memory-bridge</span>
-                    </div>
-
-                    <div class="step-flow">
-                        <div class="step-num">2</div>
-                        <div class="step-content">
-                            <h3 data-i18n="dash.step2_title">Store your first memory</h3>
-                            <p data-i18n="dash.step2_desc">Replace <code style="font-size:0.78rem;">YOUR_API_KEY</code> with your key from above.</p>
-                        </div>
-                    </div>
-                    <div class="term-block">
-                        <button class="term-copy-btn" onclick="copyPyCode(this)" title="Copy code">
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
-                            Copy
-                        </button>
-                        <span class="term-prompt">$</span> <span class="term-line">curl -X POST http://localhost:8000/memories \</span><br>
-                        <span class="term-line" style="padding-left:1.5rem;">-H "Authorization: Bearer YOUR_API_KEY" \</span><br>
-                        <span class="term-line" style="padding-left:1.5rem;">-H "Content-Type: application/json" \</span><br>
-                        <span class="term-line" style="padding-left:1.5rem;">-d '{"session_id":"my-session","agent_id":"henry","key":"hello","value":"Hello Memory Bridge!"}'</span>
-                    </div>
-                </div>
-            </div>
-        </div>  <!-- /setup-card -->
+            <!-- Moved to Integrations page -->
         </div>  <!-- /dash-grid -->
     </div>  <!-- /dash-authenticated-inner -->
 </div>  <!-- /dash-container -->
@@ -2203,12 +2114,10 @@
                 if (!data.agents || data.agents.length === 0) {
                     card.style.display = 'none';
                     _hasAgentData = false;
-                    updateSetupCardVisibility();
                     return;
                 }
                 card.style.display = '';
                 _hasAgentData = true;
-                updateSetupCardVisibility();
                 let html = '<div class="agent-list">';
                 for (const agent of data.agents.slice(0, 10)) {
                     const lastActive = agent.last_active
@@ -2311,7 +2220,6 @@
             }
 
             let html = '';
-            _hasApiKeys = true;  // track for setup-card auto-hide
 
             // Fill MCP setup key placeholder with first key
             const mcpPlaceholder = document.getElementById('setup-mcp-key-placeholder');
@@ -2966,85 +2874,11 @@
         function copyPyCode(btn) {
             // Build the full curl command with the current API key
             const key = currentApiKey || localStorage.getItem('mb_api_key') || 'YOUR_API_KEY';
-            const isHosted = document.getElementById('setup-hosted').style.display !== 'none';
             const base = isHosted ? 'https://memory-bridge-app-production.up.railway.app' : 'http://localhost:8000';
             const cmd = `curl -X POST ${base}/memories \\\n  -H "Authorization: Bearer ${key}" \\\n  -H "Content-Type: application/json" \\\n  -d '{"session_id":"my-session","agent_id":"henry","key":"hello","value":"Hello Memory Bridge!"}'`;
             copyText(btn, cmd);
         }
 
-        function switchSetupTab(tab, btn) {
-            // Toggle buttons
-            document.querySelectorAll('.setup-tab').forEach(b => {
-                b.style.background = 'transparent';
-                b.style.color = 'var(--text-muted)';
-                b.style.fontWeight = '600';
-            });
-            btn.style.background = 'var(--accent)';
-            btn.style.color = '#fff';
-            btn.style.fontWeight = '700';
-            // Toggle panes
-            document.getElementById('setup-hosted').style.display = tab === 'hosted' ? '' : 'none';
-            document.getElementById('setup-selfhost').style.display = tab === 'selfhost' ? '' : 'none';
-        }
-
-        function copyKey(keyId) {
-            copyText(event.target.closest('.btn-icon'), keyId);
-        }
-
-        function copyText(btn, text) {
-            navigator.clipboard.writeText(text).then(() => {
-                const original = btn.innerHTML;
-                btn.innerHTML = '✅ Copied';
-                btn.classList.add('copied');
-                setTimeout(() => {
-                    btn.innerHTML = original;
-                    btn.classList.remove('copied');
-                }, 2000);
-            }).catch(() => {
-                // Fallback
-                const ta = document.createElement('textarea');
-                ta.value = text;
-                document.body.appendChild(ta);
-                ta.select();
-                document.execCommand('copy');
-                document.body.removeChild(ta);
-                showToast('📋 Copied!');
-            });
-        }
-
-        function showToast(msg) {
-            const el = document.getElementById('toast');
-            el.textContent = msg;
-            el.classList.add('show');
-            clearTimeout(el._t);
-            el._t = setTimeout(() => el.classList.remove('show'), 2500);
-        }
-
-        function updateSetupCardVisibility() {
-            const card = document.getElementById('setup-card');
-            if (!card) return;
-            // Hide setup card when user has API keys AND has stored memories (agent data)
-            if (_hasApiKeys && _hasAgentData) {
-                card.style.display = 'none';
-            } else {
-                card.style.display = '';
-            }
-        }
-
-        function escapeHtml(str) {
-            const div = document.createElement('div');
-            div.textContent = str;
-            return div.innerHTML;
-        }
-
-        function showAuthenticatedContent(show) {
-            const gate = document.getElementById('dash-auth-gate');
-            const inner = document.getElementById('dash-authenticated-inner');
-            if (gate) gate.style.display = show ? 'none' : 'block';
-            if (inner) inner.style.display = show ? 'block' : 'none';
-            const status = document.getElementById('dash-status');
-            if (status) status.style.display = show ? 'block' : 'none';
-        }
 
         // ── Init ──────────────────────────────────────────────────
         document.addEventListener('DOMContentLoaded', async () => {
