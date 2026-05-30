@@ -11,7 +11,7 @@ from uuid import uuid4
 
 import asyncpg
 
-from ..models import MemoryEntry, MemoryType, Session, Subscription, AgentPermission
+from ..models import MemoryEntry, MemoryType, Session, Subscription, AgentPermission, InboxMessage
 from ..config import get_settings
 from ..services.embedding_service import EmbeddingService
 
@@ -172,6 +172,19 @@ _SCHEMA_MIGRATIONS: dict[int, str] = {
         "ON {schema}.webhook_deliveries(subscription_id, timestamp DESC)"
     ),
     18: "ALTER TABLE {schema}.memories ADD COLUMN IF NOT EXISTS memory_type TEXT NOT NULL DEFAULT 'episodic'",
+    19: (
+        "CREATE TABLE IF NOT EXISTS {schema}.inbox_messages ("
+        "id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text, "
+        "from_agent_id TEXT NOT NULL, "
+        "to_agent_id TEXT NOT NULL, "
+        "subject TEXT NOT NULL DEFAULT '', "
+        "body TEXT NOT NULL, "
+        "priority TEXT NOT NULL DEFAULT 'normal', "
+        "is_read BOOLEAN NOT NULL DEFAULT FALSE, "
+        "read_at TIMESTAMPTZ, "
+        "created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(), "
+        "project TEXT"        "); "        "CREATE INDEX IF NOT EXISTS idx_{schema}_inbox_to_agent "        "ON {schema}.inbox_messages(to_agent_id, is_read, created_at DESC); "        "CREATE INDEX IF NOT EXISTS idx_{schema}_inbox_project "        "ON {schema}.inbox_messages(project, to_agent_id)"
+    ),
 }
 # ──────────────────────────────────────────────────────────────────────────────
 
@@ -922,6 +935,89 @@ class PostgresMemoryRepository(MemoryRepository):
             # Record cleanup timestamp in shared metrics
             await self.record_metric("last_cleanup_at", datetime.now(timezone.utc).isoformat())
             return count
+
+    # ── Inbox Message Management ──────────────────────────────────────────────
+
+    async def send_inbox_message(self, msg: InboxMessage) -> InboxMessage:
+        """Send an inbox message from one agent to another."""
+        async with self.pool.acquire() as conn:
+            await conn.execute(
+                f"""INSERT INTO {self.schema}.inbox_messages
+                    (id, from_agent_id, to_agent_id, subject, body, priority, is_read, created_at, project)
+                    VALUES ($1, $2, $3, $4, $5, $6, $7, $8::timestamptz, $9)""",
+                msg.id, msg.from_agent_id, msg.to_agent_id, msg.subject,
+                msg.body, msg.priority, msg.read, msg.created_at, msg.project,
+            )
+        return msg
+
+    async def get_inbox_messages(
+        self, to_agent_id: str, unread_only: bool = False,
+        limit: int = 50, offset: int = 0, project: Optional[str] = None
+    ) -> tuple[list[InboxMessage], int]:
+        """Get inbox messages for an agent. Returns (messages, total_count)."""
+        async with self.pool.acquire() as conn:
+            conditions = ["to_agent_id = $1"]
+            params = [to_agent_id]
+            param_idx = 2
+            if unread_only:
+                conditions.append(f"is_read = FALSE")
+            if project:
+                conditions.append(f"project = ${param_idx}")
+                params.append(project)
+                param_idx += 1
+
+            where = " AND ".join(conditions)
+
+            # Count
+            row = await conn.fetchval(
+                f"SELECT COUNT(*) FROM {self.schema}.inbox_messages WHERE {where}", *params
+            )
+            total = row or 0
+
+            # Fetch
+            rows = await conn.fetch(
+                f"SELECT * FROM {self.schema}.inbox_messages WHERE {where} ORDER BY created_at DESC LIMIT ${param_idx} OFFSET ${param_idx + 1}",
+                *params, limit, offset,
+            )
+            messages = []
+            for row in rows:
+                messages.append(InboxMessage(
+                    id=row["id"],
+                    from_agent_id=row["from_agent_id"],
+                    to_agent_id=row["to_agent_id"],
+                    subject=row.get("subject") or "",
+                    body=row["body"],
+                    priority=row.get("priority") or "normal",
+                    read=row.get("is_read", False),
+                    read_at=row.get("read_at"),
+                    created_at=row["created_at"] if isinstance(row["created_at"], datetime) else datetime.fromisoformat(row["created_at"]),
+                    project=row.get("project"),
+                ))
+            return messages, total
+
+    async def acknowledge_inbox_message(self, message_id: str) -> bool:
+        """Mark an inbox message as read. Returns True if found."""
+        async with self.pool.acquire() as conn:
+            result = await conn.execute(
+                f"UPDATE {self.schema}.inbox_messages SET is_read = TRUE, read_at = NOW() WHERE id = $1",
+                message_id,
+            )
+            return result != "UPDATE 0"
+
+    async def count_unread_inbox(self, to_agent_id: str, project: Optional[str] = None) -> int:
+        """Count unread inbox messages for an agent."""
+        async with self.pool.acquire() as conn:
+            if project:
+                row = await conn.fetchval(
+                    f"SELECT COUNT(*) FROM {self.schema}.inbox_messages WHERE to_agent_id = $1 AND is_read = FALSE AND project = $2",
+                    to_agent_id, project,
+                )
+            else:
+                row = await conn.fetchval(
+                    f"SELECT COUNT(*) FROM {self.schema}.inbox_messages WHERE to_agent_id = $1 AND is_read = FALSE",
+                    to_agent_id,
+                )
+            return row or 0
 
     # ── API Key Management ────────────────────────────────────────────────────
 

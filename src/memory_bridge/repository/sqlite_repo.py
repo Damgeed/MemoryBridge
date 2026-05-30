@@ -10,7 +10,7 @@ from typing import Any, Optional
 from pathlib import Path
 from uuid import uuid4
 
-from ..models import MemoryEntry, MemoryType, Session, Subscription, AgentPermission
+from ..models import MemoryEntry, MemoryType, Session, Subscription, AgentPermission, InboxMessage
 from ..config import get_settings
 
 logger = logging.getLogger(__name__)
@@ -161,6 +161,19 @@ _SCHEMA_MIGRATIONS: dict[int, str] = {
         "ON webhook_deliveries(subscription_id, timestamp DESC)"
     ),
     17: "ALTER TABLE memories ADD COLUMN memory_type TEXT NOT NULL DEFAULT 'episodic'",
+    18: (
+        "CREATE TABLE IF NOT EXISTS inbox_messages ("
+        "id TEXT PRIMARY KEY, "
+        "from_agent_id TEXT NOT NULL, "
+        "to_agent_id TEXT NOT NULL, "
+        "subject TEXT NOT NULL DEFAULT '', "
+        "body TEXT NOT NULL, "
+        "priority TEXT NOT NULL DEFAULT 'normal', "
+        "is_read INTEGER NOT NULL DEFAULT 0, "
+        "read_at TEXT, "
+        "created_at TEXT NOT NULL, "
+        "project TEXT"        "); "        "CREATE INDEX IF NOT EXISTS idx_inbox_to_agent ON inbox_messages(to_agent_id, is_read, created_at DESC); "        "CREATE INDEX IF NOT EXISTS idx_inbox_project ON inbox_messages(project, to_agent_id)"
+    ),
 }
 # ──────────────────────────────────────────────────────────────────────────────
 
@@ -806,6 +819,92 @@ class SQLiteMemoryRepository(MemoryRepository):
             # Record cleanup timestamp in shared metrics
             await self.record_metric("last_cleanup_at", datetime.now(timezone.utc).isoformat())
             return count
+
+    async def send_inbox_message(self, msg: InboxMessage) -> InboxMessage:
+        """Send an inbox message from one agent to another."""
+        async with aiosqlite.connect(self.db_path) as db:
+            await db.execute(
+                """INSERT INTO inbox_messages
+                   (id, from_agent_id, to_agent_id, subject, body, priority, is_read, created_at, project)
+                   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                (msg.id, msg.from_agent_id, msg.to_agent_id, msg.subject,
+                 msg.body, msg.priority, 1 if msg.read else 0,
+                 msg.created_at.isoformat(), msg.project),
+            )
+            await db.commit()
+        return msg
+
+    async def get_inbox_messages(
+        self, to_agent_id: str, unread_only: bool = False,
+        limit: int = 50, offset: int = 0, project: Optional[str] = None
+    ) -> tuple[list[InboxMessage], int]:
+        """Get inbox messages for an agent. Returns (messages, total_count)."""
+        async with aiosqlite.connect(self.db_path) as db:
+            conditions = ["to_agent_id = ?"]
+            params: list = [to_agent_id]
+            if unread_only:
+                conditions.append("is_read = 0")
+            if project:
+                conditions.append("project = ?")
+                params.append(project)
+
+            where = " AND ".join(conditions)
+
+            # Count
+            cursor = await db.execute(f"SELECT COUNT(*) FROM inbox_messages WHERE {where}", params)
+            row = await cursor.fetchone()
+            total = row[0] if row else 0
+
+            # Fetch
+            cursor = await db.execute(
+                f"SELECT * FROM inbox_messages WHERE {where} ORDER BY created_at DESC LIMIT ? OFFSET ?",
+                params + [limit, offset],
+            )
+            rows = await cursor.fetchall()
+            columns = [d[0] for d in cursor.description]
+
+            messages = []
+            for row in rows:
+                row_dict = dict(zip(columns, row))
+                messages.append(InboxMessage(
+                    id=row_dict["id"],
+                    from_agent_id=row_dict["from_agent_id"],
+                    to_agent_id=row_dict["to_agent_id"],
+                    subject=row_dict["subject"] or "",
+                    body=row_dict["body"],
+                    priority=row_dict["priority"] or "normal",
+                    read=bool(row_dict["is_read"]),
+                    read_at=datetime.fromisoformat(row_dict["read_at"]) if row_dict.get("read_at") else None,
+                    created_at=datetime.fromisoformat(row_dict["created_at"]),
+                    project=row_dict.get("project"),
+                ))
+            return messages, total
+
+    async def acknowledge_inbox_message(self, message_id: str) -> bool:
+        """Mark an inbox message as read. Returns True if found."""
+        async with aiosqlite.connect(self.db_path) as db:
+            cursor = await db.execute(
+                "UPDATE inbox_messages SET is_read = 1, read_at = ? WHERE id = ?",
+                (datetime.now(timezone.utc).isoformat(), message_id),
+            )
+            await db.commit()
+            return cursor.rowcount > 0
+
+    async def count_unread_inbox(self, to_agent_id: str, project: Optional[str] = None) -> int:
+        """Count unread inbox messages for an agent."""
+        async with aiosqlite.connect(self.db_path) as db:
+            if project:
+                cursor = await db.execute(
+                    "SELECT COUNT(*) FROM inbox_messages WHERE to_agent_id = ? AND is_read = 0 AND project = ?",
+                    (to_agent_id, project),
+                )
+            else:
+                cursor = await db.execute(
+                    "SELECT COUNT(*) FROM inbox_messages WHERE to_agent_id = ? AND is_read = 0",
+                    (to_agent_id,),
+                )
+            row = await cursor.fetchone()
+            return row[0] if row else 0
 
     # ── API Key Management ────────────────────────────────────────────────────
 

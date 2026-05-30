@@ -3,7 +3,7 @@
 from abc import ABC, abstractmethod
 from typing import Any, Optional
 
-from ..models import MemoryEntry, Session, Subscription, AgentPermission
+from ..models import MemoryEntry, InboxMessage, Session, Subscription, AgentPermission
 
 
 class MemoryRepository(ABC):
@@ -338,4 +338,29 @@ class MemoryRepository(ABC):
     async def cleanup_old_webhook_deliveries(self, max_age_days: int = 30) -> int:
         """Delete webhook delivery records older than max_age_days.
         Returns the number of records deleted."""
+        ...
+
+    # ── Agent Inbox ──────────────────────────────────────────────────────
+
+    @abstractmethod
+    async def send_inbox_message(self, msg: InboxMessage) -> InboxMessage:
+        """Send an inbox message from one agent to another."""
+        ...
+
+    @abstractmethod
+    async def get_inbox_messages(
+        self, to_agent_id: str, unread_only: bool = False,
+        limit: int = 50, offset: int = 0, project: Optional[str] = None
+    ) -> tuple[list[InboxMessage], int]:
+        """Get inbox messages for an agent. Returns (messages, total_count)."""
+        ...
+
+    @abstractmethod
+    async def acknowledge_inbox_message(self, message_id: str) -> bool:
+        """Mark an inbox message as read. Returns True if found."""
+        ...
+
+    @abstractmethod
+    async def count_unread_inbox(self, to_agent_id: str, project: Optional[str] = None) -> int:
+        """Count unread inbox messages for an agent."""
         ...

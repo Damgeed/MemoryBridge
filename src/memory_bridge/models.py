@@ -186,3 +186,38 @@ class ScoreMemoriesResponse(BaseModel):
     """Response body for POST /memories/score."""
     results: list[ScoredMemoryResult]
     count: int
+
+class InboxMessage(BaseModel):
+    """A message left by one agent for another (async agent-to-agent communication)."""
+    id: str = Field(default_factory=lambda: str(uuid4()))
+    from_agent_id: str
+    to_agent_id: str
+    subject: str = ""
+    body: str
+    priority: str = "normal"
+    """Priority level: low, normal, high, critical."""
+    read: bool = False
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    read_at: Optional[datetime] = None
+    project: Optional[str] = None
+    """Project scope for multi-tenant isolation."""
+
+
+class InboxSendRequest(BaseModel):
+    """Request body to send an inbox message."""
+    from_agent_id: str
+    to_agent_id: str
+    subject: str = ""
+    body: str
+    priority: str = "normal"
+    project: Optional[str] = None
+
+
+class InboxQuery(BaseModel):
+    """Query parameters for listing inbox messages."""
+    agent_id: Optional[str] = None
+    unread_only: bool = False
+    limit: int = Field(default=50, ge=1, le=200)
+    offset: int = Field(default=0, ge=0)
+    project: Optional[str] = None
+
