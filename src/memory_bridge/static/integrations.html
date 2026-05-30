@@ -1,0 +1,734 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+    <meta name="theme-color" content="#0a0a0f" media="(prefers-color-scheme: dark)">
+    <title>Memory Bridge — Framework Integrations</title>
+    <link rel="icon" href="/playground/logo.png" type="image/png">
+    <link rel="stylesheet" href="/playground/style.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700;800&display=swap');
+        body { background: var(--bg-primary); color: var(--text-primary); display: flex; flex-direction: column; min-height: 100vh; }
+        .integrations-page { flex: 1; max-width: 900px; margin: 0 auto; padding: 3rem 1.5rem 4rem; width: 100%; }
+        .integrations-page h1 { font-size: 2rem; font-weight: 800; margin-bottom: 0.5rem; letter-spacing: -0.5px; }
+        .integrations-page h1 span { background: var(--accent-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+        .integrations-page .subtitle { color: var(--text-muted); font-size: 1.05rem; margin-bottom: 2.5rem; line-height: 1.6; }
+        .back-link { display: inline-flex; align-items: center; gap: 0.4rem; color: var(--accent); text-decoration: none; font-size: 0.88rem; font-weight: 600; margin-bottom: 2rem; transition: opacity var(--transition-fast); }
+        .back-link:hover { opacity: 0.8; }
+
+        /* ── Integration Cards ─────────────────────────────── */
+        .int-grid { display: grid; gap: 1.25rem; grid-template-columns: repeat(auto-fill, minmax(380px, 1fr)); }
+        .int-card {
+            background: var(--card-bg); border: 1px solid var(--border-primary);
+            border-radius: var(--radius-lg); padding: 1.75rem;
+            transition: all var(--transition-fast); position: relative; overflow: hidden;
+            text-decoration: none; display: flex; flex-direction: column;
+        }
+        .int-card:hover { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent-glow), var(--shadow-md); transform: translateY(-2px); }
+        .int-card-icon { font-size: 2rem; margin-bottom: 0.75rem; }
+        .int-card h2 { font-size: 1.15rem; font-weight: 700; color: var(--text-primary); margin-bottom: 0.4rem; }
+        .int-card p { font-size: 0.88rem; color: var(--text-muted); line-height: 1.5; flex: 1; margin-bottom: 1rem; }
+        .int-card .card-tag {
+            display: inline-block; padding: 0.2rem 0.6rem; border-radius: var(--radius-sm);
+            font-size: 0.72rem; font-weight: 600; font-family: var(--font-mono);
+            background: var(--accent-glow); color: var(--accent-light); align-self: flex-start;
+        }
+        .int-card .card-arrow {
+            position: absolute; bottom: 1.25rem; right: 1.25rem; color: var(--text-faint);
+            transition: transform var(--transition-fast);
+        }
+        .int-card:hover .card-arrow { transform: translateX(4px); color: var(--accent); }
+
+        @media (max-width: 768px) {
+            .nav-cta { display: none !important; }
+            .auth-btn-container { display: inline-flex !important; }
+            .integrations-page { padding: 2rem 1rem 3rem; }
+            .integrations-page h1 { font-size: 1.6rem; }
+            .int-grid { grid-template-columns: 1fr; }
+        }
+        @media (max-width: 480px) {
+            .integrations-page h1 { font-size: 1.3rem; }
+        }
+
+        /* ── User Avatar + Dropdown (same as concept) ─────── */
+        .user-avatar-btn {
+            display: inline-flex; align-items: center; gap: 0.5rem;
+            padding: 0.25rem 0.5rem 0.25rem 0.25rem;
+            border-radius: var(--radius-full);
+            border: 1px solid var(--border-primary);
+            background: transparent; cursor: pointer;
+            transition: all var(--transition-fast);
+            font-family: var(--font-sans); color: var(--text-primary);
+        }
+        .user-avatar-btn:hover { border-color: var(--accent); background: var(--accent-glow); }
+        .user-avatar-circle {
+            width: 28px; height: 28px; border-radius: 50%;
+            background: var(--accent-gradient); color: #fff;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 0.75rem; font-weight: 700; flex-shrink: 0; overflow: hidden;
+        }
+        .user-avatar-name { font-size: 0.82rem; font-weight: 600; max-width: 110px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .user-chevron { color: var(--text-faint); transition: transform 0.2s; }
+        .user-menu.open .user-chevron { transform: rotate(180deg); }
+        .user-menu { position: relative; display: inline-flex; }
+        .user-dropdown {
+            display: none; position: absolute; top: calc(100% + 6px); right: 0;
+            min-width: 220px; background: var(--card-bg);
+            border: 1px solid var(--border-primary);
+            border-radius: var(--radius-md); box-shadow: var(--shadow-xl);
+            z-index: 100; overflow: hidden; animation: drop-in 0.15s ease;
+        }
+        @keyframes drop-in { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: translateY(0); } }
+        .user-menu.open .user-dropdown { display: block; }
+        .user-dropdown-header { padding: 0.75rem 1rem; display: flex; flex-direction: column; gap: 0.2rem; }
+        .user-dropdown-email { font-size: 0.85rem; font-weight: 600; color: var(--text-primary); word-break: break-all; }
+        .user-dropdown-plan { font-size: 0.72rem; color: var(--text-muted); font-weight: 500; }
+        .user-dropdown-divider { height: 1px; background: var(--border-subtle); margin: 0; }
+        .user-dropdown-item { display: flex; align-items: center; gap: 0.5rem; padding: 0.65rem 1rem; font-size: 0.85rem; color: var(--text-secondary); text-decoration: none; transition: background var(--transition-fast); }
+        .user-dropdown-item svg { flex-shrink: 0; color: var(--text-muted); }
+        .user-dropdown-item:hover { background: var(--btn-secondary-hover); color: var(--text-primary); }
+        .user-dropdown-item:last-child:hover { color: var(--red); }
+        .user-dropdown-item:last-child:hover svg { color: var(--red); }
+
+        /* ── Logout Confirm Modal ────────────────────────── */
+        .logout-modal-overlay {
+            display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6);
+            z-index: 1001; backdrop-filter: blur(6px);
+        }
+        .logout-modal-overlay.open { display: block; }
+        .logout-modal {
+            display: none; position: fixed; top: 50%; left: 50%;
+            transform: translate(-50%, -50%) scale(0.96);
+            z-index: 1002; background: var(--card-bg);
+            border: 1px solid var(--border-primary);
+            border-radius: var(--radius-lg); padding: 2rem;
+            min-width: 360px; max-width: 90vw; box-shadow: var(--shadow-xl);
+            text-align: center; opacity: 0; transition: all 0.2s ease;
+        }
+        .logout-modal.open { display: block; opacity: 1; transform: translate(-50%, -50%) scale(1); }
+        .logout-modal .logout-icon {
+            width: 56px; height: 56px; border-radius: 50%;
+            background: var(--red-bg, rgba(239,68,68,0.12));
+            display: flex; align-items: center; justify-content: center;
+            margin: 0 auto 1rem; font-size: 1.6rem;
+        }
+        .logout-modal .logout-title { font-size: 1.15rem; font-weight: 700; margin-bottom: 0.5rem; color: var(--text-primary); }
+        .logout-modal .logout-text { font-size: 0.9rem; color: var(--text-muted); margin-bottom: 1.5rem; }
+        .logout-modal .logout-btns { display: flex; gap: 0.75rem; justify-content: center; }
+
+        /* ── Auth Modal styles (same pattern) ────────────── */
+        .auth-email-field {
+            width: 100%; padding: 0.7rem 1rem 0.7rem 2.5rem;
+            border-radius: var(--radius-sm); border: 1px solid var(--border-primary);
+            background: var(--bg-glass); color: var(--text-primary);
+            font-size: 0.88rem; font-family: var(--font-sans);
+            transition: all var(--transition-fast); outline: none; box-sizing: border-box;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23888888' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='2' y='4' width='20' height='16' rx='2'/%3E%3Cpath d='M22 7l-10 7L2 7'/%3E%3C/svg%3E");
+            background-repeat: no-repeat; background-position: 0.75rem center; background-size: 16px;
+        }
+        .auth-email-field:focus { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-glow); }
+        .auth-email-field::placeholder { color: var(--text-faint); }
+        .auth-email-cta {
+            display: flex; align-items: center; justify-content: center;
+            width: 100%; padding: 0.7rem 1rem; border-radius: var(--radius-sm);
+            border: none; background: var(--accent-gradient); color: #fff;
+            font-size: 0.88rem; font-weight: 700; font-family: var(--font-sans);
+            cursor: pointer; transition: all var(--transition-fast); gap: 0.4rem;
+        }
+        .auth-email-cta:hover { opacity: 0.9; transform: translateY(-1px); box-shadow: var(--shadow-sm); }
+        .auth-email-cta:active { transform: translateY(0); }
+        .auth-email-cta:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+    </style>
+    <script src="/playground/i18n.js"></script>
+    <script src="/playground/auth.js?v=1"></script>
+</head>
+<body>
+
+    <!-- Navbar -->
+    <nav class="navbar">
+        <a href="/" class="logo">
+          <img src="/playground/logo.png" alt="Memory Bridge" data-i18n="nav.logo_alt">
+          Memory <span class="logo-accent">Bridge</span>
+        </a>
+        <div class="nav-links">
+          <a href="/" data-i18n="nav.home">Home</a>
+          <a href="/playground/graph.html" data-i18n="nav.graph">Graph</a>
+          <a href="/forgetful-demo">Forgetful Demo</a>
+          <a href="/dashboard/" data-i18n="nav.dashboard">Dashboard</a>
+          <a href="/pricing" data-i18n="nav.pricing">Pricing</a>
+          <a href="/playground/integrations.html" class="active" data-i18n="nav.integrations">Integrations</a>
+        </div>
+      <div class="nav-right">
+        <div style="position:relative;display:inline-flex;">
+            <button class="nav-icon-btn lang-toggle" onclick="toggleLang()" title="Switch language" aria-label="Switch language">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="10"/>
+                    <line x1="2" y1="12" x2="22" y2="12"/>
+                    <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+                </svg>
+            </button>
+            <div class="lang-dropdown" id="lang-dropdown">
+                <a href="javascript:void(0)" data-lang="en" class="lang-opt active" onclick="setLang('en')">🇬🇧 English</a>
+                <a href="javascript:void(0)" data-lang="zh" class="lang-opt" onclick="setLang('zh')">🇨🇳 中文</a>
+                <a href="javascript:void(0)" data-lang="ja" class="lang-opt" onclick="setLang('ja')">🇯🇵 日本語</a>
+                <a href="javascript:void(0)" data-lang="ko" class="lang-opt" onclick="setLang('ko')">🇰🇷 한국어</a>
+                <a href="javascript:void(0)" data-lang="es" class="lang-opt" onclick="setLang('es')">🇪🇸 Español</a>
+                <a href="javascript:void(0)" data-lang="fr" class="lang-opt" onclick="setLang('fr')">🇫🇷 Français</a>
+                <a href="javascript:void(0)" data-lang="de" class="lang-opt" onclick="setLang('de')">🇩🇪 Deutsch</a>
+            </div>
+        </div>
+        <button class="nav-icon-btn theme-toggle-btn" onclick="toggleTheme()" title="Toggle theme" aria-label="Toggle theme">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="theme-sun">
+            <circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/>
+            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+            <line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/>
+            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+          </svg>
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="theme-moon" style="display:none">
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+          </svg>
+        </button>
+                <div class="auth-btn-container" id="auth-btn-container">
+                    <button class="auth-btn" id="auth-nav-btn" onclick="openAuth()" title="Sign in / Sign up" data-i18n-title="nav.sign_in_title">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                        <span id="auth-btn-label" data-i18n="auth.sign_in">Sign in</span>
+                    </button>
+                    <div class="user-menu" id="user-menu" style="display:none;">
+                        <button class="user-avatar-btn" id="user-btn" onclick="toggleUserDropdown()" title="Account menu">
+                            <span class="user-avatar-circle" id="user-avatar-circle">👤</span>
+                            <span class="session-dot" id="session-dot"></span>
+                            <span class="user-avatar-name" id="user-avatar-name"></span>
+                            <span class="user-plan-badge" id="user-plan-badge"></span>
+                            <svg class="user-chevron" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+                        </button>
+                        <div class="user-dropdown" id="user-dropdown">
+                            <div class="user-dropdown-header">
+                                <span class="user-dropdown-email" id="user-dropdown-email"></span>
+                                <span class="user-dropdown-plan" id="user-dropdown-plan" data-i18n="dash.free_plan">Free Plan</span>
+                                <span class="user-dropdown-since" id="user-dropdown-since"></span>
+                            </div>
+                            <div class="user-dropdown-divider"></div>
+                            <a href="/pricing" class="user-dropdown-item" data-i18n="dash.manage_billing">
+                                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+                                Manage Billing
+                            </a>
+                            <div class="user-dropdown-item sign-out" onclick="showLogoutConfirm()" style="cursor:pointer;" data-i18n="nav.sign_out">
+                                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+                                Sign Out
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <a href="/playground/" class="nav-cta">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <polygon points="5 3 19 12 5 21 5 3"/>
+                    </svg>
+                    <span data-i18n="nav.launch_playground">Launch Playground</span>
+                </a>
+                <button class="nav-hamburger" onclick="toggleMobileNav()" aria-label="Open menu">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="4" y1="6" x2="20" y2="6"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="18" x2="20" y2="18"/>
+                    </svg>
+                </button>
+            </div>
+        </nav>
+
+    <!-- Mobile Nav Panel -->
+    <div class="nav-mobile-backdrop" id="nav-backdrop" onclick="closeMobileNav()"></div>
+    <div class="nav-mobile-panel" id="nav-mobile">
+      <div class="nav-mobile-header">
+        <div class="logo">
+          <img src="/playground/logo.png" alt="Memory Bridge" data-i18n="nav.logo_alt">
+          Memory <span class="logo-accent">Bridge</span>
+        </div>
+        <button class="nav-mobile-close" onclick="closeMobileNav()" aria-label="Close menu">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+        </button>
+      </div>
+      <a href="/" onclick="closeMobileNav()" ><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg><span data-i18n="nav.home">Home</span></a>
+      <a href="/playground/graph.html" onclick="closeMobileNav()" ><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="5" cy="5" r="3"/><circle cx="19" cy="5" r="3"/><circle cx="12" cy="19" r="3"/><line x1="5" y1="5" x2="19" y2="5"/><line x1="5" y1="5" x2="12" y2="19"/><line x1="19" y1="5" x2="12" y2="19"/></svg><span data-i18n="nav.graph">Graph</span></a>
+      <a href="/forgetful-demo" onclick="closeMobileNav()" ><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg><span>Forgetful Demo</span></a>
+      <a href="/dashboard/" onclick="closeMobileNav()" ><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg><span data-i18n="nav.dashboard">Dashboard</span></a>
+      <a href="/pricing" onclick="closeMobileNav()" ><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg><span data-i18n="nav.pricing">Pricing</span></a>
+      <a href="/playground/integrations.html" onclick="closeMobileNav()" class="active"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg><span>Integrations</span></a>
+      <a href="javascript:void(0)" id="auth-mobile-btn" onclick="closeMobileNav();openAuth()" style="display:flex;align-items:center;gap:0.45rem;padding:0.7rem 1.25rem;border-radius:var(--radius-sm);font-size:0.88rem;font-weight:600;color:var(--accent);text-decoration:none;">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        <span id="auth-mobile-label" data-i18n="auth.sign_in">Sign in</span>
+      </a>
+      <div id="mobile-user-card" style="display:none;">
+        <div class="mobile-user-header">
+          <div class="mobile-user-avatar">
+            <span class="mobile-user-circle" id="mobile-user-circle">👤</span>
+            <span class="session-dot" id="mobile-session-dot"></span>
+          </div>
+          <div class="mobile-user-info">
+            <span class="mobile-user-email" id="mobile-user-email"></span>
+            <span class="mobile-user-plan" id="mobile-user-plan" data-i18n="dash.free_plan">Free Plan</span>
+          </div>
+        </div>
+        <div class="mobile-user-divider"></div>
+        <a href="/pricing" class="mobile-user-action" onclick="closeMobileNav()">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+          <span data-i18n="dash.manage_billing">Manage Billing</span>
+          </a>
+        <div class="mobile-user-divider"></div>
+        <span class="mobile-user-since" id="mobile-user-since"></span>
+        <a href="javascript:void(0)" class="mobile-user-action sign-out" id="mobile-sign-out-btn" onclick="closeMobileNav();showLogoutConfirm()">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+          <span data-i18n="nav.sign_out">Sign Out</span>
+        </a>
+    </div>
+      <div class="nav-mobile-divider"></div>
+      <a href="/playground/" class="nav-mobile-cta" onclick="closeMobileNav()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+        <span data-i18n="nav.launch_playground">Launch Playground</span>
+      </a>
+    </div>
+
+    <!-- Logout Confirm Modal -->
+    <div class="logout-modal-overlay" id="logout-overlay" onclick="closeLogoutConfirm()"></div>
+    <div class="logout-modal" id="logout-modal">
+        <div class="logout-icon">🚪</div>
+        <div class="logout-title" data-i18n="logout.title">Sign out of Memory Bridge?</div>
+        <div class="logout-text" data-i18n="logout.text">
+            You'll need to sign in again to manage API keys, view subscription details, or access your dashboard.
+        </div>
+        <div class="logout-btns">
+            <button class="btn btn-secondary" data-i18n="logout.cancel" onclick="closeLogoutConfirm()">Cancel</button>
+            <button class="btn btn-danger" id="logout-confirm-btn" data-i18n="logout.sign_out" onclick="logout()">Sign Out</button>
+        </div>
+    </div>
+
+    <!-- Auth Modal -->
+    <div class="auth-overlay" id="auth-overlay">
+      <div class="auth-modal">
+        <button class="auth-close" onclick="closeAuth()" aria-label="Close">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+        <div class="auth-icon">🔑</div>
+        <div class="auth-title" data-i18n="auth.title">Memory Bridge</div>
+        <div class="auth-tabs" style="display:flex;gap:0;margin:0.5rem 0 1rem;border:1px solid var(--border-primary);border-radius:var(--radius-md);overflow:hidden;width:100%;">
+          <button class="auth-tab active" id="auth-tab-signin" onclick="selectAuthTab('signin')" style="flex:1;padding:0.5rem 0;border:none;background:var(--accent);color:#fff;font-size:0.88rem;font-weight:600;cursor:pointer;">Sign In</button>
+          <button class="auth-tab" id="auth-tab-signup" onclick="selectAuthTab('signup')" style="flex:1;padding:0.5rem 0;border:none;background:transparent;color:var(--text-muted);font-size:0.88rem;font-weight:600;cursor:pointer;">Create Account</button>
+        </div>
+        <div class="auth-subtitle" id="auth-subtitle" data-i18n="auth.subtitle">Sign in to access your account.</div>
+        <div id="auth-options" class="auth-options">
+          <button class="auth-social-btn" onclick="socialLogin('google-oauth2')">
+            <span class="s-icon google">
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 48 48">
+                <path fill="#FFC107" d="M43.611,20.083H42V20H24v8h11.303c-1.649,4.657-6.08,8-11.303,8c-6.627,0-12-5.373-12-12c0-6.627,5.373-12,12-12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C12.955,4,4,12.955,4,24c0,11.045,8.955,20,20,20c11.045,0,20-8.955,20-20C44,22.659,43.862,21.35,43.611,20.083z"/>
+                <path fill="#FF3D00" d="M6.306,14.691l6.571,4.819C14.655,15.108,18.961,12,24,12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C16.318,4,9.656,8.337,6.306,14.691z"/>
+                <path fill="#4CAF50" d="M24,44c5.166,0,9.86-1.977,13.409-5.192l-6.19-5.238C29.211,35.091,26.715,36,24,36c-5.202,0-9.619-3.317-11.283-7.946l-6.522,5.025C9.505,39.556,16.227,44,24,44z"/>
+                <path fill="#1976D2" d="M43.611,20.083H42V20H24v8h11.303c-0.792,2.237-2.231,4.166-4.087,5.571c0.001-0.001,0.002-0.001,0.003-0.002l6.19,5.238C36.971,39.205,44,34,44,24C44,22.659,43.862,21.35,43.611,20.083z"/>
+              </svg>
+            </span>
+            <span data-i18n="auth.continue_google">Continue with Google</span>
+          </button>
+          <button class="auth-social-btn" onclick="socialLogin('apple')">
+            <span class="s-icon apple">
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="#000">
+                <path d="M17.05 20.28c-.98.95-2.05.8-3.08.35-1.09-.46-2.09-.48-3.24 0-1.44.62-2.2.44-3.06-.35C2.79 15.25 3.51 7.59 9.05 7.31c1.35.07 2.29.74 3.08.8 1.18-.24 2.31-.93 3.57-.84 1.51.12 2.65.72 3.4 1.8-3.12 1.87-2.38 5.98.48 7.13-.57 1.5-1.31 2.99-2.54 4.09zM12.03 7.25c-.15-2.23 1.66-4.07 3.74-4.25.29 2.58-2.34 4.5-3.74 4.25z"/>
+              </svg>
+            </span>
+            <span data-i18n="auth.continue_apple">Continue with Apple</span>
+          </button>
+          <button class="auth-social-btn" onclick="phoneLogin()">
+            <span class="s-icon phone">
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
+              </svg>
+            </span>
+            <span data-i18n="auth.continue_phone">Continue with Phone</span>
+          </button>
+          <div class="auth-divider">
+            <hr><span data-i18n="auth.or_email">or continue with email</span><hr>
+          </div>
+          <input type="email" class="auth-email-field" id="pl-email" placeholder="you@example.com" data-i18n="auth.email_placeholder" autocomplete="email" onkeydown="if(event.key==='Enter')continueWithEmail()">
+          <button class="auth-email-cta" onclick="continueWithEmail()" id="pl-email-btn" data-i18n="auth.continue_btn">Continue →</button>
+          <div class="auth-error" id="auth-error-main"></div>
+          <div style="margin-top: 0.75rem; text-align: center;">
+            <a href="#" onclick="showRecoveryForm(); return false;" style="color: var(--accent); text-decoration: none; font-size: 0.85rem; font-weight: 500; opacity: 0.85;">Lost your account? Recover it here →</a>
+          </div>
+        </div>
+        <div id="auth-phone-step" class="auth-form">
+          <button class="back-link" onclick="showAuthOptions()"><span style="font-size:0.9rem;margin-right:0.1rem;">←</span><span data-i18n="auth.back">Back</span></button>
+          <div class="auth-code-info">
+            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+            <div class="auth-code-msg" data-i18n="auth.enter_phone">Enter your phone number</div>
+          </div>
+          <div class="auth-phone-input-row" style="display:flex;flex-direction:column;gap:0.5rem;margin:1rem 0;">
+            <input type="tel" id="pl-phone" placeholder="8123 4567" data-i18n="auth.phone_placeholder" autocomplete="tel" onkeydown="if(event.key==='Enter')sendPhoneCode()">
+          </div>
+          <button class="auth-email-cta" onclick="sendPhoneCode()" id="pl-phone-btn" data-i18n="auth.send_code_btn">Send Code →</button>
+          <div class="auth-error" id="auth-error-phone"></div>
+        </div>
+        <div id="auth-code-step" class="auth-form">
+          <button class="back-link" onclick="showAuthOptions()"><span style="font-size:0.9rem;margin-right:0.1rem;">←</span><span data-i18n="auth.back">Back</span></button>
+          <div class="auth-code-info">
+            <svg id="code-step-icon" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M22 7l-10 7L2 7"/></svg>
+            <div class="auth-code-msg" data-i18n="auth.sent_code">We sent a code to</div>
+            <div class="auth-code-email" id="code-email-display">j***@example.com</div>
+          </div>
+          <div class="auth-code-input-row" style="margin:1rem 0;">
+            <input type="text" id="pl-code" placeholder="Enter 6-digit code" data-i18n="auth.code_placeholder" maxlength="6" inputmode="numeric" autocomplete="one-time-code" onkeydown="if(event.key==='Enter')verifyCode()">
+          </div>
+          <button class="btn btn-primary" onclick="verifyCode()" id="pl-code-btn" data-i18n="auth.verify_btn">Verify Code →</button>
+          <div class="auth-error" id="auth-error-code"></div>
+          <div class="auth-code-resend" style="margin-top:0.75rem;font-size:0.85rem;color:var(--text-muted);">
+            Didn't get it? <a onclick="resendCode()" style="color:var(--accent);cursor:pointer;text-decoration:underline;">Send new code</a>
+          </div>
+        </div>
+        <div id="auth-recovery-step" class="auth-form" style="display:none;">
+          <button class="back-link" onclick="showAuthOptions()"><span style="font-size:0.9rem;margin-right:0.1rem;">←</span><span data-i18n="auth.back">Back</span></button>
+          <div class="auth-code-info">
+            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+            <div class="auth-code-msg">Recover Your Account</div>
+          </div>
+          <input type="email" class="auth-email-field" id="recovery-email" placeholder="you@example.com" autocomplete="email" style="margin-bottom:0.5rem;" onkeydown="if(event.key==='Enter')recoverAccount(document.getElementById('recovery-email')?.value)">
+          <button class="auth-email-cta" id="recovery-btn" onclick="recoverAccount(document.getElementById('recovery-email')?.value)">Recover Account →</button>
+          <div class="auth-error" id="auth-error-recovery" style="margin-top:0.5rem;"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="integrations-page">
+        <a href="/" class="back-link">← Back to Home</a>
+        <h1><span>Framework</span> Integrations</h1>
+        <p class="subtitle">
+            Drop-in adapters for the most popular AI agent frameworks. Add persistent memory to any agent in minutes.
+        </p>
+
+        <div class="int-grid">
+            <a href="/playground/integration-langchain.html" class="int-card">
+                <div class="int-card-icon">🦜🔗</div>
+                <h2>LangChain / LangGraph</h2>
+                <p>Use Memory Bridge as a checkpoint saver for LangGraph state graphs. Agents automatically persist state across sessions.</p>
+                <span class="card-tag">CheckpointSaver</span>
+                <span class="card-arrow">→</span>
+            </a>
+
+            <a href="/playground/integration-crewai.html" class="int-card">
+                <div class="int-card-icon">🤖</div>
+                <h2>CrewAI</h2>
+                <p>Equip your CrewAI agents with persistent memory tools. Store and recall information across crew runs and sessions.</p>
+                <span class="card-tag">Crew Tool</span>
+                <span class="card-arrow">→</span>
+            </a>
+
+            <a href="/playground/integration-autogen.html" class="int-card">
+                <div class="int-card-icon">🧩</div>
+                <h2>AutoGen</h2>
+                <p>Wrap AutoGen agents with Memory Bridge for cross-session memory. Conversation context persists beyond individual chats.</p>
+                <span class="card-tag">ConversableAgent</span>
+                <span class="card-arrow">→</span>
+            </a>
+
+            <a href="/playground/integration-openai-agents.html" class="int-card">
+                <div class="int-card-icon">⚡</div>
+                <h2>OpenAI Agents SDK</h2>
+                <p>Add a Memory Bridge tool to any OpenAI Agent. Give your assistants durable memory with a single tool registration.</p>
+                <span class="card-tag">Agent Tool</span>
+                <span class="card-arrow">→</span>
+            </a>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer" data-i18n="footer.text">© 2026 Memory Bridge — API for cross-agent memory</footer>
+
+    <script>
+// ── Theme ──────────────────────────────────────────────
+(function initTheme() {
+  const saved = localStorage.getItem('mb-theme');
+  const html = document.documentElement;
+  if (saved) html.setAttribute('data-theme', saved);
+  else {
+    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    html.setAttribute('data-theme', prefersDark ? 'dark' : 'light');
+  }
+  updateThemeIcons();
+})();
+function toggleTheme() {
+  const html = document.documentElement;
+  const next = html.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+  html.setAttribute('data-theme', next);
+  localStorage.setItem('mb-theme', next);
+  updateThemeIcons();
+}
+function updateThemeIcons() {
+  const theme = document.documentElement.getAttribute('data-theme');
+  document.querySelectorAll('.theme-toggle-btn').forEach(btn => {
+    const sun = btn.querySelector('.theme-sun');
+    const moon = btn.querySelector('.theme-moon');
+    if (sun) sun.style.display = theme === 'dark' ? 'block' : 'none';
+    if (moon) moon.style.display = theme === 'dark' ? 'none' : 'block';
+  });
+}
+
+// ── Mobile Nav ─────────────────────────────────────────
+function toggleMobileNav() {
+  document.getElementById('nav-backdrop').classList.toggle('open');
+  document.getElementById('nav-mobile').classList.toggle('open');
+  document.body.style.overflow = document.getElementById('nav-mobile').classList.contains('open') ? 'hidden' : '';
+}
+function closeMobileNav() {
+  document.getElementById('nav-mobile').classList.remove('open');
+  document.getElementById('nav-backdrop').classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+// ── Lang toggle ────────────────────────────────────────
+function toggleLang() {
+  const dd = document.getElementById('lang-dropdown');
+  dd.classList.toggle('open');
+}
+document.addEventListener('click', function(e) {
+  const dd = document.getElementById('lang-dropdown');
+  if (dd && dd.classList.contains('open') && !e.target.closest('.lang-toggle') && !e.target.closest('.lang-dropdown')) {
+    dd.classList.remove('open');
+  }
+});
+function setLang(code) {
+  localStorage.setItem('mb-lang', code);
+  initLanguage();
+}
+
+// ── Shared Auth ────────────────────────────────────────
+let currentApiKey = '';
+let pendingEmail = '';
+let pendingPhone = '';
+let pendingMethod = 'email';
+
+function openAuth(tab) {
+    const overlay = document.getElementById('auth-overlay');
+    if (overlay) {
+        overlay.style.display = 'flex';
+        selectAuthTab(tab === 'signup' ? 'signup' : 'signin');
+        showAuthOptions();
+    } else {
+        window.location.href = '/pricing';
+    }
+}
+
+function socialLogin(connection) {
+    window.location.href = '/auth/auth0/login?connection=' + connection + (authMode === 'signup' ? '&screen_hint=signup' : '');
+}
+
+function closeAuth() {
+    const overlay = document.getElementById('auth-overlay');
+    if (overlay) overlay.style.display = '';
+    document.body.style.overflow = '';
+    pendingEmail = '';
+}
+
+let authMode = 'signin';
+
+function selectAuthTab(mode) {
+    authMode = mode;
+    const signinTab = document.getElementById('auth-tab-signin');
+    const signupTab = document.getElementById('auth-tab-signup');
+    if (!signinTab || !signupTab) return;
+    const subtitle = document.getElementById('auth-subtitle');
+    if (mode === 'signin') {
+        signinTab.style.background = 'var(--accent)';
+        signinTab.style.color = '#fff';
+        signupTab.style.background = 'transparent';
+        signupTab.style.color = 'var(--text-muted)';
+        subtitle.textContent = 'Sign in to access your account.';
+    } else {
+        signupTab.style.background = 'var(--accent)';
+        signupTab.style.color = '#fff';
+        signinTab.style.background = 'transparent';
+        signinTab.style.color = 'var(--text-muted)';
+        subtitle.textContent = 'Create an account to get started.';
+    }
+}
+
+function showAuthOptions() {
+    document.querySelectorAll('.auth-form').forEach(el => { el.classList.remove('active'); el.style.display = ''; });
+    const opts = document.getElementById('auth-options');
+    opts.style.display = '';
+    document.getElementById('pl-code').value = '';
+    document.getElementById('pl-email').value = '';
+    document.getElementById('pl-phone').value = '';
+    document.getElementById('auth-code-step').classList.remove('active');
+    document.getElementById('auth-phone-step').classList.remove('active');
+    document.getElementById('auth-recovery-step').style.display = 'none';
+    document.querySelectorAll('.auth-error').forEach(el => el.textContent = '');
+    document.getElementById('pl-email-btn').disabled = false;
+    document.getElementById('pl-code-btn').disabled = false;
+    document.getElementById('pl-phone-btn').disabled = false;
+    pendingMethod = 'email';
+    pendingPhone = '';
+}
+
+function phoneLogin() {
+    pendingMethod = 'phone';
+    document.getElementById('auth-options').style.display = 'none';
+    document.querySelectorAll('.auth-form').forEach(el => { el.classList.remove('active'); el.style.display = ''; });
+    document.getElementById('auth-phone-step').classList.add('active');
+    document.getElementById('pl-phone').value = '';
+    document.getElementById('auth-error-phone').textContent = '';
+    document.getElementById('pl-phone-btn').disabled = false;
+    setTimeout(() => document.getElementById('pl-phone').focus(), 150);
+}
+
+async function sendPhoneCode() {
+    const countryCode = document.getElementById('pl-country-code')?.value || '1';
+    const localNum = document.getElementById('pl-phone').value.trim().replace(/[^0-9]/g, '');
+    const errorEl = document.getElementById('auth-error-phone');
+    const btn = document.getElementById('pl-phone-btn');
+    if (!localNum) { errorEl.innerHTML = 'Enter your phone number'; return; }
+    const fullPhone = '+' + countryCode + localNum;
+    btn.innerHTML = '<span class=\"spinner-sm\"></span> Sending...';
+    btn.disabled = true;
+    try {
+        const res = await fetch('/auth/auth0/passwordless/start-sms', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({phone: fullPhone}),
+        });
+        if (!res.ok) {
+            const err = await res.json().catch(() => ({}));
+            errorEl.innerHTML = (err.detail || 'Failed to send code');
+            btn.innerHTML = 'Send Code →';
+            btn.disabled = false;
+            return;
+        }
+        const data = await res.json();
+        pendingPhone = fullPhone;
+        document.getElementById('code-email-display').textContent = data.phone || '*******' + fullPhone.slice(-4);
+        document.getElementById('auth-phone-step').classList.remove('active');
+        document.getElementById('auth-code-step').classList.add('active');
+        document.getElementById('pl-code').value = '';
+        btn.innerHTML = 'Send Code →';
+        btn.disabled = false;
+        setTimeout(() => document.getElementById('pl-code').focus(), 150);
+    } catch (e) {
+        errorEl.innerHTML = 'Could not reach server. Check your connection.';
+        btn.innerHTML = 'Send Code →';
+        btn.disabled = false;
+    }
+}
+
+async function continueWithEmail() {
+    const email = document.getElementById('pl-email').value.trim();
+    const errorEl = document.getElementById('auth-error-main');
+    const btn = document.getElementById('pl-email-btn');
+    if (!email || !email.includes('@')) { errorEl.innerHTML = 'Enter a valid email address'; return; }
+    btn.innerHTML = '<span class=\"spinner-sm\"></span> Sending...';
+    btn.disabled = true;
+    try {
+        const res = await fetch('/auth/auth0/passwordless/start', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({email}),
+        });
+        if (!res.ok) {
+            const err = await res.json().catch(() => ({}));
+            errorEl.innerHTML = (err.detail || 'Failed to send code');
+            btn.innerHTML = 'Continue →';
+            btn.disabled = false;
+            return;
+        }
+        const data = await res.json();
+        pendingEmail = email;
+        pendingMethod = 'email';
+        document.getElementById('code-email-display').textContent = data.email || email[0] + '***' + email.substring(email.indexOf('@'));
+        document.getElementById('auth-options').style.display = 'none';
+        document.getElementById('auth-code-step').classList.add('active');
+        document.getElementById('pl-code').value = '';
+        btn.innerHTML = 'Continue →';
+        btn.disabled = false;
+        setTimeout(() => document.getElementById('pl-code').focus(), 150);
+    } catch (e) {
+        errorEl.innerHTML = 'Could not reach server. Check your connection.';
+        btn.innerHTML = 'Continue →';
+        btn.disabled = false;
+    }
+}
+
+async function verifyCode() {
+    const code = document.getElementById('pl-code').value.trim();
+    const errorEl = document.getElementById('auth-error-code');
+    const btn = document.getElementById('pl-code-btn');
+    if (!code || code.length < 4) { errorEl.innerHTML = 'Enter your 6-digit verification code'; return; }
+    btn.innerHTML = '<span class=\"spinner-sm\"></span> Verifying...';
+    btn.disabled = true;
+    try {
+        const body = pendingMethod === 'phone' ? {phone: pendingPhone, code} : {email: pendingEmail, code};
+        const res = await fetch('/auth/auth0/passwordless/verify', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(body),
+        });
+        if (!res.ok) {
+            const err = await res.json().catch(() => ({}));
+            errorEl.innerHTML = (err.detail || 'Verification failed');
+            btn.innerHTML = 'Verify Code →';
+            btn.disabled = false;
+            return;
+        }
+        const data = await res.json();
+        localStorage.setItem('mb_jwt', data.token);
+        if (data.api_key) {
+            localStorage.setItem('mb_api_key', data.api_key);
+            currentApiKey = data.api_key;
+        }
+        updateAuthUI();
+        closeAuth();
+        window.location.reload();
+    } catch (e) {
+        errorEl.innerHTML = 'Could not reach server. Check your connection.';
+        btn.innerHTML = 'Verify Code →';
+        btn.disabled = false;
+    }
+}
+
+async function resendCode() {
+    if (!pendingEmail && !pendingPhone) return;
+    const url = pendingMethod === 'phone' ? '/auth/auth0/passwordless/start-sms' : '/auth/auth0/passwordless/start';
+    const body = pendingMethod === 'phone' ? JSON.stringify({phone: pendingPhone}) : JSON.stringify({email: pendingEmail});
+    try {
+        await fetch(url, { method: 'POST', headers: {'Content-Type': 'application/json'}, body });
+        document.getElementById('auth-error-code').innerHTML = '✅ New code sent!';
+    } catch (e) {}
+}
+
+function showRecoveryForm() {
+    document.getElementById('auth-options').style.display = 'none';
+    document.getElementById('auth-recovery-step').style.display = '';
+}
+
+async function recoverAccount(email) {
+    if (!email || !email.includes('@')) return;
+    const btn = document.getElementById('recovery-btn');
+    btn.innerHTML = 'Sending...';
+    btn.disabled = true;
+    try {
+        const res = await fetch('/auth/auth0/passwordless/start', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({email}),
+        });
+        if (res.ok) {
+            pendingEmail = email;
+            document.getElementById('auth-error-recovery').innerHTML = '✅ Recovery code sent!';
+        }
+        btn.innerHTML = 'Recover Account →';
+        btn.disabled = false;
+    } catch (e) { btn.innerHTML = 'Recover Account →'; btn.disabled = false; }
+}
+
+// ── Init ──────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', async () => {
+    await initAuth();
+    initLanguage();
+});
+    </script>
+</body>
+</html>

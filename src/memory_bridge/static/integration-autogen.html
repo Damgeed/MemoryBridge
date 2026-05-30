@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+    <meta name="theme-color" content="#0a0a0f" media="(prefers-color-scheme: dark)">
+    <title>Memory Bridge — AutoGen Integration</title>
+    <link rel="icon" href="/playground/logo.png" type="image/png">
+    <link rel="stylesheet" href="/playground/style.css">
+    <style>
+        /* ── (Same doc styles as integration-langchain.html) ── */
+        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700;800&display=swap');
+        body { background: var(--bg-primary); color: var(--text-primary); display: flex; flex-direction: column; min-height: 100vh; }
+        .doc-page { flex: 1; max-width: 860px; margin: 0 auto; padding: 3rem 1.5rem 4rem; width: 100%; }
+        .doc-page h1 { font-size: 2rem; font-weight: 800; margin-bottom: 0.4rem; letter-spacing: -0.5px; }
+        .doc-page h1 span { background: var(--accent-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+        .doc-page .subtitle { color: var(--text-muted); font-size: 1.05rem; margin-bottom: 2rem; line-height: 1.6; }
+        .doc-page h2 { font-size: 1.3rem; font-weight: 700; margin: 2.5rem 0 0.75rem; color: var(--text-primary); }
+        .doc-page h3 { font-size: 1.05rem; font-weight: 700; margin: 1.5rem 0 0.5rem; color: var(--text-primary); }
+        .doc-page p { color: var(--text-secondary); line-height: 1.7; margin-bottom: 1rem; font-size: 0.95rem; }
+        .doc-page p code, .doc-page li code { background: var(--bg-tertiary); padding: 0.1rem 0.3rem; border-radius: 4px; font-family: var(--font-mono); font-size: 0.85em; color: var(--accent-light); }
+        .doc-page ul, .doc-page ol { padding-left: 1.25rem; margin: 0 0 1.5rem; }
+        .doc-page li { color: var(--text-secondary); line-height: 1.6; margin-bottom: 0.4rem; font-size: 0.92rem; }
+        .back-link { display: inline-flex; align-items: center; gap: 0.4rem; color: var(--accent); text-decoration: none; font-size: 0.88rem; font-weight: 600; margin-bottom: 1.5rem; transition: opacity var(--transition-fast); }
+        .back-link:hover { opacity: 0.8; }
+        .framework-badge { display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.3rem 0.75rem; border-radius: var(--radius-full); font-size: 0.78rem; font-weight: 600; background: var(--accent-glow); color: var(--accent-light); margin-bottom: 1rem; }
+        pre { background: #1e1e2e; color: #cdd6f4; padding: 1.25rem 1.5rem; border-radius: var(--radius-md); overflow-x: auto; font-family: 'JetBrains Mono', monospace; font-size: 0.85rem; line-height: 1.65; border: 1px solid rgba(255,255,255,0.06); margin: 0.75rem 0 1.5rem; position: relative; }
+        pre .kw { color: #cba6f7; } pre .fn { color: #89b4fa; } pre .str { color: #a6e3a1; } pre .cm { color: #6c7086; }
+        pre .num { color: #fab387; } pre .cls { color: #f5c2e7; } pre .op { color: #89dceb; }
+        .code-header { display: flex; align-items: center; justify-content: space-between; background: #181825; padding: 0.5rem 1rem; border-radius: var(--radius-md) var(--radius-md) 0 0; border: 1px solid rgba(255,255,255,0.06); border-bottom: none; margin-top: 0.75rem; }
+        .code-header + pre { margin-top: 0; border-radius: 0 0 var(--radius-md) var(--radius-md); }
+        .code-header .lang-label { font-size: 0.72rem; font-weight: 600; color: var(--text-muted); font-family: var(--font-mono); text-transform: uppercase; letter-spacing: 0.04em; }
+        .code-header .copy-btn { background: transparent; border: 1px solid rgba(255,255,255,0.1); color: var(--text-muted); padding: 0.2rem 0.6rem; border-radius: 4px; font-size: 0.7rem; cursor: pointer; font-family: var(--font-sans); transition: all var(--transition-fast); }
+        .code-header .copy-btn:hover { border-color: var(--accent); color: var(--accent); }
+        .info-box { background: var(--bg-glass); border: 1px solid var(--border-primary); border-left: 3px solid var(--accent); border-radius: var(--radius-sm); padding: 1rem 1.25rem; margin: 1rem 0 1.5rem; }
+        .info-box p { margin: 0; font-size: 0.9rem; color: var(--text-secondary); }
+        .info-box strong { color: var(--text-primary); }
+        .info-box.tip { border-left-color: var(--green); }
+        .info-box.warn { border-left-color: var(--orange); }
+        .step { display: flex; gap: 1rem; margin: 1.25rem 0; }
+        .step-num { flex-shrink: 0; width: 32px; height: 32px; border-radius: 50%; background: var(--accent-gradient); display: flex; align-items: center; justify-content: center; font-size: 0.8rem; font-weight: 800; color: #fff; }
+        .step-body { flex: 1; }
+        .step-body h3 { margin: 0 0 0.3rem !important; font-size: 1rem !important; }
+        .step-body p { margin: 0 0 0.5rem !important; font-size: 0.9rem !important; }
+        @media (max-width: 768px) { .nav-cta { display: none !important; } .auth-btn-container { display: inline-flex !important; } .doc-page { padding: 2rem 1rem 3rem; } .doc-page h1 { font-size: 1.5rem; } pre { font-size: 0.78rem; padding: 1rem; } }
+        @media (max-width: 480px) { .doc-page h1 { font-size: 1.25rem; } }
+        .user-avatar-btn { display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.25rem 0.5rem 0.25rem 0.25rem; border-radius: var(--radius-full); border: 1px solid var(--border-primary); background: transparent; cursor: pointer; transition: all var(--transition-fast); font-family: var(--font-sans); color: var(--text-primary); }
+        .user-avatar-btn:hover { border-color: var(--accent); background: var(--accent-glow); }
+        .user-avatar-circle { width: 28px; height: 28px; border-radius: 50%; background: var(--accent-gradient); color: #fff; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: 700; flex-shrink: 0; overflow: hidden; }
+        .user-avatar-name { font-size: 0.82rem; font-weight: 600; max-width: 110px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .user-menu { position: relative; display: inline-flex; }
+        .user-dropdown { display: none; position: absolute; top: calc(100% + 6px); right: 0; min-width: 220px; background: var(--card-bg); border: 1px solid var(--border-primary); border-radius: var(--radius-md); box-shadow: var(--shadow-xl); z-index: 100; overflow: hidden; animation: drop-in 0.15s ease; }
+        @keyframes drop-in { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: translateY(0); } }
+        .user-menu.open .user-dropdown { display: block; }
+        .logout-modal { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%) scale(0.96); z-index: 1002; background: var(--card-bg); border: 1px solid var(--border-primary); border-radius: var(--radius-lg); padding: 2rem; min-width: 360px; max-width: 90vw; text-align: center; opacity: 0; transition: all 0.2s ease; }
+        .logout-modal.open { display: block; opacity: 1; transform: translate(-50%, -50%) scale(1); }
+        .auth-email-field { width: 100%; padding: 0.7rem 1rem 0.7rem 2.5rem; border-radius: var(--radius-sm); border: 1px solid var(--border-primary); background: var(--bg-glass); color: var(--text-primary); font-size: 0.88rem; font-family: var(--font-sans); outline: none; box-sizing: border-box; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23888888' stroke-width='1.5'%3E%3Crect x='2' y='4' width='20' height='16' rx='2'/%3E%3Cpath d='M22 7l-10 7L2 7'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: 0.75rem center; background-size: 16px; }
+        .auth-email-field:focus { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-glow); }
+        .auth-email-cta { display: flex; align-items: center; justify-content: center; width: 100%; padding: 0.7rem 1rem; border-radius: var(--radius-sm); border: none; background: var(--accent-gradient); color: #fff; font-size: 0.88rem; font-weight: 700; cursor: pointer; transition: all var(--transition-fast); }
+        .auth-email-cta:hover { opacity: 0.9; transform: translateY(-1px); box-shadow: var(--shadow-sm); }
+        .auth-email-cta:disabled { opacity: 0.5; cursor: not-allowed; }
+    </style>
+    <script src="/playground/i18n.js"></script>
+    <script src="/playground/auth.js?v=1"></script>
+</head>
+<body>
+    <nav class="navbar">
+        <a href="/" class="logo"><img src="/playground/logo.png" alt="Memory Bridge"> Memory <span class="logo-accent">Bridge</span></a>
+        <div class="nav-links">
+          <a href="/" data-i18n="nav.home">Home</a>
+          <a href="/playground/graph.html" data-i18n="nav.graph">Graph</a>
+          <a href="/forgetful-demo">Forgetful Demo</a>
+          <a href="/dashboard/" data-i18n="nav.dashboard">Dashboard</a>
+          <a href="/pricing" data-i18n="nav.pricing">Pricing</a>
+          <a href="/playground/integrations.html" class="active" data-i18n="nav.integrations">Integrations</a>
+        </div>
+        <div class="nav-right">
+            <div style="position:relative;display:inline-flex;">
+                <button class="nav-icon-btn lang-toggle" onclick="toggleLang()" title="Switch language"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg></button>
+                <div class="lang-dropdown" id="lang-dropdown">
+                    <a href="javascript:void(0)" data-lang="en" onclick="setLang('en')">🇬🇧 English</a>
+                    <a href="javascript:void(0)" data-lang="zh" onclick="setLang('zh')">🇨🇳 中文</a>
+                    <a href="javascript:void(0)" data-lang="ja" onclick="setLang('ja')">🇯🇵 日本語</a>
+                    <a href="javascript:void(0)" data-lang="ko" onclick="setLang('ko')">🇰🇷 한국어</a>
+                    <a href="javascript:void(0)" data-lang="es" onclick="setLang('es')">🇪🇸 Español</a>
+                    <a href="javascript:void(0)" data-lang="fr" onclick="setLang('fr')">🇫🇷 Français</a>
+                    <a href="javascript:void(0)" data-lang="de" onclick="setLang('de')">🇩🇪 Deutsch</a>
+                </div>
+            </div>
+            <button class="nav-icon-btn theme-toggle-btn" onclick="toggleTheme()" title="Toggle theme"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="theme-sun"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="theme-moon" style="display:none"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg></button>
+            <div class="auth-btn-container" id="auth-btn-container">
+                <button class="auth-btn" id="auth-nav-btn" onclick="openAuth()" title="Sign in / Sign up"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg><span id="auth-btn-label" data-i18n="auth.sign_in">Sign in</span></button>
+                <div class="user-menu" id="user-menu" style="display:none;">
+                    <button class="user-avatar-btn" id="user-btn" onclick="toggleUserDropdown()"><span class="user-avatar-circle" id="user-avatar-circle">👤</span><span class="session-dot" id="session-dot"></span><span class="user-avatar-name" id="user-avatar-name"></span><svg class="user-chevron" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg></button>
+                    <div class="user-dropdown" id="user-dropdown">
+                        <div class="user-dropdown-header"><span class="user-dropdown-email" id="user-dropdown-email"></span><span class="user-dropdown-plan" id="user-dropdown-plan" data-i18n="dash.free_plan">Free Plan</span></div>
+                        <div class="user-dropdown-divider"></div>
+                        <a href="/pricing" class="user-dropdown-item">Manage Billing</a>
+                        <div class="user-dropdown-item sign-out" onclick="showLogoutConfirm()" style="cursor:pointer;">Sign Out</div>
+                    </div>
+                </div>
+            </div>
+            <a href="/playground/" class="nav-cta"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="5 3 19 12 5 21 5 3"/></svg><span data-i18n="nav.launch_playground">Launch Playground</span></a>
+            <button class="nav-hamburger" onclick="toggleMobileNav()" aria-label="Open menu"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="4" y1="6" x2="20" y2="6"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="18" x2="20" y2="18"/></svg></button>
+        </div>
+    </nav>
+
+    <div class="nav-mobile-backdrop" id="nav-backdrop" onclick="closeMobileNav()"></div>
+    <div class="nav-mobile-panel" id="nav-mobile">
+      <div class="nav-mobile-header"><div class="logo"><img src="/playground/logo.png" alt="Memory Bridge"> Memory <span class="logo-accent">Bridge</span></div><button class="nav-mobile-close" onclick="closeMobileNav()"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></div>
+      <a href="/" onclick="closeMobileNav()">Home</a>
+      <a href="/playground/graph.html" onclick="closeMobileNav()">Graph</a>
+      <a href="/forgetful-demo" onclick="closeMobileNav()">Forgetful Demo</a>
+      <a href="/dashboard/" onclick="closeMobileNav()">Dashboard</a>
+      <a href="/pricing" onclick="closeMobileNav()">Pricing</a>
+      <a href="/playground/integrations.html" onclick="closeMobileNav()" class="active">Integrations</a>
+      <a href="/playground/" class="nav-mobile-cta" onclick="closeMobileNav()"><span data-i18n="nav.launch_playground">Launch Playground</span></a>
+    </div>
+
+    <div class="logout-modal-overlay" id="logout-overlay" onclick="closeLogoutConfirm()"></div>
+    <div class="logout-modal" id="logout-modal">
+        <div class="logout-icon">🚪</div>
+        <div class="logout-title">Sign out of Memory Bridge?</div>
+        <div class="logout-btns"><button class="btn btn-secondary" onclick="closeLogoutConfirm()">Cancel</button><button class="btn btn-danger" onclick="logout()">Sign Out</button></div>
+    </div>
+
+    <div class="auth-overlay" id="auth-overlay">
+      <div class="auth-modal">
+        <button class="auth-close" onclick="closeAuth()"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+        <div class="auth-icon">🔑</div>
+        <div class="auth-title">Memory Bridge</div>
+        <input type="email" class="auth-email-field" id="pl-email" placeholder="you@example.com" style="margin-top:1rem;" onkeydown="if(event.key==='Enter')continueWithEmail()">
+        <button class="auth-email-cta" onclick="continueWithEmail()" id="pl-email-btn" style="margin-top:0.5rem;">Continue →</button>
+        <div class="auth-error" id="auth-error-main"></div>
+      </div>
+    </div>
+
+    <div class="doc-page">
+        <a href="/playground/integrations.html" class="back-link">← All Integrations</a>
+        <div class="framework-badge">🧩 AutoGen (Microsoft)</div>
+        <h1><span>AutoGen</span> Integration</h1>
+        <p class="subtitle">
+            Wrap AutoGen agents with Memory Bridge for persistent, cross-session memory. Conversation context and learned facts survive beyond individual chats.
+        </p>
+
+        <h2>Overview</h2>
+        <p>
+            The <code>MemoryBridgeAgent</code> adapter wraps AutoGen's <code>ConversableAgent</code> with persistent
+            memory capabilities. Every <code>remember()</code> and <code>recall()</code> call is backed by the
+            Memory Bridge API, enabling agents to retain knowledge across conversations, sessions, and group chats.
+        </p>
+
+        <div class="info-box tip">
+            <p><strong>✨ Note:</strong> Use the <code>MemoryBridgeAutoGen.create_agent()</code> convenience method for a one-line agent setup with full memory integration.</p>
+        </div>
+
+        <h2>Installation</h2>
+        <div class="code-header"><span class="lang-label">bash</span></div>
+        <pre><span class="kw">pip</span> install memory-bridge pyautogen</pre>
+
+        <h2>Quick Start</h2>
+
+        <div class="step">
+            <div class="step-num">1</div>
+            <div class="step-body">
+                <h3>Import and create a memory-backed agent</h3>
+                <p>Use <code>MemoryBridgeAgent</code> directly or the <code>create_agent</code> helper.</p>
+            </div>
+        </div>
+        <div class="code-header"><span class="lang-label">Python</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+        <pre><span class="kw">from</span> memory_bridge.adapters.autogen_adapter <span class="kw">import</span> MemoryBridgeAgent
+
+agent = MemoryBridgeAgent(
+    name=<span class="str">"assistant"</span>,
+    api_key=<span class="str">"mb_your-api-key-here"</span>,
+    base_url=<span class="str">"http://localhost:8000"</span>,
+    session_id=<span class="str">"my-autogen-session"</span>
+)</pre>
+
+        <div class="step">
+            <div class="step-num">2</div>
+            <div class="step-body">
+                <h3>Store and recall memories</h3>
+                <p>Use the <code>remember</code> and <code>recall</code> methods to persist and retrieve information.</p>
+            </div>
+        </div>
+        <div class="code-header"><span class="lang-label">Python</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+        <pre><span class="cm"># Store a memory</span>
+<span class="kw">await</span> agent.<span class="fn">remember</span>(
+    key=<span class="str">"user_preference"</span>,
+    value={<span class="str">"language"</span>: <span class="str">"Python"</span>, <span class="str">"framework"</span>: <span class="str">"FastAPI"</span>}
+)
+
+<span class="cm"># Recall a memory</span>
+prefs = <span class="kw">await</span> agent.<span class="fn">recall</span>(key=<span class="str">"user_preference"</span>)
+<span class="fn">print</span>(prefs)  <span class="cm"># {'language': 'Python', 'framework': 'FastAPI'}</span>
+
+<span class="cm"># Semantic search</span>
+results = <span class="kw">await</span> agent.<span class="fn">search</span>(query=<span class="str">"user framework preferences"</span>)</pre>
+
+        <div class="step">
+            <div class="step-num">3</div>
+            <div class="step-body">
+                <h3>Use in an AutoGen conversation</h3>
+                <p>Agents with memory naturally persist context across messages.</p>
+            </div>
+        </div>
+        <div class="code-header"><span class="lang-label">Python</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+        <pre><span class="kw">from</span> autogen <span class="kw">import</span> ConversableAgent, UserProxyAgent
+
+user_proxy = UserProxyAgent(
+    name=<span class="str">"User"</span>,
+    human_input_mode=<span class="str">"NEVER"</span>,
+    code_execution_config=<span class="kw">False</span>
+)
+
+<span class="cm"># Start a conversation — agent can recall past interactions</span>
+<span class="kw">await</span> user_proxy.<span class="fn">a_initiate_chat</span>(
+    agent,
+    message=<span class="str">"Do you remember my preferred framework?"</span>
+)</pre>
+
+        <h2>Complete Working Example</h2>
+        <p>A complete AutoGen agent with Memory Bridge persistence:</p>
+        <div class="code-header"><span class="lang-label">Python</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+        <pre><span class="kw">import</span> asyncio
+<span class="kw">from</span> memory_bridge.adapters.autogen_adapter <span class="kw">import</span> MemoryBridgeAgent, MemoryBridgeAutoGen
+<span class="kw">from</span> autogen <span class="kw">import</span> AssistantAgent, UserProxyAgent, ConversableAgent
+
+<span class="kw">async def</span> <span class="fn">main</span>():
+    <span class="cm"># Option 1: Direct MemoryBridgeAgent</span>
+    memory_agent = MemoryBridgeAgent(
+        name=<span class="str">"researcher"</span>,
+        api_key=<span class="str">"mb_your-api-key"</span>,
+        base_url=<span class="str">"http://localhost:8000"</span>,
+        session_id=<span class="str">"autogen-demo"</span>
+    )
+
+    <span class="cm"># Store some knowledge</span>
+    <span class="kw">await</span> memory_agent.<span class="fn">remember</span>(
+        key=<span class="str">"project_context"</span>,
+        value={<span class="str">"project"</span>: <span class="str">"Memory Bridge"</span>, <span class="str">"status"</span>: <span class="str">"active"</span>}
+    )
+
+    <span class="cm"># Option 2: One-liner with create_agent</span>
+    agent2 = MemoryBridgeAutoGen.<span class="fn">create_agent</span>(
+        name=<span class="str">"researcher"</span>,
+        llm_config={<span class="str">"config_list"</span>: [{<span class="str">"model"</span>: <span class="str">"gpt-4"</span>, <span class="str">"api_key"</span>: <span class="str">"sk-..."</span>}]},
+        api_url=<span class="str">"http://localhost:8000"</span>,
+        api_key=<span class="str">"your-key-here"</span>
+    )
+
+    <span class="cm"># Recall stored memory across sessions</span>
+    context = <span class="kw">await</span> memory_agent.<span class="fn">recall</span>(key=<span class="str">"project_context"</span>)
+    <span class="fn">print</span>(<span class="str">"Recalled:"</span>, context)
+
+<span class="kw">if</span> __name__ == <span class="str">"__main__"</span>:
+    <span class="kw">asyncio</span>.<span class="fn">run</span>(<span class="fn">main</span>())</pre>
+
+        <h2>Multi-Agent Memory Sharing</h2>
+        <p>Memory Bridge enables cross-agent memory in AutoGen group chats:</p>
+        <ul>
+            <li><strong>Shared session</strong> — Agents with the same <code>session_id</code> share a memory pool</li>
+            <li><strong>Agent-specific keys</strong> — Use prefixed keys (e.g., <code>"researcher:findings"</code>) for per-agent namespacing</li>
+            <li><strong>Cross-session continuity</strong> — Memories persist even when all agents restart, enabling long-running research projects</li>
+            <li><strong>Semantic discovery</strong> — Agents can search for relevant memories created by other agents using natural language</li>
+        </ul>
+
+        <div class="info-box warn">
+            <p><strong>⚠️ Production Tip:</strong> For multi-agent scenarios, set the same <code>project</code> name across agents and use different <code>session_id</code> values for different conversations. This enables cross-agent retrieval within a project while isolating conversations.</p>
+        </div>
+    </div>
+
+    <footer class="footer" data-i18n="footer.text">© 2026 Memory Bridge — API for cross-agent memory</footer>
+
+    <script>
+        var savedTheme = localStorage.getItem('mb-theme');
+        if (savedTheme) document.documentElement.setAttribute('data-theme', savedTheme);
+        else document.documentElement.setAttribute('data-theme', window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+        function toggleTheme() { var html = document.documentElement; var next = html.getAttribute('data-theme') === 'dark' ? 'light' : 'dark'; html.setAttribute('data-theme', next); localStorage.setItem('mb-theme', next); updateThemeIcons(); }
+        function updateThemeIcons() { var theme = document.documentElement.getAttribute('data-theme'); document.querySelectorAll('.theme-toggle-btn').forEach(function(b){ var sun = b.querySelector('.theme-sun'), moon = b.querySelector('.theme-moon'); if(sun) sun.style.display = theme === 'dark' ? 'block' : 'none'; if(moon) moon.style.display = theme === 'dark' ? 'none' : 'block'; }); }
+        updateThemeIcons();
+        function toggleMobileNav() { document.getElementById('nav-backdrop').classList.toggle('open'); document.getElementById('nav-mobile').classList.toggle('open'); document.body.style.overflow = document.getElementById('nav-mobile').classList.contains('open') ? 'hidden' : ''; }
+        function closeMobileNav() { document.getElementById('nav-mobile').classList.remove('open'); document.getElementById('nav-backdrop').classList.remove('open'); document.body.style.overflow = ''; }
+        function toggleLang() { document.getElementById('lang-dropdown').classList.toggle('open'); }
+        document.addEventListener('click', function(e) { var dd = document.getElementById('lang-dropdown'); if (dd && dd.classList.contains('open') && !e.target.closest('.lang-toggle') && !e.target.closest('.lang-dropdown')) dd.classList.remove('open'); });
+        function setLang(code) { localStorage.setItem('mb-lang', code); initLanguage(); }
+        function copyCode(btn) { var pre = btn.closest('.code-header').nextElementSibling; if (pre && pre.tagName === 'PRE') { navigator.clipboard.writeText(pre.textContent).then(function() { var t = btn.textContent; btn.textContent = 'Copied!'; setTimeout(function() { btn.textContent = t; }, 1500); }); } }
+        document.addEventListener('DOMContentLoaded', function() { if (typeof initAuth === 'function') initAuth(); if (typeof initLanguage === 'function') initLanguage(); });
+    </script>
+</body>
+</html>

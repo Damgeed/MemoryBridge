@@ -10,6 +10,8 @@ window.TRANSLATIONS = {
     "nav.playground": "Playground",
     "nav.concept": "Concept",
     "nav.graph": "Graph",
+    "nav.demo": "Demo",
+    "nav.forgetful_demo": "Forgetful Demo",
     "nav.pricing": "Pricing",
     "nav.dashboard": "Dashboard",
 
@@ -371,6 +373,8 @@ window.TRANSLATIONS = {
     "nav.playground": "演示",
     "nav.concept": "概念",
     "nav.graph": "图谱",
+    "nav.demo": "演示",
+    "nav.forgetful_demo": "失忆演示",
     "nav.pricing": "定价",
     "nav.dashboard": "控制台",
     "footer.text": "© 2026 Memory Bridge — 跨代理记忆 API",
