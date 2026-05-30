@@ -47,7 +47,10 @@
             .auth-btn-container { display: inline-flex !important; }
             .integrations-page { padding: 2rem 1rem 3rem; }
             .integrations-page h1 { font-size: 1.6rem; }
-            .int-grid { grid-template-columns: 1fr; }
+            .int-grid { 
+                grid-template-columns: minmax(280px, 380px);
+                justify-content: center;
+            }
         }
         @media (max-width: 480px) {
             .integrations-page h1 { font-size: 1.3rem; }
@@ -170,7 +173,7 @@
           <a href="/dashboard/" data-i18n="nav.dashboard">Dashboard</a>
           <a href="/pricing" data-i18n="nav.pricing">Pricing</a>
           <a href="/playground/integrations.html" class="active" data-i18n="nav.integrations">Integrations</a>
-          <a href="/quickstart" style="color:var(--accent);font-weight:700;">Quickstart</a>
+          <a href="/quickstart" >Quickstart</a>
         </div>
       <div class="nav-right">
         <div style="position:relative;display:inline-flex;">
