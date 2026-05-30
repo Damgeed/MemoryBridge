@@ -121,6 +121,9 @@
         .auth-email-cta { display: flex; align-items: center; justify-content: center; width: 100%; padding: 0.7rem 1rem; border-radius: var(--radius-sm); border: none; background: var(--accent-gradient); color: #fff; font-size: 0.88rem; font-weight: 700; font-family: var(--font-sans); cursor: pointer; transition: all var(--transition-fast); gap: 0.4rem; }
         .auth-email-cta:hover { opacity: 0.9; transform: translateY(-1px); box-shadow: var(--shadow-sm); }
         .auth-email-cta:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+    @media (max-width: 640px) {
+        .back-link { display: none !important; }
+    }
     </style>
     <script src="/playground/i18n.js"></script>
     <script src="/playground/auth.js?v=1"></script>
