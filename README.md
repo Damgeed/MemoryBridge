@@ -6,7 +6,7 @@
 [![Docker](https://img.shields.io/badge/docker-ready-2496ED?logo=docker)](https://hub.docker.com/)
 [![MCP](https://img.shields.io/badge/MCP-ready-8B5CF6)](https://modelcontextprotocol.io)
 
-**Your AI agents have amnesia. Memory Bridge is the shared workspace for your AI workforce.**
+**Your AI agents have amnesia. Because stateless agents can't build stateful businesses — Memory Bridge gives AI teams persistent memory, shared context, and coordinated workflows.**
 
 Memory Bridge is a middleware layer that lets AI agents share context across sessions, frameworks, and servers. One API key per agent gives your entire ecosystem a unified, permanent corporate brain.
 

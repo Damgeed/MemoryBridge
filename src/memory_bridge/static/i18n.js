@@ -87,7 +87,7 @@ window.TRANSLATIONS = {
 
     // ── Hero ────────────────────────────────────────
     "hero.title": 'Your AI agents have<br><span class="gradient-text">amnesia.</span>',
-    "hero.subtitle": "You're building a team of AI agents — but they can't talk to each other, and they forget everything the moment they spin down. Memory Bridge is the shared workspace for your AI workforce.",
+    "hero.subtitle": "You're building a team of AI agents — but they can't talk to each other, and they forget everything the moment they spin down.\nBecause stateless agents can't build stateful businesses. Memory Bridge gives AI teams persistent memory, shared context, and coordinated workflows.",
     "cta.tryit": "🚀 Try It Now — No Signup",
     "cta.howitworks": "How It Works",
     "stat.tests": "Tests",
