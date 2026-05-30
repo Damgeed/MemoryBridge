@@ -2880,6 +2880,15 @@
         }
 
 
+        function showAuthenticatedContent(show) {
+            const gate = document.getElementById('dash-auth-gate');
+            const inner = document.getElementById('dash-authenticated-inner');
+            if (gate) gate.style.display = show ? 'none' : 'block';
+            if (inner) inner.style.display = show ? 'block' : 'none';
+            const status = document.getElementById('dash-status');
+            if (status) status.style.display = show ? 'block' : 'none';
+        }
+
         // ── Init ──────────────────────────────────────────────────
         document.addEventListener('DOMContentLoaded', async () => {
             const authResult = await initAuth();
