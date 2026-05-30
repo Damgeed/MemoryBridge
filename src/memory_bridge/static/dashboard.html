@@ -32,6 +32,42 @@
             -webkit-text-fill-color: transparent;
             background-clip: text;
         }
+        #dash-refresh-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 34px;
+            height: 34px;
+            border: 1px solid var(--border-primary);
+            border-radius: var(--radius-sm);
+            background: transparent;
+            color: var(--text-muted);
+            cursor: pointer;
+            transition: all var(--transition-fast);
+            flex-shrink: 0;
+            margin-left: auto;
+        }
+        #dash-refresh-btn:hover {
+            background: var(--btn-secondary-hover);
+            color: var(--accent);
+            border-color: var(--accent);
+        }
+        #dash-refresh-btn.loading {
+            pointer-events: none;
+            opacity: 0.7;
+        }
+        #dash-refresh-btn.loading svg {
+            animation: spin 0.6s linear infinite;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        #dash-updated-text {
+            font-size: 0.72rem;
+            color: var(--text-faint);
+            white-space: nowrap;
+            margin-left: 0.5rem;
+        }
         .dash-subtitle {
             color: var(--text-muted);
             margin-bottom: 2rem;
@@ -1145,6 +1181,13 @@
         <!-- Header -->
         <div class="dash-header">
             <h1><span class="gradient-text" data-i18n="dash.heading">Dashboard</span></h1>
+            <span id="dash-updated-text"></span>
+            <button id="dash-refresh-btn" onclick="handleDashboardRefresh()" title="Refresh dashboard" aria-label="Refresh dashboard">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="23 4 23 10 17 10"/>
+                    <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>
+                </svg>
+            </button>
         </div>
         <p class="dash-subtitle" id="dash-status" data-i18n="dash.loading">Loading your dashboard...</p>
 
@@ -1858,6 +1901,24 @@
             el.textContent = '🔄 Loading...';
             document.getElementById('key-reveal-area').innerHTML = '';
             loadDashboard();
+        }
+
+        function handleDashboardRefresh() {
+            const btn = document.getElementById('dash-refresh-btn');
+            const updatedText = document.getElementById('dash-updated-text');
+            if (btn) btn.classList.add('loading');
+            if (updatedText) updatedText.textContent = 'Updating...';
+            Promise.all([
+                loadDashboard(),
+                loadKeys(),
+                loadAgentStats(),
+            ]).finally(() => {
+                if (btn) btn.classList.remove('loading');
+                if (updatedText) {
+                    updatedText.textContent = 'Updated just now';
+                    setTimeout(() => { updatedText.textContent = ''; }, 5000);
+                }
+            });
         }
 
         async function api(method, path, body) {

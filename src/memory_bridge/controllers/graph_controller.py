@@ -92,6 +92,11 @@ async def get_memory_graph(
     # --- Auth check: resolve project from request headers ---
     effective_project = project or await _resolve_project_id(request)
 
+    # Demo tier: cap at 50 to prevent timeout
+    auth = getattr(request.state, 'auth', {})
+    if auth.get('tier') == 'demo' and limit > 50:
+        limit = 50
+
     # Fetch memories
     memories = await storage.query_memories(
         session_id=session_id,

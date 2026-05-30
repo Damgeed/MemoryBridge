@@ -53,6 +53,45 @@
         .graph-toolbar input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-glow); }
         .graph-toolbar input::placeholder { color: var(--text-faint); }
 
+        #refresh-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 32px;
+            height: 32px;
+            border: 1px solid var(--border-primary);
+            border-radius: var(--radius-sm);
+            background: transparent;
+            color: var(--text-muted);
+            cursor: pointer;
+            transition: all var(--transition-fast);
+            flex-shrink: 0;
+        }
+        #refresh-btn:hover {
+            background: var(--btn-secondary-hover);
+            color: var(--accent);
+            border-color: var(--accent);
+        }
+        #refresh-btn.loading {
+            pointer-events: none;
+            opacity: 0.7;
+        }
+        #refresh-btn svg {
+            transition: transform 0.3s ease;
+        }
+        #refresh-btn.loading svg {
+            animation: spin 0.6s linear infinite;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        .last-updated {
+            font-size: 0.72rem;
+            color: var(--text-faint);
+            white-space: nowrap;
+            margin-left: auto;
+        }
+
         .graph-legend {
             display: flex;
             gap: 1rem;
@@ -344,6 +383,13 @@
     <!-- Toolbar -->
     <div class="graph-toolbar">
         <h2 data-i18n="graph.heading">🧠 Memory Graph</h2>
+        <button id="refresh-btn" onclick="handleRefresh()" title="Refresh graph data" aria-label="Refresh graph">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="23 4 23 10 17 10"/>
+                <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>
+            </svg>
+        </button>
+        <span class="last-updated" id="last-updated"></span>
         <input id="search" type="text" placeholder="Filter nodes by label..." data-i18n-placeholder="graph.filter" oninput="filterNodes()">
         <div class="graph-legend">
             <span class="legend-item"><span class="legend-dot" style="background: #a78bfa;"></span> <span data-i18n="graph.legend_memory">Memory</span></span>
@@ -445,7 +491,7 @@
                 if (project)   url += `&project=${encodeURIComponent(project)}`;
 
                 const controller = new AbortController();
-                const timeout = setTimeout(() => controller.abort(), 10000);
+                const timeout = setTimeout(() => controller.abort(), 20000);
                 const headers = {};
                 const jwt = localStorage.getItem('mb_jwt');
                 // Try JWT first (logged-in users), fall back to API key
@@ -460,18 +506,20 @@
                     if (!firstData.nodes || firstData.nodes.length === 0) {
                         const retryHeaders = { 'Authorization': 'Bearer ' + apiKey };
                         const retryController = new AbortController();
-                        const retryTimeout = setTimeout(() => retryController.abort(), 10000);
+                        const retryTimeout = setTimeout(() => retryController.abort(), 20000);
                         const retryRes = await fetch(url, { signal: retryController.signal, headers: retryHeaders });
                         clearTimeout(retryTimeout);
                         if (retryRes.ok) {
                             graphData = await retryRes.json();
                             if (graphData.nodes && graphData.nodes.length > 0) {
+                                updateLastUpdated();
                                 renderGraph(graphData);
                                 return;
                             }
                         }
                     } else {
                         graphData = firstData;
+                        updateLastUpdated();
                         renderGraph(graphData);
                         return;
                     }
@@ -489,6 +537,7 @@
                     return;
                 }
 
+                updateLastUpdated();
                 renderGraph(graphData);
             } catch (e) {
                 container.innerHTML = '';
@@ -499,6 +548,27 @@
                 p.textContent = e.message || 'Unknown error';
                 container.appendChild(errorDiv);
             }
+        }
+
+        // ── Refresh & Timestamp ──────────────────────────────────
+        function updateLastUpdated() {
+            const el = document.getElementById('last-updated');
+            if (el) {
+                const now = new Date();
+                el.textContent = 'Updated ' + now.toLocaleTimeString();
+            }
+        }
+
+        function handleRefresh() {
+            const btn = document.getElementById('refresh-btn');
+            if (btn) {
+                btn.classList.add('loading');
+            }
+            loadGraph().finally(() => {
+                if (btn) {
+                    btn.classList.remove('loading');
+                }
+            });
         }
 
         // ── Render D3 Force-Directed Graph ────────────────────────
