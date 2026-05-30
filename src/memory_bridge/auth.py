@@ -67,7 +67,7 @@ def is_token_revoked(claims: dict) -> bool:
 DEMO_API_KEY = "mb_demo_public_test"
 
 
-EXEMPT_PATHS = {"/", "/health", "/docs", "/openapi.json", "/redoc", "/playground", "/badge", "/graph", "/graph/data", "/billing/webhook", "/pricing", "/concept", "/concept/", "/dashboard", "/dashboard/", "/dashboard/recover", "/dashboard/free-signup", "/dashboard/stripe-welcome", "/auth/register", "/auth/login", "/auth/oauth", "/auth/auth0/login", "/auth/auth0/callback", "/auth/auth0/passwordless/start", "/auth/auth0/passwordless/start-sms", "/auth/auth0/passwordless/verify", "/demo", "/api-docs", "/faq"}
+EXEMPT_PATHS = {"/", "/health", "/docs", "/openapi.json", "/redoc", "/playground", "/badge", "/graph", "/graph/data", "/billing/webhook", "/pricing", "/concept", "/concept/", "/dashboard", "/dashboard/", "/dashboard/recover", "/dashboard/free-signup", "/dashboard/stripe-welcome", "/auth/register", "/auth/login", "/auth/oauth", "/auth/auth0/login", "/auth/auth0/callback", "/auth/auth0/passwordless/start", "/auth/auth0/passwordless/start-sms", "/auth/auth0/passwordless/verify", "/demo", "/forgetful-demo", "/integrations", "/integration/langchain", "/integration/crewai", "/integration/autogen", "/integration/openai-agents", "/api-docs", "/faq", "/CAPABILITIES.md"}
 
 
 class APIKeyMiddleware(BaseHTTPMiddleware):

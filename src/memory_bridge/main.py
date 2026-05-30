@@ -402,6 +402,61 @@ def create_app() -> FastAPI:
             status_code=404,
         )
 
+    # ── Forgetful Agent Demo ────────────────────────
+    @app.get("/forgetful-demo", include_in_schema=False)
+    async def forgetful_demo_page():
+        """Serve the split-screen forgetful agent comparison demo."""
+        static_dir = os.path.join(os.path.dirname(__file__), "static")
+        html_path = os.path.join(static_dir, "forgetful-demo.html")
+        if os.path.exists(html_path):
+            with open(html_path) as f:
+                content = f.read()
+            return Response(
+                content=content,
+                media_type="text/html",
+                headers={"Cache-Control": "no-cache, no-store, must-revalidate"},
+            )
+        return Response(content="Page not found", status_code=404)
+
+    # ── Integrations Index ─────────────────────────
+    @app.get("/integrations", include_in_schema=False)
+    async def integrations_page():
+        """Serve the framework integrations index page."""
+        static_dir = os.path.join(os.path.dirname(__file__), "static")
+        html_path = os.path.join(static_dir, "integrations.html")
+        if os.path.exists(html_path):
+            with open(html_path) as f:
+                content = f.read()
+            return Response(
+                content=content,
+                media_type="text/html",
+                headers={"Cache-Control": "no-cache, no-store, must-revalidate"},
+            )
+        return Response(content="Page not found", status_code=404)
+
+    # ── Integration Detail Pages ───────────────────
+    _INTEGRATION_PAGES = {
+        "langchain": "integration-langchain.html",
+        "crewai": "integration-crewai.html",
+        "autogen": "integration-autogen.html",
+        "openai-agents": "integration-openai-agents.html",
+    }
+
+    for _slug, _filename in _INTEGRATION_PAGES.items():
+
+        @app.get(f"/integration/{_slug}", include_in_schema=False)
+        async def _integration_detail(static_dir=os.path.join(os.path.dirname(__file__), "static"), filename=_filename):
+            html_path = os.path.join(static_dir, filename)
+            if os.path.exists(html_path):
+                with open(html_path) as f:
+                    content = f.read()
+                return Response(
+                    content=content,
+                    media_type="text/html",
+                    headers={"Cache-Control": "no-cache, no-store, must-revalidate"},
+                )
+            return Response(content="Page not found", status_code=404)
+
     # ── Static Assets (logo.svg, etc.) ─────────────────────────────
     static_dir = os.path.join(os.path.dirname(__file__), "static")
     if os.path.exists(static_dir):
