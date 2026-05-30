@@ -198,6 +198,7 @@ _SCHEMA_MIGRATIONS: dict[int, str] = {
         20: "ALTER TABLE {schema}.api_keys ADD COLUMN IF NOT EXISTS scope TEXT",
         21: "ALTER TABLE {schema}.agent_permissions ADD COLUMN IF NOT EXISTS scope TEXT",
         22: "ALTER TABLE {schema}.agent_permissions ADD COLUMN IF NOT EXISTS allowed_agent_types JSONB",
+        23: "CREATE INDEX IF NOT EXISTS idx_{schema}_memories_created ON {schema}.memories(created_at DESC)",
     }
 # ──────────────────────────────────────────────────────────────────────────────
 
@@ -304,6 +305,8 @@ class PostgresMemoryRepository(MemoryRepository):
                         ON {self.schema}.memories(agent_id);
                     CREATE INDEX IF NOT EXISTS idx_{self.schema}_memories_key
                         ON {self.schema}.memories(key);
+                    CREATE INDEX IF NOT EXISTS idx_{self.schema}_memories_created
+                        ON {self.schema}.memories(created_at DESC);
 
                     CREATE TABLE IF NOT EXISTS {self.schema}.memory_tags (
                         memory_id TEXT NOT NULL REFERENCES {self.schema}.memories(id) ON DELETE CASCADE,
