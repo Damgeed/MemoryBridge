@@ -31,8 +31,12 @@ class MemoryEntry(BaseModel):
     updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     ttl_seconds: Optional[int] = None
     """Seconds after which this memory expires. None = never expires."""
+    superseded_by: Optional[str] = None
+    """If set, this memory has been superseded by another memory with the same key+project. Points to the newer memory's ID."""
     project: Optional[str] = None
     """Project scope for multi-tenant isolation."""
+    conflicts_resolved: int = 0
+    """Number of conflicting memories that were superseded during this write (transient, not persisted)."""
 
 
 class Session(BaseModel):

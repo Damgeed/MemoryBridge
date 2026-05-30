@@ -404,6 +404,105 @@ async def _test_cleanup_expired_none_expired(repo: MemoryRepository):
 # ── Query_memories_lineage tests (extra method beyond ABC) ────────────────
 
 
+async def _test_conflict_resolution_same_value(repo: MemoryRepository):
+    """Storing a memory with same key+project and same value does NOT create a conflict."""
+    m1 = make_memory(session_id="s1", agent_id="a1", key="same", value="value", project="proj-x")
+    stored1 = await repo.store_memory(m1)
+    assert stored1.conflicts_resolved == 0
+
+    # Store same key+project with identical value
+    m2 = make_memory(session_id="s1", agent_id="a1", key="same", value="value", project="proj-x")
+    stored2 = await repo.store_memory(m2)
+    assert stored2.conflicts_resolved == 0
+
+    # Both should be queryable (same value = not a conflict)
+    results = await repo.query_memories(project="proj-x")
+    assert len(results) == 2
+
+
+async def _test_conflict_resolution_different_value(repo: MemoryRepository):
+    """Storing a memory with same key+project but different value supersedes the old one."""
+    m1 = make_memory(session_id="s1", agent_id="a1", key="conflict", value="old_value", project="proj-x")
+    stored1 = await repo.store_memory(m1)
+    assert stored1.conflicts_resolved == 0
+    old_id = stored1.id
+
+    # Store same key+project with different value
+    m2 = make_memory(session_id="s1", agent_id="a1", key="conflict", value="new_value", project="proj-x")
+    stored2 = await repo.store_memory(m2)
+    assert stored2.conflicts_resolved == 1
+
+    # Only the new one should appear in queries
+    results = await repo.query_memories(project="proj-x")
+    assert len(results) == 1
+    assert results[0].id == stored2.id
+    assert results[0].value == "new_value"
+
+    # The old one should be retrievable by ID but marked as superseded
+    old_entry = await repo.get_memory(old_id)
+    assert old_entry is not None
+    assert old_entry.superseded_by == stored2.id
+
+
+async def _test_conflict_resolution_different_project(repo: MemoryRepository):
+    """Same key but different project is NOT a conflict."""
+    m1 = make_memory(session_id="s1", agent_id="a1", key="shared", value="val_a", project="proj-a")
+    m2 = make_memory(session_id="s1", agent_id="a1", key="shared", value="val_b", project="proj-b")
+    stored1 = await repo.store_memory(m1)
+    stored2 = await repo.store_memory(m2)
+    assert stored1.conflicts_resolved == 0
+    assert stored2.conflicts_resolved == 0
+
+    # Both should exist (different projects = isolated)
+    results_a = await repo.query_memories(project="proj-a")
+    results_b = await repo.query_memories(project="proj-b")
+    assert len(results_a) == 1
+    assert len(results_b) == 1
+    assert results_a[0].value == "val_a"
+    assert results_b[0].value == "val_b"
+
+
+async def _test_conflict_resolution_superseded_not_in_search(repo: MemoryRepository):
+    """Superseded memories should not appear in full-text search results."""
+    m1 = make_memory(session_id="s1", agent_id="a1", key="search_conflict", value="old_searchable", project="proj-x")
+    await repo.store_memory(m1)
+
+    m2 = make_memory(session_id="s1", agent_id="a1", key="search_conflict", value="new_searchable", project="proj-x")
+    await repo.store_memory(m2)
+
+    # Search should only find the new one
+    results = await repo.search_memories(query="searchable", project="proj-x")
+    assert len(results) == 1
+    assert results[0].value == "new_searchable"
+
+
+async def _test_conflict_resolution_multiple_supersedes(repo: MemoryRepository):
+    """Multiple writes of the same key+project chain supersede correctly."""
+    ids = []
+    for i in range(3):
+        m = make_memory(session_id="s1", agent_id="a1", key="chain", value=f"v{i}", project="proj-x")
+        stored = await repo.store_memory(m)
+        ids.append(stored.id)
+        if i > 0:
+            assert stored.conflicts_resolved == 1, f"Write {i} should resolve a conflict"
+
+    # Only the last one should be queryable
+    results = await repo.query_memories(project="proj-x")
+    assert len(results) == 1
+    assert results[0].id == ids[2]
+    assert results[0].value == "v2"
+
+    # The first should be marked as superseded by the second
+    first = await repo.get_memory(ids[0])
+    assert first is not None
+    assert first.superseded_by == ids[1]
+
+    # The second should be marked as superseded by the third
+    second = await repo.get_memory(ids[1])
+    assert second is not None
+    assert second.superseded_by == ids[2]
+
+
 async def _test_query_memories_lineage(repo: MemoryRepository):
     """Child can see parent's memories via lineage query."""
     await repo.store_session(make_session(session_id="s-parent", agent_id="a1"))
@@ -576,6 +675,28 @@ class TestMemoryRepoContractSQLite:
     async def test_query_memories_lineage_child_overrides(self, sqlite_repo):
         await _test_query_memories_lineage_child_overrides(sqlite_repo)
 
+    # ── Conflict resolution tests ──────────────────────────────────────
+
+    @pytest.mark.asyncio
+    async def test_conflict_same_value(self, sqlite_repo):
+        await _test_conflict_resolution_same_value(sqlite_repo)
+
+    @pytest.mark.asyncio
+    async def test_conflict_different_value(self, sqlite_repo):
+        await _test_conflict_resolution_different_value(sqlite_repo)
+
+    @pytest.mark.asyncio
+    async def test_conflict_different_project(self, sqlite_repo):
+        await _test_conflict_resolution_different_project(sqlite_repo)
+
+    @pytest.mark.asyncio
+    async def test_conflict_superseded_not_in_search(self, sqlite_repo):
+        await _test_conflict_resolution_superseded_not_in_search(sqlite_repo)
+
+    @pytest.mark.asyncio
+    async def test_conflict_multiple_supersedes(self, sqlite_repo):
+        await _test_conflict_resolution_multiple_supersedes(sqlite_repo)
+
 
 # ═══════════════════════════════════════════════════════════════════════════
 # PostgreSQL test class — runs the same assertions against Postgres
@@ -717,3 +838,25 @@ class TestMemoryRepoContractPostgres:
     @pytest.mark.asyncio
     async def test_query_memories_lineage_child_overrides(self, postgres_repo):
         await _test_query_memories_lineage_child_overrides(postgres_repo)
+
+    # ── Conflict resolution tests ──────────────────────────────────────
+
+    @pytest.mark.asyncio
+    async def test_conflict_same_value(self, postgres_repo):
+        await _test_conflict_resolution_same_value(postgres_repo)
+
+    @pytest.mark.asyncio
+    async def test_conflict_different_value(self, postgres_repo):
+        await _test_conflict_resolution_different_value(postgres_repo)
+
+    @pytest.mark.asyncio
+    async def test_conflict_different_project(self, postgres_repo):
+        await _test_conflict_resolution_different_project(postgres_repo)
+
+    @pytest.mark.asyncio
+    async def test_conflict_superseded_not_in_search(self, postgres_repo):
+        await _test_conflict_resolution_superseded_not_in_search(postgres_repo)
+
+    @pytest.mark.asyncio
+    async def test_conflict_multiple_supersedes(self, postgres_repo):
+        await _test_conflict_resolution_multiple_supersedes(postgres_repo)

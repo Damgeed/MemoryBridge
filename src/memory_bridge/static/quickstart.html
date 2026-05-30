@@ -1,0 +1,736 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+    <meta name="theme-color" content="#0a0a0f" media="(prefers-color-scheme: dark)">
+    <title>Memory Bridge — Quickstart</title>
+    <link rel="icon" href="/playground/logo.png" type="image/png">
+    <link rel="stylesheet" href="/playground/style.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700;800&display=swap');
+        body { background: var(--bg-primary); color: var(--text-primary); display: flex; flex-direction: column; min-height: 100vh; }
+        .quickstart-page { flex: 1; max-width: 860px; margin: 0 auto; padding: 3rem 1.5rem 4rem; width: 100%; }
+        .quickstart-page h1 { font-size: 2.2rem; font-weight: 800; margin-bottom: 0.5rem; letter-spacing: -0.5px; text-align: center; }
+        .quickstart-page h1 span { background: var(--accent-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+        .quickstart-page .subtitle { color: var(--text-muted); font-size: 1.05rem; margin-bottom: 3rem; line-height: 1.6; text-align: center; }
+        .back-link { display: inline-flex; align-items: center; gap: 0.4rem; color: var(--accent); text-decoration: none; font-size: 0.88rem; font-weight: 600; margin-bottom: 2rem; transition: opacity var(--transition-fast); }
+        .back-link:hover { opacity: 0.8; }
+
+        /* ── Step Cards ──────────────────────────────── */
+        .step-card {
+            background: var(--card-bg); border: 1px solid var(--border-primary);
+            border-radius: var(--radius-lg); padding: 2rem;
+            margin-bottom: 1.75rem;
+            transition: all var(--transition-fast); position: relative; overflow: hidden;
+        }
+        .step-card:hover { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent-glow), var(--shadow-md); }
+        .step-number {
+            display: inline-flex; align-items: center; justify-content: center;
+            width: 36px; height: 36px; border-radius: 50%;
+            background: var(--accent-gradient); color: #fff;
+            font-size: 0.9rem; font-weight: 800; flex-shrink: 0;
+            margin-bottom: 1rem;
+        }
+        .step-card h2 { font-size: 1.25rem; font-weight: 700; margin-bottom: 0.4rem; color: var(--text-primary); }
+        .step-card .step-desc { color: var(--text-muted); font-size: 0.92rem; line-height: 1.6; margin-bottom: 1.25rem; }
+
+        /* ── Terminal / Code Blocks ──────────────────── */
+        .term-block {
+            background: var(--code-bg); border: 1px solid var(--code-border);
+            border-radius: var(--radius-md); padding: 1rem 1.25rem;
+            font-family: var(--font-mono); font-size: 0.82rem; line-height: 1.7;
+            color: var(--code-text); position: relative; overflow-x: auto;
+            margin-bottom: 0.75rem;
+        }
+        .term-block:last-child { margin-bottom: 0; }
+        .term-comment { color: #6c7086; font-style: italic; }
+        .term-line { white-space: nowrap; }
+        .term-prompt { color: var(--accent); font-weight: 600; margin-right: 0.4rem; user-select: none; }
+        .term-accent { color: var(--accent); }
+        .term-string { color: var(--green); }
+        .term-key { color: var(--pink); }
+
+        .term-copy-btn {
+            position: absolute; top: 0.5rem; right: 0.5rem;
+            background: var(--btn-secondary-hover); border: 1px solid var(--border-primary);
+            border-radius: var(--radius-sm); color: var(--text-muted);
+            padding: 0.3rem 0.6rem; font-size: 0.72rem; cursor: pointer;
+            font-family: var(--font-sans); font-weight: 600;
+            transition: all var(--transition-fast); z-index: 2;
+        }
+        .term-copy-btn:hover { background: var(--accent-glow); color: var(--accent); border-color: var(--accent); }
+
+        /* ── Buttons ─────────────────────────────────── */
+        .btn-primary {
+            display: inline-flex; align-items: center; gap: 0.5rem;
+            padding: 0.7rem 1.5rem; border-radius: var(--radius-sm);
+            border: none; background: var(--accent-gradient); color: #fff;
+            font-size: 0.9rem; font-weight: 700; font-family: var(--font-sans);
+            cursor: pointer; transition: all var(--transition-fast);
+            text-decoration: none;
+        }
+        .btn-primary:hover { opacity: 0.9; transform: translateY(-1px); box-shadow: var(--btn-primary-shadow); text-decoration: none; color: #fff; }
+        .btn-secondary {
+            display: inline-flex; align-items: center; gap: 0.4rem;
+            padding: 0.6rem 1.2rem; border-radius: var(--radius-sm);
+            border: 1px solid var(--border-primary); background: transparent;
+            color: var(--text-secondary); font-size: 0.85rem; font-weight: 600;
+            font-family: var(--font-sans); cursor: pointer;
+            transition: all var(--transition-fast); text-decoration: none;
+        }
+        .btn-secondary:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-glow); text-decoration: none; }
+
+        /* ── Step Actions Row ──────────────────────────── */
+        .step-actions { display: flex; gap: 0.75rem; flex-wrap: wrap; margin-top: 0.25rem; }
+        .step-note {
+            display: flex; align-items: flex-start; gap: 0.5rem;
+            padding: 0.75rem 1rem; border-radius: var(--radius-sm);
+            background: var(--accent-glow); border: 1px solid rgba(167, 139, 250, 0.15);
+            color: var(--text-secondary); font-size: 0.85rem; line-height: 1.5;
+            margin-top: 1rem;
+        }
+        .step-note svg { flex-shrink: 0; margin-top: 0.1rem; color: var(--accent); }
+
+        /* ── Next Steps Grid ─────────────────────────── */
+        .next-steps { margin-top: 3rem; }
+        .next-steps h2 { font-size: 1.3rem; font-weight: 700; margin-bottom: 1.25rem; color: var(--text-primary); }
+        .ns-grid { display: grid; gap: 1rem; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); }
+        .ns-card {
+            background: var(--card-bg); border: 1px solid var(--border-primary);
+            border-radius: var(--radius-md); padding: 1.25rem;
+            transition: all var(--transition-fast); text-decoration: none;
+            display: flex; flex-direction: column; align-items: center; text-align: center; gap: 0.4rem;
+        }
+        .ns-card:hover { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent-glow), var(--shadow-md); transform: translateY(-2px); }
+        .ns-icon { font-size: 1.6rem; }
+        .ns-card h3 { font-size: 0.92rem; font-weight: 700; color: var(--text-primary); }
+        .ns-card p { font-size: 0.78rem; color: var(--text-muted); line-height: 1.4; }
+
+        /* ── API Reference Table ─────────────────────── */
+        .api-ref { margin-top: 3rem; }
+        .api-ref h2 { font-size: 1.3rem; font-weight: 700; margin-bottom: 1rem; color: var(--text-primary); }
+        .api-table-wrap {
+            overflow-x: auto; border: 1px solid var(--border-primary);
+            border-radius: var(--radius-md); background: var(--card-bg);
+        }
+        .api-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+        .api-table th {
+            text-align: left; padding: 0.85rem 1rem;
+            background: var(--bg-tertiary); color: var(--text-muted);
+            font-weight: 700; font-size: 0.78rem; text-transform: uppercase;
+            letter-spacing: 0.5px; border-bottom: 1px solid var(--border-primary);
+        }
+        .api-table td {
+            padding: 0.75rem 1rem; border-bottom: 1px solid var(--border-subtle);
+            color: var(--text-secondary); font-family: var(--font-mono); font-size: 0.8rem;
+        }
+        .api-table tr:last-child td { border-bottom: none; }
+        .api-table tr:hover td { background: var(--btn-secondary-hover); }
+        .api-table .method-badge {
+            display: inline-block; padding: 0.15rem 0.45rem;
+            border-radius: var(--radius-sm); font-size: 0.7rem; font-weight: 700;
+            font-family: var(--font-mono);
+        }
+        .method-get { background: rgba(52, 211, 153, 0.15); color: var(--green); }
+        .method-post { background: rgba(167, 139, 250, 0.15); color: var(--accent); }
+        .method-delete { background: rgba(239, 68, 68, 0.15); color: var(--red); }
+        .api-table .endpoint-desc { font-family: var(--font-sans); color: var(--text-muted); font-size: 0.82rem; }
+
+        /* ── User Avatar + Dropdown (same as concept) ─ */
+        .user-avatar-btn {
+            display: inline-flex; align-items: center; gap: 0.5rem;
+            padding: 0.25rem 0.5rem 0.25rem 0.25rem;
+            border-radius: var(--radius-full);
+            border: 1px solid var(--border-primary);
+            background: transparent; cursor: pointer;
+            transition: all var(--transition-fast);
+            font-family: var(--font-sans); color: var(--text-primary);
+        }
+        .user-avatar-btn:hover { border-color: var(--accent); background: var(--accent-glow); }
+        .user-avatar-circle {
+            width: 28px; height: 28px; border-radius: 50%;
+            background: var(--accent-gradient); color: #fff;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 0.75rem; font-weight: 700; flex-shrink: 0; overflow: hidden;
+        }
+        .user-avatar-name { font-size: 0.82rem; font-weight: 600; max-width: 110px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .user-chevron { color: var(--text-faint); transition: transform 0.2s; }
+        .user-menu.open .user-chevron { transform: rotate(180deg); }
+        .user-menu { position: relative; display: inline-flex; }
+        .user-dropdown {
+            display: none; position: absolute; top: calc(100% + 6px); right: 0;
+            min-width: 220px; background: var(--card-bg);
+            border: 1px solid var(--border-primary);
+            border-radius: var(--radius-md); box-shadow: var(--shadow-xl);
+            z-index: 100; overflow: hidden; animation: drop-in 0.15s ease;
+        }
+        @keyframes drop-in { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: translateY(0); } }
+        .user-menu.open .user-dropdown { display: block; }
+        .user-dropdown-header { padding: 0.75rem 1rem; display: flex; flex-direction: column; gap: 0.2rem; }
+        .user-dropdown-email { font-size: 0.85rem; font-weight: 600; color: var(--text-primary); word-break: break-all; }
+        .user-dropdown-plan { font-size: 0.72rem; color: var(--text-muted); font-weight: 500; }
+        .user-dropdown-divider { height: 1px; background: var(--border-subtle); margin: 0; }
+        .user-dropdown-item { display: flex; align-items: center; gap: 0.5rem; padding: 0.65rem 1rem; font-size: 0.85rem; color: var(--text-secondary); text-decoration: none; transition: background var(--transition-fast); }
+        .user-dropdown-item svg { flex-shrink: 0; color: var(--text-muted); }
+        .user-dropdown-item:hover { background: var(--btn-secondary-hover); color: var(--text-primary); }
+        .user-dropdown-item:last-child:hover { color: var(--red); }
+        .user-dropdown-item:last-child:hover svg { color: var(--red); }
+
+        /* ── Logout Confirm Modal ────────────────────── */
+        .logout-modal-overlay {
+            display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6);
+            z-index: 1001; backdrop-filter: blur(6px);
+        }
+        .logout-modal-overlay.open { display: block; }
+        .logout-modal {
+            display: none; position: fixed; top: 50%; left: 50%;
+            transform: translate(-50%, -50%) scale(0.96);
+            z-index: 1002; background: var(--card-bg);
+            border: 1px solid var(--border-primary);
+            border-radius: var(--radius-lg); padding: 2rem;
+            min-width: 360px; max-width: 90vw; box-shadow: var(--shadow-xl);
+            text-align: center; opacity: 0; transition: all 0.2s ease;
+        }
+        .logout-modal.open { display: block; opacity: 1; transform: translate(-50%, -50%) scale(1); }
+        .logout-modal .logout-icon {
+            width: 56px; height: 56px; border-radius: 50%;
+            background: var(--red-bg, rgba(239,68,68,0.12));
+            display: flex; align-items: center; justify-content: center;
+            margin: 0 auto 1rem; font-size: 1.6rem;
+        }
+        .logout-modal .logout-title { font-size: 1.15rem; font-weight: 700; margin-bottom: 0.5rem; color: var(--text-primary); }
+        .logout-modal .logout-text { font-size: 0.9rem; color: var(--text-muted); margin-bottom: 1.5rem; }
+        .logout-modal .logout-btns { display: flex; gap: 0.75rem; justify-content: center; }
+
+        /* ── Auth Modal styles ───────────────────────── */
+        .auth-email-field {
+            width: 100%; padding: 0.7rem 1rem 0.7rem 2.5rem;
+            border-radius: var(--radius-sm); border: 1px solid var(--border-primary);
+            background: var(--bg-glass); color: var(--text-primary);
+            font-size: 0.88rem; font-family: var(--font-sans);
+            transition: all var(--transition-fast); outline: none; box-sizing: border-box;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23888888' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='2' y='4' width='20' height='16' rx='2'/%3E%3Cpath d='M22 7l-10 7L2 7'/%3E%3C/svg%3E");
+            background-repeat: no-repeat; background-position: 0.75rem center; background-size: 16px;
+        }
+        .auth-email-field:focus { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-glow); }
+        .auth-email-field::placeholder { color: var(--text-faint); }
+        .auth-email-cta {
+            display: flex; align-items: center; justify-content: center;
+            width: 100%; padding: 0.7rem 1rem; border-radius: var(--radius-sm);
+            border: none; background: var(--accent-gradient); color: #fff;
+            font-size: 0.88rem; font-weight: 700; font-family: var(--font-sans);
+            cursor: pointer; transition: all var(--transition-fast); gap: 0.4rem;
+        }
+        .auth-email-cta:hover { opacity: 0.9; transform: translateY(-1px); box-shadow: var(--shadow-sm); }
+        .auth-email-cta:active { transform: translateY(0); }
+        .auth-email-cta:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+        /* ── Responsive ──────────────────────────────── */
+        @media (max-width: 768px) {
+            .nav-cta { display: none !important; }
+            .auth-btn-container { display: inline-flex !important; }
+            .quickstart-page { padding: 2rem 1rem 3rem; }
+            .quickstart-page h1 { font-size: 1.6rem; }
+        }
+        @media (max-width: 640px) {
+            .quickstart-page { padding: 1.5rem 0.75rem 2rem; }
+            .quickstart-page h1 { font-size: 1.4rem; }
+            .quickstart-page .subtitle { font-size: 0.92rem; margin-bottom: 2rem; }
+            .step-card { padding: 1.25rem; }
+            .step-card h2 { font-size: 1.1rem; }
+            .term-block { font-size: 0.75rem; padding: 0.85rem; }
+            .ns-grid { grid-template-columns: repeat(2, 1fr); }
+            .api-table td, .api-table th { padding: 0.5rem 0.6rem; font-size: 0.72rem; }
+            .step-actions { flex-direction: column; }
+            .step-actions .btn-primary, .step-actions .btn-secondary { width: 100%; justify-content: center; }
+        }
+        @media (max-width: 480px) {
+            .quickstart-page h1 { font-size: 1.2rem; }
+            .ns-grid { grid-template-columns: 1fr 1fr; gap: 0.6rem; }
+            .ns-card { padding: 0.85rem; }
+        }
+    </style>
+    <script src="/playground/i18n.js"></script>
+    <script src="/playground/auth.js?v=1"></script>
+</head>
+<body>
+
+    <!-- Navbar -->
+    <nav class="navbar">
+        <a href="/" class="logo">
+          <img src="/playground/logo.png" alt="Memory Bridge" data-i18n="nav.logo_alt">
+          Memory <span class="logo-accent">Bridge</span>
+        </a>
+        <div class="nav-links">
+          <a href="/" data-i18n="nav.home">Home</a>
+          <a href="/playground/graph.html" data-i18n="nav.graph">Graph</a>
+          <a href="/dashboard/" data-i18n="nav.dashboard">Dashboard</a>
+          <a href="/pricing" data-i18n="nav.pricing">Pricing</a>
+          <a href="/playground/integrations.html" data-i18n="nav.integrations">Integrations</a>
+          <a href="/quickstart" class="active" data-i18n="nav.quickstart">Quickstart</a>
+        </div>
+      <div class="nav-right">
+        <div style="position:relative;display:inline-flex;">
+            <button class="nav-icon-btn lang-toggle" onclick="toggleLang()" title="Switch language" aria-label="Switch language">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="10"/>
+                    <line x1="2" y1="12" x2="22" y2="12"/>
+                    <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+                </svg>
+            </button>
+            <div class="lang-dropdown" id="lang-dropdown">
+                <a href="javascript:void(0)" data-lang="en" class="lang-opt active" onclick="setLang('en')">🇬🇧 English</a>
+                <a href="javascript:void(0)" data-lang="zh" class="lang-opt" onclick="setLang('zh')">🇨🇳 中文</a>
+                <a href="javascript:void(0)" data-lang="ja" class="lang-opt" onclick="setLang('ja')">🇯🇵 日本語</a>
+                <a href="javascript:void(0)" data-lang="ko" class="lang-opt" onclick="setLang('ko')">🇰🇷 한국어</a>
+                <a href="javascript:void(0)" data-lang="es" class="lang-opt" onclick="setLang('es')">🇪🇸 Español</a>
+                <a href="javascript:void(0)" data-lang="fr" class="lang-opt" onclick="setLang('fr')">🇫🇷 Français</a>
+                <a href="javascript:void(0)" data-lang="de" class="lang-opt" onclick="setLang('de')">🇩🇪 Deutsch</a>
+            </div>
+        </div>
+        <button class="nav-icon-btn theme-toggle-btn" onclick="toggleTheme()" title="Toggle theme" aria-label="Toggle theme">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="theme-sun">
+            <circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/>
+            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+            <line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/>
+            <line x1="4.22" y1="19.78" x2="5.64" y2="5.64"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+          </svg>
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="theme-moon" style="display:none">
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+          </svg>
+        </button>
+                <div class="auth-btn-container" id="auth-btn-container">
+                    <button class="auth-btn" id="auth-nav-btn" onclick="openAuth()" title="Sign in / Sign up" data-i18n-title="nav.sign_in_title">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                        <span id="auth-btn-label" data-i18n="auth.sign_in">Sign in</span>
+                    </button>
+                    <div class="user-menu" id="user-menu" style="display:none;">
+                        <button class="user-avatar-btn" id="user-btn" onclick="toggleUserDropdown()" title="Account menu">
+                            <span class="user-avatar-circle" id="user-avatar-circle">👤</span>
+                            <span class="session-dot" id="session-dot"></span>
+                            <span class="user-avatar-name" id="user-avatar-name"></span>
+                            <span class="user-plan-badge" id="user-plan-badge"></span>
+                            <svg class="user-chevron" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+                        </button>
+                        <div class="user-dropdown" id="user-dropdown">
+                            <div class="user-dropdown-header">
+                                <span class="user-dropdown-email" id="user-dropdown-email"></span>
+                                <span class="user-dropdown-plan" id="user-dropdown-plan" data-i18n="dash.free_plan">Free Plan</span>
+                                <span class="user-dropdown-since" id="user-dropdown-since"></span>
+                            </div>
+                            <div class="user-dropdown-divider"></div>
+                            <a href="/pricing" class="user-dropdown-item" data-i18n="dash.manage_billing">
+                                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+                                Manage Billing
+                            </a>
+                            <div class="user-dropdown-item sign-out" onclick="showLogoutConfirm()" style="cursor:pointer;" data-i18n="nav.sign_out">
+                                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+                                Sign Out
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <a href="/playground/" class="nav-cta">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <polygon points="5 3 19 12 5 21 5 3"/>
+                    </svg>
+                    <span data-i18n="nav.launch_playground">Launch Playground</span>
+                </a>
+                <button class="nav-hamburger" onclick="toggleMobileNav()" aria-label="Open menu">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="4" y1="6" x2="20" y2="6"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="18" x2="20" y2="18"/>
+                    </svg>
+                </button>
+            </div>
+        </nav>
+
+    <!-- Mobile Nav Panel -->
+    <div class="nav-mobile-backdrop" id="nav-backdrop" onclick="closeMobileNav()"></div>
+    <div class="nav-mobile-panel" id="nav-mobile">
+      <div class="nav-mobile-header">
+        <div class="logo">
+          <img src="/playground/logo.png" alt="Memory Bridge" data-i18n="nav.logo_alt">
+          Memory <span class="logo-accent">Bridge</span>
+        </div>
+        <button class="nav-mobile-close" onclick="closeMobileNav()" aria-label="Close menu">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+        </button>
+      </div>
+      <a href="/" onclick="closeMobileNav()" ><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg><span data-i18n="nav.home">Home</span></a>
+      <a href="/playground/graph.html" onclick="closeMobileNav()" ><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="5" cy="5" r="3"/><circle cx="19" cy="5" r="3"/><circle cx="12" cy="19" r="3"/><line x1="5" y1="5" x2="19" y2="5"/><line x1="5" y1="5" x2="12" y2="19"/><line x1="19" y1="5" x2="12" y2="19"/></svg><span data-i18n="nav.graph">Graph</span></a>
+      <a href="/dashboard/" onclick="closeMobileNav()" ><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg><span data-i18n="nav.dashboard">Dashboard</span></a>
+      <a href="/pricing" onclick="closeMobileNav()" ><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg><span data-i18n="nav.pricing">Pricing</span></a>
+      <a href="/playground/integrations.html" onclick="closeMobileNav()"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg><span>Integrations</span></a>
+      <a href="/quickstart" onclick="closeMobileNav()" class="active"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg><span>Quickstart</span></a>
+      <a href="javascript:void(0)" id="auth-mobile-btn" onclick="closeMobileNav();openAuth()" style="display:flex;align-items:center;gap:0.45rem;padding:0.7rem 1.25rem;border-radius:var(--radius-sm);font-size:0.88rem;font-weight:600;color:var(--accent);text-decoration:none;">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        <span id="auth-mobile-label" data-i18n="auth.sign_in">Sign in</span>
+      </a>
+      <div id="mobile-user-card" style="display:none;">
+        <div class="mobile-user-header">
+          <div class="mobile-user-avatar">
+            <span class="mobile-user-circle" id="mobile-user-circle">👤</span>
+            <span class="session-dot" id="mobile-session-dot"></span>
+          </div>
+          <div class="mobile-user-info">
+            <span class="mobile-user-email" id="mobile-user-email"></span>
+            <span class="mobile-user-plan" id="mobile-user-plan" data-i18n="dash.free_plan">Free Plan</span>
+          </div>
+        </div>
+        <div class="mobile-user-divider"></div>
+        <a href="/pricing" class="mobile-user-action" onclick="closeMobileNav()">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+          <span data-i18n="dash.manage_billing">Manage Billing</span>
+          </a>
+        <div class="mobile-user-divider"></div>
+        <span class="mobile-user-since" id="mobile-user-since"></span>
+        <a href="javascript:void(0)" class="mobile-user-action sign-out" id="mobile-sign-out-btn" onclick="closeMobileNav();showLogoutConfirm()">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+          <span data-i18n="nav.sign_out">Sign Out</span>
+        </a>
+    </div>
+      <div class="nav-mobile-divider"></div>
+      <a href="/playground/" class="nav-mobile-cta" onclick="closeMobileNav()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+        <span data-i18n="nav.launch_playground">Launch Playground</span>
+      </a>
+    </div>
+
+    <!-- Logout Confirm Modal -->
+    <div class="logout-modal-overlay" id="logout-overlay" onclick="closeLogoutConfirm()"></div>
+    <div class="logout-modal" id="logout-modal">
+        <div class="logout-icon">🚪</div>
+        <div class="logout-title" data-i18n="logout.title">Sign out of Memory Bridge?</div>
+        <div class="logout-text" data-i18n="logout.text">
+            You'll need to sign in again to manage API keys, view subscription details, or access your dashboard.
+        </div>
+        <div class="logout-btns">
+            <button class="btn btn-secondary" data-i18n="logout.cancel" onclick="closeLogoutConfirm()">Cancel</button>
+            <button class="btn btn-danger" id="logout-confirm-btn" data-i18n="logout.sign_out" onclick="logout()">Sign Out</button>
+        </div>
+    </div>
+
+    <!-- Auth Modal -->
+    <div class="auth-overlay" id="auth-overlay">
+      <div class="auth-modal">
+        <button class="auth-close" onclick="closeAuth()" aria-label="Close">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+        <div class="auth-icon">🔑</div>
+        <div class="auth-title" data-i18n="auth.title">Memory Bridge</div>
+        <div class="auth-tabs" style="display:flex;gap:0;margin:0.5rem 0 1rem;border:1px solid var(--border-primary);border-radius:var(--radius-md);overflow:hidden;width:100%;">
+          <button class="auth-tab active" id="auth-tab-signin" onclick="selectAuthTab('signin')" style="flex:1;padding:0.5rem 0;border:none;background:var(--accent);color:#fff;font-size:0.88rem;font-weight:600;cursor:pointer;">Sign In</button>
+          <button class="auth-tab" id="auth-tab-signup" onclick="selectAuthTab('signup')" style="flex:1;padding:0.5rem 0;border:none;background:transparent;color:var(--text-muted);font-size:0.88rem;font-weight:600;cursor:pointer;">Create Account</button>
+        </div>
+        <div class="auth-subtitle" id="auth-subtitle" data-i18n="auth.subtitle">Sign in to access your account.</div>
+        <div id="auth-options" class="auth-options">
+          <button class="auth-social-btn" onclick="socialLogin('google-oauth2')">
+            <span class="s-icon google">
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 48 48">
+                <path fill="#FFC107" d="M43.611,20.083H42V20H24v8h11.303c-1.649,4.657-6.08,8-11.303,8c-6.627,0-12-5.373-12-12c0-6.627,5.373-12,12-12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C12.955,4,4,12.955,4,24c0,11.045,8.955,20,20,20c11.045,0,20-8.955,20-20C44,22.659,43.862,21.35,43.611,20.083z"/>
+                <path fill="#FF3D00" d="M6.306,14.691l6.571,4.819C14.655,15.108,18.961,12,24,12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C16.318,4,9.656,8.337,6.306,14.691z"/>
+                <path fill="#4CAF50" d="M24,44c5.166,0,9.86-1.977,13.409-5.192l-6.19-5.238C29.211,35.091,26.715,36,24,36c-5.202,0-9.619-3.317-11.283-7.946l-6.522,5.025C9.505,39.556,16.227,44,24,44z"/>
+                <path fill="#1976D2" d="M43.611,20.083H42V20H24v8h11.303c-0.792,2.237-2.231,4.166-4.087,5.571c0.001-0.001,0.002-0.001,0.003-0.002l6.19,5.238C36.971,39.205,44,34,44,24C44,22.659,43.862,21.35,43.611,20.083z"/>
+              </svg>
+            </span>
+            <span data-i18n="auth.continue_google">Continue with Google</span>
+          </button>
+          <button class="auth-social-btn" onclick="socialLogin('apple')">
+            <span class="s-icon apple">
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="#000">
+                <path d="M17.05 20.28c-.98.95-2.05.8-3.08.35-1.09-.46-2.09-.48-3.24 0-1.44.62-2.2.44-3.06-.35C2.79 15.25 3.51 7.59 9.05 7.31c1.35.07 2.29.74 3.08.8 1.18-.24 2.31-.93 3.57-.84 1.51.12 2.65.72 3.4 1.8-3.12 1.87-2.38 5.98.48 7.13-.57 1.5-1.31 2.99-2.54 4.09zM12.03 7.25c-.15-2.23 1.66-4.07 3.74-4.25.29 2.58-2.34 4.5-3.74 4.25z"/>
+              </svg>
+            </span>
+            <span data-i18n="auth.continue_apple">Continue with Apple</span>
+          </button>
+          <button class="auth-social-btn" onclick="phoneLogin()">
+            <span class="s-icon phone">
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
+              </svg>
+            </span>
+            <span data-i18n="auth.continue_phone">Continue with Phone</span>
+          </button>
+          <div class="auth-divider">
+            <hr><span data-i18n="auth.or_email">or continue with email</span><hr>
+          </div>
+          <input type="email" class="auth-email-field" id="pl-email" placeholder="you@example.com" data-i18n="auth.email_placeholder" autocomplete="email" onkeydown="if(event.key==='Enter')continueWithEmail()">
+          <button class="auth-email-cta" onclick="continueWithEmail()" id="pl-email-btn" data-i18n="auth.continue_btn">Continue →</button>
+          <div class="auth-error" id="auth-error-main"></div>
+          <div style="margin-top: 0.75rem; text-align: center;">
+            <a href="#" onclick="showRecoveryForm(); return false;" style="color: var(--accent); text-decoration: none; font-size: 0.85rem; font-weight: 500; opacity: 0.85;">Lost your account? Recover it here →</a>
+          </div>
+        </div>
+        <div id="auth-phone-step" class="auth-form">
+          <button class="back-link" onclick="showAuthOptions()"><span style="font-size:0.9rem;margin-right:0.1rem;">←</span><span data-i18n="auth.back">Back</span></button>
+          <div class="auth-code-info">
+            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+            <div class="auth-code-msg" data-i18n="auth.enter_phone">Enter your phone number</div>
+          </div>
+          <div class="auth-phone-input-row" style="display:flex;flex-direction:column;gap:0.5rem;margin:1rem 0;">
+            <input type="tel" id="pl-phone" placeholder="8123 4567" data-i18n="auth.phone_placeholder" autocomplete="tel" onkeydown="if(event.key==='Enter')sendPhoneCode()">
+          </div>
+          <button class="auth-email-cta" onclick="sendPhoneCode()" id="pl-phone-btn" data-i18n="auth.send_code_btn">Send Code →</button>
+          <div class="auth-error" id="auth-error-phone"></div>
+        </div>
+        <div id="auth-code-step" class="auth-form">
+          <button class="back-link" onclick="showAuthOptions()"><span style="font-size:0.9rem;margin-right:0.1rem;">←</span><span data-i18n="auth.back">Back</span></button>
+          <div class="auth-code-info">
+            <svg id="code-step-icon" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M22 7l-10 7L2 7"/></svg>
+            <div class="auth-code-msg" data-i18n="auth.sent_code">We sent a code to</div>
+            <div class="auth-code-email" id="code-email-display">j***@example.com</div>
+          </div>
+          <div class="auth-code-input-row" style="margin:1rem 0;">
+            <input type="text" id="pl-code" placeholder="Enter 6-digit code" data-i18n="auth.code_placeholder" maxlength="6" inputmode="numeric" autocomplete="one-time-code" onkeydown="if(event.key==='Enter')verifyCode()">
+          </div>
+          <button class="btn btn-primary" onclick="verifyCode()" id="pl-code-btn" data-i18n="auth.verify_btn">Verify Code →</button>
+          <div class="auth-error" id="auth-error-code"></div>
+          <div class="auth-code-resend" style="margin-top:0.75rem;font-size:0.85rem;color:var(--text-muted);">
+            Didn't get it? <a onclick="resendCode()" style="color:var(--accent);cursor:pointer;text-decoration:underline;">Send new code</a>
+          </div>
+        </div>
+        <div id="auth-recovery-step" class="auth-form" style="display:none;">
+          <button class="back-link" onclick="showAuthOptions()"><span style="font-size:0.9rem;margin-right:0.1rem;">←</span><span data-i18n="auth.back">Back</span></button>
+          <div class="auth-code-info">
+            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+            <div class="auth-code-msg">Recover Your Account</div>
+          </div>
+          <input type="email" class="auth-email-field" id="recovery-email" placeholder="you@example.com" autocomplete="email" style="margin-bottom:0.5rem;" onkeydown="if(event.key==='Enter')recoverAccount(document.getElementById('recovery-email')?.value)">
+          <button class="auth-email-cta" id="recovery-btn" onclick="recoverAccount(document.getElementById('recovery-email')?.value)">Recover Account →</button>
+          <div class="auth-error" id="auth-error-recovery" style="margin-top:0.5rem;"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ════════════════ Main Content ════════════════ -->
+    <div class="quickstart-page">
+
+        <h1><span>Get Started</span> in 3 Steps</h1>
+        <p class="subtitle">
+            From zero to your first stored memory in under 60 seconds.
+        </p>
+
+        <!-- ═══ Step 1: Generate an API Key ═══ -->
+        <div class="step-card">
+            <div class="step-number">1</div>
+            <h2>Generate an API Key</h2>
+            <p class="step-desc">
+                Create your first API key from the dashboard or generate one instantly via the admin API using the demo key below.
+            </p>
+            <div class="term-block">
+                <button class="term-copy-btn" onclick="copyCmd(this,'curl -X POST https://memory-bridge-app-production.up.railway.app/admin/api-keys -H \"Authorization: Bearer YOUR_API_KEY\" -H \"Content-Type: application/json\" -d \'{\\\"name\\\":\\\"My Quickstart Key\\\"}\'')" title="Copy">📋 Copy</button>
+                <span class="term-comment"># Generate a new API key via the admin API</span><br>
+                <span class="term-line"><span class="term-prompt">$</span> curl -X POST https://memory-bridge-app-production.up.railway.app/admin/api-keys \</span><br>
+                <span class="term-line" style="padding-left:1.5rem;">-H "Authorization: Bearer <span class="term-accent">YOUR_API_KEY</span>" \</span><br>
+                <span class="term-line" style="padding-left:1.5rem;">-H "Content-Type: application/json" \</span><br>
+                <span class="term-line" style="padding-left:1.5rem;">-d '{"name": "My Quickstart Key"}'</span>
+            </div>
+            <div class="step-actions">
+                <a href="/dashboard/" class="btn-primary">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+                    Open Dashboard
+                </a>
+            </div>
+        </div>
+
+        <!-- ═══ Step 2: Try the MCP Integration ═══ -->
+        <div class="step-card">
+            <div class="step-number">2</div>
+            <h2>Try the MCP Integration</h2>
+            <p class="step-desc">
+                Add Memory Bridge to your Claude Desktop or any MCP-compatible client. Configure your <code style="font-family:var(--font-mono);font-size:0.85em;color:var(--accent);">claude_desktop_config.json</code>:
+            </p>
+            <div class="term-block">
+                <button class="term-copy-btn" onclick="copyCmd(this,'{\n  \"mcpServers\": {\n    \"memory-bridge\": {\n      \"command\": \"npx\",\n      \"args\": [\"-y\", \"@memory-bridge/mcp\"],\n      \"env\": { \"MEMORY_BRIDGE_API_KEY\": \"YOUR_API_KEY\" }\n    }\n  }\n}')" title="Copy">📋 Copy</button>
+                <span class="term-comment"># ~/Library/Application Support/Claude/claude_desktop_config.json</span><br>
+                <span class="term-line">{</span><br>
+                <span class="term-line">  <span class="term-key">"mcpServers"</span>: {</span><br>
+                <span class="term-line">    <span class="term-key">"memory-bridge"</span>: {</span><br>
+                <span class="term-line">      <span class="term-key">"command"</span>: <span class="term-string">"npx"</span>,</span><br>
+                <span class="term-line">      <span class="term-key">"args"</span>: [<span class="term-string">"-y"</span>, <span class="term-string">"@memory-bridge/mcp"</span>],</span><br>
+                <span class="term-line">      <span class="term-key">"env"</span>: { <span class="term-key">"MEMORY_BRIDGE_API_KEY"</span>: <span class="term-string">"<span class="term-accent">YOUR_API_KEY</span>"</span> }</span><br>
+                <span class="term-line">    }</span><br>
+                <span class="term-line">  }</span><br>
+                <span class="term-line">}</span>
+            </div>
+            <div class="step-note">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                <span>Replace <strong>YOUR_API_KEY</strong> with the key you generated in Step 1. Restart Claude Desktop and the memory tools will be available automatically.</span>
+            </div>
+            <div class="step-actions">
+                <a href="/playground/integrations.html" class="btn-secondary">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+                    View All Integrations
+                </a>
+            </div>
+        </div>
+
+        <!-- ═══ Step 3: Store Your First Memory ═══ -->
+        <div class="step-card">
+            <div class="step-number">3</div>
+            <h2>Store Your First Memory</h2>
+            <p class="step-desc">
+                Use curl — or any HTTP client — to store a memory and then query it back.
+            </p>
+            <div class="term-block">
+                <button class="term-copy-btn" onclick="copyCmd(this,'curl -X POST https://memory-bridge-app-production.up.railway.app/memories -H \"Authorization: Bearer YOUR_API_KEY\" -H \"Content-Type: application/json\" -d \'{\"session_id\":\"quickstart\",\"agent_id\":\"claude\",\"key\":\"greeting\",\"value\":\"Hello from Memory Bridge!\"}\'')" title="Copy">📋 Copy</button>
+                <span class="term-comment"># Store a memory</span><br>
+                <span class="term-line"><span class="term-prompt">$</span> curl -X POST https://memory-bridge-app-production.up.railway.app/memories \</span><br>
+                <span class="term-line" style="padding-left:1.5rem;">-H "Authorization: Bearer <span class="term-accent">YOUR_API_KEY</span>" \</span><br>
+                <span class="term-line" style="padding-left:1.5rem;">-H "Content-Type: application/json" \</span><br>
+                <span class="term-line" style="padding-left:1.5rem;">-d '{</span><br>
+                <span class="term-line" style="padding-left:2.5rem;"><span class="term-key">"session_id"</span>: <span class="term-string">"quickstart"</span>,</span><br>
+                <span class="term-line" style="padding-left:2.5rem;"><span class="term-key">"agent_id"</span>: <span class="term-string">"claude"</span>,</span><br>
+                <span class="term-line" style="padding-left:2.5rem;"><span class="term-key">"key"</span>: <span class="term-string">"greeting"</span>,</span><br>
+                <span class="term-line" style="padding-left:2.5rem;"><span class="term-key">"value"</span>: <span class="term-string">"Hello from Memory Bridge!"</span></span><br>
+                <span class="term-line" style="padding-left:1.5rem;">}'</span>
+            </div>
+            <p class="step-desc" style="margin-top: 1.25rem;">
+                ✅ Expected response — a <strong>201 Created</strong> with the stored memory:
+            </p>
+            <div class="term-block">
+                <button class="term-copy-btn" onclick="copyCmd(this,'{\n  \"id\": \"mem_abc123\",\n  \"session_id\": \"quickstart\",\n  \"agent_id\": \"claude\",\n  \"key\": \"greeting\",\n  \"value\": \"Hello from Memory Bridge!\",\n  \"created_at\": \"2025-01-15T10:30:00Z\"\n}')" title="Copy">📋 Copy</button>
+                <span class="term-comment"># Response: 201 Created</span><br>
+                <span class="term-line">{</span><br>
+                <span class="term-line">  <span class="term-key">"id"</span>: <span class="term-string">"mem_abc123"</span>,</span><br>
+                <span class="term-line">  <span class="term-key">"session_id"</span>: <span class="term-string">"quickstart"</span>,</span><br>
+                <span class="term-line">  <span class="term-key">"agent_id"</span>: <span class="term-string">"claude"</span>,</span><br>
+                <span class="term-line">  <span class="term-key">"key"</span>: <span class="term-string">"greeting"</span>,</span><br>
+                <span class="term-line">  <span class="term-key">"value"</span>: <span class="term-string">"Hello from Memory Bridge!"</span>,</span><br>
+                <span class="term-line">  <span class="term-key">"created_at"</span>: <span class="term-string">"2025-01-15T10:30:00Z"</span></span><br>
+                <span class="term-line">}</span>
+            </div>
+            <p class="step-desc" style="margin-top: 1.25rem;">
+                Now query it back:
+            </p>
+            <div class="term-block">
+                <button class="term-copy-btn" onclick="copyCmd(this,'curl -s https://memory-bridge-app-production.up.railway.app/memories?agent_id=claude&session_id=quickstart -H \"Authorization: Bearer YOUR_API_KEY\"')" title="Copy">📋 Copy</button>
+                <span class="term-comment"># Query the memory back</span><br>
+                <span class="term-line"><span class="term-prompt">$</span> curl -s "https://memory-bridge-app-production.up.railway.app/memories?agent_id=claude&session_id=quickstart" \</span><br>
+                <span class="term-line" style="padding-left:1.5rem;">-H "Authorization: Bearer <span class="term-accent">YOUR_API_KEY</span>"</span>
+            </div>
+        </div>
+
+        <!-- ═══ Next Steps ═══ -->
+        <div class="next-steps">
+            <h2>🚀 Next Steps</h2>
+            <div class="ns-grid">
+                <a href="/playground/integrations.html" class="ns-card">
+                    <div class="ns-icon">🔌</div>
+                    <h3>Integrations</h3>
+                    <p>Connect with LangChain, CrewAI, AutoGen, OpenAI Agents & more</p>
+                </a>
+                <a href="/playground/concept.html" class="ns-card">
+                    <div class="ns-icon">🧠</div>
+                    <h3>Concept</h3>
+                    <p>Understand the architecture and how memory works</p>
+                </a>
+                <a href="/playground/graph.html" class="ns-card">
+                    <div class="ns-icon">📊</div>
+                    <h3>Graph</h3>
+                    <p>Visualize memory relationships and connections</p>
+                </a>
+                <a href="/pricing" class="ns-card">
+                    <div class="ns-icon">💰</div>
+                    <h3>Pricing</h3>
+                    <p>View plans, quotas, and upgrade options</p>
+                </a>
+            </div>
+        </div>
+
+        <!-- ═══ Quick API Reference ═══ -->
+        <div class="api-ref">
+            <h2>📡 Quick API Reference</h2>
+            <div class="api-table-wrap">
+                <table class="api-table">
+                    <thead>
+                        <tr>
+                            <th>Method</th>
+                            <th>Endpoint</th>
+                            <th>Description</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><span class="method-badge method-post">POST</span></td>
+                            <td>/memories</td>
+                            <td class="endpoint-desc">Store a new memory</td>
+                        </tr>
+                        <tr>
+                            <td><span class="method-badge method-get">GET</span></td>
+                            <td>/memories?agent_id=&lt;id&gt;</td>
+                            <td class="endpoint-desc">Query memories by agent</td>
+                        </tr>
+                        <tr>
+                            <td><span class="method-badge method-get">GET</span></td>
+                            <td>/memories/&lt;memory_id&gt;</td>
+                            <td class="endpoint-desc">Get a single memory by ID</td>
+                        </tr>
+                        <tr>
+                            <td><span class="method-badge method-delete">DELETE</span></td>
+                            <td>/memories/&lt;memory_id&gt;</td>
+                            <td class="endpoint-desc">Delete a specific memory</td>
+                        </tr>
+                        <tr>
+                            <td><span class="method-badge method-post">POST</span></td>
+                            <td>/admin/api-keys</td>
+                            <td class="endpoint-desc">Generate a new API key</td>
+                        </tr>
+                        <tr>
+                            <td><span class="method-badge method-get">GET</span></td>
+                            <td>/health</td>
+                            <td class="endpoint-desc">Health check endpoint</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        function copyCmd(btn, text) {
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(text).then(() => {
+                    const orig = btn.textContent;
+                    btn.textContent = '✅ Copied!';
+                    btn.style.color = 'var(--green)';
+                    btn.style.borderColor = 'var(--green)';
+                    setTimeout(() => {
+                        btn.textContent = orig;
+                        btn.style.color = '';
+                        btn.style.borderColor = '';
+                    }, 2000);
+                }).catch(() => fallbackCopy(text, btn));
+            } else {
+                fallbackCopy(text, btn);
+            }
+        }
+        function fallbackCopy(text, btn) {
+            const ta = document.createElement('textarea');
+            ta.value = text;
+            ta.style.position = 'fixed';
+            ta.style.opacity = '0';
+            document.body.appendChild(ta);
+            ta.select();
+            try {
+                document.execCommand('copy');
+                const orig = btn.textContent;
+                btn.textContent = '✅ Copied!';
+                btn.style.color = 'var(--green)';
+                btn.style.borderColor = 'var(--green)';
+                setTimeout(() => {
+                    btn.textContent = orig;
+                    btn.style.color = '';
+                    btn.style.borderColor = '';
+                }, 2000);
+            } catch (e) {}
+            document.body.removeChild(ta);
+        }
+    </script>
+</body>
+</html>

@@ -199,6 +199,7 @@ _SCHEMA_MIGRATIONS: dict[int, str] = {
         21: "ALTER TABLE {schema}.agent_permissions ADD COLUMN IF NOT EXISTS scope TEXT",
         22: "ALTER TABLE {schema}.agent_permissions ADD COLUMN IF NOT EXISTS allowed_agent_types JSONB",
         23: "CREATE INDEX IF NOT EXISTS idx_{schema}_memories_created ON {schema}.memories(created_at DESC)",
+        24: "ALTER TABLE {schema}.memories ADD COLUMN IF NOT EXISTS superseded_by TEXT",
     }
 # ──────────────────────────────────────────────────────────────────────────────
 
@@ -234,6 +235,7 @@ async def _row_to_entry(row: asyncpg.Record, conn: asyncpg.Connection) -> Memory
         created_at=row["created_at"] if isinstance(row["created_at"], datetime) else datetime.fromisoformat(row["created_at"]),
         updated_at=row["updated_at"] if isinstance(row["updated_at"], datetime) else datetime.fromisoformat(row["updated_at"]),
         ttl_seconds=ttl,
+        superseded_by=row.get("superseded_by"),
         project=project,
     )
 
@@ -296,7 +298,8 @@ class PostgresMemoryRepository(MemoryRepository):
                         created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
                         updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
                         ttl_seconds INTEGER,
-                        project TEXT
+                        project TEXT,
+                        superseded_by TEXT
                     );
 
                     CREATE INDEX IF NOT EXISTS idx_{self.schema}_memories_session
@@ -413,6 +416,10 @@ class PostgresMemoryRepository(MemoryRepository):
     ) -> MemoryEntry:
         """Store a memory entry. Replaces if the same ID already exists.
 
+        If another non-superseded memory exists with the same key + project
+        but a different value, the existing memory is marked as superseded
+        (conflict resolution).
+
         Tags are stored exclusively in the memory_tags junction table.
 
         If propagate_to_parent is True and the session has a parent_session_id,
@@ -420,12 +427,30 @@ class PostgresMemoryRepository(MemoryRepository):
         tags augmented with ["propagated:child"].
         """
         async with self.pool.acquire() as conn:
+            # ── Conflict resolution ───────────────────────────────────────
+            conflicts_resolved = 0
+            existing = await self._get_existing_by_key(
+                conn, project=entry.project, key=entry.key
+            )
+            if existing is not None:
+                existing_value_str = json.dumps(existing.value, sort_keys=True)
+                new_value_str = json.dumps(entry.value, sort_keys=True)
+                if existing_value_str != new_value_str:
+                    # Mark the old memory as superseded
+                    await conn.execute(
+                        f"UPDATE {self.schema}.memories SET superseded_by = $1 WHERE id = $2",
+                        entry.id, existing.id,
+                    )
+                    conflicts_resolved = 1
+
+            entry.conflicts_resolved = conflicts_resolved
+
             # Upsert the memory entry
             await conn.execute(
                 f"""
                 INSERT INTO {self.schema}.memories
-                    (id, session_id, agent_id, key, value, created_at, updated_at, ttl_seconds, project, memory_type)
-                VALUES ($1, $2, $3, $4, $5::jsonb, $6::timestamptz, $7::timestamptz, $8, $9, $10)
+                    (id, session_id, agent_id, key, value, created_at, updated_at, ttl_seconds, superseded_by, project, memory_type)
+                VALUES ($1, $2, $3, $4, $5::jsonb, $6::timestamptz, $7::timestamptz, $8, $9, $10, $11)
                 ON CONFLICT (id) DO UPDATE SET
                     session_id = EXCLUDED.session_id,
                     agent_id = EXCLUDED.agent_id,
@@ -433,6 +458,7 @@ class PostgresMemoryRepository(MemoryRepository):
                     value = EXCLUDED.value,
                     updated_at = EXCLUDED.updated_at,
                     ttl_seconds = EXCLUDED.ttl_seconds,
+                    superseded_by = EXCLUDED.superseded_by,
                     project = EXCLUDED.project,
                     memory_type = EXCLUDED.memory_type
                 """,
@@ -444,6 +470,7 @@ class PostgresMemoryRepository(MemoryRepository):
                 entry.created_at,
                 entry.updated_at,
                 entry.ttl_seconds,
+                entry.superseded_by,
                 entry.project,
                 entry.memory_type.value,
             )
@@ -478,6 +505,31 @@ class PostgresMemoryRepository(MemoryRepository):
                 await self.store_memory(parent_entry, propagate_to_parent=False)
 
         return entry
+
+    async def _get_existing_by_key(
+        self, conn: asyncpg.Connection, project: Optional[str], key: str
+    ) -> Optional[MemoryEntry]:
+        """Find the most recent non-superseded memory with the given key and project.
+
+        Used for conflict resolution inside store_memory.
+        """
+        if project:
+            row = await conn.fetchrow(
+                f"SELECT * FROM {self.schema}.memories "
+                f"WHERE key = $1 AND project = $2 AND superseded_by IS NULL "
+                f"ORDER BY created_at DESC LIMIT 1",
+                key, project,
+            )
+        else:
+            row = await conn.fetchrow(
+                f"SELECT * FROM {self.schema}.memories "
+                f"WHERE key = $1 AND project IS NULL AND superseded_by IS NULL "
+                f"ORDER BY created_at DESC LIMIT 1",
+                key,
+            )
+        if row is None:
+            return None
+        return await self._row_to_entry_schema(row, conn)
 
     async def get_memory(self, memory_id: str) -> Optional[MemoryEntry]:
         """Retrieve a single memory entry by its ID. Returns None if expired."""
@@ -536,6 +588,7 @@ class PostgresMemoryRepository(MemoryRepository):
             created_at=created_at,
             updated_at=updated_at,
             ttl_seconds=ttl,
+            superseded_by=row.get("superseded_by"),
             project=project,
         )
 
@@ -587,6 +640,9 @@ class PostgresMemoryRepository(MemoryRepository):
             conditions.append(f"project = ${param_idx}")
             params.append(project)
             param_idx += 1
+
+        # Exclude superseded memories from normal queries
+        conditions.append("superseded_by IS NULL")
 
         where_clause = " AND ".join(conditions) if conditions else "TRUE"
 
@@ -652,6 +708,9 @@ class PostgresMemoryRepository(MemoryRepository):
             conditions.append(f"project = ${param_idx}")
             params.append(project)
             param_idx += 1
+
+        # Exclude superseded memories from search results
+        conditions.append("superseded_by IS NULL")
 
         where_clause = " AND ".join(conditions)
 

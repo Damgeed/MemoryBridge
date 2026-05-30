@@ -121,6 +121,11 @@ class MemoryService:
             project=resolved_project,
         )
 
+        # Resolve conflicts: check for existing memory with same key+project
+        # (delegates to the repo's store_memory which handles conflict marking)
+        # The repo sets entry.conflicts_resolved when it finds and supersedes
+        # an existing memory with the same key+project but different value.
+
         # Offload large values to S3 (or local fallback)
         if self.s3_store and self.s3_store.needs_offloading(payload.value):
             s3_key = await self.s3_store.store(entry.id, payload.value)

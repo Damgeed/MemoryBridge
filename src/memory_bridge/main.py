@@ -14,6 +14,7 @@ from contextlib import asynccontextmanager
 from datetime import datetime, timezone
 
 from fastapi import FastAPI, Request, Response
+from fastapi.responses import HTMLResponse
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from starlette.middleware.base import BaseHTTPMiddleware
@@ -205,8 +206,42 @@ def create_app() -> FastAPI:
     """Build and return a fully configured FastAPI application."""
     app = FastAPI(
         title="Memory Bridge",
-        version="0.2.0",
-        description="Cross-session memory persistence for multi-agent teams",
+        version="0.3.0",
+        description="""# Memory Bridge — Cross-Session Memory for AI Agents
+
+Memory Bridge is the shared workspace for your AI workforce. It provides **persistent memory, shared context, and coordinated workflows** for multi-agent systems.
+
+## Core Capabilities
+
+- **Typed Memory** — Episodic (what happened), Semantic (what we know), Procedural (how we do things)
+- **Conflict Resolution** — Automatic dedup and superseding of contradictory facts
+- **Memory TTL** — Per-memory time-to-live with automatic expiry
+- **Agent Inboxes** — Cross-agent messaging and task handoff
+- **Shared Scratchpads** — Temporary collaborative workspaces between agents
+- **Memory Graph** — Relationship tracking between memories and agents
+- **Memory Decay** — Automatic pruning of low-value memories
+
+## Authentication
+
+Use the **Authorize** button above with your API key or JWT token.
+Format: `Bearer YOUR_API_KEY`
+
+## Clients
+
+- **MCP** — Claude Desktop, Cursor, Windsurf, any MCP-compatible client
+- **REST API** — Standard HTTP endpoints with JSON payloads
+- **SDKs** — Python, LangChain, CrewAI, AutoGen, OpenAI Agents SDK adapters""",
+        summary="Persistent memory, shared context, and coordinated workflows for autonomous AI teams",
+        contact={
+            "name": "Memory Bridge Team",
+            "url": "https://memory-bridge-app-production.up.railway.app",
+            "email": "support@memorybridge.io",
+        },
+        license_info={
+            "name": "MIT",
+            "identifier": "MIT",
+        },
+        terms_of_service="https://memory-bridge-app-production.up.railway.app/terms",
         lifespan=lifespan,
     )
 
@@ -455,6 +490,22 @@ def create_app() -> FastAPI:
                 headers={"Cache-Control": "no-cache, no-store, must-revalidate"},
             )
         return Response(content="Page not found", status_code=404)
+
+    # ── Quickstart Page ──────────────────────────
+    @app.get("/quickstart", response_class=HTMLResponse, include_in_schema=False)
+    async def get_quickstart_page():
+        """Serve the Quickstart page with step-by-step setup instructions."""
+        static_dir = os.path.join(os.path.dirname(__file__), "static")
+        html_path = os.path.join(static_dir, "quickstart.html")
+        if not os.path.exists(html_path):
+            return HTMLResponse("<h1>Quickstart page not found</h1>", status_code=200)
+        with open(html_path) as f:
+            content = f.read()
+        return Response(
+            content=content,
+            media_type="text/html",
+            headers={"Cache-Control": "no-cache, no-store, must-revalidate"},
+        )
 
     # ── Integration Detail Pages ───────────────────
     _INTEGRATION_PAGES = {

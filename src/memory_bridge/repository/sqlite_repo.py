@@ -180,6 +180,7 @@ _SCHEMA_MIGRATIONS: dict[int, str] = {
         19: "ALTER TABLE api_keys ADD COLUMN scope TEXT",
         20: "ALTER TABLE agent_permissions ADD COLUMN scope TEXT",
         21: "ALTER TABLE agent_permissions ADD COLUMN allowed_agent_types TEXT",
+        22: "ALTER TABLE memories ADD COLUMN superseded_by TEXT",
     }
 # ──────────────────────────────────────────────────────────────────────────────
 
@@ -209,6 +210,11 @@ async def _row_to_entry(row: aiosqlite.Row, db: aiosqlite.Connection) -> MemoryE
     except (KeyError, IndexError, ValueError):
         memory_type = MemoryType.episodic
 
+    try:
+        superseded_by = row["superseded_by"]
+    except (KeyError, IndexError):
+        superseded_by = None
+
     return MemoryEntry(
         id=row["id"],
         session_id=row["session_id"],
@@ -220,6 +226,7 @@ async def _row_to_entry(row: aiosqlite.Row, db: aiosqlite.Connection) -> MemoryE
         created_at=datetime.fromisoformat(row["created_at"]),
         updated_at=datetime.fromisoformat(row["updated_at"]),
         ttl_seconds=ttl,
+        superseded_by=superseded_by,
         project=project,
     )
 
@@ -271,6 +278,7 @@ class SQLiteMemoryRepository(MemoryRepository):
                     updated_at TEXT NOT NULL,
                     ttl_seconds INTEGER,
                     project TEXT,
+                    superseded_by TEXT,
                     FOREIGN KEY (session_id) REFERENCES sessions(session_id)
                 );
                 CREATE INDEX IF NOT EXISTS idx_memories_session
@@ -360,6 +368,10 @@ class SQLiteMemoryRepository(MemoryRepository):
     ) -> MemoryEntry:
         """Store a memory entry. Replaces if the same ID already exists.
 
+        If another non-superseded memory exists with the same key + project
+        but a different value, the existing memory is marked as superseded
+        (conflict resolution).
+
         Tags are stored exclusively in the memory_tags junction table
         (the legacy tags JSON column was dropped in schema v3).
 
@@ -368,10 +380,28 @@ class SQLiteMemoryRepository(MemoryRepository):
         tags augmented with ["propagated:child"].
         """
         async with aiosqlite.connect(self.db_path) as db:
+            # ── Conflict resolution ───────────────────────────────────────
+            conflicts_resolved = 0
+            existing = await self.get_existing_by_key(
+                project=entry.project, key=entry.key, db=db
+            )
+            if existing is not None:
+                existing_value_str = json.dumps(existing.value, sort_keys=True)
+                new_value_str = json.dumps(entry.value, sort_keys=True)
+                if existing_value_str != new_value_str:
+                    # Mark the old memory as superseded
+                    await db.execute(
+                        "UPDATE memories SET superseded_by = ? WHERE id = ?",
+                        (entry.id, existing.id),
+                    )
+                    conflicts_resolved = 1
+
+            entry.conflicts_resolved = conflicts_resolved
+
             await db.execute(
                 """INSERT OR REPLACE INTO memories
-                   (id, session_id, agent_id, key, value, created_at, updated_at, ttl_seconds, project, memory_type)
-                   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                   (id, session_id, agent_id, key, value, created_at, updated_at, ttl_seconds, superseded_by, project, memory_type)
+                   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
                 (
                     entry.id,
                     entry.session_id,
@@ -381,6 +411,7 @@ class SQLiteMemoryRepository(MemoryRepository):
                     entry.created_at.isoformat(),
                     entry.updated_at.isoformat(),
                     entry.ttl_seconds,
+                    entry.superseded_by,
                     entry.project,
                     entry.memory_type.value,
                 ),
@@ -422,6 +453,42 @@ class SQLiteMemoryRepository(MemoryRepository):
                 await self.store_memory(parent_entry, propagate_to_parent=False)
 
         return entry
+
+    async def get_existing_by_key(
+        self,
+        project: Optional[str],
+        key: str,
+        db: Optional[aiosqlite.Connection] = None,
+    ) -> Optional[MemoryEntry]:
+        """Find the most recent non-superseded memory with the given key and project.
+
+        Used for conflict resolution: if a memory with the same key+project
+        exists and is not superseded, it may be a conflict.
+        """
+        if db is not None:
+            return await self._get_existing_by_key_internal(db, project, key)
+        async with aiosqlite.connect(self.db_path) as db:
+            return await self._get_existing_by_key_internal(db, project, key)
+
+    async def _get_existing_by_key_internal(
+        self, db: aiosqlite.Connection, project: Optional[str], key: str
+    ) -> Optional[MemoryEntry]:
+        """Internal helper for get_existing_by_key with an open connection."""
+        db.row_factory = aiosqlite.Row
+        if project:
+            cursor = await db.execute(
+                "SELECT * FROM memories WHERE key = ? AND project = ? AND superseded_by IS NULL ORDER BY created_at DESC LIMIT 1",
+                (key, project),
+            )
+        else:
+            cursor = await db.execute(
+                "SELECT * FROM memories WHERE key = ? AND project IS NULL AND superseded_by IS NULL ORDER BY created_at DESC LIMIT 1",
+                (key,),
+            )
+        row = await cursor.fetchone()
+        if row is None:
+            return None
+        return await _row_to_entry(row, db)
 
     async def get_memory(self, memory_id: str) -> Optional[MemoryEntry]:
         """Retrieve a single memory entry by its ID. Returns None if expired."""
@@ -484,6 +551,9 @@ class SQLiteMemoryRepository(MemoryRepository):
         if project:
             conditions.append("project = ?")
             params.append(project)
+
+        # Exclude superseded memories from normal queries
+        conditions.append("superseded_by IS NULL")
 
         where_clause = " AND ".join(conditions) if conditions else "1=1"
 
@@ -559,6 +629,9 @@ class SQLiteMemoryRepository(MemoryRepository):
             if project:
                 conditions.append("m.project = ?")
                 params.append(project)
+
+            # Exclude superseded memories from search results
+            conditions.append("m.superseded_by IS NULL")
 
             where = " AND ".join(conditions)
             cursor = await db.execute(
