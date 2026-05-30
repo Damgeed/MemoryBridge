@@ -116,6 +116,7 @@ class MemoryService:
             key=payload.key,
             value=payload.value,
             tags=payload.tags,
+            memory_type=payload.memory_type,
             ttl_seconds=ttl,
             project=resolved_project,
         )

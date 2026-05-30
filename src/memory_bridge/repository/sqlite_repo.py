@@ -10,7 +10,7 @@ from typing import Any, Optional
 from pathlib import Path
 from uuid import uuid4
 
-from ..models import MemoryEntry, Session, Subscription, AgentPermission
+from ..models import MemoryEntry, MemoryType, Session, Subscription, AgentPermission
 from ..config import get_settings
 
 logger = logging.getLogger(__name__)
@@ -160,6 +160,7 @@ _SCHEMA_MIGRATIONS: dict[int, str] = {
         "CREATE INDEX IF NOT EXISTS idx_webhook_deliveries_subscription "
         "ON webhook_deliveries(subscription_id, timestamp DESC)"
     ),
+    17: "ALTER TABLE memories ADD COLUMN memory_type TEXT NOT NULL DEFAULT 'episodic'",
 }
 # ──────────────────────────────────────────────────────────────────────────────
 
@@ -184,6 +185,11 @@ async def _row_to_entry(row: aiosqlite.Row, db: aiosqlite.Connection) -> MemoryE
     except (KeyError, IndexError):
         project = None
 
+    try:
+        memory_type = MemoryType(row.get("memory_type", "episodic") if hasattr(row, "get") else row["memory_type"])
+    except (KeyError, IndexError, ValueError):
+        memory_type = MemoryType.episodic
+
     return MemoryEntry(
         id=row["id"],
         session_id=row["session_id"],
@@ -191,6 +197,7 @@ async def _row_to_entry(row: aiosqlite.Row, db: aiosqlite.Connection) -> MemoryE
         key=row["key"],
         value=json.loads(row["value"]),
         tags=tags,
+        memory_type=memory_type,
         created_at=datetime.fromisoformat(row["created_at"]),
         updated_at=datetime.fromisoformat(row["updated_at"]),
         ttl_seconds=ttl,
@@ -343,8 +350,8 @@ class SQLiteMemoryRepository(MemoryRepository):
         async with aiosqlite.connect(self.db_path) as db:
             await db.execute(
                 """INSERT OR REPLACE INTO memories
-                   (id, session_id, agent_id, key, value, created_at, updated_at, ttl_seconds, project)
-                   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                   (id, session_id, agent_id, key, value, created_at, updated_at, ttl_seconds, project, memory_type)
+                   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
                 (
                     entry.id,
                     entry.session_id,
@@ -355,6 +362,7 @@ class SQLiteMemoryRepository(MemoryRepository):
                     entry.updated_at.isoformat(),
                     entry.ttl_seconds,
                     entry.project,
+                    entry.memory_type.value,
                 ),
             )
             # Sync the memory_tags junction table

@@ -11,7 +11,7 @@ from uuid import uuid4
 
 import asyncpg
 
-from ..models import MemoryEntry, Session, Subscription, AgentPermission
+from ..models import MemoryEntry, MemoryType, Session, Subscription, AgentPermission
 from ..config import get_settings
 from ..services.embedding_service import EmbeddingService
 
@@ -171,6 +171,7 @@ _SCHEMA_MIGRATIONS: dict[int, str] = {
         "CREATE INDEX IF NOT EXISTS idx_{schema}_webhook_deliveries_subscription "
         "ON {schema}.webhook_deliveries(subscription_id, timestamp DESC)"
     ),
+    18: "ALTER TABLE {schema}.memories ADD COLUMN IF NOT EXISTS memory_type TEXT NOT NULL DEFAULT 'episodic'",
 }
 # ──────────────────────────────────────────────────────────────────────────────
 
@@ -190,6 +191,11 @@ async def _row_to_entry(row: asyncpg.Record, conn: asyncpg.Connection) -> Memory
 
     project = row.get("project")
 
+    try:
+        memory_type = MemoryType(row.get("memory_type", "episodic"))
+    except (ValueError, KeyError):
+        memory_type = MemoryType.episodic
+
     return MemoryEntry(
         id=row["id"],
         session_id=row["session_id"],
@@ -197,6 +203,7 @@ async def _row_to_entry(row: asyncpg.Record, conn: asyncpg.Connection) -> Memory
         key=row["key"],
         value=json.loads(row["value"]) if isinstance(row["value"], str) else row["value"],
         tags=tags,
+        memory_type=memory_type,
         created_at=row["created_at"] if isinstance(row["created_at"], datetime) else datetime.fromisoformat(row["created_at"]),
         updated_at=row["updated_at"] if isinstance(row["updated_at"], datetime) else datetime.fromisoformat(row["updated_at"]),
         ttl_seconds=ttl,
@@ -371,8 +378,8 @@ class PostgresMemoryRepository(MemoryRepository):
             await conn.execute(
                 f"""
                 INSERT INTO {self.schema}.memories
-                    (id, session_id, agent_id, key, value, created_at, updated_at, ttl_seconds, project)
-                VALUES ($1, $2, $3, $4, $5::jsonb, $6::timestamptz, $7::timestamptz, $8, $9)
+                    (id, session_id, agent_id, key, value, created_at, updated_at, ttl_seconds, project, memory_type)
+                VALUES ($1, $2, $3, $4, $5::jsonb, $6::timestamptz, $7::timestamptz, $8, $9, $10)
                 ON CONFLICT (id) DO UPDATE SET
                     session_id = EXCLUDED.session_id,
                     agent_id = EXCLUDED.agent_id,
@@ -380,7 +387,8 @@ class PostgresMemoryRepository(MemoryRepository):
                     value = EXCLUDED.value,
                     updated_at = EXCLUDED.updated_at,
                     ttl_seconds = EXCLUDED.ttl_seconds,
-                    project = EXCLUDED.project
+                    project = EXCLUDED.project,
+                    memory_type = EXCLUDED.memory_type
                 """,
                 entry.id,
                 entry.session_id,
@@ -391,6 +399,7 @@ class PostgresMemoryRepository(MemoryRepository):
                 entry.updated_at,
                 entry.ttl_seconds,
                 entry.project,
+                entry.memory_type.value,
             )
 
             # Sync the memory_tags junction table
@@ -460,6 +469,11 @@ class PostgresMemoryRepository(MemoryRepository):
 
         project = row.get("project")
 
+        try:
+            memory_type = MemoryType(row.get("memory_type", "episodic"))
+        except (ValueError, KeyError):
+            memory_type = MemoryType.episodic
+
         # asyncpg returns JSONB as dict/list, timestamptz as datetime
         value = row["value"] if isinstance(row["value"], (dict, list)) else json.loads(row["value"])
         created_at = row["created_at"] if isinstance(row["created_at"], datetime) else datetime.fromisoformat(row["created_at"])
@@ -472,6 +486,7 @@ class PostgresMemoryRepository(MemoryRepository):
             key=row["key"],
             value=value,
             tags=tags,
+            memory_type=memory_type,
             created_at=created_at,
             updated_at=updated_at,
             ttl_seconds=ttl,

@@ -1,7 +1,18 @@
 from datetime import datetime, timezone
+from enum import Enum
 from typing import Any, Optional
 from uuid import uuid4
 from pydantic import BaseModel, Field
+
+
+class MemoryType(str, Enum):
+    """Types of agent memory — episodic, semantic, procedural."""
+    episodic = "episodic"
+    """What happened: conversations, events, decisions, failures."""
+    semantic = "semantic"
+    """What we know: facts, preferences, knowledge, architecture."""
+    procedural = "procedural"
+    """How we do things: learned workflows, best practices, action chains."""
 
 
 class MemoryEntry(BaseModel):
@@ -12,6 +23,8 @@ class MemoryEntry(BaseModel):
     key: str
     value: Any
     tags: list[str] = Field(default_factory=list)
+    memory_type: MemoryType = MemoryType.episodic
+    """Type of memory: episodic (what happened), semantic (what we know), procedural (how we do things)."""
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     ttl_seconds: Optional[int] = None
@@ -85,6 +98,8 @@ class MemoryCreate(BaseModel):
     key: str
     value: Any
     tags: list[str] = Field(default_factory=list)
+    memory_type: MemoryType = MemoryType.episodic
+    """Type of memory: episodic (what happened), semantic (what we know), procedural (how we do things)."""
     ttl_seconds: Optional[int] = None
     """Seconds after which this memory expires. None = never expires."""
     propagate_to_parent: bool = False
