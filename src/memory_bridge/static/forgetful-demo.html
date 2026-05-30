@@ -490,6 +490,159 @@
   <span class="counter" id="step-counter">Step 0 / 0</span>
 </div>
 
+    <script>
+    // ── Forgetful Agent Demo ─────────────────────────
+    // Left panel: No Memory — agent forgets each session
+    // Right panel: With Memory Bridge — agent remembers
+
+    const DEMO_SESSIONS = [
+      {
+        id: 1,
+        prompt: 'User: "My name is Alice"',
+        left: { agent: '→ "Hello! How can I help you today?"', summary: 'Fresh start — no context.' },
+        right: { agent: '→ "Hello! How can I help you today?"', summary: 'Stored: name=Alice' }
+      },
+      {
+        id: 2,
+        prompt: 'User: "What is my name?"',
+        left: { agent: '→ "I don\'t know. Please tell me your name."', summary: 'Forgot again. Starts over.' },
+        right: { agent: '→ "Your name is Alice, as you told me before."', summary: 'Recalled: name=Alice ✓' }
+      },
+      {
+        id: 3,
+        prompt: 'User: "I like dark mode"',
+        left: { agent: '→ "Noted! What else can I help with?"', summary: 'New info, but won\'t remember next time.' },
+        right: { agent: '→ "Got it, Alice! I\'ll remember you prefer dark mode."', summary: 'Stored: preference=dark_mode' }
+      },
+      {
+        id: 4,
+        prompt: 'User: "What do you know about me?"',
+        left: { agent: '→ "I\'m sorry, I have no information about you."', summary: 'Zero retained. All forgotten.' },
+        right: { agent: '→ "Your name is Alice. You prefer dark mode. Anything else?"', summary: 'Retained: 2 facts ✓ ✓' }
+      }
+    ];
+
+    let demoRunning = false;
+    let demoStep = 0;
+    let currentSession = 0;
+    let demoTimeout = null;
+
+    function addLog(panelId, text, type) {
+      const el = document.getElementById(panelId);
+      if (!el) return;
+      const div = document.createElement('div');
+      div.className = 'log' + (type ? ' ' + type : '');
+      const match = text.match(/^(→|SYSTEM)/);
+      if (match) {
+        const tag = match[1] === 'SYSTEM' ? 'SYSTEM' : 'AGENT';
+        const rest = text.replace(match[0], '').trim();
+        div.innerHTML = '<span class="agent-tag">' + tag + '</span> <span class="arrow">→</span> <span>' + rest + '</span>';
+      } else {
+        div.innerHTML = '<span class="agent-tag">USER</span> <span class="arrow">→</span> <span>' + text + '</span>';
+      }
+      el.appendChild(div);
+      el.scrollTop = el.scrollHeight;
+    }
+
+    function addPhaseLabel(panelId, text) {
+      const el = document.getElementById(panelId);
+      if (!el) return;
+      const div = document.createElement('div');
+      div.className = 'phase-label phase-start';
+      div.textContent = text;
+      el.appendChild(div);
+      el.scrollTop = el.scrollHeight;
+    }
+
+    function updateSummary(panelId, text) {
+      const el = document.getElementById(panelId);
+      if (el) el.textContent = text;
+    }
+
+    function updateStatus(text) {
+      const el = document.getElementById('demo-status');
+      if (el) el.textContent = text;
+    }
+
+    function updateStep(current, total) {
+      const el = document.getElementById('step-counter');
+      if (el) el.textContent = 'Session ' + current + ' / ' + total;
+    }
+
+    function sleep(ms) {
+      return new Promise(r => setTimeout(r, ms));
+    }
+
+    async function runDemo() {
+      if (demoRunning) return;
+      demoRunning = true;
+
+      const runBtn = document.getElementById('run-demo-btn');
+      const replayBtn = document.getElementById('replay-btn');
+      if (runBtn) runBtn.disabled = true;
+      if (replayBtn) replayBtn.disabled = true;
+
+      document.getElementById('left-logs').innerHTML = '';
+      document.getElementById('right-logs').innerHTML = '';
+      updateSummary('left-summary', 'Sessions: 0 | Retained: 0 | Success: —');
+      updateSummary('right-summary', 'Sessions: 0 | Retained: 0 | Success: —');
+
+      updateStatus('Running demo...');
+      updateStep(0, DEMO_SESSIONS.length);
+
+      for (let i = 0; i < DEMO_SESSIONS.length; i++) {
+        const session = DEMO_SESSIONS[i];
+        updateStep(i + 1, DEMO_SESSIONS.length);
+        updateStatus('Session ' + session.id + '...');
+        await sleep(800);
+
+        // Add phase label
+        addPhaseLabel('left-logs', '── Session ' + session.id + ' ──');
+        addPhaseLabel('right-logs', '── Session ' + session.id + ' ──');
+
+        // User prompt (both panels)
+        await sleep(400);
+        addLog('left-logs', session.prompt);
+        addLog('right-logs', session.prompt);
+        await sleep(600);
+
+        // Left panel: forgetful response
+        addLog('left-logs', session.left.agent, 'log');
+        await sleep(300);
+
+        // Right panel: remembering response
+        addLog('right-logs', session.right.agent, 'log');
+        await sleep(400);
+
+        // Update summaries
+        const leftSessions = i + 1;
+        updateSummary('left-summary', 'Sessions: ' + leftSessions + ' | Retained: 0 | Success: 0%');
+        if (i === 0) {
+          updateSummary('right-summary', 'Sessions: ' + leftSessions + ' | Retained: 1 | Success: ⏳');
+        } else if (i === 1) {
+          updateSummary('right-summary', 'Sessions: ' + leftSessions + ' | Retained: 1 | Success: ✅ 100%');
+        } else if (i === 2) {
+          updateSummary('right-summary', 'Sessions: ' + leftSessions + ' | Retained: 2 | Success: ✅ 100%');
+        } else {
+          updateSummary('right-summary', 'Sessions: ' + leftSessions + ' | Retained: 2 | Success: ✅ 100%');
+        }
+
+        await sleep(500);
+      }
+
+      updateStatus('Demo complete ✓');
+      if (runBtn) runBtn.disabled = false;
+      if (replayBtn) replayBtn.disabled = false;
+      demoRunning = false;
+    }
+
+    async function replayDemo() {
+      if (demoRunning) return;
+      await runDemo();
+    }
+
+    window.runDemo = runDemo;
+    window.replayDemo = replayDemo;
     </script>
 
 </body>
