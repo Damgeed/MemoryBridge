@@ -2221,13 +2221,6 @@
 
             let html = '';
 
-            // Fill MCP setup key placeholder with first key
-            const mcpPlaceholder = document.getElementById('setup-mcp-key-placeholder');
-            if (mcpPlaceholder && active.length > 0) {
-                mcpPlaceholder.textContent = active[0].id ? active[0].id.slice(-12) : '••••••••';
-            }
-            // Hide setup card once user has keys (and we can check agent stats too)
-            updateSetupCardVisibility();
 
             // ── Active keys ──
             html += `<div class="keys-divider" style="justify-content:space-between;">
