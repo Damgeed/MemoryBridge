@@ -58,7 +58,7 @@ async def health(storage: MemoryRepository = Depends(get_storage)):
     return {
         "status": "ok",
         "service": "memory-bridge",
-        "version": "0.2.0",
+        "version": "0.3.0",
         "uptime_seconds": uptime,
         "sessions_total": sessions_total,
         "memories_total": memories_total,
