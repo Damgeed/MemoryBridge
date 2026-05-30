@@ -1948,19 +1948,8 @@
         async function loadDashboard(retries = 2) {
             try {
                 const data = await api('GET', '/dashboard/data');
-                // If tier is free but user has auth credentials, retry a few times
-                // (backend may be checking Stripe synchronously)
-                if (data.tier === 'free' && retries > 0) {
-                    const hasAuth = currentApiKey || localStorage.getItem('mb_jwt');
-                    if (hasAuth) {
-                        document.getElementById('dash-status').textContent = '⏳ Checking subscription...';
-                        await new Promise(r => setTimeout(r, 1000));
-                        return loadDashboard(retries - 1);
-                    }
-                }
                 renderSubscription(data);
                 renderProfile(data);
-                // Store plan data for bulk selection limit
                 const tierKeyLimit = {free: 5, starter: 25, pro: 100}[data.tier] || 5;
                 _planKeyLimit = tierKeyLimit;
                 _activeKeyCount = data.active_keys || 0;
@@ -1984,7 +1973,6 @@
                             <div style="margin-top:0.75rem;"><a href="/pricing" class="btn btn-primary btn-sm">Upgrade Plan →</a></div>
                         </div>`;
                 } else if (retries > 0) {
-                    // Transient failure — retry with backoff
                     document.getElementById('dash-status').textContent = '⏳ Loading...';
                     await new Promise(r => setTimeout(r, 1000));
                     return loadDashboard(retries - 1);

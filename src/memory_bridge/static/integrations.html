@@ -140,7 +140,18 @@
         .auth-email-cta:hover { opacity: 0.9; transform: translateY(-1px); box-shadow: var(--shadow-sm); }
         .auth-email-cta:active { transform: translateY(0); }
         .auth-email-cta:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
-    </style>
+    
+  /* ── Mobile Responsive: Integrations ─────────────── */
+  @media (max-width: 640px) {
+    .int-grid { grid-template-columns: 1fr !important; }
+    .setup-tabs { flex-wrap: wrap !important; }
+    .setup-tabs button { flex: 1 1 40% !important; font-size: 0.75rem !important; padding: 0.4rem 0.2rem !important; }
+    .install-pane .term-block { font-size: 0.78rem !important; overflow-x: auto !important; }
+    .install-pane .term-block .term-line { white-space: nowrap !important; }
+    .integrations-page { padding: 1rem !important; }
+    .integrations-page h1 { font-size: 1.3rem !important; }
+  }
+</style>
     <script src="/playground/i18n.js"></script>
     <script src="/playground/auth.js?v=1"></script>
 </head>

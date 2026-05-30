@@ -842,6 +842,14 @@
     <iframe src="/forgetful-demo" style="width:100%;height:100%;border:none;border-radius:var(--radius-lg);background:var(--bg-primary);" title="Forgetful Agent Demo"></iframe>
 </div>
 
+<style>
+  @media (max-width: 640px) {
+    .demo-tabs { flex-direction: column !important; max-width: 100% !important; margin: 0.5rem !important; }
+    .demo-tabs button { font-size: 0.78rem !important; padding: 0.5rem 0 !important; }
+    #demo-forgetful { height: 60vh !important; }
+  }
+</style>
+
 <script>
 // ── Demo Switcher ────────────────────────────────────
 function switchDemo(demo) {

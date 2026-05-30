@@ -454,7 +454,6 @@
                 const timeout = setTimeout(() => controller.abort(), 10000);
                 const headers = {};
                 const jwt = localStorage.getItem('mb_jwt');
-                const apiKey = localStorage.getItem('mb_api_key');
                 // Try JWT first (logged-in users), fall back to API key
                 if (jwt) headers['Authorization'] = 'Bearer ' + jwt;
                 else if (apiKey) headers['Authorization'] = 'Bearer ' + apiKey;
