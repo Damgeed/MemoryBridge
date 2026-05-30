@@ -128,6 +128,10 @@ async def lifespan(app: FastAPI):
     # Start background cleanup task
     cleanup_task = asyncio.create_task(_cleanup_loop(storage))
 
+    # Start memory decay task (low-importance auto-prune)
+    from .jobs.decay import _decay_loop
+    decay_task = asyncio.create_task(_decay_loop(storage))
+
     # Load persisted webhook subscriptions from the repository
     webhook_svc = await get_webhook_service(repo=storage)
     await webhook_svc.load_subscriptions()
