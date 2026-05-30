@@ -425,8 +425,16 @@
         // ── Load Data ─────────────────────────────────────────────
         async function loadGraph() {
             const container = document.getElementById('graph');
+            const DEMO_API_KEY = 'mb_demo_public_test';
 
             try {
+                // Auto-seed demo key if no key saved yet
+                let apiKey = localStorage.getItem('mb_api_key');
+                if (!apiKey) {
+                    apiKey = DEMO_API_KEY;
+                    localStorage.setItem('mb_api_key', apiKey);
+                }
+
                 const params = new URLSearchParams(window.location.search);
                 const limit = params.get('limit') || '200';
                 const sessionId = params.get('session_id') || '';
@@ -440,7 +448,6 @@
                 const timeout = setTimeout(() => controller.abort(), 10000);
                 const headers = {};
                 const jwt = localStorage.getItem('mb_jwt');
-                const apiKey = localStorage.getItem('mb_api_key');
                 if (jwt) headers['Authorization'] = 'Bearer ' + jwt;
                 else if (apiKey) headers['Authorization'] = 'Bearer ' + apiKey;
                 const response = await fetch(url, { signal: controller.signal, headers });
@@ -453,7 +460,7 @@
                     container.innerHTML = `
                         <div class="empty-state">
                             <h3 data-i18n="graph.empty">No memories found</h3>
-                            <p data-i18n="graph.empty_desc">Create some memories first, then visit this page.</p>
+                            <p data-i18n="graph.empty_desc">Visit <a href="/playground/" style="color:var(--accent);">the Playground</a> to create some memories first, then come back here.</p>
                         </div>`;
                     return;
                 }

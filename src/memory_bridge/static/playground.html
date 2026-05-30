@@ -534,8 +534,10 @@
 
         function useDemoKey() {
             document.getElementById('api-key-input').value = DEMO_API_KEY;
-            document.getElementById('api-key-status').textContent = '📋 Click Save to activate the demo key';
-            document.getElementById('api-key-status').style.color = 'var(--text-muted)';
+            localStorage.setItem('mb_api_key', DEMO_API_KEY);
+            document.getElementById('api-key-status').textContent = '✅ Demo key activated — works across all pages';
+            document.getElementById('api-key-status').style.color = 'var(--green)';
+            setTimeout(() => document.getElementById('api-key-status').textContent = '', 3000);
         }
 
         async function api(method, path, body) {
@@ -905,10 +907,6 @@
         document.addEventListener('DOMContentLoaded', () => {
             // Kill browser autofill — mobile browsers aggressively fill password fields
             document.getElementById('api-key-input').value = '';
-            // Clean up any leftover demo key from localStorage (pre-fix data)
-            if (localStorage.getItem('mb_api_key') === 'mb_demo_public_test') {
-                localStorage.removeItem('mb_api_key');
-            }
             applyQueryParams();
             const savedKey = getApiKey();
             if (savedKey) {
