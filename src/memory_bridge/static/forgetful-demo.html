@@ -292,6 +292,18 @@
 <script src="/playground/auth.js?v=1"></script>
 </head>
 <body>
+<script>
+  // Hide nav when embedded in an iframe on the demo page
+  if (window.top !== window) {
+    document.documentElement.classList.add('in-iframe');
+  }
+</script>
+<style>
+  .in-iframe .navbar,
+  .in-iframe .nav-mobile-backdrop,
+  .in-iframe .nav-mobile-panel { display: none !important; }
+  .in-iframe body { padding-top: 0; }
+</style>
 <!-- Navbar (matches site theme) -->
 <nav class="navbar">
   <a href="/" class="logo">

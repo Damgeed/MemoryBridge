@@ -799,7 +799,17 @@
     </div>
 </div>
 
-<div class="main">
+<!-- ═══ Demo Selector Tabs ═══ -->
+<div class="demo-tabs" style="display:flex;gap:0;border:1px solid var(--border-primary);border-radius:var(--radius-md);overflow:hidden;margin:1rem auto;max-width:500px;">
+    <button class="demo-tab active" id="demo-tab-team" onclick="switchDemo('team')" style="flex:1;padding:0.6rem 0;border:none;background:var(--accent);color:#fff;font-weight:700;font-size:0.85rem;cursor:pointer;font-family:var(--font-sans);transition:all 0.15s;">
+        🤖 Multi-Agent Team
+    </button>
+    <button class="demo-tab" id="demo-tab-forgetful" onclick="switchDemo('forgetful')" style="flex:1;padding:0.6rem 0;border:none;background:transparent;color:var(--text-muted);font-weight:600;font-size:0.85rem;cursor:pointer;font-family:var(--font-sans);transition:all 0.15s;">
+        🧠 Forgetful Agent
+    </button>
+</div>
+
+<div class="main" id="demo-team">
   <div class="left" id="log-panel"></div>
   <div class="right">
     <svg class="conn" id="conn-h-d" style="
@@ -827,7 +837,31 @@
   </div>
 </div>
 
+<!-- Forgetful Agent Demo (hidden by default) -->
+<div class="main" id="demo-forgetful" style="display:none;height:80vh;border:none;padding:0;overflow:hidden;">
+    <iframe src="/forgetful-demo" style="width:100%;height:100%;border:none;border-radius:var(--radius-lg);background:var(--bg-primary);" title="Forgetful Agent Demo"></iframe>
+</div>
+
 <script>
+// ── Demo Switcher ────────────────────────────────────
+function switchDemo(demo) {
+    document.getElementById('demo-team').style.display = demo === 'team' ? '' : 'none';
+    document.getElementById('demo-forgetful').style.display = demo === 'forgetful' ? '' : 'none';
+    document.querySelectorAll('.demo-tab').forEach(b => {
+        b.style.background = 'transparent';
+        b.style.color = 'var(--text-muted)';
+    });
+    const activeTab = document.getElementById('demo-tab-' + demo);
+    if (activeTab) {
+        activeTab.style.background = 'var(--accent)';
+        activeTab.style.color = '#fff';
+    }
+    // Pause team demo when switching away
+    if (demo !== 'team' && typeof paused === 'undefined') {
+        // If team demo is running, pause it
+    }
+}
+
 // ── Theme ──────────────────────────────────────────────
 (function initDemoTheme() {
   const saved = localStorage.getItem('mb-theme');
