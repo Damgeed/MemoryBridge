@@ -160,7 +160,7 @@ _SCHEMA_MIGRATIONS: dict[int, str] = {
         "CREATE INDEX IF NOT EXISTS idx_webhook_deliveries_subscription "
         "ON webhook_deliveries(subscription_id, timestamp DESC)"
     ),
-    17: "ALTER TABLE memories ADD COLUMN memory_type TEXT NOT NULL DEFAULT 'episodic'",
+    17: "ALTER TABLE memories ADD COLUMN memory_type TEXT DEFAULT 'episodic'",
     18: (
         "CREATE TABLE IF NOT EXISTS inbox_messages ("
         "id TEXT PRIMARY KEY, "
