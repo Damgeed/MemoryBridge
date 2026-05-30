@@ -69,10 +69,17 @@ async def create_memory(
             detail=f"Memory value too large: {value_size} bytes exceeds limit of {max_value_size} bytes",
         )
 
-    # ACL check: verify the agent has write permission
+    # ACL check: verify the agent has write permission (scope-based)
     acl = ACLService(storage=service.repo)
     try:
-        await acl.require_write(agent_id=payload.agent_id, project=project)
+        await acl.require_scope(agent_id=payload.agent_id, required_scope="write", project=project)
+    except PermissionError as e:
+        raise HTTPException(status_code=403, detail=str(e))
+
+    # ACL check: verify agent_type is whitelisted if applicable
+    agent_type = getattr(request.state, "agent_type", None) or "default"
+    try:
+        await acl.require_agent_type(agent_id=payload.agent_id, agent_type=agent_type, project=project)
     except PermissionError as e:
         raise HTTPException(status_code=403, detail=str(e))
 
@@ -378,11 +385,11 @@ async def get_memory(
     if entry is None:
         raise HTTPException(status_code=404, detail="Memory not found")
 
-    # ACL check: verify the agent that owns this memory has read permission
+    # ACL check: verify the agent has read scope or better
     project = getattr(request.state, "project_id", None)
     acl = ACLService(storage=service.repo)
     try:
-        await acl.require_read(agent_id=entry.agent_id, project=project)
+        await acl.require_scope(agent_id=entry.agent_id, required_scope="read", project=project)
     except PermissionError as e:
         raise HTTPException(status_code=403, detail=str(e))
 
@@ -422,12 +429,13 @@ async def delete_memory(
     service: MemoryService = Depends(get_memory_service),
 ):
     """Delete a memory by its ID."""
-    # ACL check: verify the agent has delete permission
+    # ACL check: verify the agent has admin scope (or write, design decision)
     project = getattr(request.state, "project_id", None)
     if agent_id:
         acl = ACLService(storage=service.repo)
         try:
-            await acl.require_delete(agent_id=agent_id, project=project)
+            # Delete requires admin scope (which includes read+write+delete+manage)
+            await acl.require_scope(agent_id=agent_id, required_scope="admin", project=project)
         except PermissionError as e:
             raise HTTPException(status_code=403, detail=str(e))
 

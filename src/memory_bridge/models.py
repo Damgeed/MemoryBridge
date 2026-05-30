@@ -6,13 +6,15 @@ from pydantic import BaseModel, Field
 
 
 class MemoryType(str, Enum):
-    """Types of agent memory — episodic, semantic, procedural."""
+    """Types of agent memory — episodic, semantic, procedural, scratchpad."""
     episodic = "episodic"
     """What happened: conversations, events, decisions, failures."""
     semantic = "semantic"
     """What we know: facts, preferences, knowledge, architecture."""
     procedural = "procedural"
     """How we do things: learned workflows, best practices, action chains."""
+    scratchpad = "scratchpad"
+    """Temporary collaborative workspace that auto-expires after a TTL."""
 
 
 class MemoryEntry(BaseModel):
@@ -163,20 +165,92 @@ class ScoredMemoryResult(BaseModel):
     importance_score: float
 
 
+class PermissionScope(str, Enum):
+    """Role-based scope levels for agent permissions.
+    
+    Hierarchy: read < write < admin
+    - read: can read memories
+    - write: can read and write memories
+    - admin: can read, write, delete, and manage permissions
+    """
+    read = "read"
+    write = "write"
+    admin = "admin"
+
+
+# ── Scope utility functions ───────────────────────────────────────────────────
+
+
+def scope_to_level(scope: Optional[str]) -> int:
+    """Convert a scope string to a numeric level for hierarchy comparisons."""
+    if scope is None:
+        return 0
+    mapping = {"read": 1, "write": 2, "admin": 3}
+    return mapping.get(scope, 0)
+
+
+def scope_implies(scope: Optional[str], required: str) -> bool:
+    """Check if a scope level implies (is >=) the required scope level.
+    
+    Returns True if scope is None (backward compat — no scope = full access).
+    """
+    if scope is None:
+        return True
+    return scope_to_level(scope) >= scope_to_level(required)
+
+
+def derive_scope_bools(perm: "AgentPermission") -> tuple[bool, bool, bool]:
+    """Derive can_read/can_write/can_delete booleans from scope if set.
+    
+    If scope is set, it takes precedence over the individual boolean fields.
+    Returns (can_read, can_write, can_delete).
+    """
+    if perm.scope is None:
+        return perm.can_read, perm.can_write, perm.can_delete
+    can_read = perm.scope in (PermissionScope.read, PermissionScope.write, PermissionScope.admin)
+    can_write = perm.scope in (PermissionScope.write, PermissionScope.admin)
+    can_delete = perm.scope == PermissionScope.admin
+    return can_read, can_write, can_delete
+
+
 class AgentPermission(BaseModel):
-    """Permission rule for a specific agent."""
+    """Permission rule for a specific agent.
+    
+    Supports two modes:
+    1. Modern (recommended): Set ``scope`` to one of "read", "write", "admin".
+       Boolean flags are derived from the scope hierarchy.
+    2. Legacy (backward compat): Set ``can_read``, ``can_write``, ``can_delete``
+       individually. If ``scope`` is None, the booleans are used directly.
+    
+    ``allowed_agent_types`` is an optional whitelist. If empty or None,
+    all agent types are permitted. If set, only the listed agent types
+    may operate under this permission rule.
+    """
     agent_id: str
     project: Optional[str] = None
+    scope: Optional[PermissionScope] = None
+    """Role-based scope. If set, takes precedence over individual booleans."""
+    allowed_agent_types: Optional[list[str]] = None
+    """Optional agent_type whitelist. None/empty = all types allowed."""
     can_read: bool = True    # Can read memories stored by other agents in this project
     can_write: bool = True   # Can store new memories
     can_delete: bool = False # Can delete memories
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
+    def model_post_init(self, __context) -> None:
+        """Derive boolean flags from scope if scope is set."""
+        if self.scope is not None:
+            self.can_read, self.can_write, self.can_delete = derive_scope_bools(self)
+
 
 class AgentPermissionUpdate(BaseModel):
     """Request to update agent permissions."""
     agent_id: Optional[str] = None
+    scope: Optional[PermissionScope] = None
+    """Role-based scope. If set, overrides individual boolean flags."""
+    allowed_agent_types: Optional[list[str]] = None
+    """Optional agent_type whitelist. None/empty = all types allowed."""
     can_read: Optional[bool] = None
     can_write: Optional[bool] = None
     can_delete: Optional[bool] = None
@@ -220,4 +294,40 @@ class InboxQuery(BaseModel):
     limit: int = Field(default=50, ge=1, le=200)
     offset: int = Field(default=0, ge=0)
     project: Optional[str] = None
+
+
+class Scratchpad(BaseModel):
+    """A temporary collaborative workspace for agents to write and collaborate.
+
+    Scratchpads auto-expire after a TTL (default 30 minutes).
+    Content is a list of text entries appended by agents.
+    """
+    id: str = Field(default_factory=lambda: str(uuid4()))
+    session_id: str
+    agent_id: str
+    project_id: str = ""
+    content: list[str] = Field(default_factory=list)
+    """List of text entries appended by agents."""
+    contributors: list[str] = Field(default_factory=list)
+    """List of agent_ids that have contributed."""
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    expires_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    """Timestamp after which the scratchpad is considered expired."""
+    ttl_seconds: int = 1800
+    """Time-to-live in seconds (default 30 minutes)."""
+
+
+class ScratchpadCreate(BaseModel):
+    """Request body to create a scratchpad."""
+    session_id: str
+    agent_id: str
+    content: str
+    ttl_seconds: int = 1800
+    project_id: str = ""
+
+
+class ScratchpadAppend(BaseModel):
+    """Request body to append content to a scratchpad."""
+    agent_id: str
+    content: str
 

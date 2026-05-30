@@ -3,7 +3,7 @@
 from abc import ABC, abstractmethod
 from typing import Any, Optional
 
-from ..models import MemoryEntry, InboxMessage, Session, Subscription, AgentPermission
+from ..models import MemoryEntry, InboxMessage, Session, Subscription, AgentPermission, Scratchpad
 
 
 class MemoryRepository(ABC):
@@ -128,8 +128,8 @@ class MemoryRepository(ABC):
         ...
 
     @abstractmethod
-    async def create_api_key(self, label: str, project_id: Optional[str] = None) -> dict:
-        """Create a new API key. Returns dict with id, key (plaintext), label, project_id, is_active, created_at."""
+    async def create_api_key(self, label: str, project_id: Optional[str] = None, scope: Optional[str] = None) -> dict:
+        """Create a new API key. Returns dict with id, key (plaintext), label, project_id, scope, is_active, created_at."""
         ...
 
     @abstractmethod
@@ -363,4 +363,36 @@ class MemoryRepository(ABC):
     @abstractmethod
     async def count_unread_inbox(self, to_agent_id: str, project: Optional[str] = None) -> int:
         """Count unread inbox messages for an agent."""
+        ...
+
+    # ── Scratchpads ──────────────────────────────────────────────────────
+
+    @abstractmethod
+    async def create_scratchpad(self, pad: Scratchpad) -> Scratchpad:
+        """Create a new scratchpad."""
+        ...
+
+    @abstractmethod
+    async def get_scratchpad(self, id: str) -> Optional[Scratchpad]:
+        """Get a scratchpad by ID. Returns None if not found or expired."""
+        ...
+
+    @abstractmethod
+    async def update_scratchpad(self, pad: Scratchpad) -> Scratchpad:
+        """Update an existing scratchpad (e.g. after appending content)."""
+        ...
+
+    @abstractmethod
+    async def delete_scratchpad(self, id: str) -> bool:
+        """Delete a scratchpad by ID. Returns True if deleted."""
+        ...
+
+    @abstractmethod
+    async def list_active_scratchpads(self, project_id: str) -> list[Scratchpad]:
+        """List all active (non-expired) scratchpads for a project."""
+        ...
+
+    @abstractmethod
+    async def cleanup_expired_scratchpads(self) -> int:
+        """Delete all expired scratchpads. Returns count deleted."""
         ...

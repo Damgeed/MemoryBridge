@@ -38,6 +38,7 @@ from .controllers import (
     playground_controller,
     pricing_controller,
     procedural_controller,
+    scratchpad_controller,
     session_controller,
 )
 from .webhooks import router as webhook_router
@@ -66,7 +67,7 @@ _limiter = RedisRateLimiter(requests_per_minute=_RATE_LIMIT)
 
 
 async def _cleanup_loop(storage: MemoryStorage):
-    """Periodically delete expired memories."""
+    """Periodically delete expired memories and scratchpads."""
     while True:
         try:
             await asyncio.sleep(_CLEANUP_INTERVAL)
@@ -86,6 +87,10 @@ async def _cleanup_loop(storage: MemoryStorage):
             deleted = await storage.cleanup_expired()
             if deleted:
                 logger.info("Cleanup: deleted %d expired memories", deleted)
+            # Also clean up expired scratchpads
+            scratchpad_deleted = await storage.cleanup_expired_scratchpads()
+            if scratchpad_deleted:
+                logger.info("Cleanup: deleted %d expired scratchpads", scratchpad_deleted)
         except asyncio.CancelledError:
             break
         except Exception:
@@ -320,6 +325,7 @@ def create_app() -> FastAPI:
     app.include_router(handoff_controller.router)
     app.include_router(inbox_controller.router)
     app.include_router(procedural_controller.router)
+    app.include_router(scratchpad_controller.router)
     app.include_router(admin_controller.router)
     app.include_router(export_controller.router)
     app.include_router(acl_controller.router)

@@ -11,7 +11,7 @@ from uuid import uuid4
 
 import asyncpg
 
-from ..models import MemoryEntry, MemoryType, Session, Subscription, AgentPermission, InboxMessage
+from ..models import MemoryEntry, MemoryType, Session, Subscription, AgentPermission, InboxMessage, Scratchpad
 from ..config import get_settings
 from ..services.embedding_service import EmbeddingService
 
@@ -30,162 +30,175 @@ def _hash_api_key(plain_key: str) -> str:
 #   v1  (0.1.0)  Base tables: sessions, memories (with tags column), memory_tags
 #   v2  (0.2.0)  Add ttl_seconds column to memories
 _SCHEMA_MIGRATIONS: dict[int, str] = {
-    2: "ALTER TABLE {schema}.memories ADD COLUMN ttl_seconds INTEGER",
-    3: "ALTER TABLE {schema}.memories DROP COLUMN IF EXISTS tags",
-    4: (
-        "CREATE TABLE IF NOT EXISTS {schema}.metrics ("
-        "  key TEXT PRIMARY KEY, "
-        "  value TEXT NOT NULL, "
-        "  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()"
-        ")"
-    ),
-    5: (
-        "CREATE INDEX IF NOT EXISTS idx_{schema}_memories_fts "
-        "ON {schema}.memories USING GIN (to_tsvector('english', COALESCE(value::text, ''))"
-        ")"
-    ),
-    6: (
-        "CREATE TABLE IF NOT EXISTS {schema}.api_keys ("
-        "  id TEXT PRIMARY KEY, "
-        "  key_hash TEXT NOT NULL UNIQUE, "
-        "  label TEXT NOT NULL, "
-        "  project_id TEXT, "
-        "  is_active BOOLEAN NOT NULL DEFAULT TRUE, "
-        "  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(), "
-        "  last_used_at TIMESTAMPTZ"
-        ")"
-    ),
-    7: "ALTER TABLE {schema}.memories ADD COLUMN IF NOT EXISTS project TEXT",
-    8: "ALTER TABLE {schema}.sessions ADD COLUMN IF NOT EXISTS project TEXT",
-    9: (
-        "CREATE INDEX IF NOT EXISTS idx_{schema}_memories_project_created "
-        "ON {schema}.memories(project, created_at DESC); "
-        "CREATE INDEX IF NOT EXISTS idx_{schema}_memories_session_key "
-        "ON {schema}.memories(session_id, key); "
-        "CREATE INDEX IF NOT EXISTS idx_{schema}_memories_project_agent "
-        "ON {schema}.memories(project, agent_id); "
-        "CREATE INDEX IF NOT EXISTS idx_{schema}_sessions_project_created "
-        "ON {schema}.sessions(project, created_at DESC)"
-    ),
-    10: (
-        "ALTER TABLE {schema}.memories ADD COLUMN IF NOT EXISTS embedding vector(1536); "
-        "CREATE INDEX IF NOT EXISTS idx_{schema}_memories_embedding "
-        "ON {schema}.memories USING ivfflat (embedding vector_cosine_ops) "
-        "WITH (lists = 100)"
-    ),
-    11: (
-        "CREATE TABLE IF NOT EXISTS {schema}.audit_log ("
-        "  id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text, "
-        "  timestamp TIMESTAMPTZ NOT NULL DEFAULT NOW(), "
-        "  actor_type TEXT NOT NULL, "
-        "  actor_id TEXT NOT NULL, "
-        "  action TEXT NOT NULL, "
-        "  resource_type TEXT NOT NULL, "
-        "  resource_id TEXT, "
-        "  project_id TEXT, "
-        "  ip_address TEXT, "
-        "  details JSONB DEFAULT '{{}}', "
-        "  previous_hash TEXT, "
-        "  hash TEXT"
-        "); "
-        "CREATE INDEX IF NOT EXISTS idx_{schema}_audit_log_timestamp "
-        "ON {schema}.audit_log(timestamp DESC); "
-        "CREATE INDEX IF NOT EXISTS idx_{schema}_audit_log_actor "
-        "ON {schema}.audit_log(actor_type, actor_id); "
-        "CREATE INDEX IF NOT EXISTS idx_{schema}_audit_log_action "
-        "ON {schema}.audit_log(action); "
-        "CREATE INDEX IF NOT EXISTS idx_{schema}_audit_log_project "
-        "ON {schema}.audit_log(project_id)"
-    ),
-    12: (
-        "CREATE TABLE IF NOT EXISTS {schema}.subscriptions ("
-        "  id TEXT PRIMARY KEY, "
-        "  organization_id TEXT NOT NULL UNIQUE, "
-        "  stripe_customer_id TEXT DEFAULT '', "
-        "  tier TEXT NOT NULL DEFAULT 'free', "
-        "  status TEXT NOT NULL DEFAULT 'active', "
-        "  current_period_start TIMESTAMPTZ, "
-        "  current_period_end TIMESTAMPTZ, "
-        "  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(), "
-        "  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()"
-        ")"
-    ),
-    13: (
-        "CREATE TABLE IF NOT EXISTS {schema}.oauth_accounts ("
-        "  id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text, "
-        "  user_id TEXT NOT NULL REFERENCES {schema}.users(id) ON DELETE CASCADE, "
-        "  provider TEXT NOT NULL, "
-        "  provider_user_id TEXT NOT NULL, "
-        "  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(), "
-        "  UNIQUE(provider, provider_user_id)"
-        ")"
-    ),
-    14: (
-        "CREATE TABLE IF NOT EXISTS {schema}.users ("
-        "  id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text, "
-        "  email TEXT NOT NULL UNIQUE, "
-        "  password_hash TEXT NOT NULL DEFAULT '', "
-        "  name TEXT NOT NULL DEFAULT '', "
-        "  organization_id TEXT NOT NULL DEFAULT '', "
-        "  auth0_sub TEXT DEFAULT '', "
-        "  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(), "
-        "  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()"
-        ")"
-    ),
-    15: (
-        "ALTER TABLE {schema}.users ADD COLUMN IF NOT EXISTS stripe_customer_id TEXT NOT NULL DEFAULT ''"
-    ),
-    16: (
-        "CREATE TABLE IF NOT EXISTS {schema}.agent_permissions ("
-        "agent_id TEXT NOT NULL, "
-        "project TEXT, "
-        "can_read BOOLEAN NOT NULL DEFAULT TRUE, "
-        "can_write BOOLEAN NOT NULL DEFAULT TRUE, "
-        "can_delete BOOLEAN NOT NULL DEFAULT FALSE, "
-        "created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(), "
-        "updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(), "
-        "PRIMARY KEY (agent_id, project)"
-        ")"
-    ),
-    17: (
-        "CREATE TABLE IF NOT EXISTS {schema}.webhook_subscriptions ("
-        "id TEXT PRIMARY KEY, "
-        "url TEXT NOT NULL, "
-        "event_types JSONB NOT NULL, "
-        "secret TEXT NOT NULL, "
-        "project TEXT, "
-        "is_active BOOLEAN NOT NULL DEFAULT TRUE, "
-        "created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()"
-        "); "
-        "CREATE TABLE IF NOT EXISTS {schema}.webhook_deliveries ("
-        "id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text, "
-        "subscription_id TEXT NOT NULL REFERENCES {schema}.webhook_subscriptions(id) ON DELETE CASCADE, "
-        "event_type TEXT NOT NULL, "
-        "url TEXT NOT NULL, "
-        "status TEXT NOT NULL, "
-        "status_code INTEGER, "
-        "error TEXT, "
-        "attempts INTEGER NOT NULL DEFAULT 0, "
-        "timestamp TIMESTAMPTZ NOT NULL DEFAULT NOW()"
-        "); "
-        "CREATE INDEX IF NOT EXISTS idx_{schema}_webhook_deliveries_subscription "
-        "ON {schema}.webhook_deliveries(subscription_id, timestamp DESC)"
-    ),
-    18: "ALTER TABLE {schema}.memories ADD COLUMN IF NOT EXISTS memory_type TEXT DEFAULT 'episodic'",
-    19: (
-        "CREATE TABLE IF NOT EXISTS {schema}.inbox_messages ("
-        "id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text, "
-        "from_agent_id TEXT NOT NULL, "
-        "to_agent_id TEXT NOT NULL, "
-        "subject TEXT NOT NULL DEFAULT '', "
-        "body TEXT NOT NULL, "
-        "priority TEXT NOT NULL DEFAULT 'normal', "
-        "is_read BOOLEAN NOT NULL DEFAULT FALSE, "
-        "read_at TIMESTAMPTZ, "
-        "created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(), "
-        "project TEXT"        "); "        "CREATE INDEX IF NOT EXISTS idx_{schema}_inbox_to_agent "        "ON {schema}.inbox_messages(to_agent_id, is_read, created_at DESC); "        "CREATE INDEX IF NOT EXISTS idx_{schema}_inbox_project "        "ON {schema}.inbox_messages(project, to_agent_id)"
-    ),
-}
+        2: "ALTER TABLE {schema}.memories ADD COLUMN ttl_seconds INTEGER",
+        3: "ALTER TABLE {schema}.memories DROP COLUMN IF EXISTS tags",
+        4: (
+            "CREATE TABLE IF NOT EXISTS {schema}.metrics ("
+            "  key TEXT PRIMARY KEY, "
+            "  value TEXT NOT NULL, "
+            "  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()"
+            ")"
+        ),
+        5: (
+            "CREATE INDEX IF NOT EXISTS idx_{schema}_memories_fts "
+            "ON {schema}.memories USING GIN (to_tsvector('english', COALESCE(value::text, ''))"
+            ")"
+        ),
+        6: (
+            "CREATE TABLE IF NOT EXISTS {schema}.api_keys ("
+            "  id TEXT PRIMARY KEY, "
+            "  key_hash TEXT NOT NULL UNIQUE, "
+            "  label TEXT NOT NULL, "
+            "  project_id TEXT, "
+            "  is_active BOOLEAN NOT NULL DEFAULT TRUE, "
+            "  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(), "
+            "  last_used_at TIMESTAMPTZ"
+            ")"
+        ),
+        7: "ALTER TABLE {schema}.memories ADD COLUMN IF NOT EXISTS project TEXT",
+        8: "ALTER TABLE {schema}.sessions ADD COLUMN IF NOT EXISTS project TEXT",
+        9: (
+            "CREATE INDEX IF NOT EXISTS idx_{schema}_memories_project_created "
+            "ON {schema}.memories(project, created_at DESC); "
+            "CREATE INDEX IF NOT EXISTS idx_{schema}_memories_session_key "
+            "ON {schema}.memories(session_id, key); "
+            "CREATE INDEX IF NOT EXISTS idx_{schema}_memories_project_agent "
+            "ON {schema}.memories(project, agent_id); "
+            "CREATE INDEX IF NOT EXISTS idx_{schema}_sessions_project_created "
+            "ON {schema}.sessions(project, created_at DESC)"
+        ),
+        10: (
+            "ALTER TABLE {schema}.memories ADD COLUMN IF NOT EXISTS embedding vector(1536); "
+            "CREATE INDEX IF NOT EXISTS idx_{schema}_memories_embedding "
+            "ON {schema}.memories USING ivfflat (embedding vector_cosine_ops) "
+            "WITH (lists = 100)"
+        ),
+        11: (
+            "CREATE TABLE IF NOT EXISTS {schema}.audit_log ("
+            "  id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text, "
+            "  timestamp TIMESTAMPTZ NOT NULL DEFAULT NOW(), "
+            "  actor_type TEXT NOT NULL, "
+            "  actor_id TEXT NOT NULL, "
+            "  action TEXT NOT NULL, "
+            "  resource_type TEXT NOT NULL, "
+            "  resource_id TEXT, "
+            "  project_id TEXT, "
+            "  ip_address TEXT, "
+            "  details JSONB DEFAULT '{{}}', "
+            "  previous_hash TEXT, "
+            "  hash TEXT"
+            "); "
+            "CREATE INDEX IF NOT EXISTS idx_{schema}_audit_log_timestamp "
+            "ON {schema}.audit_log(timestamp DESC); "
+            "CREATE INDEX IF NOT EXISTS idx_{schema}_audit_log_actor "
+            "ON {schema}.audit_log(actor_type, actor_id); "
+            "CREATE INDEX IF NOT EXISTS idx_{schema}_audit_log_action "
+            "ON {schema}.audit_log(action); "
+            "CREATE INDEX IF NOT EXISTS idx_{schema}_audit_log_project "
+            "ON {schema}.audit_log(project_id)"
+        ),
+        12: (
+            "CREATE TABLE IF NOT EXISTS {schema}.subscriptions ("
+            "  id TEXT PRIMARY KEY, "
+            "  organization_id TEXT NOT NULL UNIQUE, "
+            "  stripe_customer_id TEXT DEFAULT '', "
+            "  tier TEXT NOT NULL DEFAULT 'free', "
+            "  status TEXT NOT NULL DEFAULT 'active', "
+            "  current_period_start TIMESTAMPTZ, "
+            "  current_period_end TIMESTAMPTZ, "
+            "  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(), "
+            "  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()"
+            ")"
+        ),
+        13: (
+            "CREATE TABLE IF NOT EXISTS {schema}.oauth_accounts ("
+            "  id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text, "
+            "  user_id TEXT NOT NULL REFERENCES {schema}.users(id) ON DELETE CASCADE, "
+            "  provider TEXT NOT NULL, "
+            "  provider_user_id TEXT NOT NULL, "
+            "  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(), "
+            "  UNIQUE(provider, provider_user_id)"
+            ")"
+        ),
+        14: (
+            "ALTER TABLE {schema}.users ADD COLUMN IF NOT EXISTS stripe_customer_id TEXT NOT NULL DEFAULT ''"
+        ),
+        15: (
+            "CREATE TABLE IF NOT EXISTS {schema}.agent_permissions ("
+            "agent_id TEXT NOT NULL, "
+            "project TEXT, "
+            "can_read BOOLEAN NOT NULL DEFAULT TRUE, "
+            "can_write BOOLEAN NOT NULL DEFAULT TRUE, "
+            "can_delete BOOLEAN NOT NULL DEFAULT FALSE, "
+            "created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(), "
+            "updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(), "
+            "PRIMARY KEY (agent_id, project)"
+            ")"
+        ),
+        16: (
+            "CREATE TABLE IF NOT EXISTS {schema}.webhook_subscriptions ("
+            "id TEXT PRIMARY KEY, "
+            "url TEXT NOT NULL, "
+            "event_types JSONB NOT NULL, "
+            "secret TEXT NOT NULL, "
+            "project TEXT, "
+            "is_active BOOLEAN NOT NULL DEFAULT TRUE, "
+            "created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()"
+            "); "
+            "CREATE TABLE IF NOT EXISTS {schema}.webhook_deliveries ("
+            "id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text, "
+            "subscription_id TEXT NOT NULL REFERENCES {schema}.webhook_subscriptions(id) ON DELETE CASCADE, "
+            "event_type TEXT NOT NULL, "
+            "url TEXT NOT NULL, "
+            "status TEXT NOT NULL, "
+            "status_code INTEGER, "
+            "error TEXT, "
+            "attempts INTEGER NOT NULL DEFAULT 0, "
+            "timestamp TIMESTAMPTZ NOT NULL DEFAULT NOW()"
+            "); "
+            "CREATE INDEX IF NOT EXISTS idx_{schema}_webhook_deliveries_subscription "
+            "ON {schema}.webhook_deliveries(subscription_id, timestamp DESC)"
+        ),
+        17: "ALTER TABLE {schema}.memories ADD COLUMN IF NOT EXISTS memory_type TEXT DEFAULT 'episodic'",
+        18: (
+            "CREATE TABLE IF NOT EXISTS {schema}.inbox_messages ("
+            "id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text, "
+            "from_agent_id TEXT NOT NULL, "
+            "to_agent_id TEXT NOT NULL, "
+            "subject TEXT NOT NULL DEFAULT '', "
+            "body TEXT NOT NULL, "
+            "priority TEXT NOT NULL DEFAULT 'normal', "
+            "is_read BOOLEAN NOT NULL DEFAULT FALSE, "
+            "read_at TIMESTAMPTZ, "
+            "created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(), "
+            "project TEXT"
+            "); "
+            "CREATE INDEX IF NOT EXISTS idx_{schema}_inbox_to_agent "
+            "ON {schema}.inbox_messages(to_agent_id, is_read, created_at DESC); "
+            "CREATE INDEX IF NOT EXISTS idx_{schema}_inbox_project "
+            "ON {schema}.inbox_messages(project, to_agent_id)"
+        ),
+        19: (
+            "CREATE TABLE IF NOT EXISTS {schema}.scratchpads ("
+            "id TEXT PRIMARY KEY, "
+            "session_id TEXT NOT NULL, "
+            "agent_id TEXT NOT NULL, "
+            "project_id TEXT NOT NULL DEFAULT '', "
+            "content JSONB NOT NULL DEFAULT '[]', "
+            "contributors JSONB NOT NULL DEFAULT '[]', "
+            "created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(), "
+            "expires_at TIMESTAMPTZ NOT NULL, "
+            "ttl_seconds INTEGER NOT NULL DEFAULT 1800"
+            "); "
+            "CREATE INDEX IF NOT EXISTS idx_{schema}_scratchpads_project "
+            "ON {schema}.scratchpads(project_id); "
+            "CREATE INDEX IF NOT EXISTS idx_{schema}_scratchpads_expires "
+            "ON {schema}.scratchpads(expires_at)"
+        ),
+        20: "ALTER TABLE {schema}.api_keys ADD COLUMN IF NOT EXISTS scope TEXT",
+        21: "ALTER TABLE {schema}.agent_permissions ADD COLUMN IF NOT EXISTS scope TEXT",
+        22: "ALTER TABLE {schema}.agent_permissions ADD COLUMN IF NOT EXISTS allowed_agent_types JSONB",
+    }
 # ──────────────────────────────────────────────────────────────────────────────
 
 
@@ -1021,7 +1034,7 @@ class PostgresMemoryRepository(MemoryRepository):
 
     # ── API Key Management ────────────────────────────────────────────────────
 
-    async def create_api_key(self, label: str, project_id: Optional[str] = None) -> dict:
+    async def create_api_key(self, label: str, project_id: Optional[str] = None, scope: Optional[str] = None) -> dict:
         """Create a new API key. Returns the full key info including the plaintext key (show once)."""
         plain_key = f"mb_{secrets.token_hex(24)}"
         key_hash = _hash_api_key(plain_key)
@@ -1031,9 +1044,9 @@ class PostgresMemoryRepository(MemoryRepository):
         async with self.pool.acquire() as conn:
             await conn.execute(
                 f"INSERT INTO {self.schema}.api_keys "
-                f"(id, key_hash, label, project_id, is_active, created_at) "
-                f"VALUES ($1, $2, $3, $4, TRUE, $5::timestamptz)",
-                key_id, key_hash, label, project_id, now,
+                f"(id, key_hash, label, project_id, scope, is_active, created_at) "
+                f"VALUES ($1, $2, $3, $4, $5, TRUE, $6::timestamptz)",
+                key_id, key_hash, label, project_id, scope, now,
             )
 
         return {
@@ -1041,6 +1054,7 @@ class PostgresMemoryRepository(MemoryRepository):
             "key": plain_key,
             "label": label,
             "project_id": project_id,
+            "scope": scope,
             "is_active": True,
             "created_at": now.isoformat(),
         }
@@ -1049,7 +1063,7 @@ class PostgresMemoryRepository(MemoryRepository):
         """List all API keys (without the actual key value, only hash)."""
         async with self.pool.acquire() as conn:
             rows = await conn.fetch(
-                f"SELECT id, label, project_id, is_active, created_at, last_used_at "
+                f"SELECT id, label, project_id, scope, is_active, created_at, last_used_at "
                 f"FROM {self.schema}.api_keys "
                 f"ORDER BY created_at DESC"
             )
@@ -1482,9 +1496,11 @@ class PostgresMemoryRepository(MemoryRepository):
             await conn.execute(
                 f"""
                 INSERT INTO {self.schema}.agent_permissions
-                    (agent_id, project, can_read, can_write, can_delete, created_at, updated_at)
-                VALUES ($1, $2, $3, $4, $5, $6, $7)
+                    (agent_id, project, scope, allowed_agent_types, can_read, can_write, can_delete, created_at, updated_at)
+                VALUES ($1, $2, $3, $4::jsonb, $5, $6, $7, $8::timestamptz, $9::timestamptz)
                 ON CONFLICT (agent_id, project) DO UPDATE SET
+                    scope = EXCLUDED.scope,
+                    allowed_agent_types = EXCLUDED.allowed_agent_types,
                     can_read = EXCLUDED.can_read,
                     can_write = EXCLUDED.can_write,
                     can_delete = EXCLUDED.can_delete,
@@ -1492,6 +1508,8 @@ class PostgresMemoryRepository(MemoryRepository):
                 """,
                 perm.agent_id,
                 perm.project,
+                perm.scope.value if perm.scope else None,
+                json.dumps(perm.allowed_agent_types) if perm.allowed_agent_types is not None else None,
                 perm.can_read,
                 perm.can_write,
                 perm.can_delete,
@@ -1511,9 +1529,15 @@ class PostgresMemoryRepository(MemoryRepository):
             )
             if row is None:
                 return None
+            raw_types = row.get("allowed_agent_types")
+            allowed_types = json.loads(raw_types) if isinstance(raw_types, str) else raw_types if raw_types else None
+            scope_val = row.get("scope")
+            from ..models import PermissionScope
             return AgentPermission(
                 agent_id=row["agent_id"],
                 project=row["project"],
+                scope=PermissionScope(scope_val) if scope_val else None,
+                allowed_agent_types=allowed_types,
                 can_read=bool(row["can_read"]),
                 can_write=bool(row["can_write"]),
                 can_delete=bool(row["can_delete"]),
@@ -1540,6 +1564,8 @@ class PostgresMemoryRepository(MemoryRepository):
                 AgentPermission(
                     agent_id=row["agent_id"],
                     project=row["project"],
+                    scope=PermissionScope(row["scope"]) if row.get("scope") else None,
+                    allowed_agent_types=json.loads(row["allowed_agent_types"]) if isinstance(row.get("allowed_agent_types"), str) else row.get("allowed_agent_types") if row.get("allowed_agent_types") else None,
                     can_read=bool(row["can_read"]),
                     can_write=bool(row["can_write"]),
                     can_delete=bool(row["can_delete"]),
@@ -1717,6 +1743,113 @@ class PostgresMemoryRepository(MemoryRepository):
             if count:
                 logger.info("Cleaned up %d old webhook deliveries (>%d days)", count, max_age_days)
             return count
+
+    # ── Scratchpads (SQL table) ───────────────────────────────────────────────
+
+    async def create_scratchpad(self, pad: Scratchpad) -> Scratchpad:
+        async with self.pool.acquire() as conn:
+            await conn.execute(
+                f"""
+                INSERT INTO {self.schema}.scratchpads
+                    (id, session_id, agent_id, project_id, content, contributors, created_at, expires_at, ttl_seconds)
+                VALUES ($1, $2, $3, $4, $5::jsonb, $6::jsonb, $7::timestamptz, $8::timestamptz, $9)
+                """,
+                pad.id,
+                pad.session_id,
+                pad.agent_id,
+                pad.project_id,
+                json.dumps(pad.content),
+                json.dumps(pad.contributors),
+                pad.created_at,
+                pad.expires_at,
+                pad.ttl_seconds,
+            )
+        return pad
+
+    async def get_scratchpad(self, id: str) -> Optional[Scratchpad]:
+        async with self.pool.acquire() as conn:
+            row = await conn.fetchrow(
+                f"SELECT * FROM {self.schema}.scratchpads WHERE id = $1",
+                id,
+            )
+            if row is None:
+                return None
+            now = datetime.now(timezone.utc)
+            expires_at = row["expires_at"] if isinstance(row["expires_at"], datetime) else datetime.fromisoformat(row["expires_at"])
+            if now >= expires_at:
+                await conn.execute(
+                    f"DELETE FROM {self.schema}.scratchpads WHERE id = $1",
+                    id,
+                )
+                return None
+            return self._row_to_scratchpad(row)
+
+    async def update_scratchpad(self, pad: Scratchpad) -> Scratchpad:
+        async with self.pool.acquire() as conn:
+            await conn.execute(
+                f"""
+                UPDATE {self.schema}.scratchpads
+                SET content = $1::jsonb,
+                    contributors = $2::jsonb,
+                    expires_at = $3::timestamptz
+                WHERE id = $4
+                """,
+                json.dumps(pad.content),
+                json.dumps(pad.contributors),
+                pad.expires_at,
+                pad.id,
+            )
+        return pad
+
+    async def delete_scratchpad(self, id: str) -> bool:
+        async with self.pool.acquire() as conn:
+            result = await conn.execute(
+                f"DELETE FROM {self.schema}.scratchpads WHERE id = $1",
+                id,
+            )
+            count = int(result.split()[-1]) if result else 0
+            return count > 0
+
+    async def list_active_scratchpads(self, project_id: str) -> list[Scratchpad]:
+        async with self.pool.acquire() as conn:
+            now = datetime.now(timezone.utc)
+            rows = await conn.fetch(
+                f"SELECT * FROM {self.schema}.scratchpads "
+                f"WHERE project_id = $1 AND expires_at > $2 "
+                f"ORDER BY created_at DESC",
+                project_id, now,
+            )
+            # Clean up expired that may have slipped through
+            await conn.execute(
+                f"DELETE FROM {self.schema}.scratchpads WHERE expires_at <= $1",
+                now,
+            )
+            return [self._row_to_scratchpad(r) for r in rows]
+
+    async def cleanup_expired_scratchpads(self) -> int:
+        async with self.pool.acquire() as conn:
+            result = await conn.execute(
+                f"DELETE FROM {self.schema}.scratchpads WHERE expires_at <= NOW()"
+            )
+            count = int(result.split()[-1]) if result else 0
+            if count:
+                logger.info("Cleaned up %d expired scratchpads", count)
+            return count
+
+    def _row_to_scratchpad(self, row: asyncpg.Record) -> Scratchpad:
+        content = row["content"] if isinstance(row["content"], list) else json.loads(row["content"])
+        contributors = row["contributors"] if isinstance(row["contributors"], list) else json.loads(row["contributors"])
+        return Scratchpad(
+            id=row["id"],
+            session_id=row["session_id"],
+            agent_id=row["agent_id"],
+            project_id=row["project_id"],
+            content=content,
+            contributors=contributors,
+            created_at=row["created_at"] if isinstance(row["created_at"], datetime) else datetime.fromisoformat(row["created_at"]),
+            expires_at=row["expires_at"] if isinstance(row["expires_at"], datetime) else datetime.fromisoformat(row["expires_at"]),
+            ttl_seconds=row["ttl_seconds"],
+        )
 
     # ── Additional utilities (beyond the ABC) ────────────────────────────────
 

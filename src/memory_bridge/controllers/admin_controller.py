@@ -31,10 +31,15 @@ async def get_admin_service():
 async def admin_create_api_key(
     label: str = Query(..., description="Human-readable label for the key"),
     project_id: Optional[str] = Query(None, description="Optional project scope"),
+    scope: Optional[str] = Query(None, description='Permission scope: "read", "write", or "admin". Default: full access'),
     storage: MemoryRepository = Depends(get_storage),
 ):
-    """Create a new API key. The full key is returned only once."""
-    return await storage.create_api_key(label=label, project_id=project_id)
+    """Create a new API key with optional permission scope.
+
+    The full key is returned only once.
+    Scope levels: read < write < admin. If omitted, the key has full access.
+    """
+    return await storage.create_api_key(label=label, project_id=project_id, scope=scope)
 
 
 @router.get("/keys")

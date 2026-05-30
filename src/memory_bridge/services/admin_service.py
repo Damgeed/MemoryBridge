@@ -50,6 +50,31 @@ class AdminService:
         logger.warning("Admin suspended user: %s", user_id)
         return True
 
+    async def create_api_key(
+        self,
+        label: str,
+        project_id: Optional[str] = None,
+        scope: Optional[str] = None,
+    ) -> dict:
+        """Create a new API key with optional scope.
+
+        Args:
+            label: Human-readable label for the key.
+            project_id: Optional project scope.
+            scope: Optional permission scope ("read", "write", "admin").
+                   If None, the key has full access (backward compatible default).
+
+        Returns:
+            dict with id, key (plaintext), label, project_id, scope, is_active, created_at.
+        """
+        if not self.repo:
+            raise RuntimeError("Repository not configured")
+        return await self.repo.create_api_key(
+            label=label,
+            project_id=project_id,
+            scope=scope,
+        )
+
     async def get_system_health(self) -> dict:
         """Get system health status."""
         status = "healthy" if self.repo else "degraded"

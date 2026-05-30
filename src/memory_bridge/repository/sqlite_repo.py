@@ -10,7 +10,7 @@ from typing import Any, Optional
 from pathlib import Path
 from uuid import uuid4
 
-from ..models import MemoryEntry, MemoryType, Session, Subscription, AgentPermission, InboxMessage
+from ..models import MemoryEntry, MemoryType, Session, Subscription, AgentPermission, InboxMessage, Scratchpad
 from ..config import get_settings
 
 logger = logging.getLogger(__name__)
@@ -28,153 +28,159 @@ def _hash_api_key(plain_key: str) -> str:
 #   v2  (0.2.0)  Add ttl_seconds column to memories
 #   v3  (0.3.0)  Drop legacy tags column from memories (junction-table only)
 _SCHEMA_MIGRATIONS: dict[int, str] = {
-    2: "ALTER TABLE memories ADD COLUMN ttl_seconds INTEGER",
-    3: "ALTER TABLE memories DROP COLUMN tags",
-    4: (
-        "CREATE TABLE IF NOT EXISTS metrics ("
-        "key TEXT PRIMARY KEY, "
-        "value TEXT NOT NULL, "
-        "updated_at TEXT NOT NULL"
-        ")"
-    ),
-    5: (
-        "CREATE VIRTUAL TABLE IF NOT EXISTS memory_fts USING fts5(\n"
-        "    memory_id UNINDEXED,\n"
-        "    key,\n"
-        "    value,\n"
-        "    tags UNINDEXED,\n"
-        "    tokenize='porter unicode61'\n"
-        ");\n"
-        "INSERT INTO memory_fts (memory_id, key, value, tags)\n"
-        "SELECT m.id, m.key, m.value,\n"
-        "  COALESCE((SELECT group_concat(mt.tag, ' ') FROM memory_tags mt WHERE mt.memory_id = m.id), '')\n"
-        "FROM memories m"
-    ),
-    6: (
-        "CREATE TABLE IF NOT EXISTS api_keys ("
-        "  id TEXT PRIMARY KEY, "
-        "  key_hash TEXT NOT NULL UNIQUE, "
-        "  label TEXT NOT NULL, "
-        "  project_id TEXT, "
-        "  is_active INTEGER NOT NULL DEFAULT 1, "
-        "  created_at TEXT NOT NULL, "
-        "  last_used_at TEXT"
-        ")"
-    ),
-    7: "ALTER TABLE memories ADD COLUMN project TEXT",
-    8: "ALTER TABLE sessions ADD COLUMN project TEXT",
-    9: (
-        "CREATE INDEX IF NOT EXISTS idx_memories_project_created "
-        "ON memories(project, created_at); "
-        "CREATE INDEX IF NOT EXISTS idx_memories_session_key "
-        "ON memories(session_id, key); "
-        "CREATE INDEX IF NOT EXISTS idx_memories_project_agent "
-        "ON memories(project, agent_id); "
-        "CREATE INDEX IF NOT EXISTS idx_sessions_project_created "
-        "ON sessions(project, created_at)"
-    ),
-    10: (
-        "CREATE TABLE IF NOT EXISTS audit_log ("
-        "  id TEXT PRIMARY KEY, "
-        "  timestamp TEXT NOT NULL, "
-        "  actor_type TEXT NOT NULL, "
-        "  actor_id TEXT NOT NULL, "
-        "  action TEXT NOT NULL, "
-        "  resource_type TEXT NOT NULL, "
-        "  resource_id TEXT, "
-        "  project_id TEXT, "
-        "  ip_address TEXT, "
-        "  details TEXT DEFAULT '{}', "
-        "  previous_hash TEXT, "
-        "  hash TEXT"
-        "); "
-        "CREATE INDEX IF NOT EXISTS idx_audit_log_timestamp ON audit_log(timestamp DESC); "
-        "CREATE INDEX IF NOT EXISTS idx_audit_log_actor ON audit_log(actor_type, actor_id); "
-        "CREATE INDEX IF NOT EXISTS idx_audit_log_action ON audit_log(action); "
-        "CREATE INDEX IF NOT EXISTS idx_audit_log_project ON audit_log(project_id)"
-    ),
-    11: (
-        "CREATE TABLE IF NOT EXISTS subscriptions ("
-        "  id TEXT PRIMARY KEY, "
-        "  organization_id TEXT NOT NULL UNIQUE, "
-        "  stripe_customer_id TEXT DEFAULT '', "
-        "  tier TEXT NOT NULL DEFAULT 'free', "
-        "  status TEXT NOT NULL DEFAULT 'active', "
-        "  current_period_start TEXT, "
-        "  current_period_end TEXT, "
-        "  created_at TEXT NOT NULL, "
-        "  updated_at TEXT NOT NULL"
-        ")"
-    ),
-    12: (
-        "CREATE TABLE IF NOT EXISTS oauth_accounts ("
-        "  id TEXT PRIMARY KEY, "
-        "  user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE, "
-        "  provider TEXT NOT NULL, "
-        "  provider_user_id TEXT NOT NULL, "
-        "  created_at TEXT NOT NULL, "
-        "  UNIQUE(provider, provider_user_id)"
-        ")"
-    ),
-    13: "ALTER TABLE users ADD COLUMN stripe_customer_id TEXT NOT NULL DEFAULT ''",
-    14: (
-        "CREATE TABLE IF NOT EXISTS memory_embeddings ("
-        "memory_id TEXT PRIMARY KEY REFERENCES memories(id) ON DELETE CASCADE, "
-        "embedding TEXT NOT NULL, "
-        "updated_at TEXT NOT NULL"
-        ")"
-    ),
-    15: (
-        "CREATE TABLE IF NOT EXISTS agent_permissions ("
-        "agent_id TEXT NOT NULL, "
-        "project TEXT, "
-        "can_read INTEGER NOT NULL DEFAULT 1, "
-        "can_write INTEGER NOT NULL DEFAULT 1, "
-        "can_delete INTEGER NOT NULL DEFAULT 0, "
-        "created_at TEXT NOT NULL, "
-        "updated_at TEXT NOT NULL, "
-        "PRIMARY KEY (agent_id, project)"
-        ")"
-    ),
-    16: (
-        "CREATE TABLE IF NOT EXISTS webhook_subscriptions ("
-        "id TEXT PRIMARY KEY, "
-        "url TEXT NOT NULL, "
-        "event_types TEXT NOT NULL, "
-        "secret TEXT NOT NULL, "
-        "project TEXT, "
-        "is_active INTEGER NOT NULL DEFAULT 1, "
-        "created_at TEXT NOT NULL"
-        "); "
-        "CREATE TABLE IF NOT EXISTS webhook_deliveries ("
-        "id TEXT PRIMARY KEY, "
-        "subscription_id TEXT NOT NULL REFERENCES webhook_subscriptions(id) ON DELETE CASCADE, "
-        "event_type TEXT NOT NULL, "
-        "url TEXT NOT NULL, "
-        "status TEXT NOT NULL, "
-        "status_code INTEGER, "
-        "error TEXT, "
-        "attempts INTEGER NOT NULL DEFAULT 0, "
-        "timestamp TEXT NOT NULL"
-        "); "
-        "CREATE INDEX IF NOT EXISTS idx_webhook_deliveries_subscription "
-        "ON webhook_deliveries(subscription_id, timestamp DESC)"
-    ),
-    17: "ALTER TABLE memories ADD COLUMN memory_type TEXT DEFAULT 'episodic'",
-    18: (
-        "CREATE TABLE IF NOT EXISTS inbox_messages ("
-        "id TEXT PRIMARY KEY, "
-        "from_agent_id TEXT NOT NULL, "
-        "to_agent_id TEXT NOT NULL, "
-        "subject TEXT NOT NULL DEFAULT '', "
-        "body TEXT NOT NULL, "
-        "priority TEXT NOT NULL DEFAULT 'normal', "
-        "is_read INTEGER NOT NULL DEFAULT 0, "
-        "read_at TEXT, "
-        "created_at TEXT NOT NULL, "
-        "project TEXT"        "); "        "CREATE INDEX IF NOT EXISTS idx_inbox_to_agent ON inbox_messages(to_agent_id, is_read, created_at DESC); "        "CREATE INDEX IF NOT EXISTS idx_inbox_project ON inbox_messages(project, to_agent_id)"
-    ),
-}
+        2: "ALTER TABLE memories ADD COLUMN ttl_seconds INTEGER",
+        3: "ALTER TABLE memories DROP COLUMN tags",
+        4: (
+            "CREATE TABLE IF NOT EXISTS metrics ("
+            "key TEXT PRIMARY KEY, "
+            "value TEXT NOT NULL, "
+            "updated_at TEXT NOT NULL"
+            ")"
+        ),
+        5: (
+            "CREATE VIRTUAL TABLE IF NOT EXISTS memory_fts USING fts5(\n"
+            "    memory_id UNINDEXED,\n"
+            "    key,\n"
+            "    value,\n"
+            "    tags UNINDEXED,\n"
+            "    tokenize='porter unicode61'\n"
+            ");\n"
+            "INSERT INTO memory_fts (memory_id, key, value, tags)\n"
+            "SELECT m.id, m.key, m.value,\n"
+            "  COALESCE((SELECT group_concat(mt.tag, ' ') FROM memory_tags mt WHERE mt.memory_id = m.id), '')\n"
+            "FROM memories m"
+        ),
+        6: (
+            "CREATE TABLE IF NOT EXISTS api_keys ("
+            "  id TEXT PRIMARY KEY, "
+            "  key_hash TEXT NOT NULL UNIQUE, "
+            "  label TEXT NOT NULL, "
+            "  project_id TEXT, "
+            "  is_active INTEGER NOT NULL DEFAULT 1, "
+            "  created_at TEXT NOT NULL, "
+            "  last_used_at TEXT"
+            ")"
+        ),
+        7: "ALTER TABLE memories ADD COLUMN project TEXT",
+        8: "ALTER TABLE sessions ADD COLUMN project TEXT",
+        9: (
+            "CREATE INDEX IF NOT EXISTS idx_memories_project_created "
+            "ON memories(project, created_at); "
+            "CREATE INDEX IF NOT EXISTS idx_memories_session_key "
+            "ON memories(session_id, key); "
+            "CREATE INDEX IF NOT EXISTS idx_memories_project_agent "
+            "ON memories(project, agent_id); "
+            "CREATE INDEX IF NOT EXISTS idx_sessions_project_created "
+            "ON sessions(project, created_at)"
+        ),
+        10: (
+            "CREATE TABLE IF NOT EXISTS audit_log ("
+            "  id TEXT PRIMARY KEY, "
+            "  timestamp TEXT NOT NULL, "
+            "  actor_type TEXT NOT NULL, "
+            "  actor_id TEXT NOT NULL, "
+            "  action TEXT NOT NULL, "
+            "  resource_type TEXT NOT NULL, "
+            "  resource_id TEXT, "
+            "  project_id TEXT, "
+            "  ip_address TEXT, "
+            "  details TEXT DEFAULT '{}', "
+            "  previous_hash TEXT, "
+            "  hash TEXT"
+            "); "
+            "CREATE INDEX IF NOT EXISTS idx_audit_log_timestamp ON audit_log(timestamp DESC); "
+            "CREATE INDEX IF NOT EXISTS idx_audit_log_actor ON audit_log(actor_type, actor_id); "
+            "CREATE INDEX IF NOT EXISTS idx_audit_log_action ON audit_log(action); "
+            "CREATE INDEX IF NOT EXISTS idx_audit_log_project ON audit_log(project_id)"
+        ),
+        11: (
+            "CREATE TABLE IF NOT EXISTS subscriptions ("
+            "  id TEXT PRIMARY KEY, "
+            "  organization_id TEXT NOT NULL UNIQUE, "
+            "  stripe_customer_id TEXT DEFAULT '', "
+            "  tier TEXT NOT NULL DEFAULT 'free', "
+            "  status TEXT NOT NULL DEFAULT 'active', "
+            "  current_period_start TEXT, "
+            "  current_period_end TEXT, "
+            "  created_at TEXT NOT NULL, "
+            "  updated_at TEXT NOT NULL"
+            ")"
+        ),
+        12: (
+            "CREATE TABLE IF NOT EXISTS oauth_accounts ("
+            "  id TEXT PRIMARY KEY, "
+            "  user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE, "
+            "  provider TEXT NOT NULL, "
+            "  provider_user_id TEXT NOT NULL, "
+            "  created_at TEXT NOT NULL, "
+            "  UNIQUE(provider, provider_user_id)"
+            ")"
+        ),
+        13: "ALTER TABLE users ADD COLUMN stripe_customer_id TEXT NOT NULL DEFAULT ''",
+        14: (
+            "CREATE TABLE IF NOT EXISTS memory_embeddings ("
+            "memory_id TEXT PRIMARY KEY REFERENCES memories(id) ON DELETE CASCADE, "
+            "embedding TEXT NOT NULL, "
+            "updated_at TEXT NOT NULL"
+            ")"
+        ),
+        15: (
+            "CREATE TABLE IF NOT EXISTS agent_permissions ("
+            "agent_id TEXT NOT NULL, "
+            "project TEXT, "
+            "can_read INTEGER NOT NULL DEFAULT 1, "
+            "can_write INTEGER NOT NULL DEFAULT 1, "
+            "can_delete INTEGER NOT NULL DEFAULT 0, "
+            "created_at TEXT NOT NULL, "
+            "updated_at TEXT NOT NULL, "
+            "PRIMARY KEY (agent_id, project)"
+            ")"
+        ),
+        16: (
+            "CREATE TABLE IF NOT EXISTS webhook_subscriptions ("
+            "id TEXT PRIMARY KEY, "
+            "url TEXT NOT NULL, "
+            "event_types TEXT NOT NULL, "
+            "secret TEXT NOT NULL, "
+            "project TEXT, "
+            "is_active INTEGER NOT NULL DEFAULT 1, "
+            "created_at TEXT NOT NULL"
+            "); "
+            "CREATE TABLE IF NOT EXISTS webhook_deliveries ("
+            "id TEXT PRIMARY KEY, "
+            "subscription_id TEXT NOT NULL REFERENCES webhook_subscriptions(id) ON DELETE CASCADE, "
+            "event_type TEXT NOT NULL, "
+            "url TEXT NOT NULL, "
+            "status TEXT NOT NULL, "
+            "status_code INTEGER, "
+            "error TEXT, "
+            "attempts INTEGER NOT NULL DEFAULT 0, "
+            "timestamp TEXT NOT NULL"
+            "); "
+            "CREATE INDEX IF NOT EXISTS idx_webhook_deliveries_subscription "
+            "ON webhook_deliveries(subscription_id, timestamp DESC)"
+        ),
+        17: "ALTER TABLE memories ADD COLUMN memory_type TEXT DEFAULT 'episodic'",
+        18: (
+            "CREATE TABLE IF NOT EXISTS inbox_messages ("
+            "id TEXT PRIMARY KEY, "
+            "from_agent_id TEXT NOT NULL, "
+            "to_agent_id TEXT NOT NULL, "
+            "subject TEXT NOT NULL DEFAULT '', "
+            "body TEXT NOT NULL, "
+            "priority TEXT NOT NULL DEFAULT 'normal', "
+            "is_read INTEGER NOT NULL DEFAULT 0, "
+            "read_at TEXT, "
+            "created_at TEXT NOT NULL, "
+            "project TEXT"
+            "); "
+            "CREATE INDEX IF NOT EXISTS idx_inbox_to_agent ON inbox_messages(to_agent_id, is_read, created_at DESC); "
+            "CREATE INDEX IF NOT EXISTS idx_inbox_project ON inbox_messages(project, to_agent_id)"
+        ),
+        19: "ALTER TABLE api_keys ADD COLUMN scope TEXT",
+        20: "ALTER TABLE agent_permissions ADD COLUMN scope TEXT",
+        21: "ALTER TABLE agent_permissions ADD COLUMN allowed_agent_types TEXT",
+    }
 # ──────────────────────────────────────────────────────────────────────────────
 
 
@@ -240,6 +246,7 @@ class SQLiteMemoryRepository(MemoryRepository):
     def __init__(self, db_path: Optional[str] = None):
         settings = get_settings()
         self.db_path = db_path or settings.database_url
+        self._scratchpads: dict[str, Scratchpad] = {}
 
     async def initialize(self):
         """Create tables if they don't exist and run pending schema migrations."""
@@ -908,7 +915,7 @@ class SQLiteMemoryRepository(MemoryRepository):
 
     # ── API Key Management ────────────────────────────────────────────────────
 
-    async def create_api_key(self, label: str, project_id: Optional[str] = None) -> dict:
+    async def create_api_key(self, label: str, project_id: Optional[str] = None, scope: Optional[str] = None) -> dict:
         """Create a new API key. Returns the full key info including the plaintext key (show once)."""
         plain_key = f"mb_{secrets.token_hex(24)}"
         key_hash = _hash_api_key(plain_key)
@@ -917,9 +924,9 @@ class SQLiteMemoryRepository(MemoryRepository):
 
         async with aiosqlite.connect(self.db_path) as db:
             await db.execute(
-                "INSERT INTO api_keys (id, key_hash, label, project_id, is_active, created_at) "
-                "VALUES (?, ?, ?, ?, 1, ?)",
-                (key_id, key_hash, label, project_id, now),
+                "INSERT INTO api_keys (id, key_hash, label, project_id, scope, is_active, created_at) "
+                "VALUES (?, ?, ?, ?, ?, 1, ?)",
+                (key_id, key_hash, label, project_id, scope, now),
             )
             await db.commit()
 
@@ -928,6 +935,7 @@ class SQLiteMemoryRepository(MemoryRepository):
             "key": plain_key,
             "label": label,
             "project_id": project_id,
+            "scope": scope,
             "is_active": True,
             "created_at": now,
         }
@@ -937,7 +945,7 @@ class SQLiteMemoryRepository(MemoryRepository):
         async with aiosqlite.connect(self.db_path) as db:
             db.row_factory = aiosqlite.Row
             cursor = await db.execute(
-                "SELECT id, label, project_id, is_active, created_at, last_used_at FROM api_keys "
+                "SELECT id, label, project_id, scope, is_active, created_at, last_used_at FROM api_keys "
                 "ORDER BY created_at DESC"
             )
             rows = await cursor.fetchall()
@@ -1370,11 +1378,13 @@ class SQLiteMemoryRepository(MemoryRepository):
         async with aiosqlite.connect(self.db_path) as db:
             await db.execute(
                 """INSERT OR REPLACE INTO agent_permissions
-                   (agent_id, project, can_read, can_write, can_delete, created_at, updated_at)
-                   VALUES (?, ?, ?, ?, ?, ?, ?)""",
+                   (agent_id, project, scope, allowed_agent_types, can_read, can_write, can_delete, created_at, updated_at)
+                   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)""",
                 (
                     perm.agent_id,
                     perm.project,
+                    perm.scope.value if perm.scope else None,
+                    json.dumps(perm.allowed_agent_types) if perm.allowed_agent_types is not None else None,
                     int(perm.can_read),
                     int(perm.can_write),
                     int(perm.can_delete),
@@ -1403,9 +1413,15 @@ class SQLiteMemoryRepository(MemoryRepository):
             row = await cursor.fetchone()
             if row is None:
                 return None
+            raw_types = row["allowed_agent_types"]
+            allowed_types = json.loads(raw_types) if raw_types else None
+            scope_val = row["scope"]
+            from ..models import PermissionScope
             return AgentPermission(
                 agent_id=row["agent_id"],
                 project=row["project"],
+                scope=PermissionScope(scope_val) if scope_val else None,
+                allowed_agent_types=allowed_types,
                 can_read=bool(row["can_read"]),
                 can_write=bool(row["can_write"]),
                 can_delete=bool(row["can_delete"]),
@@ -1429,10 +1445,13 @@ class SQLiteMemoryRepository(MemoryRepository):
                     "SELECT * FROM agent_permissions ORDER BY agent_id"
                 )
             rows = await cursor.fetchall()
+            from ..models import PermissionScope
             return [
                 AgentPermission(
                     agent_id=row["agent_id"],
                     project=row["project"],
+                    scope=PermissionScope(row["scope"]) if row["scope"] else None,
+                    allowed_agent_types=json.loads(row["allowed_agent_types"]) if row["allowed_agent_types"] else None,
                     can_read=bool(row["can_read"]),
                     can_write=bool(row["can_write"]),
                     can_delete=bool(row["can_delete"]),
@@ -1610,6 +1629,54 @@ class SQLiteMemoryRepository(MemoryRepository):
             if count:
                 logger.info("Cleaned up %d old webhook deliveries (>%d days)", count, max_age_days)
             return count
+
+    # ── Scratchpads (dict-based) ──────────────────────────────────────────────
+
+    async def create_scratchpad(self, pad: Scratchpad) -> Scratchpad:
+        self._scratchpads[pad.id] = pad.model_copy(deep=True)
+        return pad
+
+    async def get_scratchpad(self, id: str) -> Optional[Scratchpad]:
+        pad = self._scratchpads.get(id)
+        if pad is None:
+            return None
+        # Check expiry
+        if datetime.now(timezone.utc) >= pad.expires_at:
+            del self._scratchpads[id]
+            return None
+        return pad.model_copy(deep=True)
+
+    async def update_scratchpad(self, pad: Scratchpad) -> Scratchpad:
+        self._scratchpads[pad.id] = pad.model_copy(deep=True)
+        return pad
+
+    async def delete_scratchpad(self, id: str) -> bool:
+        if id in self._scratchpads:
+            del self._scratchpads[id]
+            return True
+        return False
+
+    async def list_active_scratchpads(self, project_id: str) -> list[Scratchpad]:
+        now = datetime.now(timezone.utc)
+        active = []
+        expired_ids = []
+        for pid, pad in self._scratchpads.items():
+            if now >= pad.expires_at:
+                expired_ids.append(pid)
+                continue
+            if pad.project_id == project_id:
+                active.append(pad.model_copy(deep=True))
+        # Clean up expired entries on access
+        for pid in expired_ids:
+            del self._scratchpads[pid]
+        return active
+
+    async def cleanup_expired_scratchpads(self) -> int:
+        now = datetime.now(timezone.utc)
+        expired_ids = [pid for pid, pad in self._scratchpads.items() if now >= pad.expires_at]
+        for pid in expired_ids:
+            del self._scratchpads[pid]
+        return len(expired_ids)
 
     # ── Additional utilities (beyond the ABC) ────────────────────────────────
 
