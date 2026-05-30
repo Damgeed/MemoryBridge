@@ -408,10 +408,10 @@ def create_app() -> FastAPI:
             status_code=404,
         )
 
-    # ── Forgetful Agent Demo ────────────────────────
+    # ── Without Memory Demo ───────────────────────
     @app.get("/forgetful-demo", include_in_schema=False)
     async def forgetful_demo_page():
-        """Serve the split-screen forgetful agent comparison demo."""
+        """Serve the split-screen without-memory comparison demo."""
         static_dir = os.path.join(os.path.dirname(__file__), "static")
         html_path = os.path.join(static_dir, "forgetful-demo.html")
         if os.path.exists(html_path):
@@ -424,7 +424,7 @@ def create_app() -> FastAPI:
             )
         return Response(content="Page not found", status_code=404)
 
-    # ── Watch Demo (tabbed: multi-agent + forgetful) ──
+    # ── Watch Demo (tabbed: multi-agent + without memory) ─
     @app.get("/watch-demo", include_in_schema=False)
     async def watch_demo_page():
         """Serve the tabbed watch-demo page with both demos."""

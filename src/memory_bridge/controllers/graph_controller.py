@@ -25,7 +25,16 @@ router = APIRouter(prefix="/graph", tags=["graph"])
 
 
 async def _resolve_project_id(request: Request) -> Optional[str]:
-    """Extract project_id from Authorization header (JWT or API key), or return None."""
+    """Extract project_id from Authorization header (JWT or API key), or return None.
+
+    Uses request.state.auth (set by middleware) first to avoid redundant DB calls.
+    """
+    # Use auth state from middleware first (fast, no DB call)
+    auth = getattr(request.state, "auth", None)
+    if auth:
+        return auth.get("project_id")
+
+    # Fallback: manual decode (for routes that skip middleware)
     auth_header = request.headers.get("Authorization")
     if not auth_header or not auth_header.startswith("Bearer "):
         return None

@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#0a0a0f" media="(prefers-color-scheme: dark)">
-<title>Memory Bridge — Forgetful Agent Demo</title>
+<title>Memory Bridge — Without Memory Demo</title>
 <link rel="icon" href="/playground/logo.png" type="image/png">
 <link rel="stylesheet" href="/playground/style.css">
 <style>
@@ -441,13 +441,13 @@
     <div class="panel-header">
       <span class="status-dot bad"></span>
       <h3 data-i18n="demo.no_memory_title">No Memory</h3>
-      <span class="panel-badge bad" data-i18n="demo.forgetful_badge">FORGETFUL</span>
+      <span class="panel-badge bad" data-i18n="demo.stateless_badge">STATELESS</span>
     </div>
     <div class="panel-logs" id="left-logs">
       <div class="log system">
         <span class="agent-tag">SYSTEM</span>
         <span class="arrow">→</span>
-        <span data-i18n="demo.agent_no_memory">Agent: NO memory — each session starts fresh.</span>
+        <span data-i18n="demo.agent_no_memory">Agent: No memory bridge — every session is a blank slate.</span>
       </div>
     </div>
     <div class="panel-summary" id="left-summary" data-i18n="demo.left_summary">Sessions: 0 &nbsp;|&nbsp; Retained: 0 &nbsp;|&nbsp; Success: —</div>
@@ -491,7 +491,7 @@
 </div>
 
     <script>
-    // ── Forgetful Agent Demo ─────────────────────────
+    // ── Without Memory Demo ────────────────────────
     // Left panel: No Memory — agent forgets each session
     // Right panel: With Memory Bridge — agent remembers
 
@@ -606,7 +606,7 @@
         addLog('right-logs', session.prompt);
         await sleep(600);
 
-        // Left panel: forgetful response
+        // Left panel: stateless response
         addLog('left-logs', session.left.agent, 'log');
         await sleep(300);
 

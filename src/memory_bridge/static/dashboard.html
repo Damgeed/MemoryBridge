@@ -62,6 +62,90 @@
         @keyframes spin {
             to { transform: rotate(360deg); }
         }
+
+        /* ── Loading Timeout & Retry ─────────────────────── */
+        .dash-loading-hint {
+            text-align: center;
+            margin-top: 1.5rem;
+            padding: 0.5rem 1rem;
+            font-size: 0.88rem;
+            color: var(--orange);
+            background: var(--bg-secondary);
+            border: 1px solid var(--orange);
+            border-radius: var(--radius-md);
+            max-width: 480px;
+            margin-left: auto;
+            margin-right: auto;
+            line-height: 1.5;
+        }
+        .dash-loading-hint .hint-icon {
+            font-size: 1.2rem;
+            display: block;
+            margin-bottom: 0.3rem;
+        }
+        .dash-retry-area {
+            text-align: center;
+            margin-top: 1.25rem;
+        }
+        .dash-retry-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            padding: 0.6rem 1.5rem;
+            font-size: 0.92rem;
+            font-weight: 700;
+            border: 2px solid var(--accent);
+            border-radius: var(--radius-md);
+            background: var(--accent-glow);
+            color: var(--accent);
+            cursor: pointer;
+            transition: all var(--transition-fast);
+            font-family: var(--font-sans);
+        }
+        .dash-retry-btn:hover {
+            background: var(--accent);
+            color: #fff;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(99,102,241,0.3);
+        }
+        .dash-retry-btn svg {
+            flex-shrink: 0;
+        }
+        .dash-retry-btn.loading {
+            pointer-events: none;
+            opacity: 0.7;
+        }
+        .dash-retry-btn.loading svg {
+            animation: spin 0.6s linear infinite;
+        }
+        .dash-refreshing-indicator {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-top: 1rem;
+            font-size: 0.88rem;
+            color: var(--text-muted);
+        }
+        .dash-connection-error {
+            text-align: center;
+            margin-top: 1.5rem;
+            padding: 1rem 1.5rem;
+            font-size: 0.88rem;
+            color: var(--red);
+            background: var(--bg-secondary);
+            border: 1px solid var(--red);
+            border-radius: var(--radius-md);
+            max-width: 480px;
+            margin-left: auto;
+            margin-right: auto;
+            line-height: 1.5;
+        }
+        .dash-connection-error .err-icon {
+            font-size: 1.4rem;
+            display: block;
+            margin-bottom: 0.3rem;
+        }
         #dash-updated-text {
             font-size: 0.72rem;
             color: var(--text-faint);
@@ -1190,6 +1274,30 @@
             </button>
         </div>
         <p class="dash-subtitle" id="dash-status" data-i18n="dash.loading">Loading your dashboard...</p>
+        <div id="dash-loading-hint" class="dash-loading-hint" style="display:none;">
+            <span class="hint-icon">⏳</span>
+            Taking longer than expected. The server may be waking up from inactivity.
+        </div>
+        <div id="dash-retry-area" class="dash-retry-area" style="display:none;">
+            <button class="dash-retry-btn" onclick="handleDashboardRefresh()" title="Retry loading dashboard">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="23 4 23 10 17 10"/>
+                    <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>
+                </svg>
+                Refresh Dashboard
+            </button>
+        </div>
+        <div id="dash-refreshing-indicator" class="dash-refreshing-indicator" style="display:none;">
+            <span class="spinner-sm"></span>
+            Refreshing...
+        </div>
+        <div id="dash-connection-error" class="dash-connection-error" style="display:none;">
+            <span class="err-icon">🌐</span>
+            Connection issue — check your network.
+            <div style="margin-top:0.6rem;">
+                <button class="dash-retry-btn" onclick="handleDashboardRefresh()" style="padding:0.4rem 1rem;font-size:0.82rem;border-width:1px;">Retry</button>
+            </div>
+        </div>
 
         <!-- Signed Out Gate -->
         <div id="dash-auth-gate" class="dash-card" style="display:none;text-align:center;padding:3rem 2rem;">
@@ -1900,13 +2008,25 @@
             const el = document.getElementById('dash-status');
             el.textContent = '🔄 Loading...';
             document.getElementById('key-reveal-area').innerHTML = '';
+            hideLoadingTimeoutUI();
             loadDashboard();
         }
 
         function handleDashboardRefresh() {
             const btn = document.getElementById('dash-refresh-btn');
             const updatedText = document.getElementById('dash-updated-text');
+            const retryBtn = document.querySelector('.dash-retry-btn');
+            const refreshing = document.getElementById('dash-refreshing-indicator');
+            const connErr = document.getElementById('dash-connection-error');
+            // Hide connection error if visible
+            if (connErr) connErr.style.display = 'none';
+            // Show refreshing indicator
+            if (refreshing) refreshing.style.display = 'inline-flex';
+            // Hide retry area while refreshing
+            const retryArea = document.getElementById('dash-retry-area');
+            if (retryArea) retryArea.style.display = 'none';
             if (btn) btn.classList.add('loading');
+            if (retryBtn) retryBtn.classList.add('loading');
             if (updatedText) updatedText.textContent = 'Updating...';
             Promise.all([
                 loadDashboard(),
@@ -1914,6 +2034,8 @@
                 loadAgentStats(),
             ]).finally(() => {
                 if (btn) btn.classList.remove('loading');
+                if (retryBtn) retryBtn.classList.remove('loading');
+                if (refreshing) refreshing.style.display = 'none';
                 if (updatedText) {
                     updatedText.textContent = 'Updated just now';
                     setTimeout(() => { updatedText.textContent = ''; }, 5000);
@@ -2001,14 +2123,68 @@
             } catch (e) {
                 clearTimeout(timeout);
                 if (e.name === 'AbortError') throw new Error('Server is not responding. Please try again.');
+                // Mark network errors (TypeError from fetch = DNS/connection failure)
+                if (e instanceof TypeError && e.message.includes('fetch')) {
+                    const netErr = new Error('Connection issue - check your network');
+                    netErr.isNetworkError = true;
+                    throw netErr;
+                }
                 throw e;
             }
         }
 
         // ── Dashboard Data ─────────────────────────────────────────
+        let _dashLoadingTimer = null;
+
+        function hideLoadingTimeoutUI() {
+            const hint = document.getElementById('dash-loading-hint');
+            const retry = document.getElementById('dash-retry-area');
+            const connErr = document.getElementById('dash-connection-error');
+            if (hint) hint.style.display = 'none';
+            if (retry) retry.style.display = 'none';
+            if (connErr) connErr.style.display = 'none';
+            if (_dashLoadingTimer) {
+                clearTimeout(_dashLoadingTimer);
+                _dashLoadingTimer = null;
+            }
+        }
+
+        function showLoadingTimeoutUI(isRefresh) {
+            const hint = document.getElementById('dash-loading-hint');
+            const retry = document.getElementById('dash-retry-area');
+            if (hint) hint.style.display = 'block';
+            if (retry) {
+                retry.style.display = 'block';
+                const btn = retry.querySelector('.dash-retry-btn');
+                if (btn) btn.classList.remove('loading');
+            }
+            // Update status text to show it's still loading
+            const status = document.getElementById('dash-status');
+            if (status && !status.textContent.includes('🌐') && !status.textContent.includes('🔑')) {
+                status.textContent = '⏳ Still loading...';
+            }
+            // Hide refreshing indicator when showing retry
+            const refreshing = document.getElementById('dash-refreshing-indicator');
+            if (refreshing) refreshing.style.display = 'none';
+        }
+
         async function loadDashboard(retries = 2) {
+            // Hide any previous timeout/error UI
+            hideLoadingTimeoutUI();
+
+            // Start a 5-second timeout — if loadDashboard hasn't resolved by then,
+            // show the "taking longer than expected" hint + retry button
+            let loaded = false;
+            _dashLoadingTimer = setTimeout(() => {
+                if (!loaded) {
+                    showLoadingTimeoutUI(false);
+                }
+            }, 5000);
+
             try {
                 const data = await api('GET', '/dashboard/data');
+                loaded = true;
+                hideLoadingTimeoutUI();
                 renderSubscription(data);
                 renderProfile(data);
                 const tierKeyLimit = {free: 5, starter: 25, pro: 100}[data.tier] || 5;
@@ -2021,6 +2197,15 @@
                 if (typeof updateAuthUI === 'function') updateAuthUI();
             } catch (e) {
                 const msg = e.message || '';
+                // Connection/network errors — show dedicated UI
+                if (e.isNetworkError || msg.includes('Failed to fetch') || msg.includes('NetworkError') || msg.includes('Network request failed') || msg.includes('check your network')) {
+                    loaded = true; // prevent timeout UI from also showing
+                    hideLoadingTimeoutUI();
+                    const connErr = document.getElementById('dash-connection-error');
+                    if (connErr) connErr.style.display = 'block';
+                    document.getElementById('dash-status').textContent = '🌐 Connection issue';
+                    return;
+                }
                 if (msg.includes('401') || msg.includes('Unauthorized') || msg.includes('Invalid API key') || msg.includes('Session expired')) {
                     showAuthenticatedContent(false);
                     document.getElementById('dash-status').textContent = '🔑 Session expired. Please sign in again.';
