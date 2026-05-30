@@ -405,7 +405,7 @@
     </div>
 
     <div class="integrations-page">
-        <a href="/" class="back-link">← Back to Home</a>
+        
         <h1><span>Framework</span> Integrations</h1>
         <p class="subtitle">
             Drop-in adapters for the most popular AI agent frameworks. Add persistent memory to any agent in minutes.
@@ -440,7 +440,7 @@
             <div class="install-pane" id="install-hosted">
                 <p style="color:var(--text-muted);font-size:0.88rem;margin-bottom:0.75rem;">Use our hosted instance — zero setup, just add your API key.</p>
                 <div class="term-block">
-                    <button class="term-copy-btn" onclick="copyCmd(this,'Authorization: Bearer YOUR_API_KEY')" title="Copy">📋 Copy</button>
+                    <button class="term-copy-btn" onclick="copyCmd(this,'curl -X POST https://memory-bridge-app-production.up.railway.app/memories -H "Authorization: Bearer YOUR_API_KEY" -H "Content-Type: application/json" -d '{\"session_id\":\"my-session\",\"agent_id\":\"henry\",\"key\":\"hello\",\"value\":\"Hello Memory Bridge!\"}'')" title="Copy">📋 Copy</button>
                     <span class="term-comment"># Add to your Authorization header</span><br>
                     <span class="term-line"><span class="term-prompt">$</span> curl -X POST https://memory-bridge-app-production.up.railway.app/memories \</span><br>
                     <span class="term-line" style="padding-left:1.5rem;">-H "Authorization: Bearer <span style="color:var(--accent);">YOUR_API_KEY</span>" \</span><br>
@@ -503,10 +503,10 @@
             <div class="install-pane" id="install-binary" style="display:none;">
                 <p style="color:var(--text-muted);font-size:0.88rem;margin-bottom:0.75rem;">Download a single-file binary — no dependencies required.</p>
                 <div style="display:flex;gap:0.75rem;flex-wrap:wrap;justify-content:center;margin:1rem 0;">
-                    <a href="#" class="btn btn-secondary" style="font-size:0.85rem;">🐧 Linux (x86_64)</a>
-                    <a href="#" class="btn btn-secondary" style="font-size:0.85rem;">🍎 macOS (ARM64)</a>
-                    <a href="#" class="btn btn-secondary" style="font-size:0.85rem;">🍎 macOS (x86_64)</a>
-                    <a href="#" class="btn btn-secondary" style="font-size:0.85rem;">🪟 Windows (x86_64)</a>
+                    <span class="btn btn-secondary" style="font-size:0.85rem;opacity:0.5;cursor:not-allowed;">🐧 Linux (x86_64) — Coming Soon</span>
+                    <span class="btn btn-secondary" style="font-size:0.85rem;opacity:0.5;cursor:not-allowed;">🍎 macOS (ARM64) — Coming Soon</span>
+                    <span class="btn btn-secondary" style="font-size:0.85rem;opacity:0.5;cursor:not-allowed;">🍎 macOS (x86_64) — Coming Soon</span>
+                    <span class="btn btn-secondary" style="font-size:0.85rem;opacity:0.5;cursor:not-allowed;">🪟 Windows (x86_64) — Coming Soon</span>
                 </div>
                 <p style="color:var(--text-muted);font-size:0.78rem;text-align:center;">Binaries are self-contained — just download, <code style="background:var(--bg-tertiary);padding:0.1rem 0.3rem;border-radius:4px;">chmod +x</code>, and run.</p>
             </div>
