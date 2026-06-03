@@ -1,0 +1,106 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  name      String?
+  avatarUrl String?  @map("avatar_url")
+  plan      String   @default("free")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  workspaces Workspace[]
+  agents     Agent[]
+  memories   Memory[]
+
+  @@map("users")
+}
+
+model Workspace {
+  id        String   @id @default(uuid())
+  name      String
+  slug      String   @unique
+  plan      String   @default("free")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  ownerId String @map("owner_id")
+  owner   User   @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+
+  agents   Agent[]
+  memories Memory[]
+  events   Event[]
+
+  @@map("workspaces")
+}
+
+model Agent {
+  id          String   @id @default(uuid())
+  name        String
+  description String?
+  framework   String   @default("generic")
+  config      Json?
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  workspaceId String   @map("workspace_id")
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  ownerId String @map("owner_id")
+  owner   User   @relation(fields: [ownerId], references: [id])
+
+  memories Memory[]
+  events   Event[]
+
+  @@map("agents")
+}
+
+model Memory {
+  id        String   @id @default(uuid())
+  key       String
+  value     Json
+  scope     String   @default("agent")
+  ttl       Int?     @map("ttl")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  expiresAt DateTime? @map("expires_at")
+
+  agentId     String?    @map("agent_id")
+  agent       Agent?     @relation(fields: [agentId], references: [id], onDelete: Cascade)
+  workspaceId String?    @map("workspace_id")
+  workspace   Workspace? @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  ownerId     String     @map("owner_id")
+  owner       User       @relation(fields: [ownerId], references: [id])
+
+  @@unique([key, agentId, workspaceId])
+  @@index([key])
+  @@index([agentId])
+  @@index([workspaceId])
+  @@map("memories")
+}
+
+model Event {
+  id        String   @id @default(uuid())
+  type      String
+  payload   Json?
+  createdAt DateTime @default(now()) @map("created_at")
+
+  agentId     String?    @map("agent_id")
+  agent       Agent?     @relation(fields: [agentId], references: [id], onDelete: Cascade)
+  workspaceId String?    @map("workspace_id")
+  workspace   Workspace? @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  @@index([type])
+  @@index([agentId])
+  @@index([workspaceId])
+  @@index([createdAt])
+  @@map("events")
+}

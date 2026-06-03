@@ -1,0 +1,9 @@
+[build]
+  builder = "NIXPACKS"
+  buildCommand = "pnpm install --frozen-lockfile && pnpm --filter web build"
+
+[deploy]
+  startCommand = "pnpm --filter web start"
+  healthcheckPath = "/"
+  healthcheckTimeout = 120
+  restarts = "always"

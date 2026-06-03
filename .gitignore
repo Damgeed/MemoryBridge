@@ -7,3 +7,8 @@ build/
 *.db
 .env
 uv.lock
+
+# Node.js / pnpm
+node_modules/
+.next/
+*.tsbuildinfo
