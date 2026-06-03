@@ -20,9 +20,6 @@ importers:
       '@auth0/nextjs-auth0':
         specifier: ^4.21.0
         version: 4.21.0(next@16.2.7(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
-      '@memory-bridge/ui':
-        specifier: workspace:*
-        version: link:../../packages/ui
       '@tanstack/react-query':
         specifier: ^5.100.14
         version: 5.100.14(react@19.2.7)

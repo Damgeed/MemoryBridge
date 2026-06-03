@@ -25,6 +25,12 @@
     "paths": {
       "@/*": [
         "./src/*"
+      ],
+      "@memory-bridge/ui": [
+        "../../packages/ui/src"
+      ],
+      "@memory-bridge/ui/*": [
+        "../../packages/ui/src/*"
       ]
     }
   },
